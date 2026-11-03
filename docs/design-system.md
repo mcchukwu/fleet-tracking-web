@@ -34,6 +34,7 @@ The user is an operator watching a live system, often for hours, often under pre
 ## 2. Stack and implementation rules
 
 - Tailwind v4, tokens defined once in `src/styles/tokens.css` (§3 to §8) and exposed through `@theme inline`.
+- Maps: features use `<FleetMap>` and the `MapAdapter` contract. Layers are provider-neutral, via `MapTokens`; only `src/map/providers/*` may import a map SDK.
 - Primitives from shadcn/ui (Radix underneath). Restyle them to these tokens; do not leave default shadcn styling.
 - Variants with `cva`, class merging with `cn()` (`clsx` + `tailwind-merge`).
 - Icons: `lucide-react` only, 16px default, 1.5px stroke, always paired with a label or `aria-label`.
@@ -365,7 +366,7 @@ The KPI strip always shows `last data age`. The top-bar connection indicator has
 
 ### 9.3 Map layers
 
-- **Basemap:** desaturated, low contrast, minimal labels, so markers carry the visual weight. Ship two styles (light and dark) and swap with the theme. Tiles come from the self-hosted PMTiles file so the map works offline.
+- **Basemap:** provider-neutral, via `MapTokens`. Desaturated, low contrast, minimal labels so markers carry the visual weight. Ship two styles (light and dark) and swap with the theme. Offline tiles are a provider capability; a provider that ships an offline tile pack enables the offline layer.
 - **Vehicle marker:** 24px circle, 2px ring in `--surface`, shadow-menu. Plate label appears at zoom ≥ 13 in a 12px mono chip. Below zoom 11, vehicles cluster; the cluster shows its count and takes the colour of the worst status inside.
 - **Selected vehicle:** 2px `--accent` outer ring and the marker raised above the others.
 - **Geofence:** polygon fill at 12% opacity, 2px stroke. Kind is encoded by colour *and* stroke pattern:
@@ -460,7 +461,7 @@ Standard Radix behaviour. Tooltip delay 400ms, content `text-xs`, never the only
 
 ## 11. Required states
 
-Every list, table, panel and map layer implements all five. Build them with the shared `<StateBoundary>` component so they stay consistent. Optimistic mutations are a transient overlay on the loaded state.
+Every list, table, panel and map layer implements all five. Build them with the shared `<StateBoundary>` component so they stay consistent. Pessimistic mutations show a transient pending overlay on the loaded state.
 
 | State | Treatment |
 |---|---|
@@ -469,7 +470,7 @@ Every list, table, panel and map layer implements all five. Build them with the 
 | **Error** | Message plus `Retry`. Preserve any previously loaded data below it, dimmed. |
 | **Stale** | Data stays visible; the panel shows `Stale · <time>` (§9.2). Mutating actions are disabled with a reason while offline. |
 | **Forbidden** | `You don't have access to this.` plus a link back. Role gating is enforced by the API; the UI never relies on hiding alone. |
-| **Pending / optimistic** | Keep the previous row visible at reduced opacity and put a spinner in the existing action slot. Do not add text or columns that move the layout. Reconcile on success; roll back and announce on error. |
+| **Pending** | Keep the previous row visible at reduced opacity and put a spinner in the existing action slot. Do not add text or columns that move the layout. Apply the server result on success; on error, restore the row and announce the error. |
 
 Global banner states (below the top bar, 32px, dismissible only when resolved):
 
@@ -575,7 +576,7 @@ const pill = cva("inline-flex h-5 items-center gap-1 rounded-full px-2 text-xs f
 - [ ] Reduced-motion respected.
 - [ ] Offline behaviour verified (service worker on, network off).
 - [ ] No gradients, no nested cards, no decorative elements, no more than one primary button per view.
-- [ ] `pnpm check` passes.
+- [ ] `npm run check` passes.
 
 ---
 

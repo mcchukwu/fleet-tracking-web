@@ -20,12 +20,13 @@ Each slice ends with a working screen, its states, and a Playwright check.
 
 ## Contract
 
-- Generate TypeScript request and response types from `api/openapi.yaml`.
+- Use the provided handoff types/client or generate TypeScript request and response types from `api/openapi.yaml`.
 - Use the reference client or a thin wrapper. Do not hand-write API shapes.
 - Server state belongs in TanStack Query. Live positions belong in Zustand keyed by `vehicle_id`.
 - Validate WebSocket messages at the boundary with a discriminated union.
 - Define loading, empty, error and stale presentation with every query.
-- Mutations are optimistic: keep the previous row visible, mark it pending, reconcile on success, roll back and announce on error.
+- Follow `error-handling.md` for classification, surfaces, copy and reconciliation. Features never branch on raw status codes.
+- Mutations are pessimistic: keep the previous row visible, mark it pending, apply the server result on success, restore it and announce the error on failure.
 
 ## Design
 

@@ -48,6 +48,7 @@ VITE_PROXY_TARGET=http://localhost:8081 npm run dev
 - [UI brief and screens](docs/ui-brief.md)
 - [Design system](docs/design-system.md)
 - [Frontend workflow](docs/workflow.md)
+- [Error handling](docs/error-handling.md)
 - [Decisions](docs/decisions.md)
 
 ## Theme

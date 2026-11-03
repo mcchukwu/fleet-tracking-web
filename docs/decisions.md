@@ -44,7 +44,7 @@ The repo already installs `react-router` 8.5.1. The declarative `BrowserRouter`,
 
 ## 2026-11-03: npm in this repo
 
-The repo has `package-lock.json`. Keep npm until the team explicitly migrates to pnpm. The `check` and `build` scripts are package-manager neutral.
+The repo uses npm and `package-lock.json`. Use npm and oxlint. Do not switch package managers for the foundation. The `check` and `build` scripts are package-manager neutral.
 
 ## 2026-11-03: `/styleguide` is the visual contract
 
@@ -64,6 +64,23 @@ The native resize handle is removed. Textareas keep a fixed minimum height so fo
 
 The selected option is styled with the accent through `option:checked`. Native popup hover and focus are controlled by the browser and OS, so they cannot be styled consistently with Tailwind. A custom listbox would be needed for that; keep native select until that cost is justified.
 
-## 2026-11-03: Optimistic rows do not add layout
+## 2026-11-03: Pessimistic writes, non-shifting pending rows
 
-A pending row keeps its status content and replaces the existing action slot with a spinner. No extra text, columns or notes are inserted, so the table does not move between normal and optimistic states.
+Mutations use a pessimistic pending state. A pending row keeps its status content and replaces the existing action slot with a spinner. No extra text, columns or notes are inserted, so the table does not move between normal and pending states. The server result is applied only after success.
+
+## 2026-11-03: Staging contract probe
+
+Probed staging with the demo dispatcher and admin accounts.
+
+- A real live position frame uses `vehicle_id: "demo-imei-0019"`, which is `Vehicle.external_id`, not the UUID `id`. All live and map code uses `vehicleKey()` based on `external_id`.
+- Position frames contain `type`, `tenant_id`, `vehicle_id`, `lat`, `lon`, `recorded_at`; speed and heading are not included. Retain the last snapshot values.
+- `Vehicle` responses do not contain `trip_id`, `destination` or `trip_status`. Trip detail comes from the trips list; there is no `GET /trips/{id}`.
+- Geofence-exit alert evidence was only `{geofence_id}`. Position must come from other evidence, history, or an explicit unavailable state.
+- A missing CSRF token produces `csrf_failed`; recovery is one `/me` refresh and one retry.
+- `GET /vehicles?status=` filters administrative status: `active` returns rows, `moving` returns zero.
+- The staging snapshot contains 25 vehicles, not the 20 in the brief. Do not hard-code 20 in copy.
+- `last_seen_at` may be null; `recorded_at` is the reliable data-age field.
+
+## 2026-11-03: One error model
+
+Every failure normalizes to `AppError` and is handled by `src/errors/`; features render error states from the hook result and never branch on raw status codes or server messages. `docs/error-handling.md` is authoritative for classification, copy, surfaces, reconciliation and diagnostics.

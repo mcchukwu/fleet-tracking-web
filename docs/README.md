@@ -13,6 +13,7 @@ Project context for the control console. Read only the file you need.
 | Visual rules and tokens | `design-system.md` |
 | Working agreement and quality gates | `workflow.md` |
 | Settled choices | `decisions.md` |
+| Error policy and recovery | `error-handling.md` |
 
 The Bruno collection is in `~/Projects/fleet-tracking-handoff/bruno`, outside this repo.
 
@@ -23,7 +24,7 @@ The Bruno collection is in `~/Projects/fleet-tracking-handoff/bruno`, outside th
 - Demo password: `DemoPass123!`
 - Users: `dispatcher@demo.ftb`, `security@demo.ftb`, `viewer@demo.ftb`, `admin@demo.ftb`
 
-Staging is seeded with 20 moving trucks, geofences, trips and alerts. It is shared, may restart during a deploy, and must not hold real customer data.
+The current staging snapshot has 25 vehicles, geofences, trips and alerts. Product copy must not hard-code the count. Staging is shared, may restart during a deploy, and must not hold real customer data.
 
 There is no CORS. Vite proxies `/api` to staging by default. Set `VITE_PROXY_TARGET=http://localhost:8081` to use a local backend.
 
@@ -37,7 +38,7 @@ There is no CORS. Vite proxies `/api` to staging by default. Set `VITE_PROXY_TAR
 - Theme is `light`, `dark` or `system` under `fleet.theme`. Accent is `blue`, `violet` or `teal` under `fleet.accent`.
 - `npm run dev`, `npm run check`, `npm run build`.
 
-Generate API types from `api/openapi.yaml`; do not hand-write request or response shapes.
+Use the provided API types/client or generate from `api/openapi.yaml`; do not hand-write request or response shapes.
 
 ## Known gaps
 
