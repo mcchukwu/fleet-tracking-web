@@ -1,5 +1,4 @@
-import { Ban, Inbox, RefreshCw, TriangleAlert } from "lucide-react";
-import { Button } from "./Button";
+import { Ban, Inbox } from "lucide-react";
 import { cn } from "./cn";
 
 export function Skeleton({ className }: { className?: string }) {
@@ -43,27 +42,6 @@ export function EmptyState({ title, description, action }: EmptyStateProps) {
       <p className="text-base font-medium text-text">{title}</p>
       <p className="max-w-prose text-sm text-muted">{description}</p>
       {action}
-    </div>
-  );
-}
-
-interface ErrorStateProps {
-  title?: string;
-  description: string;
-  onRetry?: () => void;
-}
-
-export function ErrorState({ title = "Couldn't load this view", description, onRetry }: ErrorStateProps) {
-  return (
-    <div role="alert" className="flex flex-col items-center gap-2 px-4 py-10 text-center">
-      <TriangleAlert aria-hidden="true" className="size-6 text-danger" strokeWidth={1.5} />
-      <p className="text-base font-medium text-text">{title}</p>
-      <p className="max-w-prose text-sm text-muted">{description}</p>
-      {onRetry ? (
-        <Button size="sm" leadingIcon={<RefreshCw className="size-icon-sm" strokeWidth={1.5} />} onClick={onRetry}>
-          Retry
-        </Button>
-      ) : null}
     </div>
   );
 }

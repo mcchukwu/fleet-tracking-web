@@ -1,0 +1,23 @@
+import { describe, expect, it } from "vitest";
+import { queryKeys } from "./keys";
+
+describe("query keys", () => {
+  it("keeps stable roots for persistence allowlisting", () => {
+    expect(queryKeys.me).toEqual(["me"]);
+    expect(queryKeys.liveSnapshot).toEqual(["live-snapshot"]);
+    expect(queryKeys.alertRules).toEqual(["alert-rules"]);
+    expect(queryKeys.systemHealth).toEqual(["system-health"]);
+  });
+
+  it("separates filter shapes", () => {
+    expect(queryKeys.vehicles({ q: "lsd", status: "active" })).not.toEqual(
+      queryKeys.vehicles({ q: "lsd" }),
+    );
+    expect(queryKeys.alerts({ status: "open" })).toEqual(["alerts", { status: "open" }]);
+  });
+
+  it("namespaces detail keys by id", () => {
+    expect(queryKeys.vehicle("a")).toEqual(["vehicle", "a"]);
+    expect(queryKeys.vehicle("a")).not.toEqual(queryKeys.vehicle("b"));
+  });
+});

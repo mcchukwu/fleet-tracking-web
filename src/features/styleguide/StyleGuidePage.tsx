@@ -30,7 +30,9 @@ import { Input } from "../../ui/Input";
 import { SearchInput } from "../../ui/SearchInput";
 import { Select } from "../../ui/Select";
 import { Stat } from "../../ui/Stat";
-import { EmptyState, ErrorState, ForbiddenState, LoadingBar, LoadingState, Skeleton } from "../../ui/StatePanel";
+import { EmptyState, ForbiddenState, LoadingBar, LoadingState, Skeleton } from "../../ui/StatePanel";
+import { ErrorState } from "../../errors/ErrorState";
+import type { AppError } from "../../errors/types";
 import { Spinner } from "../../ui/Spinner";
 import { TBody, TD, TH, THead, TR, Table } from "../../ui/Table";
 import { Textarea } from "../../ui/Textarea";
@@ -68,6 +70,14 @@ const statuses = ["moving", "idle", "offline", "alert"] as const;
 const severities: Severity[] = ["low", "medium", "high", "critical"];
 const alertStatuses: AlertStatus[] = ["open", "acked", "closed"];
 const tripStatuses: TripStatus[] = ["planned", "assigned", "active", "completed", "cancelled"];
+
+const sampleError: AppError = {
+  kind: "network",
+  retryable: true,
+  outcome: "failed",
+  context: { route: "/styleguide", action: "load the vehicle list" },
+  at: 0,
+};
 
 type TableState = "default" | "pending" | "loading" | "empty" | "error";
 
@@ -368,7 +378,7 @@ export function StyleGuidePage() {
 
           {tableState === "error" ? (
             <div className="rounded-lg border border-border bg-surface">
-              <ErrorState description="The vehicle list could not be loaded." onRetry={() => setTableState("default")} />
+              <ErrorState error={sampleError} onRetry={() => setTableState("default")} />
             </div>
           ) : null}
         </Section>
@@ -459,7 +469,7 @@ export function StyleGuidePage() {
               />
             </div>
             <div className="rounded-lg border border-border bg-surface">
-              <ErrorState description="Check your connection and retry." onRetry={() => undefined} />
+              <ErrorState error={sampleError} onRetry={() => undefined} />
             </div>
             <div className="rounded-lg border border-border bg-surface">
               <ForbiddenState />
