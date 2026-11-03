@@ -1,13 +1,24 @@
-import { Navigate, Route, Routes } from "react-router";
-import { StyleGuidePage } from "./features/styleguide/StyleGuidePage";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { RouterProvider } from "@tanstack/react-router";
+import { AuthProvider } from "./auth/AuthProvider";
+import { createAppRouter } from "./app/router";
+import { ErrorBoundary } from "./errors/ErrorBoundary";
+import { createQueryClient } from "./errors/global";
+import { ThemeProvider } from "./theme/ThemeProvider";
 
-function App() {
+const queryClient = createQueryClient();
+const router = createAppRouter(queryClient);
+
+export function App() {
   return (
-    <Routes>
-      <Route path="/styleguide" element={<StyleGuidePage />} />
-      <Route path="*" element={<Navigate to="/styleguide" replace />} />
-    </Routes>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <ErrorBoundary level="app">
+            <RouterProvider router={router} />
+          </ErrorBoundary>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
-
-export default App; // guard-ignore: replaced by the TanStack router in checkpoint 4.

@@ -2,13 +2,19 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../instance";
 import { queryKeys } from "../keys";
 
+export function meQueryOptions() {
+  return {
+    queryKey: queryKeys.me,
+    queryFn: ({ signal }: { signal: AbortSignal }) => api.me({ signal }),
+    retry: false as const,
+    staleTime: 5 * 60_000,
+    meta: { scope: "auth" as const, resource: "me" },
+  };
+}
+
 export function useMe(options: { enabled?: boolean } = {}) {
   return useQuery({
-    queryKey: queryKeys.me,
-    queryFn: ({ signal }) => api.me({ signal }),
-    retry: false,
-    staleTime: 5 * 60_000,
-    meta: { scope: "auth", resource: "me" },
+    ...meQueryOptions(),
     enabled: options.enabled ?? true,
   });
 }
