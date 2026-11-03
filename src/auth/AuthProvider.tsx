@@ -1,0 +1,56 @@
+import { useEffect, useRef, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { api } from "../api/instance";
+import { useMe } from "../api/hooks/auth";
+import { useAuthStore } from "./store";
+import { isAppError } from "../errors/types";
+
+api.setSessionHandlers({
+  onSessionExpired: () => {
+    useAuthStore.getState().expire();
+  },
+  refreshCsrf: async () => {
+    const response = await api.me();
+    useAuthStore.getState().setSession(response.user, response.csrf_token);
+    return response.csrf_token;
+  },
+});
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
+  const me = useMe();
+  const previousUserId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!me.data) return;
+    const { user, csrf_token: csrfToken } = me.data;
+    if (previousUserId.current !== null && previousUserId.current !== user.id) {
+      queryClient.clear();
+    }
+    previousUserId.current = user.id;
+    api.setCsrfToken(csrfToken);
+    useAuthStore.getState().setSession(user, csrfToken);
+  }, [me.data, queryClient]);
+
+  useEffect(() => {
+    if (!me.isError || !isAppError(me.error) || me.error.kind !== "unauthenticated") return;
+    const state = useAuthStore.getState();
+    if (state.status === "authenticated" || state.status === "expired") {
+      state.expire();
+    } else {
+      state.clear();
+    }
+  }, [me.isError, me.error]);
+
+  useEffect(() => {
+    const onExpired = () => {
+      void queryClient.cancelQueries();
+      queryClient.clear();
+      useAuthStore.getState().expire();
+    };
+    window.addEventListener("fleet:session-expired", onExpired);
+    return () => window.removeEventListener("fleet:session-expired", onExpired);
+  }, [queryClient]);
+
+  return <>{children}</>;
+}
