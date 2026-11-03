@@ -1,0 +1,255 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f4f4f5;
+  --surface-3: #e4e4e7;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+
+  --text: #18181b;
+  --text-muted: #52525b;
+  --text-subtle: #71717a;
+  --text-inverse: #ffffff;
+
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: #eff6ff;
+  --accent-fg: #1d4ed8;
+  --focus-ring: #2563eb;
+
+  --swatch-blue: #2563eb;
+  --swatch-violet: #7c3aed;
+  --swatch-teal: #0f766e;
+
+  --moving: #16a34a;
+  --idle: #d97706;
+  --offline: #71717a;
+  --alert: #dc2626;
+
+  --moving-fg: #15803d;
+  --idle-fg: #b45309;
+  --offline-fg: #52525b;
+  --alert-fg: #b91c1c;
+
+  --moving-bg: #f0fdf4;
+  --idle-bg: #fffbeb;
+  --offline-bg: #f4f4f5;
+  --alert-bg: #fef2f2;
+
+  --sev-low: #52525b;
+  --sev-medium: #b45309;
+  --sev-high: #c2410c;
+  --sev-critical: #b91c1c;
+
+  --gf-depot: #4f46e5;
+  --gf-customer: #0d9488;
+  --gf-restricted: #dc2626;
+  --gf-other: #71717a;
+
+  --success: #15803d;
+  --warning: #b45309;
+  --danger: #b91c1c;
+  --info: #1d4ed8;
+
+  --shadow-float: 0 1px 2px rgb(0 0 0 / 0.06), 0 8px 24px rgb(0 0 0 / 0.1);
+  --shadow-menu: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 12px rgb(0 0 0 / 0.1);
+}
+
+.dark {
+  --bg: #09090b;
+  --surface: #18181b;
+  --surface-2: #27272a;
+  --surface-3: #3f3f46;
+  --border: #27272a;
+  --border-strong: #3f3f46;
+
+  --text: #fafafa;
+  --text-muted: #a1a1aa;
+  --text-subtle: #8b8b94;
+  --text-inverse: #09090b;
+
+  --accent: #3b82f6;
+  --accent-hover: #60a5fa;
+  --accent-soft: #172554;
+  --accent-fg: #93c5fd;
+  --focus-ring: #60a5fa;
+
+  --moving: #4ade80;
+  --idle: #fbbf24;
+  --offline: #a1a1aa;
+  --alert: #f87171;
+
+  --moving-fg: #86efac;
+  --idle-fg: #fcd34d;
+  --offline-fg: #a1a1aa;
+  --alert-fg: #fca5a5;
+
+  --moving-bg: color-mix(in srgb, #4ade80 14%, var(--surface));
+  --idle-bg: color-mix(in srgb, #fbbf24 14%, var(--surface));
+  --offline-bg: color-mix(in srgb, #a1a1aa 14%, var(--surface));
+  --alert-bg: color-mix(in srgb, #f87171 14%, var(--surface));
+
+  --sev-low: #a1a1aa;
+  --sev-medium: #fcd34d;
+  --sev-high: #fdba74;
+  --sev-critical: #fca5a5;
+
+  --gf-depot: #818cf8;
+  --gf-customer: #2dd4bf;
+  --gf-restricted: #f87171;
+  --gf-other: #a1a1aa;
+
+  --success: #86efac;
+  --warning: #fcd34d;
+  --danger: #fca5a5;
+  --info: #93c5fd;
+
+  --shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.5);
+  --shadow-menu: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 12px rgb(0 0 0 / 0.5);
+}
+
+:root[data-accent="violet"] {
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-soft: #f5f3ff;
+  --accent-fg: #6d28d9;
+  --focus-ring: #7c3aed;
+}
+
+.dark[data-accent="violet"] {
+  --accent: #a78bfa;
+  --accent-hover: #c4b5fd;
+  --accent-soft: #2e1065;
+  --accent-fg: #c4b5fd;
+  --focus-ring: #a78bfa;
+}
+
+:root[data-accent="teal"] {
+  --accent: #0f766e;
+  --accent-hover: #115e59;
+  --accent-soft: #f0fdfa;
+  --accent-fg: #0f766e;
+  --focus-ring: #0f766e;
+}
+
+.dark[data-accent="teal"] {
+  --accent: #2dd4bf;
+  --accent-hover: #5eead4;
+  --accent-soft: #042f2e;
+  --accent-fg: #5eead4;
+  --focus-ring: #2dd4bf;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --color-subtle: var(--text-subtle);
+  --color-text-inverse: var(--text-inverse);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-fg: var(--accent-fg);
+  --color-focus-ring: var(--focus-ring);
+
+  --color-moving: var(--moving);
+  --color-moving-fg: var(--moving-fg);
+  --color-moving-bg: var(--moving-bg);
+  --color-idle: var(--idle);
+  --color-idle-fg: var(--idle-fg);
+  --color-idle-bg: var(--idle-bg);
+  --color-offline: var(--offline);
+  --color-offline-fg: var(--offline-fg);
+  --color-offline-bg: var(--offline-bg);
+  --color-alert: var(--alert);
+  --color-alert-fg: var(--alert-fg);
+  --color-alert-bg: var(--alert-bg);
+
+  --color-sev-low: var(--sev-low);
+  --color-sev-medium: var(--sev-medium);
+  --color-sev-high: var(--sev-high);
+  --color-sev-critical: var(--sev-critical);
+
+  --color-gf-depot: var(--gf-depot);
+  --color-gf-customer: var(--gf-customer);
+  --color-gf-restricted: var(--gf-restricted);
+  --color-gf-other: var(--gf-other);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-data);
+}
+
+@theme {
+  --font-ui: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-data: "JetBrains Mono Variable", ui-monospace, monospace;
+
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 13px;
+  --text-sm--line-height: 20px;
+  --text-base: 14px;
+  --text-base--line-height: 20px;
+  --text-md: 16px;
+  --text-md--line-height: 24px;
+  --text-lg: 20px;
+  --text-lg--line-height: 28px;
+  --text-stat: 28px;
+  --text-stat--line-height: 32px;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  --spacing-control-sm: 28px;
+  --spacing-control-md: 32px;
+  --spacing-control-lg: 36px;
+  --spacing-status: 20px;
+  --spacing-row: 36px;
+  --spacing-icon-sm: 14px;
+  --spacing-icon-md: 16px;
+  --spacing-topbar: 48px;
+  --spacing-rail: 56px;
+  --spacing-panel: 360px;
+  --spacing-drawer: 420px;
+
+  --animate-fade-in: fade-in 150ms ease-out;
+  --animate-slide-in: slide-in 200ms ease-out;
+  --animate-pulse-soft: pulse-soft 1.8s ease-in-out infinite;
+  --animate-progress: progress 1.4s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@keyframes progress {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(300%); }
+}
