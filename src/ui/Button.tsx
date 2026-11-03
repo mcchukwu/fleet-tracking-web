@@ -1,0 +1,56 @@
+import { cva, type VariantProps } from "class-variance-authority";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { cn } from "./cn";
+import { Spinner } from "./Spinner";
+
+const buttonStyles = cva(
+  "inline-flex items-center justify-center gap-2 rounded-md font-medium transition duration-100 active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        primary: "bg-accent text-text-inverse hover:bg-accent-hover",
+        secondary: "border border-border-strong bg-surface text-text hover:bg-surface-2",
+        ghost: "text-text hover:bg-surface-2",
+        destructive: "border border-border-strong bg-surface text-danger hover:bg-alert-bg",
+      },
+      size: {
+        sm: "h-control-sm px-3 text-xs",
+        md: "h-control-md px-3 text-base",
+        lg: "h-control-lg px-4 text-base",
+      },
+    },
+    defaultVariants: { variant: "secondary", size: "md" },
+  },
+);
+
+export interface ButtonProps
+  extends ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonStyles> {
+  loading?: boolean;
+  leadingIcon?: ReactNode;
+}
+
+export function Button({
+  className,
+  variant,
+  size,
+  loading = false,
+  leadingIcon,
+  children,
+  disabled,
+  type = "button",
+  ...props
+}: ButtonProps) {
+  return (
+    <button
+      type={type}
+      className={cn(buttonStyles({ variant, size }), className)}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
+      {...props}
+    >
+      {loading ? <Spinner /> : leadingIcon}
+      {children}
+    </button>
+  );
+}
