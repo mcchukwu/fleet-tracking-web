@@ -38,9 +38,9 @@ The first pass builds `src/ui` primitives directly with Tailwind, `cva`, `clsx` 
 
 Trade-off: Some primitives will be replaced when the project adopts shadcn. The component APIs are kept narrow to make that cheap.
 
-## 2026-11-03: React Router 8
+## 2026-11-03: TanStack Router in the foundation
 
-The repo already installs `react-router` 8.5.1. The declarative `BrowserRouter`, `Routes` and `Route` API is used. The handoff notes call it v7; the installed package is v8.
+The styleguide currently uses React Router 8.5.1 as a placeholder. Slice 0 migrates to TanStack Router, which is on the approved dependency list and is required for typed search params, auth guards and route-level error boundaries. Do not add new React Router routes.
 
 ## 2026-11-03: npm in this repo
 

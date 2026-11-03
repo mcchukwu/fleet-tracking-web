@@ -18,7 +18,7 @@ Do not copy backend source into this repo. The handoff is frontend-facing only.
 Vite, React, TypeScript strict, Tailwind v4, React Router, lucide-react, cva, clsx and tailwind-merge.
 Self-hosted Inter Variable and JetBrains Mono Variable.
 
-Planned for the feature slices: TanStack Query, Zustand (live positions only), MapLibre,
+Planned for the feature slices: TanStack Query, TanStack Router (replacing React Router in Slice 0), Zustand (live positions only), MapLibre,
 vite-plugin-pwa, Vitest, Playwright and MSW. Ask before adding any of them.
 
 ## Commands

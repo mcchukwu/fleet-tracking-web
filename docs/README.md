@@ -30,7 +30,7 @@ There is no CORS. Vite proxies `/api` to staging by default. Set `VITE_PROXY_TAR
 
 ## Frontend setup
 
-- Vite, React, TypeScript strict, Tailwind v4, React Router.
+- Vite, React, TypeScript strict, Tailwind v4, React Router (placeholder; Slice 0 migrates to TanStack Router).
 - Tokens: `src/styles/tokens.css`; base styles: `src/styles/base.css`.
 - Theme and accent state: `src/theme`.
 - Shared primitives: `src/ui`.
