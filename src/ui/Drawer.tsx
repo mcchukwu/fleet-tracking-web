@@ -27,6 +27,7 @@ export function Drawer({ open, onClose, title, headerAside, children }: DrawerPr
   }, [open]);
 
   return (
+    /* oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- backdrop click closes the modal dialog; Escape is handled by onCancel. */
     <dialog
       ref={ref}
       aria-labelledby={titleId}

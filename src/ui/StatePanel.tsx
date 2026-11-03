@@ -8,6 +8,7 @@ export function Skeleton({ className }: { className?: string }) {
 
 export function LoadingBar({ label = "Loading" }: { label?: string }) {
   return (
+    /* oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- <progress> cannot host the indeterminate bar. */
     <div role="progressbar" aria-label={label} className="h-0.5 w-full overflow-hidden rounded-full bg-surface-2">
       <div className="h-full w-1/3 animate-progress rounded-full bg-accent motion-reduce:animate-none" />
     </div>

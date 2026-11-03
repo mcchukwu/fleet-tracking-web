@@ -12,7 +12,7 @@ export function AccentPicker() {
   const { accent, setAccent } = useTheme();
 
   return (
-    <div role="group" aria-label="Accent colour" className="inline-flex items-center gap-1">
+    <fieldset aria-label="Accent colour" className="m-0 inline-flex items-center gap-1 border-0 p-0">
       {accents.map((option) => {
         const active = accent === option.id;
         return (
@@ -34,6 +34,6 @@ export function AccentPicker() {
           </button>
         );
       })}
-    </div>
+    </fieldset>
   );
 }

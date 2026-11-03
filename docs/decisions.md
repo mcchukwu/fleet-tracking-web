@@ -81,6 +81,24 @@ Probed staging with the demo dispatcher and admin accounts.
 - The staging snapshot contains 25 vehicles, not the 20 in the brief. Do not hard-code 20 in copy.
 - `last_seen_at` may be null; `recorded_at` is the reliable data-age field.
 
+## 2026-11-03: Type-aware oxlint and Vitest in the check gate
+
+Use oxlint with `--type-aware --type-check` and `oxlint-tsgolint`, plus Vitest, the design guard and Playwright. `npm run check` runs typecheck, lint, guard and unit tests. Type-aware linting catches floating promises and unsafe casts that text-based rules miss.
+
+Trade-off: the check gate is slower and needs a native lint helper. The repository avoids a second linter and keeps one configuration.
+
+## 2026-11-03: Code-based TanStack Router
+
+Routes are declared in `src/app/router.tsx` with `createRoute`, not generated from the filesystem. Search params are Zod-validated on each route. This keeps guards, placeholders and route-level boundaries in one readable tree and avoids a code-generation step.
+
+Trade-off: adding a route means editing one file. That is acceptable at this screen count.
+
+## 2026-11-03: Handoff types before generated types
+
+`src/api/types.ts` copies the provided handoff types and reconciles them with observed staging payloads. `openapi-typescript` is approved but deferred: its current release peers on TypeScript 5 while the repo uses TypeScript 7, and the contract is stable enough for the handoff types plus Zod at the boundary.
+
+Trade-off: a contract change needs a deliberate type edit. Zod schemas catch drift at runtime for untyped payloads.
+
 ## 2026-11-03: One error model
 
 Every failure normalizes to `AppError` and is handled by `src/errors/`; features render error states from the hook result and never branch on raw status codes or server messages. `docs/error-handling.md` is authoritative for classification, copy, surfaces, reconciliation and diagnostics.

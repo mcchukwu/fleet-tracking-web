@@ -44,14 +44,17 @@ Each slice ends with a working screen, its states, and a Playwright check.
 - Tailwind v4 is CSS-first. `src/styles/tokens.css` declares light/dark values, accent presets and the `@theme inline` mapping. No `tailwind.config.js`.
 - `ThemeProvider` persists the theme and accent. The inline script in `index.html` applies them before paint.
 - The drawer uses native `<dialog>` for focus containment and Escape.
-- Shared primitives are local for now. shadcn/Radix is deferred until a component needs it.
+- Shared primitives are local for now. shadcn/Radix is deferred until a component needs it, such as a combobox or a menu.
+- TanStack Router uses code-based routes in `src/app/router.tsx`; search params are Zod-validated.
+- TanStack Query owns server state. The key factory is `src/api/keys.ts`.
+- The API client is `src/api/client.ts`. All failures normalize to `AppError` in `src/errors/`.
 - The repo uses npm and `package-lock.json`.
 
 ## Quality gates
 
-- `npm run check` passes: TypeScript strict and oxlint.
-- The slice's Playwright test passes once the harness exists.
-- Screenshots at 1440px and 390px are reviewed.
+- `npm run check` passes: TypeScript strict, oxlint type-aware, the design guard, and Vitest.
+- `npm run e2e` passes in both Playwright projects (desktop 1440x900, mobile 390x844).
+- `npm run e2e:review` writes screenshots to `test-results/review/` for human review at 1440px and 390px.
 - Keyboard path works: tab order, Escape closes overlays, focus returns.
 - No TODOs, no `any`, no non-null assertions, no comments that restate code.
 

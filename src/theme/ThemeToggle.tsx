@@ -12,10 +12,9 @@ export function ThemeToggle() {
   const { mode, setMode } = useTheme();
 
   return (
-    <div
-      role="group"
+    <fieldset
       aria-label="Colour theme"
-      className="inline-flex h-control-md items-center rounded-md border border-border bg-surface p-1"
+      className="m-0 inline-flex h-control-md items-center rounded-md border border-border bg-surface p-1"
     >
       {options.map(({ mode: value, label, Icon }) => {
         const active = mode === value;
@@ -36,6 +35,6 @@ export function ThemeToggle() {
           </button>
         );
       })}
-    </div>
+    </fieldset>
   );
 }

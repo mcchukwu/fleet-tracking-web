@@ -6,7 +6,7 @@ const ACCENT_KEY = "fleet.accent";
 
 function readMode(): ThemeMode {
   try {
-    const value = localStorage.getItem(THEME_KEY);
+    const value = localStorage.getItem(THEME_KEY); // guard-ignore: theme preference is the one allowed web-storage value.
     return value === "light" || value === "dark" || value === "system" ? value : "system";
   } catch {
     return "system";
@@ -15,7 +15,7 @@ function readMode(): ThemeMode {
 
 function readAccent(): Accent {
   try {
-    const value = localStorage.getItem(ACCENT_KEY);
+    const value = localStorage.getItem(ACCENT_KEY); // guard-ignore: accent preference lives beside the theme preference.
     return value === "violet" || value === "teal" ? value : "blue";
   } catch {
     return "blue";
@@ -53,7 +53,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const setMode = useCallback((next: ThemeMode) => {
     setModeState(next);
     try {
-      localStorage.setItem(THEME_KEY, next);
+      localStorage.setItem(THEME_KEY, next); // guard-ignore: theme preference only.
     } catch {
       // Private mode can reject storage; the session still works.
     }
@@ -62,7 +62,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const setAccent = useCallback((next: Accent) => {
     setAccentState(next);
     try {
-      localStorage.setItem(ACCENT_KEY, next);
+      localStorage.setItem(ACCENT_KEY, next); // guard-ignore: accent preference only.
     } catch {
       // Private mode can reject storage; the session still works.
     }

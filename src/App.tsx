@@ -10,4 +10,4 @@ function App() {
   );
 }
 
-export default App;
+export default App; // guard-ignore: replaced by the TanStack router in checkpoint 4.

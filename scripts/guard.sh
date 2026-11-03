@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Fails on design-system and code-quality violations. Add "guard-ignore" on a line to exempt it (explain why).
+set -u
+target="${1:-src}"
+fail=0
+check() { # name pattern
+  local out
+  out=$(rg -n --no-heading \
+        --glob '!**/*.test.*' --glob '!**/__fixtures__/**' --glob '!src/styles/tokens.css' \
+        --glob '!src/api/generated/**' "$2" "$target" | rg -v 'guard-ignore')
+  if [ -n "$out" ]; then echo "GUARD FAIL: $1"; echo "$out"; fail=1; fi
+}
+check "arbitrary Tailwind value"  '\b(w|h|p|m|px|py|pt|pb|pl|pr|gap|text|bg|border|top|left|right|bottom|z|min-w|max-w|min-h|max-h|rounded|shadow)-\['
+check "raw palette class"         '\b(bg|text|border|ring|fill|stroke|from|to|via)-(zinc|gray|slate|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-[0-9]{2,3}\b'
+check "hex colour in source"      '#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b'
+check "inline style"              'style=\{\{'
+check "direct web storage"        '\b(localStorage|sessionStorage)\b'
+check "gradient"                  'gradient'
+check "default export"            '^export default'
+sdk=$(rg -n --no-heading --glob '!src/map/providers/**' --glob '!**/*.test.*' \
+      "from ['\"](maplibre-gl|pmtiles|terra-draw|@googlemaps/)|google\.maps\." "$target" | rg -v 'guard-ignore')
+if [ -n "$sdk" ]; then echo "GUARD FAIL: map SDK used outside src/map/providers"; echo "$sdk"; fail=1; fi
+exit $fail

@@ -30,15 +30,17 @@ There is no CORS. Vite proxies `/api` to staging by default. Set `VITE_PROXY_TAR
 
 ## Frontend setup
 
-- Vite, React, TypeScript strict, Tailwind v4, React Router (placeholder; Slice 0 migrates to TanStack Router).
+- Vite, React, TypeScript strict, Tailwind v4, TanStack Router, TanStack Query, Zustand and Zod.
 - Tokens: `src/styles/tokens.css`; base styles: `src/styles/base.css`.
 - Theme and accent state: `src/theme`.
-- Shared primitives: `src/ui`.
+- Shared primitives: `src/ui`; error surfaces: `src/errors`.
+- API runtime: `src/api`; mock handlers and fixtures: `src/mocks`.
 - Visual contract: `/styleguide`.
 - Theme is `light`, `dark` or `system` under `fleet.theme`. Accent is `blue`, `violet` or `teal` under `fleet.accent`.
-- `npm run dev`, `npm run check`, `npm run build`.
+- `npm run dev`, `npm run check`, `npm run test`, `npm run e2e`, `npm run e2e:review`, `npm run build`.
+- Error policy: `docs/error-handling.md`.
 
-Use the provided API types/client or generate from `api/openapi.yaml`; do not hand-write request or response shapes.
+Use the provided API types or generate from `api/openapi.yaml`; do not hand-write request or response shapes.
 
 ## Known gaps
 

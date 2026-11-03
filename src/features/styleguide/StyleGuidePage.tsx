@@ -113,9 +113,9 @@ function VehicleTable({ pending = false }: { pending?: boolean }) {
               </TD>
               <TD className="text-right">
                 {isPending ? (
-                  <span role="status" aria-label="Saving changes" className="inline-flex size-control-sm items-center justify-center text-accent-fg">
+                  <output aria-label="Saving changes" className="inline-flex size-control-sm items-center justify-center text-accent-fg">
                     <Spinner />
-                  </span>
+                  </output>
                 ) : (
                   <IconButton
                     label={`More actions for ${vehicle.plate}`}
@@ -328,7 +328,7 @@ export function StyleGuidePage() {
         </Section>
 
         <Section id="table" title="Table" description="Dense rows, sticky header, selected state and numeric alignment. Use the state switch to preview the list states.">
-          <div role="group" aria-label="Table states" className="flex flex-wrap gap-1">
+          <fieldset aria-label="Table states" className="m-0 flex flex-wrap gap-1 border-0 p-0">
             {tableStates.map((state) => (
               <Button
                 key={state.id}
@@ -340,7 +340,7 @@ export function StyleGuidePage() {
                 {state.label}
               </Button>
             ))}
-          </div>
+          </fieldset>
 
           {tableState === "default" || tableState === "pending" ? (
             <VehicleTable pending={tableState === "pending"} />
