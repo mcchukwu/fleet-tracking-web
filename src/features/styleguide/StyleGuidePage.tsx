@@ -69,17 +69,17 @@ const severities: Severity[] = ["low", "medium", "high", "critical"];
 const alertStatuses: AlertStatus[] = ["open", "acked", "closed"];
 const tripStatuses: TripStatus[] = ["planned", "assigned", "active", "completed", "cancelled"];
 
-type TableState = "default" | "optimistic" | "loading" | "empty" | "error";
+type TableState = "default" | "pending" | "loading" | "empty" | "error";
 
 const tableStates: Array<{ id: TableState; label: string }> = [
   { id: "default", label: "Rows" },
-  { id: "optimistic", label: "Optimistic" },
+  { id: "pending", label: "Pending" },
   { id: "loading", label: "Loading" },
   { id: "empty", label: "Empty" },
   { id: "error", label: "Error" },
 ];
 
-function VehicleTable({ optimistic = false }: { optimistic?: boolean }) {
+function VehicleTable({ pending = false }: { pending?: boolean }) {
   return (
     <Table>
       <THead>
@@ -95,13 +95,13 @@ function VehicleTable({ optimistic = false }: { optimistic?: boolean }) {
       </THead>
       <TBody>
         {vehicles.map((vehicle, index) => {
-          const pending = optimistic && index === 0;
+          const isPending = pending && index === 0;
           return (
             <TR
               key={vehicle.plate}
               selected={index === 0}
-              className={pending ? "opacity-60" : undefined}
-              aria-busy={pending || undefined}
+              className={isPending ? "opacity-60" : undefined}
+              aria-busy={isPending || undefined}
             >
               <TD>
                 <span className="font-mono text-sm text-text">{vehicle.plate}</span>
@@ -112,7 +112,7 @@ function VehicleTable({ optimistic = false }: { optimistic?: boolean }) {
                 <StatusPill status={vehicle.status} />
               </TD>
               <TD className="text-right">
-                {pending ? (
+                {isPending ? (
                   <span role="status" aria-label="Saving changes" className="inline-flex size-control-sm items-center justify-center text-accent-fg">
                     <Spinner />
                   </span>
@@ -314,7 +314,7 @@ export function StyleGuidePage() {
               </div>
             </div>
             <div className="rounded-lg border border-border bg-surface p-4">
-              <p className="label-caps text-muted">Optimistic row</p>
+              <p className="label-caps text-muted">Pending row</p>
               <div className="mt-3 flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2">
                 <span className="font-mono text-sm text-text">LSD-100-AA</span>
                 <span className="inline-flex items-center gap-1 text-xs text-accent-fg">
@@ -342,8 +342,8 @@ export function StyleGuidePage() {
             ))}
           </div>
 
-          {tableState === "default" || tableState === "optimistic" ? (
-            <VehicleTable optimistic={tableState === "optimistic"} />
+          {tableState === "default" || tableState === "pending" ? (
+            <VehicleTable pending={tableState === "pending"} />
           ) : null}
 
           {tableState === "loading" ? (
