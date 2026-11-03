@@ -85,6 +85,20 @@ describe("api client", () => {
     expect((await request).kind).toBe("aborted");
   });
 
+  it("does not emit session expiry for a rejected login", async () => {
+    const onSessionExpired = vi.fn();
+    const client = new FleetApiClient(
+      "",
+      fetcherOf(
+        jsonResponse({ error: { code: "invalid_credentials", message: "invalid email or password" } }, 401),
+      ),
+    );
+    client.setSessionHandlers({ onSessionExpired });
+    const error = await caught(client.login("dispatcher@demo.ftb", "wrong"));
+    expect(error.kind).toBe("unauthenticated");
+    expect(onSessionExpired).not.toHaveBeenCalled();
+  });
+
   it("emits session expiry on 401", async () => {
     const onSessionExpired = vi.fn();
     const client = new FleetApiClient(

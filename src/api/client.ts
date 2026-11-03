@@ -182,7 +182,9 @@ export class FleetApiClient {
       options.signal?.removeEventListener("abort", abortFromCaller);
     }
 
-    if (response.status === 401) this.handlers.onSessionExpired?.();
+    if (response.status === 401 && path !== "/auth/login") {
+      this.handlers.onSessionExpired?.();
+    }
 
     if (response.status === 204) return undefined as T;
 

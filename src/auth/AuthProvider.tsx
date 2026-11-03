@@ -18,7 +18,8 @@ api.setSessionHandlers({
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const me = useMe();
+  const status = useAuthStore((state) => state.status);
+  const me = useMe({ enabled: status === "unknown" || status === "authenticated" });
   const previousUserId = useRef<string | null>(null);
 
   useEffect(() => {
@@ -44,9 +45,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const onExpired = () => {
+      const state = useAuthStore.getState();
+      if (state.status !== "authenticated") return;
+      state.expire();
       void queryClient.cancelQueries();
-      queryClient.clear();
-      useAuthStore.getState().expire();
     };
     window.addEventListener("fleet:session-expired", onExpired);
     return () => window.removeEventListener("fleet:session-expired", onExpired);

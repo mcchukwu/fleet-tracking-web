@@ -56,13 +56,22 @@ test.describe("foundation smoke", () => {
     await captureForReview(page, "00-not-found");
   });
 
-  test("an unauthenticated deep link redirects to sign in", async ({ page }) => {
+  test("an unauthenticated deep link redirects to sign in without a request storm", async ({
+    page,
+  }) => {
+    let meCalls = 0;
+    page.on("request", (request) => {
+      if (request.url().endsWith("/api/v1/me")) meCalls += 1;
+    });
+
     await page.addInitScript(() => {
       localStorage.setItem("fleet.mockAuth", "anonymous");
     });
     await page.goto("/map");
     await expect(page).toHaveURL(/\/login(\?|$)/);
     await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+    await page.waitForTimeout(500);
+    expect(meCalls).toBeLessThanOrEqual(4);
   });
 
   test("a viewer cannot open the audit log or import", async ({ page }) => {
