@@ -6,16 +6,19 @@ This repository is the frontend web application. It talks to the fleet tracking 
 
 ## Status
 
-The design system and `/styleguide` are in place. Login, the app shell, live map, alerts, trips, geofences, import and reports are next.
+The foundation is in place: design system and `/styleguide`, API runtime, error pipeline, TanStack Router guards, auth and role state, connection state, shared formatting, the map contract and the mock/e2e harness. Login and the app shell are next.
 
 ## Stack
 
 - Vite and React
 - TypeScript in strict mode
 - Tailwind CSS v4 with semantic design tokens
-- React Router
+- TanStack Router and TanStack Query
+- Zustand for connection and live state
+- Zod at the boundaries
 - Lucide icons
 - Self-hosted Inter and JetBrains Mono
+- Vitest, Testing Library, MSW and Playwright
 
 ## Getting started
 
@@ -24,7 +27,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. The root route currently opens the styleguide at `/styleguide`.
+Open `http://localhost:5173`. The root route opens the styleguide at `/styleguide` until the app shell exists.
 
 The dev server proxies `/api` to the staging API. To point it at a local backend:
 
@@ -32,14 +35,22 @@ The dev server proxies `/api` to the staging API. To point it at a local backend
 VITE_PROXY_TARGET=http://localhost:8081 npm run dev
 ```
 
+Set `VITE_MOCK=1` to run the app against MSW instead of staging.
+
 ## Scripts
 
 | Command | What it does |
 |---|---|
 | `npm run dev` | Start the Vite dev server |
-| `npm run check` | Run TypeScript and lint checks |
+| `npm run check` | Typecheck, type-aware lint, design guard and unit tests |
+| `npm run guard` | Run only the design guard |
+| `npm run test` | Run Vitest |
+| `npm run e2e` | Run Playwright in desktop and mobile projects |
+| `npm run e2e:review` | Run Playwright and write screenshots to `test-results/review/` |
 | `npm run build` | Type-check and build for production |
 | `npm run preview` | Preview the production build |
+
+If Playwright's bundled Chromium is not installed, point it at a system browser: `PLAYWRIGHT_CHROMIUM_PATH=/usr/bin/chromium npm run e2e`.
 
 ## Documentation
 

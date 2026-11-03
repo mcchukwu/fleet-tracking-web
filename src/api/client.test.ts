@@ -96,6 +96,26 @@ describe("api client", () => {
     expect(onSessionExpired).toHaveBeenCalledTimes(1);
   });
 
+  it("marks a rejected write as failed, not uncertain", async () => {
+    const client = new FleetApiClient(
+      "",
+      fetcherOf(jsonResponse({ error: { code: "invalid_input", message: "bad plate" } }, 400)),
+    );
+    const error = await caught(client.updateVehicle("id", { plate: "" }));
+    expect(error.kind).toBe("validation");
+    expect(error.outcome).toBe("failed");
+  });
+
+  it("marks a write that never reached the server as uncertain", async () => {
+    const client = new FleetApiClient(
+      "",
+      fetcherOf(() => Promise.reject(new TypeError("Failed to fetch"))),
+    );
+    const error = await caught(client.updateVehicle("id", { plate: "X" }));
+    expect(error.kind).toBe("network");
+    expect(error.outcome).toBe("unknown");
+  });
+
   it("refreshes CSRF once and replays the write", async () => {
     const calls: Array<{ url: string; csrf: string | null }> = [];
     let attempt = 0;

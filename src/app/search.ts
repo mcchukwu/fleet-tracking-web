@@ -1,50 +1,50 @@
 import { z } from "zod";
 
-const text = z.string().catch("");
+const text = z.string().optional().catch(undefined);
 
 export const mapSearchSchema = z.object({
-  q: text.default(""),
-  status: text.default(""),
-  depot: text.default(""),
-  v: text.default(""),
+  q: text,
+  status: text,
+  depot: text,
+  v: text,
 });
 
 export const alertsSearchSchema = z.object({
-  status: text.default(""),
-  type: text.default(""),
-  severity: text.default(""),
-  q: text.default(""),
+  status: text,
+  type: text,
+  severity: text,
+  q: text,
 });
 
 export const tripsSearchSchema = z.object({
-  status: text.default(""),
-  q: text.default(""),
+  status: text,
+  q: text,
 });
 
 export const driversSearchSchema = z.object({
-  status: text.default(""),
-  q: text.default(""),
+  status: text,
+  q: text,
 });
 
 export const geofencesSearchSchema = z.object({
-  q: text.default(""),
-  selected: text.default(""),
+  q: text,
+  selected: text,
 });
 
 export const playbackSearchSchema = z.object({
-  vehicle: text.default(""),
-  from: text.default(""),
-  to: text.default(""),
-  resolution: z.enum(["raw", "30s", "5m"]).catch("30s"),
+  vehicle: text,
+  from: text,
+  to: text,
+  resolution: z.enum(["raw", "30s", "5m"]).optional().catch(undefined),
 });
 
 export const reportsSearchSchema = z.object({
-  from: text.default(""),
-  to: text.default(""),
+  from: text,
+  to: text,
 });
 
 export const auditSearchSchema = z.object({
-  offset: z.coerce.number().int().min(0).catch(0),
+  offset: z.coerce.number().int().min(0).optional().catch(undefined),
 });
 
 export const loginSearchSchema = z.object({

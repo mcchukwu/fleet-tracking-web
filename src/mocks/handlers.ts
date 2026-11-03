@@ -129,6 +129,21 @@ async function readJson(request: Request): Promise<unknown> {
   }
 }
 
+function readOverride(key: string): string | null {
+  try {
+    return typeof localStorage === "undefined" ? null : localStorage.getItem(key); // guard-ignore: mock-only test override, never app state.
+  } catch {
+    return null;
+  }
+}
+
+function applyRoleOverride(): void {
+  const role = readOverride("fleet.mockRole");
+  if (!role) return;
+  const user = demoUsers[`${role}@demo.ftb`];
+  if (user) state.user = user;
+}
+
 function badRequest(): Response {
   return HttpResponse.json(
     { error: { code: "invalid_input", message: "Check the request body." } },
@@ -161,6 +176,13 @@ export const handlers = [
   }),
 
   http.get(`${API}/me`, () => {
+    if (readOverride("fleet.mockAuth") === "anonymous") {
+      return HttpResponse.json(
+        { error: { code: "unauthenticated", message: "no session" } },
+        { status: 401 },
+      );
+    }
+    applyRoleOverride();
     return HttpResponse.json({ user: state.user, csrf_token: state.csrf });
   }),
 

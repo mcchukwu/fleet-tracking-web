@@ -74,7 +74,7 @@ Probed staging with the demo dispatcher and admin accounts.
 
 - A real live position frame uses `vehicle_id: "demo-imei-0019"`, which is `Vehicle.external_id`, not the UUID `id`. All live and map code uses `vehicleKey()` based on `external_id`.
 - Position frames contain `type`, `tenant_id`, `vehicle_id`, `lat`, `lon`, `recorded_at`; speed and heading are not included. Retain the last snapshot values.
-- `Vehicle` responses do not contain `trip_id`, `destination` or `trip_status`. Trip detail comes from the trips list; there is no `GET /trips/{id}`.
+- `Vehicle` responses are not consistent about trip fields: some rows omit `trip_id`, `destination` and `trip_status`, and later snapshot rows included them. Treat all three as optional; trip detail comes from the trips list because there is no `GET /trips/{id}`.
 - Geofence-exit alert evidence was only `{geofence_id}`. Position must come from other evidence, history, or an explicit unavailable state.
 - A missing CSRF token produces `csrf_failed`; recovery is one `/me` refresh and one retry.
 - `GET /vehicles?status=` filters administrative status: `active` returns rows, `moving` returns zero.
@@ -98,6 +98,24 @@ Trade-off: adding a route means editing one file. That is acceptable at this scr
 `src/api/types.ts` copies the provided handoff types and reconciles them with observed staging payloads. `openapi-typescript` is approved but deferred: its current release peers on TypeScript 5 while the repo uses TypeScript 7, and the contract is stable enough for the handoff types plus Zod at the boundary.
 
 Trade-off: a contract change needs a deliberate type edit. Zod schemas catch drift at runtime for untyped payloads.
+
+## 2026-11-03: Session restore is a single-flight client call
+
+Route guards call `ensureSession()` before rendering protected routes. It is a single-flight promise around `GET /me`, not a React Query read. This keeps the guard independent of StrictMode's mount/unmount cycle and of query cancellation, and it prevents duplicate `/me` calls when several guards run together.
+
+Trade-off: the `me` query used by `AuthProvider` can still fetch separately after the guard. The response is cheap, and the auth store is the single source of truth.
+
+## 2026-11-03: Map contract is declarative
+
+`src/map/types.ts` defines the only boundary between features and a map provider. Features pass full desired state and the adapter diffs it. Only `src/map/providers/*` may import a map SDK; the design guard enforces it. The Slice 0 MapLibre adapter is a lazy, honest skeleton that reports `drawing` and `offline` capabilities and fails with a map error until Slice 2 implements rendering.
+
+Trade-off: every adapter must implement the whole contract even when a feature does not use it yet. That is what makes Slice 15 a folder-sized change.
+
+## 2026-11-03: Timeout table and slow-request copy
+
+Endpoint timeouts live in `src/api/timeouts.ts` (15s default, 30s history, 120s upload). Slow feedback is a pure `getSlowState()` helper at 3s and 10s so any screen can render the same copy without another timer convention.
+
+Trade-off: the helper is not a UI component. Slice 1 wires it into the shell, where user-started actions first exist.
 
 ## 2026-11-03: One error model
 

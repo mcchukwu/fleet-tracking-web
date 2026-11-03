@@ -6,6 +6,7 @@ import {
   type AppError,
 } from "../errors/types";
 import { normalize } from "../errors/normalize";
+import { endpointTimeouts } from "./timeouts";
 import {
   auditResponseSchema,
   errorResponseSchema,
@@ -50,9 +51,9 @@ export interface SessionHandlers {
   refreshCsrf?: () => Promise<string | null>;
 }
 
-const DEFAULT_TIMEOUT_MS = 15_000;
-const UPLOAD_TIMEOUT_MS = 120_000;
-const HISTORY_TIMEOUT_MS = 30_000;
+const DEFAULT_TIMEOUT_MS = endpointTimeouts.default;
+const UPLOAD_TIMEOUT_MS = endpointTimeouts.upload;
+const HISTORY_TIMEOUT_MS = endpointTimeouts.history;
 
 function currentRoute(): string {
   return typeof window === "undefined" ? "/" : window.location.pathname;
@@ -88,7 +89,7 @@ export class FleetApiClient {
     fetcher: typeof fetch = fetch,
   ) {
     this.baseUrl = baseUrl;
-    this.fetcher = fetcher;
+    this.fetcher = fetcher.bind(globalThis);
   }
 
   setCsrfToken(token: string): void {
@@ -119,11 +120,20 @@ export class FleetApiClient {
     try {
       return await this.send<T>(method, path, body, options, true);
     } catch (cause) {
-      throw normalize(
+      const error = normalize(
         cause,
         { route: currentRoute(), resource: path.split("?")[0] },
         { outcome: method === "GET" ? "failed" : "unknown" },
       );
+      if (
+        method !== "GET" &&
+        error.outcome === "unknown" &&
+        error.kind !== "network" &&
+        error.kind !== "timeout"
+      ) {
+        throw { ...error, outcome: "failed" };
+      }
+      throw error;
     }
   }
 

@@ -1,11 +1,16 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const executablePath = process.env.PLAYWRIGHT_CHROMIUM_PATH;
+const launchOptions = executablePath
+  ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
+  : {};
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1,
   reporter: [["list"], ["html", { open: "never" }]],
   outputDir: "test-results/artifacts",
   use: {
@@ -16,11 +21,20 @@ export default defineConfig({
   projects: [
     {
       name: "desktop",
-      use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } },
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 1440, height: 900 },
+        launchOptions,
+      },
     },
     {
       name: "mobile",
-      use: { ...devices["iPhone 13"], viewport: { width: 390, height: 844 } },
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 390, height: 844 },
+        hasTouch: true,
+        launchOptions,
+      },
     },
   ],
   webServer: {

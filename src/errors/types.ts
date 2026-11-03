@@ -64,6 +64,13 @@ export class TimeoutError extends Error {
   }
 }
 
+export class MapError extends Error {
+  constructor(message = "The map could not load") {
+    super(message);
+    this.name = "MapError";
+  }
+}
+
 export function isAppError(value: unknown): value is AppError {
   if (typeof value !== "object" || value === null) return false;
   const candidate = value as Partial<AppError>;

@@ -33,6 +33,7 @@ import { Stat } from "../../ui/Stat";
 import { EmptyState, ForbiddenState, LoadingBar, LoadingState, Skeleton } from "../../ui/StatePanel";
 import { ErrorState } from "../../errors/ErrorState";
 import type { AppError } from "../../errors/types";
+import { useDocumentTitle } from "../../lib/useDocumentTitle";
 import { Spinner } from "../../ui/Spinner";
 import { TBody, TD, TH, THead, TR, Table } from "../../ui/Table";
 import { Textarea } from "../../ui/Textarea";
@@ -143,6 +144,7 @@ function VehicleTable({ pending = false }: { pending?: boolean }) {
 }
 
 export function StyleGuidePage() {
+  useDocumentTitle("Styleguide");
   const [search, setSearch] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [tableState, setTableState] = useState<TableState>("default");

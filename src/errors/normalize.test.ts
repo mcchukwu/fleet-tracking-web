@@ -16,6 +16,12 @@ describe("normalize", () => {
     expect(error.retryable).toBe(false);
   });
 
+  it("treats a query cancellation as quiet too", () => {
+    const cancelled = new Error("cancelled");
+    cancelled.name = "CancelledError";
+    expect(kindOf(cancelled).kind).toBe("aborted");
+  });
+
   it("prefers offline over a generic network failure", () => {
     expect(kindOf(new TypeError("Failed to fetch"), { offline: true }).kind).toBe("offline");
     expect(kindOf(new TypeError("Failed to fetch"), { offline: false }).kind).toBe("network");

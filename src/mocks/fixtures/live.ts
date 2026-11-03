@@ -1,4 +1,6 @@
-export const positionFrame = {
+import type { AlertMessage, PositionMessage } from "../../api/schemas";
+
+export const positionFrame: PositionMessage = {
   type: "position" as const,
   tenant_id: "tenant-demo",
   vehicle_id: "demo-imei-0019",
@@ -7,14 +9,14 @@ export const positionFrame = {
   recorded_at: "2026-11-03T08:13:29Z",
 };
 
-export const olderPositionFrame = {
+export const olderPositionFrame: PositionMessage = {
   ...positionFrame,
   lat: 6.5,
   lon: 3.3,
   recorded_at: "2026-11-03T08:10:00Z",
 };
 
-export const alertFrame = {
+export const alertFrame: AlertMessage = {
   type: "alert" as const,
   tenant_id: "tenant-demo",
   vehicle_id: "demo-imei-0007",

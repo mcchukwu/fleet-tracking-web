@@ -38,6 +38,7 @@ There is no CORS. Vite proxies `/api` to staging by default. Set `VITE_PROXY_TAR
 - Visual contract: `/styleguide`.
 - Theme is `light`, `dark` or `system` under `fleet.theme`. Accent is `blue`, `violet` or `teal` under `fleet.accent`.
 - `npm run dev`, `npm run check`, `npm run test`, `npm run e2e`, `npm run e2e:review`, `npm run build`.
+- If Playwright's bundled Chromium is not installed, point it at a system browser: `PLAYWRIGHT_CHROMIUM_PATH=/usr/bin/chromium npm run e2e`.
 - Error policy: `docs/error-handling.md`.
 
 Use the provided API types or generate from `api/openapi.yaml`; do not hand-write request or response shapes.

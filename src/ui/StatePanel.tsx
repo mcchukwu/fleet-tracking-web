@@ -16,7 +16,7 @@ export function LoadingBar({ label = "Loading" }: { label?: string }) {
 
 export function LoadingState({ rows = 4 }: { rows?: number }) {
   return (
-    <div aria-busy="true" aria-label="Loading" className="flex flex-col gap-3 p-4">
+    <output aria-busy="true" aria-label="Loading" className="flex flex-col gap-3 p-4">
       {Array.from({ length: rows }).map((_, index) => (
         <div key={index} className="flex items-center gap-3">
           <Skeleton className="w-8" />
@@ -25,7 +25,7 @@ export function LoadingState({ rows = 4 }: { rows?: number }) {
           <Skeleton className="ml-auto w-12" />
         </div>
       ))}
-    </div>
+    </output>
   );
 }
 

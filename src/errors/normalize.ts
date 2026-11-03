@@ -1,5 +1,6 @@
 import { ZodError } from "zod";
 import {
+  MapError,
   isApiError,
   isAppError,
   isTimeoutError,
@@ -59,7 +60,10 @@ export function normalize(
     retryable: false,
   } as const;
 
-  if (cause instanceof DOMException && cause.name === "AbortError") {
+  if (
+    (cause instanceof DOMException && cause.name === "AbortError") ||
+    (cause instanceof Error && cause.name === "CancelledError")
+  ) {
     return { ...base, kind: "aborted", retryable: false };
   }
 
@@ -69,6 +73,10 @@ export function normalize(
 
   if (cause instanceof ZodError) {
     return { ...base, kind: "contract", retryable: true };
+  }
+
+  if (cause instanceof MapError) {
+    return { ...base, kind: "map", retryable: true };
   }
 
   if (isApiError(cause)) {

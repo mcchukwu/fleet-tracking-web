@@ -6,7 +6,7 @@ export function NotFound() {
   useDocumentTitle("Page not found");
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-2 bg-bg px-4 py-12 text-center text-text">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-2 bg-bg px-4 py-12 text-center text-text">
       <FileQuestion aria-hidden="true" className="size-6 text-subtle" strokeWidth={1.5} />
       <h1 className="text-base font-medium">Page not found</h1>
       <p className="max-w-prose text-sm text-muted">
@@ -18,6 +18,6 @@ export function NotFound() {
       >
         Back to the styleguide
       </Link>
-    </div>
+    </main>
   );
 }

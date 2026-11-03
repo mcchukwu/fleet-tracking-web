@@ -33,8 +33,8 @@ export interface RouterContext {
   queryClient: QueryClient;
 }
 
-async function requireUser(context: RouterContext, href: string): Promise<User> {
-  const user = await ensureSession(context.queryClient);
+async function requireUser(_context: RouterContext, href: string): Promise<User> {
+  const user = await ensureSession();
   if (!user) {
     throw redirect({ to: "/login", search: { redirect: href } });
   }
@@ -93,8 +93,8 @@ const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
   validateSearch: loginSearchSchema,
-  beforeLoad: async ({ context, search }) => {
-    const user = await ensureSession(context.queryClient);
+  beforeLoad: async ({ search }) => {
+    const user = await ensureSession();
     if (user) throw redirect({ to: search.redirect ?? "/map" });
   },
   component: placeholder("Sign in", "The login screen ships in Slice 1."),
@@ -213,12 +213,12 @@ const forbiddenRoute = createRoute({
   path: "/forbidden",
   component: function Forbidden() {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-2 bg-bg text-text">
+      <main className="flex min-h-screen flex-col items-center justify-center gap-2 bg-bg text-text">
         <ForbiddenState />
         <Link to="/map" className="text-sm font-medium text-accent-fg underline-offset-4 hover:underline">
           Back to the map
         </Link>
-      </div>
+      </main>
     );
   },
 });
