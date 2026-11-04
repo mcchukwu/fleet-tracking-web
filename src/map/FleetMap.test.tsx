@@ -15,6 +15,7 @@ const vehicle: MapVehicle = {
   status: "moving",
   label: "LSD-100-AA",
   selected: false,
+  hovered: false,
   stale: false,
 };
 

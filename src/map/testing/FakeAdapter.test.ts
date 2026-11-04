@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FakeAdapter } from "./FakeAdapter";
-import { runAdapterContract } from "./adapter-contract";
+import { contractTokens, runAdapterContract } from "./adapter-contract";
 
 runAdapterContract("FakeAdapter", { create: () => new FakeAdapter() });
 
@@ -9,25 +9,7 @@ describe("FakeAdapter determinism", () => {
     const adapter = new FakeAdapter();
     await adapter.mount(document.createElement("div"), {
       theme: "light",
-      tokens: {
-        colors: {
-          surface: "s",
-          text: "t",
-          textMuted: "m",
-          accent: "a",
-          moving: "mv",
-          idle: "i",
-          offline: "o",
-          alert: "al",
-          geofenceDepot: "d",
-          geofenceCustomer: "c",
-          geofenceRestricted: "r",
-          geofenceOther: "x",
-        },
-        fonts: { ui: "ui", data: "data" },
-        marker: { radius: 12, ringWidth: 2, labelZoom: 13, clusterZoom: 11 },
-        geofence: { fillOpacity: 0.12, strokeWidth: 2, labelZoom: 12 },
-      },
+      tokens: contractTokens,
     });
     adapter.setVehicles([
       {
@@ -37,6 +19,7 @@ describe("FakeAdapter determinism", () => {
         status: "idle",
         label: "LSD-100-AA",
         selected: true,
+        hovered: false,
         stale: false,
       },
     ]);

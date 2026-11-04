@@ -21,6 +21,7 @@ export interface Padding {
 export interface Viewport {
   center: LngLat;
   zoom: number;
+  bounds: Bounds;
 }
 
 export interface MapVehicle {
@@ -30,6 +31,7 @@ export interface MapVehicle {
   status: VehicleDisplayStatus;
   label: string;
   selected: boolean;
+  hovered: boolean;
   stale: boolean;
 }
 
@@ -60,6 +62,7 @@ export interface MapTokens {
     surface: string;
     text: string;
     textMuted: string;
+    textInverse: string;
     accent: string;
     moving: string;
     idle: string;
@@ -77,13 +80,24 @@ export interface MapTokens {
   marker: {
     radius: number;
     ringWidth: number;
+    hitRadius: number;
+    selectedRadius: number;
+    selectedRingWidth: number;
+    hoverRingWidth: number;
+    glyphSize: number;
     labelZoom: number;
+    labelSize: number;
+    labelOffset: number;
     clusterZoom: number;
+    clusterRadius: number;
+    clusterMaxZoom: number;
+    clusterTextSize: number;
   };
   geofence: {
     fillOpacity: number;
     strokeWidth: number;
     labelZoom: number;
+    labelSize: number;
   };
 }
 
@@ -99,7 +113,7 @@ export interface MapEvents {
   error: AppError;
   viewportChange: Viewport;
   vehicleClick: { key: string };
-  vehicleHover: { key: string | null };
+  vehicleHover: { key: string; point: { x: number; y: number } } | null;
   clusterClick: { clusterId: string; count: number };
   geofenceClick: { id: string };
   mapClick: { point: LngLat };
@@ -127,7 +141,7 @@ export interface MapAdapter {
   readonly draw?: DrawController;
 }
 
-export type MapProvider = "maplibre" | "google";
+export type MapProvider = "maplibre" | "google" | "fake";
 
 export const identityBounds = (point: LngLat): Bounds => ({
   south: point[1],

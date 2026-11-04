@@ -8,5 +8,10 @@ export async function loadMapAdapter(provider: MapProvider = mapConfig.provider)
     return module.createMapLibreAdapter();
   }
 
+  if (provider === "fake" && import.meta.env.DEV && import.meta.env.VITE_MOCK === "1") {
+    const module = await import("./testing/FakeAdapter");
+    return new module.FakeAdapter();
+  }
+
   throw new MapError(`The ${provider} map provider is not available in this build.`);
 }

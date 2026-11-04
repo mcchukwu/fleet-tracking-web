@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { ErrorState } from "../errors/ErrorState";
 import { normalize } from "../errors/normalize";
 import type { AppError } from "../errors/types";
+import { useErrorStorm } from "../errors/global";
 import { useTheme } from "../theme/theme-context";
-import { Spinner } from "../ui/Spinner";
+import { LoadingBar } from "../ui/StatePanel";
 import { cn } from "../ui/cn";
 import { loadMapAdapter } from "./load";
 import { readMapTokens } from "./tokens";
@@ -27,6 +28,7 @@ export interface FleetMapProps {
   geofences?: readonly MapGeofence[];
   route?: MapRoute | null;
   bounds?: Bounds;
+  dimmed?: boolean;
   className?: string;
   onReady?: (adapter: MapAdapter) => void;
   onError?: (error: AppError) => void;
@@ -40,11 +42,13 @@ export function FleetMap({
   geofences = EMPTY_GEOFENCES,
   route = null,
   bounds,
+  dimmed = false,
   className,
   onReady,
   onError,
 }: FleetMapProps) {
   const theme = useTheme();
+  const storm = useErrorStorm();
   const canvasRef = useRef<HTMLDivElement>(null);
   const themeRef = useRef(theme.resolved);
   const boundsRef = useRef(bounds);
@@ -137,7 +141,7 @@ export function FleetMap({
     if (loaded && activeAdapter) {
       activeAdapter.setTheme(theme.resolved, readMapTokens());
     }
-  }, [theme.resolved, loaded, activeAdapter]);
+  }, [theme.resolved, theme.accent, loaded, activeAdapter]);
 
   useEffect(() => {
     if (loaded && activeAdapter) activeAdapter.setVehicles(vehicles);
@@ -161,25 +165,27 @@ export function FleetMap({
   }
 
   return (
-    <div
+    <section
+      aria-label="Live map"
+      aria-busy={!loaded && !error ? true : undefined}
       className={cn(
         "relative overflow-hidden bg-surface-2",
         variant === "full" ? "h-full min-h-48 w-full" : "h-48 w-full",
+        dimmed && "opacity-60",
         className,
       )}
     >
       <div ref={canvasRef} data-testid="fleet-map-canvas" aria-hidden="true" className="absolute inset-0" />
       {!loaded && !error ? (
-        <output className="absolute inset-0 flex items-center justify-center gap-2 bg-surface text-sm text-muted">
-          <Spinner />
-          Loading map…
-        </output>
+        <div className="absolute inset-x-0 top-0 z-10 bg-surface">
+          <LoadingBar label="Loading map" />
+        </div>
       ) : null}
       {error ? (
         <div className="absolute inset-0 flex items-center justify-center bg-surface">
-          <ErrorState error={error} onRetry={retry} />
+          <ErrorState error={error} onRetry={retry} compact={storm} />
         </div>
       ) : null}
-    </div>
+    </section>
   );
 }

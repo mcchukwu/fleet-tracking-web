@@ -6,6 +6,7 @@ export const contractTokens: MapTokens = {
     surface: "surface-token",
     text: "text-token",
     textMuted: "muted-token",
+    textInverse: "inverse-token",
     accent: "accent-token",
     moving: "moving-token",
     idle: "idle-token",
@@ -17,8 +18,23 @@ export const contractTokens: MapTokens = {
     geofenceOther: "other-token",
   },
   fonts: { ui: "ui-token", data: "data-token" },
-  marker: { radius: 12, ringWidth: 2, labelZoom: 13, clusterZoom: 11 },
-  geofence: { fillOpacity: 0.12, strokeWidth: 2, labelZoom: 12 },
+  marker: {
+    radius: 12,
+    ringWidth: 2,
+    hitRadius: 22,
+    selectedRadius: 16,
+    selectedRingWidth: 2,
+    hoverRingWidth: 1,
+    glyphSize: 12,
+    labelZoom: 13,
+    labelSize: 12,
+    labelOffset: 1,
+    clusterZoom: 11,
+    clusterRadius: 22,
+    clusterMaxZoom: 10,
+    clusterTextSize: 12,
+  },
+  geofence: { fillOpacity: 0.12, strokeWidth: 2, labelZoom: 12, labelSize: 12 },
 };
 
 export interface AdapterContractOptions {
@@ -71,6 +87,7 @@ export function runAdapterContract(name: string, options: AdapterContractOptions
           status: "moving",
           label: "LSD-100-AA",
           selected: false,
+          hovered: false,
           stale: false,
         },
       ]);

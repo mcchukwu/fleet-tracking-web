@@ -37,6 +37,8 @@ VITE_PROXY_TARGET=http://localhost:8081 npm run dev
 
 Set `VITE_MOCK=1` to run the app against MSW instead of staging.
 
+The map uses MapLibre with OpenFreeMap's Positron (light) and Dark styles. Override the basemap with `VITE_MAP_STYLE_URL_LIGHT` and `VITE_MAP_STYLE_URL_DARK`, or switch providers with `VITE_MAP_PROVIDER`. In mock mode, `?map=fake` selects the deterministic fake adapter.
+
 ## Scripts
 
 | Command | What it does |

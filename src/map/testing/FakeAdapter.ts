@@ -1,6 +1,5 @@
 import type {
   Bounds,
-  DrawController,
   LngLat,
   MapAdapter,
   MapCapabilities,
@@ -14,11 +13,13 @@ import type {
   Viewport,
 } from "../types";
 
+const WORLD: Bounds = { south: -85, west: -180, north: 85, east: 180 };
+
 export class FakeAdapter implements MapAdapter {
   readonly id = "fake";
   readonly capabilities: MapCapabilities = {
     offline: true,
-    drawing: true,
+    drawing: false,
     clustering: "emulated",
     comfortableVehicleCount: 5_000,
   };
@@ -29,18 +30,11 @@ export class FakeAdapter implements MapAdapter {
   vehicles: readonly MapVehicle[] = [];
   geofences: readonly MapGeofence[] = [];
   route: MapRoute | null = null;
-  viewport: Viewport = { center: [0, 0], zoom: 2 };
+  viewport: Viewport = { center: [0, 0], zoom: 2, bounds: WORLD };
   mountCount = 0;
   destroyCount = 0;
 
   private readonly listeners = new Map<keyof MapEvents, Set<(payload: never) => void>>();
-
-  readonly draw: DrawController = {
-    start: () => undefined,
-    stop: () => undefined,
-    getGeometry: () => null,
-    onChange: () => () => undefined,
-  };
 
   mount(_element: HTMLElement, options: MountOptions): Promise<void> {
     this.mounted = true;
@@ -54,6 +48,7 @@ export class FakeAdapter implements MapAdapter {
           (options.bounds.south + options.bounds.north) / 2,
         ],
         zoom: 8,
+        bounds: options.bounds,
       };
     }
     queueMicrotask(() => this.emit("ready", undefined));
@@ -86,12 +81,13 @@ export class FakeAdapter implements MapAdapter {
     this.viewport = {
       center: [(bounds.west + bounds.east) / 2, (bounds.south + bounds.north) / 2],
       zoom: 10,
+      bounds,
     };
     this.emit("viewportChange", this.viewport);
   }
 
   flyTo(point: LngLat, zoom?: number): void {
-    this.viewport = { center: point, zoom: zoom ?? this.viewport.zoom };
+    this.viewport = { ...this.viewport, center: point, zoom: zoom ?? this.viewport.zoom };
     this.emit("viewportChange", this.viewport);
   }
 
