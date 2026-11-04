@@ -25,4 +25,10 @@ describe("role capability matrix", () => {
       expect(can(undefined, capability)).toBe(false);
     }
   });
+
+  it("denies an unknown server role instead of throwing", () => {
+    for (const capability of capabilities) {
+      expect(can("wizard" as Role, capability)).toBe(false);
+    }
+  });
 });

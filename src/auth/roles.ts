@@ -11,5 +11,6 @@ const capabilities: Record<Role, ReadonlySet<Capability>> = {
 
 export function can(role: Role | undefined, capability: Capability): boolean {
   if (!role) return false;
-  return capabilities[role].has(capability);
+  const allowed: ReadonlySet<Capability> | undefined = capabilities[role];
+  return allowed?.has(capability) ?? false;
 }

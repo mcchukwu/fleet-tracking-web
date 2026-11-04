@@ -5,10 +5,17 @@ import { useMe } from "../api/hooks/auth";
 import { useAuthStore } from "./store";
 import { isAppError } from "../errors/types";
 
+export function handleSessionExpired(): void {
+  const state = useAuthStore.getState();
+  if (state.status === "unknown" || state.status === "anonymous") {
+    state.clear();
+  } else {
+    state.expire();
+  }
+}
+
 api.setSessionHandlers({
-  onSessionExpired: () => {
-    useAuthStore.getState().expire();
-  },
+  onSessionExpired: handleSessionExpired,
   refreshCsrf: async () => {
     const response = await api.me();
     useAuthStore.getState().setSession(response.user, response.csrf_token);

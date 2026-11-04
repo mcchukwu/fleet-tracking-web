@@ -24,6 +24,7 @@ async function restoreSession(): Promise<User | null> {
 export function ensureSession(): Promise<User | null> {
   const state = useAuthStore.getState();
   if (state.status === "authenticated" && state.user) return Promise.resolve(state.user);
+  if (state.status === "anonymous") return Promise.resolve(null);
 
   if (!restoring) {
     restoring = restoreSession().finally(() => {

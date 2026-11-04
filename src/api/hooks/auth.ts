@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../instance";
 import { queryKeys } from "../keys";
+import { useAuthStore } from "../../auth/store";
 
 export function meQueryOptions() {
   return {
@@ -31,7 +32,10 @@ export function useLogoutMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => api.logout(),
-    onSettled: () => queryClient.clear(),
+    onSettled: () => {
+      useAuthStore.getState().clear();
+      queryClient.clear();
+    },
     meta: { scope: "auth", resource: "/auth/logout" },
   });
 }
