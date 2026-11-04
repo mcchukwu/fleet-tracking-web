@@ -19,7 +19,10 @@ import { ErrorBoundary } from "../errors/ErrorBoundary";
 import { ErrorState } from "../errors/ErrorState";
 import { normalize } from "../errors/normalize";
 import { recordError } from "../errors/report";
+import { useDocumentTitle } from "../lib/useDocumentTitle";
 import { LoginPage } from "../features/login/components/LoginPage";
+import { AppShell } from "../features/shell/components/AppShell";
+import { ShellSkeleton } from "../features/shell/components/ShellSkeleton";
 import { StyleGuidePage } from "../features/styleguide/StyleGuidePage";
 import { ForbiddenState } from "../ui/StatePanel";
 import { NotFound } from "./NotFound";
@@ -103,6 +106,25 @@ function RootLayout() {
   );
 }
 
+function ForbiddenPage() {
+  useDocumentTitle("Forbidden");
+  return (
+    <div className="mx-auto flex max-w-content flex-col items-center px-4 py-10 text-text sm:px-6">
+      <h1 className="sr-only">Forbidden</h1>
+      <ForbiddenState
+        action={
+          <Link
+            to="/map"
+            className="text-sm font-medium text-accent-fg underline-offset-4 hover:underline"
+          >
+            Back to the map
+          </Link>
+        }
+      />
+    </div>
+  );
+}
+
 const rootRoute = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
   notFoundComponent: NotFound,
@@ -113,7 +135,7 @@ const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
   beforeLoad: () => {
-    throw redirect({ to: "/styleguide" });
+    throw redirect({ to: "/map" });
   },
 });
 
@@ -122,12 +144,6 @@ const styleguideRoute = createRoute({
   path: "/styleguide",
   component: StyleGuidePage,
 });
-
-function placeholder(title: string, description: string) {
-  return function Placeholder() {
-    return <PlaceholderPage title={title} description={description} />;
-  };
-}
 
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -140,133 +156,105 @@ const loginRoute = createRoute({
   component: LoginPage,
 });
 
-const mapRoute = createRoute({
+const appRoute = createRoute({
   getParentRoute: () => rootRoute,
+  id: "_app",
+  component: AppShell,
+  pendingComponent: ShellSkeleton,
+  pendingMs: 0,
+  beforeLoad: async ({ context, location }) => ({
+    user: await requireUser(context, location.href),
+  }),
+});
+
+function placeholder(title: string, description: string) {
+  return function Placeholder() {
+    return <PlaceholderPage title={title} description={description} />;
+  };
+}
+
+const mapRoute = createRoute({
+  getParentRoute: () => appRoute,
   path: "/map",
   validateSearch: mapSearchSchema,
-  beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.href);
-    requireCapability(user, "read");
-  },
+  beforeLoad: ({ context }) => requireCapability(context.user, "read"),
   component: placeholder("Map", "The live map ships in Slice 2."),
 });
 
 const alertsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/alerts",
   validateSearch: alertsSearchSchema,
-  beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.href);
-    requireCapability(user, "read");
-  },
+  beforeLoad: ({ context }) => requireCapability(context.user, "read"),
   component: placeholder("Alerts", "The alerts list ships in Slice 4."),
 });
 
 const tripsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/trips",
   validateSearch: tripsSearchSchema,
-  beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.href);
-    requireCapability(user, "read");
-  },
+  beforeLoad: ({ context }) => requireCapability(context.user, "read"),
   component: placeholder("Trips", "The trips table ships in Slice 6."),
 });
 
 const driversRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/drivers",
   validateSearch: driversSearchSchema,
-  beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.href);
-    requireCapability(user, "read");
-  },
+  beforeLoad: ({ context }) => requireCapability(context.user, "read"),
   component: placeholder("Drivers", "The drivers table ships in Slice 7."),
 });
 
 const geofencesRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/geofences",
   validateSearch: geofencesSearchSchema,
-  beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.href);
-    requireCapability(user, "read");
-  },
+  beforeLoad: ({ context }) => requireCapability(context.user, "read"),
   component: placeholder("Geofences", "The geofence editor ships in Slice 8."),
 });
 
 const importRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/import",
-  beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.href);
-    requireCapability(user, "mutate");
-  },
+  beforeLoad: ({ context }) => requireCapability(context.user, "mutate"),
   component: placeholder("Import", "The vehicle import ships in Slice 9."),
 });
 
 const reportsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/reports",
   validateSearch: reportsSearchSchema,
-  beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.href);
-    requireCapability(user, "read");
-  },
+  beforeLoad: ({ context }) => requireCapability(context.user, "read"),
   component: placeholder("Reports", "The reports screen ships in Slice 10."),
 });
 
 const systemRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/system",
-  beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.href);
-    requireCapability(user, "read");
-  },
+  beforeLoad: ({ context }) => requireCapability(context.user, "read"),
   component: placeholder("System health", "The system health screen ships in Slice 11."),
 });
 
 const auditRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/audit",
   validateSearch: auditSearchSchema,
-  beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.href);
-    requireCapability(user, "audit");
-  },
+  beforeLoad: ({ context }) => requireCapability(context.user, "audit"),
   component: placeholder("Audit", "The audit log ships in Slice 12."),
 });
 
 const playbackRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/playback",
   validateSearch: playbackSearchSchema,
-  beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.href);
-    requireCapability(user, "read");
-  },
+  beforeLoad: ({ context }) => requireCapability(context.user, "read"),
   component: placeholder("Playback", "Playback ships in Slice 5."),
 });
 
 const forbiddenRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/forbidden",
-  component: function Forbidden() {
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-2 bg-bg text-text">
-        <ForbiddenState
-          action={
-            <Link
-              to="/map"
-              className="text-sm font-medium text-accent-fg underline-offset-4 hover:underline"
-            >
-              Back to the map
-            </Link>
-          }
-        />
-      </main>
-    );
-  },
+  component: ForbiddenPage,
 });
 
 const devRoutes = import.meta.env.DEV
@@ -283,18 +271,20 @@ const routeTree = rootRoute.addChildren([
   indexRoute,
   styleguideRoute,
   loginRoute,
-  mapRoute,
-  alertsRoute,
-  tripsRoute,
-  driversRoute,
-  geofencesRoute,
-  importRoute,
-  reportsRoute,
-  systemRoute,
-  auditRoute,
-  playbackRoute,
+  appRoute.addChildren([
+    mapRoute,
+    alertsRoute,
+    tripsRoute,
+    driversRoute,
+    geofencesRoute,
+    importRoute,
+    reportsRoute,
+    systemRoute,
+    auditRoute,
+    playbackRoute,
+    forbiddenRoute,
+  ]),
   ...devRoutes,
-  forbiddenRoute,
 ]);
 
 export function createAppRouter(queryClient: QueryClient) {

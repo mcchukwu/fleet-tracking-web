@@ -13,10 +13,10 @@ export function NotFound() {
         The address may be out of date or the page may have moved.
       </p>
       <Link
-        to="/styleguide"
+        to="/map"
         className="mt-2 inline-flex h-control-md items-center rounded-md border border-border-strong bg-surface px-3 text-base font-medium text-text hover:bg-surface-2"
       >
-        Back to the styleguide
+        Back to the map
       </Link>
     </main>
   );

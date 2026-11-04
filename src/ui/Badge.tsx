@@ -31,17 +31,26 @@ const connectionDot: Record<ConnectionState, string> = {
   offline: "bg-offline",
 };
 
-export function ConnectionIndicator({ state }: { state: ConnectionState }) {
+export function ConnectionIndicator({
+  state,
+  compact = false,
+}: {
+  state: ConnectionState;
+  compact?: boolean;
+}) {
   return (
-    <span className="inline-flex items-center gap-2 text-xs font-medium text-text">
-      <span className="relative flex size-2">
+    <output
+      aria-label={`Connection: ${connectionLabel[state]}`}
+      className="inline-flex items-center gap-2 text-xs font-medium text-text"
+    >
+      <span aria-hidden="true" className="relative flex size-2">
         {state === "live" ? (
           <span className="absolute inline-flex size-2 animate-ping rounded-full bg-moving opacity-60 motion-reduce:animate-none" />
         ) : null}
         <span className={cn("relative inline-flex size-2 rounded-full", connectionDot[state])} />
       </span>
-      {connectionLabel[state]}
-    </span>
+      <span className={compact ? "hidden md:inline" : undefined}>{connectionLabel[state]}</span>
+    </output>
   );
 }
 

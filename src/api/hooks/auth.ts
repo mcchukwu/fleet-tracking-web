@@ -23,8 +23,15 @@ export function useMe(options: { enabled?: boolean } = {}) {
 export function useLoginMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ email, password }: { email: string; password: string }) =>
-      api.login(email, password),
+    mutationFn: ({
+      email,
+      password,
+      signal,
+    }: {
+      email: string;
+      password: string;
+      signal?: AbortSignal;
+    }) => api.login(email, password, { signal }),
     onSuccess: (response) => {
       useAuthStore.getState().setSession(response.user, response.csrf_token);
       queryClient.setQueryData(queryKeys.me, response);

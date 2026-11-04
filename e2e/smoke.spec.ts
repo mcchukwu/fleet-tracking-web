@@ -13,8 +13,7 @@ test.describe("foundation smoke", () => {
       if (message.type() === "error") errors.push(message.text());
     });
 
-    await page.goto("/");
-    await expect(page).toHaveURL(/\/styleguide$/);
+    await page.goto("/styleguide");
     await expect(
       page.getByRole("heading", { name: "Fleet Console foundations" }),
     ).toBeVisible();
@@ -25,6 +24,17 @@ test.describe("foundation smoke", () => {
     await captureForReview(page, "00-styleguide");
 
     expect(errors).toEqual([]);
+  });
+
+  test("the index route opens the map inside the shell", async ({ page }) => {
+    await page.goto("/");
+    await expect(page).toHaveURL(/\/map$/);
+    await expect(page.getByRole("heading", { name: "Map" })).toBeVisible();
+
+    if ((page.viewportSize()?.width ?? 1440) < 768) {
+      await page.getByRole("button", { name: "Open navigation" }).click();
+    }
+    await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
   });
 
   test("placeholder map route renders with the debug hook", async ({ page, theme }) => {
