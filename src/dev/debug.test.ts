@@ -7,7 +7,7 @@ const snapshot: FleetDebugSnapshot = {
   map: {
     mapLoaded: false,
     provider: null,
-    renderedVehicleCount: 0,
+    targetVehicleCount: 0,
     viewport: null,
     bounds: null,
     selectedKey: null,

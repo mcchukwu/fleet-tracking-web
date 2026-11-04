@@ -4,19 +4,23 @@ import { useNavigate } from "@tanstack/react-router";
 import { liveSnapshotQueryOptions, useLiveSnapshot } from "../api/hooks/vehicles";
 import { api } from "../api/instance";
 import { LiveSocketManager, type SocketState } from "../api/live";
-import type { LiveMessage } from "../api/schemas";
+import { liveMessageSchema, type LiveMessage, type PositionMessage } from "../api/schemas";
 import { useAuthStore } from "../auth/store";
 import { useConnectionStore } from "../stores/connection";
 import { useLiveStore } from "../stores/live";
-import { useLiveRegion } from "../ui/LiveRegion";
 import { useToast } from "../ui/Toast";
-import { alertBatchSummary, normalizeAlertFrame } from "./alertFrame";
-import { createFrameBatcher, type FrameBatcher } from "./batcher";
+import {
+  alertBatchSummary,
+  normalizeAlertFrame,
+  type NormalizedAlertFrame,
+} from "./alertFrame";
+import { createFrameBatcher } from "./batcher";
 
 const ALERT_DEDUPE_MS = 60_000;
 const ALERT_INVALIDATE_MS = 1_000;
+const ALERT_WINDOW_MS = 250;
 
-function isPosition(frame: LiveMessage): frame is Extract<LiveMessage, { type: "position" }> {
+function isPosition(frame: LiveMessage): frame is PositionMessage {
   return frame.type === "position";
 }
 
@@ -24,27 +28,51 @@ function isAlert(frame: LiveMessage): frame is Extract<LiveMessage, { type: "ale
   return frame.type === "alert";
 }
 
+/** Parses and validates raw frames inside the batch, never per socket message. */
+function parseFrames(rawFrames: readonly string[]): LiveMessage[] {
+  const frames: LiveMessage[] = [];
+  for (const raw of rawFrames) {
+    let payload: unknown;
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      continue;
+    }
+    const result = liveMessageSchema.safeParse(payload);
+    if (result.success) frames.push(result.data);
+  }
+  return frames;
+}
+
+function coalescePositions(frames: readonly LiveMessage[]): PositionMessage[] {
+  const newest = new Map<string, PositionMessage>();
+  for (const frame of frames) {
+    if (!isPosition(frame)) continue;
+    const previous = newest.get(frame.vehicle_id);
+    if (!previous || Date.parse(frame.recorded_at) > Date.parse(previous.recorded_at)) {
+      newest.set(frame.vehicle_id, frame);
+    }
+  }
+  return [...newest.values()];
+}
+
 export function LiveProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { announce } = useLiveRegion();
   const status = useAuthStore((state) => state.status);
   const userId = useAuthStore((state) => state.user?.id ?? null);
-  const snapshot = useLiveSnapshot().data;
+  const authenticated = status === "authenticated";
+  const snapshot = useLiveSnapshot(authenticated).data;
 
-  const batcherRef = useRef<FrameBatcher<LiveMessage> | null>(null);
   const activeRef = useRef(false);
   const seenAlerts = useRef(new Map<string, number>());
-  const alertSequence = useRef(0);
-  const alertTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const alertWindowSequence = useRef(0);
   const previousUserId = useRef<string | null>(null);
-  const announceRef = useRef(announce);
   const toastRef = useRef(toast);
   const navigateRef = useRef(navigate);
 
   useEffect(() => {
-    announceRef.current = announce;
     toastRef.current = toast;
     navigateRef.current = navigate;
   });
@@ -64,18 +92,52 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
     activeRef.current = true;
     useConnectionStore.getState().setSocket("down");
 
+    let alertWindowTimer: ReturnType<typeof setTimeout> | null = null;
+    let invalidationTimer: ReturnType<typeof setTimeout> | null = null;
+    const pendingAlerts = new Map<string, NormalizedAlertFrame>();
+
     const invalidateAlertsSoon = () => {
-      if (alertTimer.current) return;
-      alertTimer.current = setTimeout(() => {
-        alertTimer.current = null;
+      if (invalidationTimer) return;
+      invalidationTimer = setTimeout(() => {
+        invalidationTimer = null;
         void queryClient.invalidateQueries({ queryKey: ["alerts"] });
       }, ALERT_INVALIDATE_MS);
     };
 
-    const handleBatch = (frames: LiveMessage[]) => {
+    const flushAlertWindow = () => {
+      alertWindowTimer = null;
+      const alerts = [...pendingAlerts.values()];
+      pendingAlerts.clear();
+      if (!activeRef.current || alerts.length === 0) return;
+
+      const summary = alertBatchSummary(alerts);
+      const key =
+        summary.count > 1
+          ? `alert-batch:${alertWindowSequence.current++}`
+          : summary.key;
+      toastRef.current({
+        title: summary.title,
+        description: summary.description,
+        tone: "info",
+        assertive: summary.assertive,
+        key,
+        action: {
+          label: "View",
+          onClick: () => {
+            void navigateRef.current({ to: "/alerts", search: { status: "open" } });
+          },
+        },
+      });
+      invalidateAlertsSoon();
+    };
+
+    const handleBatch = (rawFrames: string[]) => {
       if (!activeRef.current) return;
 
-      const positions = frames.filter(isPosition);
+      const frames = parseFrames(rawFrames);
+      if (frames.length === 0) return;
+
+      const positions = coalescePositions(frames);
       if (positions.length > 0) {
         const newest = useLiveStore.getState().applyFrames(positions);
         if (newest !== null) useConnectionStore.getState().markData(newest);
@@ -86,44 +148,27 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
         if (now - at > ALERT_DEDUPE_MS) seenAlerts.current.delete(key);
       }
 
-      const alerts = frames
-        .filter(isAlert)
-        .map((frame) => normalizeAlertFrame(frame))
-        .filter((alert) => {
-          if (seenAlerts.current.has(alert.key)) return false;
-          seenAlerts.current.set(alert.key, now);
-          return true;
-        });
+      let queued = false;
+      for (const frame of frames) {
+        if (!isAlert(frame)) continue;
+        const alert = normalizeAlertFrame(frame);
+        if (seenAlerts.current.has(alert.key)) continue;
+        seenAlerts.current.set(alert.key, now);
+        useLiveStore.getState().markAlert(alert.vehicleKey);
+        pendingAlerts.set(alert.key, alert);
+        queued = true;
+      }
 
-      if (alerts.length === 0) return;
-
-      for (const alert of alerts) useLiveStore.getState().markAlert(alert.vehicleKey);
-      const summary = alertBatchSummary(alerts);
-      toastRef.current({
-        title: summary.title,
-        description: summary.description,
-        tone: "info",
-        key: summary.key,
-        action: {
-          label: "View",
-          onClick: () => {
-            void navigateRef.current({ to: "/alerts", search: { status: "open" } });
-          },
-        },
-      });
-      announceRef.current(`${summary.title}. ${summary.description}`);
-      invalidateAlertsSoon();
+      if (queued && alertWindowTimer === null) {
+        alertWindowTimer = setTimeout(flushAlertWindow, ALERT_WINDOW_MS);
+      }
     };
 
-    const batcher = createFrameBatcher<LiveMessage>(handleBatch, {
-      keyOf: (frame) =>
-        frame.type === "position" ? `position:${frame.vehicle_id}` : `alert:${alertSequence.current++}`,
-    });
-    batcherRef.current = batcher;
+    const batcher = createFrameBatcher<string>(handleBatch);
 
     const manager = new LiveSocketManager({
       createSocket: () => new WebSocket(api.liveUrl()),
-      onFrame: (frame) => batcher.push(frame),
+      onFrame: (raw) => batcher.push(raw),
       resync: async () => {
         const data = await queryClient.fetchQuery({
           ...liveSnapshotQueryOptions(),
@@ -140,12 +185,16 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
     return () => {
       activeRef.current = false;
       manager.stop();
-      if (alertTimer.current) {
-        clearTimeout(alertTimer.current);
-        alertTimer.current = null;
+      if (invalidationTimer) {
+        clearTimeout(invalidationTimer);
+        invalidationTimer = null;
       }
+      if (alertWindowTimer) {
+        clearTimeout(alertWindowTimer);
+        alertWindowTimer = null;
+      }
+      pendingAlerts.clear();
       batcher.stop();
-      batcherRef.current = null;
     };
   }, [queryClient, status, userId]);
 

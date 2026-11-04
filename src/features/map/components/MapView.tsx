@@ -66,7 +66,7 @@ export function MapView({
 
   useEffect(() => {
     setMapDebug({
-      renderedVehicleCount: vehicles.length,
+      targetVehicleCount: vehicles.length,
       selectedKey,
       hoveredKey,
       geofenceCount: geofences.length,
@@ -96,7 +96,7 @@ export function MapView({
     setMapDebug({
       mapLoaded: true,
       provider: ready.id,
-      renderedVehicleCount: vehicles.length,
+      targetVehicleCount: vehicles.length,
       viewport: { center: viewport.center, zoom: viewport.zoom },
       bounds: viewport.bounds,
     });

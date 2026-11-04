@@ -16,6 +16,7 @@ export interface VehicleRow {
   recordedAt: string | null;
   recordedAtMs: number | null;
   speedKph: number | null;
+  speedReportedAtMs: number | null;
   headingDeg: number | null;
   status: VehicleDisplayStatus;
   freshness: DataFreshness;

@@ -16,6 +16,8 @@ export interface AlertBatchSummary {
   title: string;
   description: string;
   key: string;
+  /** Critical alerts are announced assertively; everything else politely. */
+  assertive: boolean;
 }
 
 const geofenceEvents: Record<string, string> = {
@@ -53,25 +55,43 @@ export function normalizeAlertFrame(message: AlertMessage): NormalizedAlertFrame
 }
 
 export function alertBatchSummary(frames: readonly NormalizedAlertFrame[]): AlertBatchSummary {
+  const assertive = frames.some((frame) => frame.severity === "critical");
+
   if (frames.length === 0) {
-    return { count: 0, title: "New alerts", description: "", key: "alert-batch" };
+    return {
+      count: 0,
+      title: "New alerts",
+      description: "",
+      key: "alert-batch",
+      assertive,
+    };
   }
 
   if (frames.length === 1) {
     const frame = frames[0];
-    if (!frame) return { count: 0, title: "New alerts", description: "", key: "alert-batch" };
+    if (!frame) {
+      return {
+        count: 0,
+        title: "New alerts",
+        description: "",
+        key: "alert-batch",
+        assertive,
+      };
+    }
     return {
       count: 1,
       title: frame.eventLabel,
-      description: `${frame.vehicleKey}. Open Alerts to review it.`,
+      description: "Open Alerts to review it.",
       key: `alert:${frame.key}`,
+      assertive,
     };
   }
 
   return {
     count: frames.length,
     title: `${frames.length} new alerts`,
-    description: `${frames.length} vehicles need review. Open Alerts to see them.`,
+    description: "Open Alerts to review them.",
     key: "alert-batch",
+    assertive,
   };
 }

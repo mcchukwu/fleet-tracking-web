@@ -1,5 +1,6 @@
 export const ALERT_MARK_WINDOW_MS = 15 * 60_000;
 export const LIST_CLOCK_MS = 1_000;
+export const SOCKET_STALE_GRACE_MS = 10_000;
 export const MAP_ROW_HEIGHT = 48;
 export const MAP_ROW_HEIGHT_TOUCH = 56;
 export const FIT_MAX_ZOOM = 12;

@@ -1,5 +1,6 @@
 import { cn } from "../../../ui/cn";
 import { Spinner } from "../../../ui/Spinner";
+import { Skeleton } from "../../../ui/StatePanel";
 import { Stat } from "../../../ui/Stat";
 
 export interface KpiCell {
@@ -29,8 +30,21 @@ export function KpiStrip({ cells, compact = false, loading = false, className }:
       aria-label="Fleet summary"
       aria-busy={loading || undefined}
     >
-      {cells.map((cell) => {
-        const content = (
+      {loading
+        ? cells.map((cell) => (
+            <div
+              key={cell.label}
+              className={cn(
+                "flex min-w-0 flex-col gap-1 border-l border-border first:border-l-0",
+                compact ? "px-3 py-2" : "px-4 py-4",
+              )}
+            >
+              <span className="label-caps text-muted">{cell.label}</span>
+              <Skeleton className={compact ? "h-5 w-12" : "h-7 w-16"} />
+            </div>
+          ))
+        : cells.map((cell) => {
+            const content = (
           <Stat
             label={cell.label}
             value={cell.value}

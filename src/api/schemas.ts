@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ContractError } from "../errors/types";
-import type { Geofence, GeofenceKind, SnapshotVehicle } from "./types";
+import type { Geofence, GeofenceKind, SnapshotVehicle, TripStatus } from "./types";
 
 const timestamp = z
   .string()
@@ -84,7 +84,8 @@ export const snapshotVehicleSchema = z.object({
   recorded_at: timestamp.optional(),
   trip_id: z.string().optional(),
   destination: z.string().optional(),
-  trip_status: z.enum(["planned", "assigned", "active", "completed", "cancelled"]).optional(),
+  // Unknown values degrade to "no trip status" instead of rejecting the vehicle.
+  trip_status: z.string().optional(),
 });
 
 export const liveSnapshotSchema = z.object({ data: z.array(z.unknown()) });
@@ -104,6 +105,18 @@ export const geofencesSchema = z.object({ data: z.array(z.unknown()) });
 export type SnapshotParseResult = { vehicles: SnapshotVehicle[]; rejected: number };
 export type GeofenceParseResult = { geofences: Geofence[]; rejected: number };
 
+const tripStatuses = new Set<TripStatus>([
+  "planned",
+  "assigned",
+  "active",
+  "completed",
+  "cancelled",
+]);
+
+function toTripStatus(value: string | undefined): TripStatus | undefined {
+  return value && tripStatuses.has(value as TripStatus) ? (value as TripStatus) : undefined;
+}
+
 export function parseSnapshot(payload: unknown): SnapshotParseResult {
   const envelope = liveSnapshotSchema.safeParse(payload);
   if (!envelope.success) throw new ContractError("Snapshot envelope is not { data: [] }");
@@ -112,8 +125,15 @@ export function parseSnapshot(payload: unknown): SnapshotParseResult {
   let rejected = 0;
   for (const row of envelope.data.data) {
     const parsed = snapshotVehicleSchema.safeParse(row);
-    if (parsed.success) vehicles.push(parsed.data);
-    else rejected += 1;
+    if (parsed.success) {
+      const tripStatus = toTripStatus(parsed.data.trip_status);
+      vehicles.push({
+        ...parsed.data,
+        trip_status: tripStatus,
+      });
+    } else {
+      rejected += 1;
+    }
   }
 
   if (envelope.data.data.length > 0 && vehicles.length === 0) {

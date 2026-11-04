@@ -3,6 +3,8 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useOpenAlerts, OPEN_ALERT_LIMIT } from "../../../api/hooks/alerts";
 import { useGeofences } from "../../../api/hooks/geofences";
 import { useLiveSnapshot } from "../../../api/hooks/vehicles";
+import { useAuthStore } from "../../../auth/store";
+import { errorCopy } from "../../../errors/catalog";
 import { ErrorBoundary } from "../../../errors/ErrorBoundary";
 import { normalize } from "../../../errors/normalize";
 import { formatAgeSeconds, formatClockTime, formatNumber } from "../../../lib/format";
@@ -18,7 +20,11 @@ import { useMapData } from "../hooks/useMapData";
 import { useMapPreferences } from "../hooks/useMapPreferences";
 import { useMapShortcuts } from "../hooks/useMapShortcuts";
 import { openAlertCountLabel } from "../lib/alerts";
-import { MAP_ROW_HEIGHT, MAP_ROW_HEIGHT_TOUCH } from "../lib/constants";
+import {
+  MAP_ROW_HEIGHT,
+  MAP_ROW_HEIGHT_TOUCH,
+  SOCKET_STALE_GRACE_MS,
+} from "../lib/constants";
 import {
   filterRows,
   filterSignature,
@@ -39,15 +45,17 @@ export function MapPage() {
   const search = useSearch({ from: "/_app/map" });
   const navigate = useNavigate();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const snapshotQuery = useLiveSnapshot();
+  const authenticated = useAuthStore((state) => state.status === "authenticated");
+  const snapshotQuery = useLiveSnapshot(authenticated);
   const {
     data: geofences,
     isError: geofencesFailed,
+    error: geofencesCause,
     refetch: refetchGeofences,
-  } = useGeofences();
-  const alertsQuery = useOpenAlerts();
+  } = useGeofences(authenticated);
+  const alertsQuery = useOpenAlerts(authenticated);
   const preferences = useMapPreferences();
-  const { network } = useConnection();
+  const { network, socket, socketDownAt } = useConnection();
   const { toast } = useToast();
 
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
@@ -93,15 +101,30 @@ export function MapPage() {
   const selectedKey = selectedRow?.key ?? null;
   const hoveredRow = data.rows.find((row) => row.key === hoveredKey) ?? null;
 
-  const snapshotError = snapshotQuery.error ? normalize(snapshotQuery.error) : null;
-  const alertsError = alertsQuery.error ? normalize(alertsQuery.error) : null;
+  const offline = network === "offline";
+  // Offline is a state, not an error: keep the cached map and rows and let the
+  // banner and stale treatment explain why nothing is refreshing.
+  const snapshotError = !offline && snapshotQuery.error ? normalize(snapshotQuery.error) : null;
+  const geofenceError =
+    !offline && geofencesFailed && geofencesCause ? normalize(geofencesCause) : null;
+  const alertsError = !offline && alertsQuery.error ? normalize(alertsQuery.error) : null;
   const hasData = data.total > 0;
 
+  const socketStale =
+    socket !== "live" && socketDownAt !== null && data.now - socketDownAt > SOCKET_STALE_GRACE_MS;
   const stale =
-    network === "offline" ||
+    offline ||
+    socketStale ||
     (data.lastDataAgeSeconds !== null && data.lastDataAgeSeconds * 1_000 > STALE_AFTER_MS);
   const staleLabel = formatClockTime(data.lastDataAtMs);
   const openAlertCount = alertsQuery.data?.length;
+
+  const mapVehicles = useMemo(() => {
+    const visible = new Set(rows.map((row) => row.key));
+    return data.mapVehicles.filter(
+      (vehicle) => visible.has(vehicle.key) || vehicle.key === selectedKey,
+    );
+  }, [data.mapVehicles, rows, selectedKey]);
 
   useDocumentTitle("Map", openAlertCount);
 
@@ -174,15 +197,16 @@ export function MapPage() {
   }, [data.positioned, fitFleet]);
 
   useEffect(() => {
-    if (!geofencesFailed) return;
+    if (!geofenceError) return;
+    const copy = errorCopy(geofenceError);
     toast({
       tone: "error",
-      title: "Geofences didn't load",
-      description: "The map is still live. Retry to show the polygons.",
+      title: copy.title,
+      description: copy.detail,
       key: "geofences-error",
       action: { label: "Retry", onClick: () => void refetchGeofences() },
     });
-  }, [geofencesFailed, refetchGeofences, toast]);
+  }, [geofenceError, refetchGeofences, toast]);
 
   useMapShortcuts({
     rows,
@@ -244,27 +268,29 @@ export function MapPage() {
     <div className="relative h-full min-h-0">
       <h1 className="sr-only">Map</h1>
 
-      <MapView
-        vehicles={data.mapVehicles}
-        geofences={preferences.geofencesVisible ? toMapGeofences(geofences ?? []) : []}
-        selectedKey={selectedKey}
-        hoveredKey={hoveredKey}
-        hoveredRow={hoveredRow}
-        hoverPoint={hoverPoint}
-        dimmed={network === "offline"}
-        loading={snapshotQuery.isPending}
-        error={snapshotQuery.isPending ? null : snapshotError}
-        hasData={hasData}
-        showErrorOverlay={!isDesktop || !preferences.panelOpen}
-        onRetry={() => void snapshotQuery.refetch()}
-        onSelect={selectKey}
-        onHover={(hover) => {
-          setHoveredKey(hover?.key ?? null);
-          setHoverPoint(hover?.point ?? null);
-        }}
-        onViewport={setBounds}
-        onAdapterReady={handleAdapterReady}
-      />
+      <ErrorBoundary level="panel" resetKeys={[selectedKey]}>
+        <MapView
+          vehicles={mapVehicles}
+          geofences={preferences.geofencesVisible ? toMapGeofences(geofences ?? []) : []}
+          selectedKey={selectedKey}
+          hoveredKey={hoveredKey}
+          hoveredRow={hoveredRow}
+          hoverPoint={hoverPoint}
+          dimmed={offline}
+          loading={snapshotQuery.isPending}
+          error={snapshotQuery.isPending ? null : snapshotError}
+          hasData={hasData}
+          showErrorOverlay={!isDesktop || !preferences.panelOpen}
+          onRetry={() => void snapshotQuery.refetch()}
+          onSelect={selectKey}
+          onHover={(hover) => {
+            setHoveredKey(hover?.key ?? null);
+            setHoverPoint(hover?.point ?? null);
+          }}
+          onViewport={setBounds}
+          onAdapterReady={handleAdapterReady}
+        />
+      </ErrorBoundary>
 
       <div className="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center pl-3 pr-14 lg:left-93 lg:right-3 lg:px-3">
         <div className="pointer-events-auto w-full max-w-md">
@@ -315,15 +341,17 @@ export function MapPage() {
       ) : null}
 
       {isDesktop ? (
-        <MapControls
-          className="absolute bottom-3 right-3 z-10"
-          panelOpen={preferences.panelOpen}
-          geofencesVisible={preferences.geofencesVisible}
-          fitDisabled={data.positioned === 0}
-          onFit={fitFleet}
-          onTogglePanel={() => preferences.setPanelOpen(!preferences.panelOpen)}
-          onToggleGeofences={preferences.toggleGeofences}
-        />
+        <ErrorBoundary level="panel" resetKeys={[preferences.panelOpen, preferences.geofencesVisible]}>
+          <MapControls
+            className="absolute bottom-3 right-3 z-10"
+            panelOpen={preferences.panelOpen}
+            geofencesVisible={preferences.geofencesVisible}
+            fitDisabled={data.positioned === 0}
+            onFit={fitFleet}
+            onTogglePanel={() => preferences.setPanelOpen(!preferences.panelOpen)}
+            onToggleGeofences={preferences.toggleGeofences}
+          />
+        </ErrorBoundary>
       ) : null}
     </div>
   );

@@ -49,6 +49,31 @@ describe("MobileVehicleSheet", () => {
     );
   });
 
+  it("collapses from full to peek on click and returns to the previous snap", async () => {
+    const first = sheet("full");
+    const handle = screen.getByRole("button", { name: /Showing 25 of 25/ });
+    await userEvent.click(handle);
+    expect(first.onSnap).toHaveBeenCalledWith("peek");
+    first.view.unmount();
+
+    const onSnap = vi.fn();
+    render(
+      <MobileVehicleSheet
+        snap="peek"
+        onSnap={onSnap}
+        shown={25}
+        total={25}
+        geofencesVisible
+        onFit={vi.fn()}
+        onToggleGeofences={vi.fn()}
+      >
+        <p>List content</p>
+      </MobileVehicleSheet>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: /Showing 25 of 25/ }));
+    expect(onSnap).toHaveBeenCalledWith("half");
+  });
+
   it("cycles with the keyboard and stops at the ends", async () => {
     const { onSnap } = sheet("peek");
     const handle = screen.getByRole("button", { name: /Showing 25 of 25/ });

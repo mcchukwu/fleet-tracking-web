@@ -5,6 +5,7 @@ import { FleetMap } from "./FleetMap";
 import { FakeAdapter } from "./testing/FakeAdapter";
 import { contractTokens } from "./testing/adapter-contract";
 import { ThemeProvider } from "../theme/ThemeProvider";
+import { useTheme } from "../theme/theme-context";
 import { MapError } from "../errors/types";
 import type { MapVehicle } from "./types";
 
@@ -74,5 +75,32 @@ describe("FleetMap", () => {
     );
     await waitFor(() => expect(adapter.mounted).toBe(true));
     expect(adapter.tokens?.marker.radius).toBe(contractTokens.marker.radius);
+  });
+
+  it("swaps the adapter theme when the theme changes", async () => {
+    const adapter = new FakeAdapter();
+
+    function ThemeToggle() {
+      const theme = useTheme();
+      return (
+        <button
+          type="button"
+          onClick={() => theme.setMode(theme.resolved === "dark" ? "light" : "dark")}
+        >
+          Switch theme
+        </button>
+      );
+    }
+
+    render(
+      <ThemeProvider>
+        <ThemeToggle />
+        <FleetMap adapter={adapter} />
+      </ThemeProvider>,
+    );
+
+    await waitFor(() => expect(adapter.mounted).toBe(true));
+    await userEvent.click(screen.getByRole("button", { name: "Switch theme" }));
+    await waitFor(() => expect(adapter.theme).toBe("dark"));
   });
 });

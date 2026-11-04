@@ -21,8 +21,8 @@ export function liveSnapshotQueryOptions() {
   });
 }
 
-export function useLiveSnapshot() {
-  return useQuery(liveSnapshotQueryOptions());
+export function useLiveSnapshot(enabled = true) {
+  return useQuery({ ...liveSnapshotQueryOptions(), enabled });
 }
 
 export function useVehicles(filters: VehicleFilters = {}) {

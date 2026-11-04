@@ -18,6 +18,8 @@ export interface ToastOptions {
   title: string;
   description?: string;
   tone?: ToastTone;
+  /** Announce assertively (critical alerts and errors that interrupt). */
+  assertive?: boolean;
   key?: string;
   action?: { label: string; onClick: () => void };
 }
@@ -88,7 +90,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               key={item.id}
               open={item.open}
               duration={item.tone === "error" ? Infinity : 4_000}
-              type={item.tone === "error" ? "foreground" : "background"}
+              type={item.tone === "error" || item.assertive ? "foreground" : "background"}
               onOpenChange={(open) => {
                 if (!open) dismiss(item.id);
               }}

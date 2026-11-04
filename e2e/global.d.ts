@@ -30,7 +30,7 @@ declare global {
       map: {
         mapLoaded: boolean;
         provider: string | null;
-        renderedVehicleCount: number;
+        targetVehicleCount: number;
         viewport: { center: [number, number]; zoom: number } | null;
         bounds: { south: number; west: number; north: number; east: number } | null;
         selectedKey: string | null;

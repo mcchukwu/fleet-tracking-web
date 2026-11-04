@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
 import { ThemeContext, type Accent, type ThemeMode } from "./theme-context";
 
 const THEME_KEY = "fleet.theme";
@@ -40,13 +40,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const resolved = mode === "system" ? (systemDark ? "dark" : "light") : mode;
 
-  useEffect(() => {
+  // Layout effects run before child passive effects, so consumers that read CSS
+  // variables in useEffect (the map adapter) see the new theme in the same commit.
+  useLayoutEffect(() => {
     const root = document.documentElement;
     root.classList.toggle("dark", resolved === "dark");
     root.dataset.theme = resolved;
   }, [resolved]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.documentElement.dataset.accent = accent;
   }, [accent]);
 

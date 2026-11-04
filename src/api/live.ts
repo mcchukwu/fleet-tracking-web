@@ -1,5 +1,3 @@
-import { liveMessageSchema, type LiveMessage } from "./schemas";
-
 export type SocketState = "live" | "reconnecting" | "down";
 
 export interface LiveSocketLike {
@@ -9,7 +7,8 @@ export interface LiveSocketLike {
 
 export interface LiveSocketOptions {
   createSocket: () => LiveSocketLike;
-  onFrame: (frame: LiveMessage) => void;
+  /** Raw payload. Parsing and schema validation happen inside the frame batch. */
+  onFrame: (raw: string) => void;
   resync: () => Promise<void>;
   onState?: (state: SocketState) => void;
   isOnline?: () => boolean;
@@ -32,7 +31,7 @@ export class LiveSocketManager {
   private state: SocketState = "down";
   private stopped = true;
   private resyncing = false;
-  private buffer: LiveMessage[] = [];
+  private buffer: string[] = [];
   private attempt = 0;
   private timer: ReturnType<typeof setTimeout> | null = null;
   private readonly online: () => boolean;
@@ -114,7 +113,6 @@ export class LiveSocketManager {
   }
 
   private async handleOpen(socket: LiveSocketLike): Promise<void> {
-    this.attempt = 0;
     this.resyncing = true;
     try {
       await this.options.resync();
@@ -131,10 +129,11 @@ export class LiveSocketManager {
     if (this.stopped || this.socket !== socket) return;
 
     this.resyncing = false;
+    this.attempt = 0;
     this.setState("live");
     const buffered = this.buffer;
     this.buffer = [];
-    for (const frame of buffered) this.options.onFrame(frame);
+    for (const raw of buffered) this.options.onFrame(raw);
   }
 
   private handleMessage(socket: LiveSocketLike, event: unknown): void {
@@ -143,22 +142,12 @@ export class LiveSocketManager {
     const raw = messageData(event);
     if (raw === null) return;
 
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      return;
-    }
-
-    const result = liveMessageSchema.safeParse(parsed);
-    if (!result.success) return;
-
     if (this.resyncing) {
-      this.buffer = [...this.buffer.slice(-(MAX_BUFFER - 1)), result.data];
+      this.buffer = [...this.buffer.slice(-(MAX_BUFFER - 1)), raw];
       return;
     }
 
-    this.options.onFrame(result.data);
+    this.options.onFrame(raw);
   }
 
   private handleClose(socket: LiveSocketLike): void {

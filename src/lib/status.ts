@@ -71,14 +71,12 @@ const alertTypeLabels: Record<AlertType, string> = {
   unplanned_trip: "Unplanned trip",
 };
 
-const alertTypeLookup: Record<string, string> = alertTypeLabels;
-
 export function isAlertType(value: string): value is AlertType {
-  return value in alertTypeLabels;
+  return Object.hasOwn(alertTypeLabels, value);
 }
 
 export function alertTypeLabel(type: string): string {
-  return alertTypeLookup[type] ?? `Unknown type: ${type}`;
+  return isAlertType(type) ? alertTypeLabels[type] : `Unknown type: ${type}`;
 }
 
 const severityRank: Record<AlertSeverity, number> = {

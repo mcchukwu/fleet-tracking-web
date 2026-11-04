@@ -27,6 +27,7 @@ export interface MapData {
   activeTrips: number;
   lastDataAtMs: number | null;
   lastDataAgeSeconds: number | null;
+  now: number;
 }
 
 export function useMapData({
@@ -55,6 +56,13 @@ export function useMapData({
       const freshness = getDataFreshness(ageMs);
       const speedKph = live?.speedKph ?? vehicle.speed_kph ?? null;
       const headingDeg = live?.headingDeg ?? vehicle.heading_deg ?? null;
+      const speedReportedAtMs =
+        live?.speedAt ??
+        (speedKph !== null || headingDeg !== null
+          ? vehicle.recorded_at
+            ? Date.parse(vehicle.recorded_at)
+            : null
+          : null);
       const isOnline = live ? ageMs !== null && ageMs <= STALE_AFTER_MS : vehicle.online;
       const recentlyMarked =
         live?.alertMarkedAt !== null &&
@@ -80,6 +88,7 @@ export function useMapData({
         recordedAt,
         recordedAtMs,
         speedKph,
+        speedReportedAtMs,
         headingDeg,
         status,
         freshness,
@@ -127,6 +136,7 @@ export function useMapData({
       activeTrips,
       lastDataAtMs,
       lastDataAgeSeconds,
+      now,
     };
   }, [snapshot, alerts, now, selectedId, hoveredKey]);
 }

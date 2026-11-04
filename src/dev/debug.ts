@@ -3,7 +3,7 @@ import type { Bounds } from "../map/types";
 export interface FleetDebugMapState {
   mapLoaded: boolean;
   provider: string | null;
-  renderedVehicleCount: number;
+  targetVehicleCount: number;
   viewport: { center: [number, number]; zoom: number } | null;
   bounds: Bounds | null;
   selectedKey: string | null;
@@ -47,7 +47,7 @@ type DebugReader = () => FleetDebugSnapshot;
 const emptyMapState: FleetDebugMapState = {
   mapLoaded: false,
   provider: null,
-  renderedVehicleCount: 0,
+  targetVehicleCount: 0,
   viewport: null,
   bounds: null,
   selectedKey: null,

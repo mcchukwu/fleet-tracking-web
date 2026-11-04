@@ -4,6 +4,7 @@ import {
   compareSeverity,
   getDataFreshness,
   getVehicleStatus,
+  isAlertType,
   tripStatusLabels,
   vehicleStatusLabels,
 } from "./status";
@@ -77,6 +78,13 @@ describe("labels and ordering", () => {
 
   it("renders an unknown alert type as a neutral fallback, not a crash", () => {
     expect(alertTypeLabel("solar_flare")).toBe("Unknown type: solar_flare");
+  });
+
+  it("does not treat prototype keys as alert types", () => {
+    for (const value of ["toString", "constructor", "__proto__", "hasOwnProperty"]) {
+      expect(isAlertType(value)).toBe(false);
+      expect(alertTypeLabel(value)).toBe(`Unknown type: ${value}`);
+    }
   });
 
   it("labels every trip and vehicle status", () => {

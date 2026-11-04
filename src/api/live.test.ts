@@ -44,7 +44,7 @@ describe("live socket manager", () => {
 
   it("resyncs the snapshot before applying buffered frames", async () => {
     const socket = new FakeSocket();
-    const frames: unknown[] = [];
+    const frames: string[] = [];
     let finishResync: () => void = () => undefined;
     const resync = new Promise<void>((resolve) => {
       finishResync = () => resolve();
@@ -64,11 +64,12 @@ describe("live socket manager", () => {
     finishResync();
     await flush();
     expect(frames).toHaveLength(1);
+    expect(frames[0]).toBe(JSON.stringify(positionFrame));
     expect(manager.getState()).toBe("live");
     manager.stop();
   });
 
-  it("ignores malformed frames without dropping the socket", () => {
+  it("forwards raw payloads and leaves validation to the frame batch", () => {
     const socket = new FakeSocket();
     const onFrame = vi.fn();
     const manager = new LiveSocketManager({
@@ -78,8 +79,7 @@ describe("live socket manager", () => {
     });
     manager.start();
     socket.emit("message", { data: "{not json" });
-    socket.emit("message", { data: JSON.stringify({ type: "position", lat: "x" }) });
-    expect(onFrame).not.toHaveBeenCalled();
+    expect(onFrame).toHaveBeenCalledWith("{not json");
     expect(socket.closed).toBe(false);
     manager.stop();
   });
@@ -106,7 +106,8 @@ describe("live socket manager", () => {
     manager.stop();
   });
 
-  it("stays down while offline and reconnects when online returns", () => {    vi.useFakeTimers();
+  it("stays down while offline and reconnects when online returns", () => {
+    vi.useFakeTimers();
     let online = true;
     const sockets: FakeSocket[] = [];
     const manager = new LiveSocketManager({
@@ -133,9 +134,41 @@ describe("live socket manager", () => {
     manager.stop();
   });
 
+  it("backs off when the snapshot resync keeps failing", async () => {
+    vi.useFakeTimers();
+    const sockets: FakeSocket[] = [];
+    const manager = new LiveSocketManager({
+      createSocket: () => {
+        const socket = new FakeSocket();
+        sockets.push(socket);
+        return socket;
+      },
+      onFrame: vi.fn(),
+      resync: () => Promise.reject(new Error("snapshot unavailable")),
+      random: () => 0,
+    });
+
+    manager.start();
+    sockets[0]?.emit("open");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(manager.getState()).toBe("reconnecting");
+
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(sockets).toHaveLength(2);
+
+    sockets[1]?.emit("open");
+    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(sockets).toHaveLength(2);
+
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(sockets).toHaveLength(3);
+    manager.stop();
+  });
+
   it("ignores a resync that finishes after the socket closed", async () => {
     const socket = new FakeSocket();
-    const frames: unknown[] = [];
+    const frames: string[] = [];
     let finishResync: () => void = () => undefined;
     const resync = new Promise<void>((resolve) => {
       finishResync = () => resolve();
@@ -162,7 +195,7 @@ describe("live socket manager", () => {
 
   it("drops buffered frames when stopped during a resync", async () => {
     const socket = new FakeSocket();
-    const frames: unknown[] = [];
+    const frames: string[] = [];
     let finishResync: () => void = () => undefined;
     const resync = new Promise<void>((resolve) => {
       finishResync = () => resolve();

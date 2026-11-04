@@ -38,6 +38,23 @@ describe("KpiStrip", () => {
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
+  it("renders loading placeholders instead of presenting zeroes as data", () => {
+    const { container } = render(
+      <KpiStrip
+        loading
+        cells={[
+          { label: "Online", value: "0 of 0" },
+          { label: "Active trips", value: "0" },
+          { label: "Open alerts", value: "—" },
+          { label: "Last data", value: "—" },
+        ]}
+      />,
+    );
+    expect(screen.queryByText("0 of 0")).not.toBeInTheDocument();
+    expect(container.firstElementChild).toHaveAttribute("aria-busy", "true");
+    expect(container.querySelectorAll('[aria-hidden="true"]')).toHaveLength(4);
+  });
+
   it("renders a compact grid without borders between cells", () => {
     const { container } = render(
       <KpiStrip

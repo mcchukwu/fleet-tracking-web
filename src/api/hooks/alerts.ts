@@ -19,8 +19,8 @@ export function openAlertsQueryOptions() {
   });
 }
 
-export function useOpenAlerts() {
-  return useQuery(openAlertsQueryOptions());
+export function useOpenAlerts(enabled = true) {
+  return useQuery({ ...openAlertsQueryOptions(), enabled });
 }
 
 export function useAlerts(filters: AlertFilters = {}) {

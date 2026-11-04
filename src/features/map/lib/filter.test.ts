@@ -25,6 +25,7 @@ function row(overrides: Partial<VehicleRow> = {}): VehicleRow {
     recordedAt: "2026-11-04T09:59:30Z",
     recordedAtMs: Date.parse("2026-11-04T09:59:30Z"),
     speedKph: 48,
+    speedReportedAtMs: Date.parse("2026-11-04T09:59:30Z"),
     headingDeg: 90,
     status: "moving",
     freshness: "fresh",

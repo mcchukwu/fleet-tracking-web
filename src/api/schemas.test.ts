@@ -16,6 +16,7 @@ import {
   positionFrame,
   alertFrame,
 } from "../mocks/fixtures/live";
+import { liveCaptureFrames, liveCaptureMeta } from "../mocks/fixtures/liveCapture";
 import { vehiclesFixture } from "../mocks/fixtures/vehicles";
 import { geofencesFixture } from "../mocks/fixtures/geofences";
 
@@ -23,6 +24,16 @@ describe("contract schemas", () => {
   it("accepts a real position frame", () => {
     const parsed = liveMessageSchema.safeParse(positionFrame);
     expect(parsed.success).toBe(true);
+  });
+
+  it("accepts every frame in the committed 31-second staging capture", () => {
+    expect(liveCaptureFrames).toHaveLength(liveCaptureMeta.frameCount);
+    for (const frame of liveCaptureFrames) {
+      expect(liveMessageSchema.safeParse(frame).success).toBe(true);
+    }
+    expect(new Set(liveCaptureFrames.map((frame) => frame.vehicle_id)).size).toBe(
+      liveCaptureMeta.vehicleCount,
+    );
   });
 
   it("accepts a documented alert frame with unknown keys", () => {
@@ -68,6 +79,15 @@ describe("contract schemas", () => {
     expect(result.vehicles).toHaveLength(1);
     expect(result.vehicles[0]?.external_id).toBe("demo-imei-0001");
     expect(result.rejected).toBe(1);
+  });
+
+  it("keeps a vehicle with an unknown trip status and drops only the status", () => {
+    const result = parseSnapshot({
+      data: [{ ...vehiclesFixture[0], trip_status: "teleporting" }],
+    });
+    expect(result.vehicles).toHaveLength(1);
+    expect(result.vehicles[0]?.trip_status).toBeUndefined();
+    expect(result.rejected).toBe(0);
   });
 
   it("rejects a snapshot envelope that is not a data array", () => {

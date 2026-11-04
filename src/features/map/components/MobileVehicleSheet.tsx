@@ -1,5 +1,5 @@
 import { ChevronUp, Layers, Maximize2 } from "lucide-react";
-import { useRef, type PointerEvent, type ReactNode } from "react";
+import { useEffect, useRef, type PointerEvent, type ReactNode } from "react";
 import { IconButton } from "../../../ui/IconButton";
 import { cn } from "../../../ui/cn";
 
@@ -11,6 +11,10 @@ export function nextSheetSnap(snap: SheetSnap, direction: 1 | -1): SheetSnap {
   const index = SNAPS.indexOf(snap);
   const next = Math.min(SNAPS.length - 1, Math.max(0, index + direction));
   return SNAPS[next] ?? snap;
+}
+
+export function toggleSheetSnap(snap: SheetSnap, previous: Exclude<SheetSnap, "peek">): SheetSnap {
+  return snap === "peek" ? previous : "peek";
 }
 
 export interface MobileVehicleSheetProps {
@@ -35,12 +39,17 @@ export function MobileVehicleSheet({
   children,
 }: MobileVehicleSheetProps) {
   const dragStart = useRef<number | null>(null);
+  const previousSnap = useRef<Exclude<SheetSnap, "peek">>("half");
 
-  function onPointerDown(event: PointerEvent<HTMLButtonElement>): void {
+  useEffect(() => {
+    if (snap !== "peek") previousSnap.current = snap;
+  }, [snap]);
+
+  function onPointerDown(event: PointerEvent<HTMLDivElement>): void {
     dragStart.current = event.clientY;
   }
 
-  function onPointerUp(event: PointerEvent<HTMLButtonElement>): void {
+  function onPointerUp(event: PointerEvent<HTMLDivElement>): void {
     if (dragStart.current === null) return;
     const delta = event.clientY - dragStart.current;
     dragStart.current = null;
@@ -56,17 +65,19 @@ export function MobileVehicleSheet({
         snap === "peek" ? "h-sheet-peek" : snap === "half" ? "h-1/2" : "h-full",
       )}
     >
-      <div className="flex h-sheet-peek shrink-0 flex-col justify-center gap-1 border-b border-border px-3">
+      <div
+        className="flex h-sheet-peek shrink-0 touch-none flex-col justify-center gap-1 border-b border-border px-3"
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+      >
         <span aria-hidden="true" className="mx-auto h-1 w-8 rounded-full bg-border-strong" />
         <div className="flex items-center gap-2">
           <button
             type="button"
             aria-expanded={snap !== "peek"}
-            aria-controls="mobile-vehicle-panel"
+            aria-controls={snap === "peek" ? undefined : "mobile-vehicle-panel"}
             className="flex h-touch min-w-0 flex-1 items-center gap-2 rounded-md text-left focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring"
-            onClick={() => onSnap(nextSheetSnap(snap, 1))}
-            onPointerDown={onPointerDown}
-            onPointerUp={onPointerUp}
+            onClick={() => onSnap(toggleSheetSnap(snap, previousSnap.current))}
             onKeyDown={(event) => {
               if (event.key === "ArrowUp") {
                 event.preventDefault();

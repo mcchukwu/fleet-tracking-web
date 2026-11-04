@@ -116,14 +116,9 @@ test.describe("live feed", () => {
     });
 
     await expect(page.getByText("Geofence exit").first()).toBeVisible();
-    await expect
-      .poll(() =>
-        page
-          .locator('output[aria-live="polite"]')
-          .first()
-          .textContent(),
-      )
-      .toContain("Geofence exit");
+    await expect(
+      page.locator('[aria-live="polite"]').filter({ hasText: "Geofence exit" }).first(),
+    ).toBeAttached();
 
     expect(titleBefore).not.toContain("(6)");
     await expect.poll(() => page.title(), { timeout: 15_000 }).toContain("(6)");
@@ -154,14 +149,9 @@ test.describe("live feed", () => {
 
     await expect(page.getByText("12 new alerts").first()).toBeVisible({ timeout: 10_000 });
     await expect(page.locator(".z-toast").getByText("12 new alerts")).toHaveCount(1);
-    await expect
-      .poll(() =>
-        page
-          .locator('output[aria-live="polite"]')
-          .first()
-          .textContent(),
-      )
-      .toContain("12 new alerts");
+    await expect(
+      page.locator('[aria-live="polite"]').filter({ hasText: "12 new alerts" }).first(),
+    ).toBeAttached();
   });
 
   test("batching keeps frame work out of the per-message path", async ({ page, liveSocket }) => {
@@ -169,7 +159,7 @@ test.describe("live feed", () => {
     await gotoLiveMap(page, "perf=5000");
     await waitForLive(page);
     await expect
-      .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.renderedVehicleCount), {
+      .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.targetVehicleCount), {
         timeout: 30_000,
       })
       .toBe(5_000);

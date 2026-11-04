@@ -55,7 +55,7 @@ export function CopyButton({ value, label, className, children }: CopyButtonProp
       title={`Copy ${label.toLowerCase()}`}
       data-copy-status={status}
       className={cn(
-        "rounded-sm font-mono text-sm text-text underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring",
+        "inline-flex h-touch min-w-touch items-center justify-start rounded-sm font-mono text-sm text-text underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:h-control-sm md:min-w-0",
         className,
       )}
     >

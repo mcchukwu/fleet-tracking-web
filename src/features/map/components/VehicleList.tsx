@@ -36,6 +36,7 @@ export function VehicleList({
   onHover,
 }: VehicleListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
+  const scrolledFor = useRef<string | null>(null);
 
   // oxlint-disable-next-line react/incompatible-library -- TanStack Virtual owns measurement and scroll position.
   const virtualizer = useVirtualizer({
@@ -50,9 +51,17 @@ export function VehicleList({
   }, [signature]);
 
   useEffect(() => {
-    if (!selectedKey) return;
+    if (!selectedKey) {
+      scrolledFor.current = null;
+      return;
+    }
+    // Rows are rebuilt on every live tick; scrolling on the array would drag the
+    // reader back to the selection once a second. Scroll only when it changes.
+    if (scrolledFor.current === selectedKey) return;
     const index = rows.findIndex((row) => row.key === selectedKey);
-    if (index >= 0) virtualizer.scrollToIndex(index, { align: "auto" });
+    if (index < 0) return;
+    scrolledFor.current = selectedKey;
+    virtualizer.scrollToIndex(index, { align: "auto" });
   }, [rows, selectedKey, virtualizer]);
 
   return (

@@ -77,7 +77,8 @@ describe("alert frame normalisation", () => {
   it("summarises one frame specifically and many as a batch", () => {
     const one = alertBatchSummary([normalizeAlertFrame(handoffFrame)]);
     expect(one.title).toBe("Geofence exit");
-    expect(one.description).toContain("demo-imei-0007");
+    expect(one.description).toBe("Open Alerts to review it.");
+    expect(one.assertive).toBe(false);
 
     const many = alertBatchSummary([
       normalizeAlertFrame(handoffFrame),
@@ -85,6 +86,11 @@ describe("alert frame normalisation", () => {
       normalizeAlertFrame(identifiedFrame),
     ]);
     expect(many.title).toBe("3 new alerts");
-    expect(many.description).toContain("3");
+    expect(many.description).toBe("Open Alerts to review them.");
+  });
+
+  it("marks a critical alert for an assertive announcement", () => {
+    const frame = normalizeAlertFrame({ ...openApiFrame, severity: "critical" });
+    expect(alertBatchSummary([frame]).assertive).toBe(true);
   });
 });

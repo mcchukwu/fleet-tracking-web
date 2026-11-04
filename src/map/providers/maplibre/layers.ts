@@ -61,6 +61,8 @@ const statusColor = (tokens: MapTokens): unknown[] => [
   tokens.colors.surface,
 ];
 
+const staleOpacity = (active: number): unknown[] => ["case", ["get", "stale"], 0.6, active];
+
 export function vehicleLayers(tokens: MapTokens): LayerSpecification[] {
   return [
     circle(LAYER_IDS.vehicleHit, {
@@ -76,6 +78,7 @@ export function vehicleLayers(tokens: MapTokens): LayerSpecification[] {
         "circle-opacity": 0,
         "circle-stroke-color": tokens.colors.accent,
         "circle-stroke-width": tokens.marker.selectedRingWidth,
+        "circle-stroke-opacity": staleOpacity(1),
       },
       { filter: ["all", ["!", ["has", "point_count"]], ["==", ["get", "selected"], true]] },
     ),
@@ -87,6 +90,7 @@ export function vehicleLayers(tokens: MapTokens): LayerSpecification[] {
         "circle-opacity": 0,
         "circle-stroke-color": tokens.colors.text,
         "circle-stroke-width": tokens.marker.hoverRingWidth,
+        "circle-stroke-opacity": staleOpacity(1),
       },
       { filter: ["all", ["!", ["has", "point_count"]], ["==", ["get", "hovered"], true]] },
     ),
@@ -98,6 +102,7 @@ export function vehicleLayers(tokens: MapTokens): LayerSpecification[] {
         "circle-opacity": 0,
         "circle-stroke-color": tokens.colors.alert,
         "circle-stroke-width": tokens.marker.ringWidth,
+        "circle-stroke-opacity": staleOpacity(1),
       },
       { filter: ["all", ["!", ["has", "point_count"]], ["==", ["get", "status"], "alert"]] },
     ),
@@ -106,6 +111,7 @@ export function vehicleLayers(tokens: MapTokens): LayerSpecification[] {
       {
         "circle-radius": tokens.marker.radius,
         "circle-color": statusColor(tokens),
+        "circle-opacity": staleOpacity(1),
         "circle-stroke-color": [
           "match",
           ["get", "status"],
@@ -114,6 +120,7 @@ export function vehicleLayers(tokens: MapTokens): LayerSpecification[] {
           tokens.colors.surface,
         ],
         "circle-stroke-width": tokens.marker.ringWidth,
+        "circle-stroke-opacity": staleOpacity(1),
       },
       { filter: ["!", ["has", "point_count"]] },
     ),

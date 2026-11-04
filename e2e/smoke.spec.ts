@@ -72,7 +72,7 @@ test.describe("foundation smoke", () => {
 
     const debug = await page.evaluate(() => window.__FLEET_DEBUG__);
     expect(debug?.connection.network).toBe("online");
-    expect(debug?.map.renderedVehicleCount).toBe(20);
+    expect(debug?.map.targetVehicleCount).toBe(20);
 
     await expectNoHorizontalScroll(page);
     await expectNoAxeViolations(page);

@@ -43,7 +43,7 @@ test.describe("map", () => {
 
     const debug = await page.evaluate(() => window.__FLEET_DEBUG__);
     expect(debug?.map.provider).toBe("fake");
-    expect(debug?.map.renderedVehicleCount).toBe(20);
+    expect(debug?.map.targetVehicleCount).toBe(20);
     expect(debug?.map.geofenceCount).toBe(4);
     expect(debug?.connection.network).toBe("online");
 
@@ -77,6 +77,9 @@ test.describe("map", () => {
       "aria-pressed",
       "true",
     );
+    await expect
+      .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.targetVehicleCount))
+      .toBe(0);
 
     await (await panel(page)).getByLabel("Depot").selectOption("Lekki Depot");
     await expect(page).toHaveURL(/depot=Lekki/);
@@ -212,6 +215,38 @@ test.describe("map", () => {
     await expect(page.getByText("Geofences didn't load")).toHaveCount(0);
   });
 
+  test("offline keeps the cached fleet and marks it stale instead of erroring", async ({ page }) => {
+    await gotoMap(page);
+    await openPanel(page);
+
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, "onLine", { configurable: true, get: () => false });
+      window.dispatchEvent(new Event("offline"));
+    });
+
+    await expect(page.getByText(/You're offline/)).toBeVisible();
+    await expect((await panel(page)).getByText(/Stale ·/)).toBeVisible();
+    await expect(page.getByText("Something went wrong on our side")).toHaveCount(0);
+    await expect((await panel(page)).getByText("Showing 25 of 25")).toBeVisible();
+    await expectNoAxeViolations(page);
+    await captureForReview(page, "02-map-stale-offline");
+  });
+
+  test("a denied clipboard failure explains how to copy manually", async ({ page }) => {
+    await gotoMap(page);
+    await openPanel(page);
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: { writeText: () => Promise.reject(new Error("denied")) },
+      });
+    });
+
+    await (await panel(page)).getByRole("button", { name: "Copy plate LSD-100-AA" }).click();
+    await expect(page.getByText("Couldn't copy")).toBeVisible();
+    await expect(page.getByText("Select the text and press Ctrl+C.")).toBeVisible();
+  });
+
   test("the mobile sheet has three snap points and keeps the map interactive", async ({ page }) => {
     test.skip(!isMobile(page), "mobile-only sheet");
     await gotoMap(page);
@@ -222,17 +257,22 @@ test.describe("map", () => {
     await expect(handle).toHaveAttribute("aria-expanded", "true");
     await captureForReview(page, "02-map-sheet-half");
 
-    await handle.click();
-    await expect(handle).toHaveAttribute("aria-expanded", "true");
+    await handle.focus();
+    await page.keyboard.press("End");
     await expect(page.getByRole("region", { name: "Vehicles" })).toBeVisible();
     await captureForReview(page, "02-map-sheet-full");
+    await expectTouchTargets(page);
+
+    await handle.click();
+    await expect(handle).toHaveAttribute("aria-expanded", "false");
+    await handle.click();
+    await expect(handle).toHaveAttribute("aria-expanded", "true");
 
     await handle.focus();
     await page.keyboard.press("Home");
     await expect(handle).toHaveAttribute("aria-expanded", "false");
 
     await expectNoHorizontalScroll(page);
-    await expectTouchTargets(page);
     await expectNoAxeViolations(page);
   });
 

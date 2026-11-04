@@ -3,10 +3,11 @@ import { api } from "../instance";
 import { queryKeys } from "../keys";
 import type { GeofenceInput } from "../types";
 
-export function useGeofences() {
+export function useGeofences(enabled = true) {
   return useQuery({
     queryKey: queryKeys.geofences,
     queryFn: ({ signal }) => api.geofences({ signal }).then((response) => response.data),
+    enabled,
     meta: { scope: "screen", resource: "geofences" },
   });
 }
