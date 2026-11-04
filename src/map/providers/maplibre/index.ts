@@ -81,7 +81,9 @@ export function createMapLibreAdapter(): MapAdapter {
     offline: false,
     drawing: false,
     clustering: "native",
-    comfortableVehicleCount: 2_000,
+    // Measured 2026-11-05: a 5,000-vehicle target produced a 348 ms longest
+    // pan task in Chromium, so the comfort budget stays well below that.
+    comfortableVehicleCount: 1_000,
   };
 
   function emit<K extends keyof MapEvents>(event: K, payload: MapEvents[K]): void {

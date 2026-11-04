@@ -243,8 +243,56 @@ test.describe("map", () => {
     });
 
     await (await panel(page)).getByRole("button", { name: "Copy plate LSD-100-AA" }).click();
-    await expect(page.getByText("Couldn't copy")).toBeVisible();
-    await expect(page.getByText("Select the text and press Ctrl+C.")).toBeVisible();
+    await expect(page.getByText("Couldn't copy", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText("Select the text and press Ctrl+C.").first()).toBeVisible();
+  });
+
+  test("live ticks do not drag the list back to the selection", async ({ page }) => {
+    await gotoMap(page);
+    await openPanel(page);
+    const region = await panel(page);
+
+    await region.getByRole("button", { name: "Select LSD-100-AA" }).click();
+    const scroller = region.locator('ul[aria-label="Vehicles"]').locator("..");
+    await scroller.evaluate((element) => {
+      element.scrollTop = 400;
+    });
+    const before = await scroller.evaluate((element) => element.scrollTop);
+    expect(before).toBeGreaterThan(0);
+
+    await page.waitForTimeout(1_500);
+    expect(await scroller.evaluate((element) => element.scrollTop)).toBe(before);
+  });
+
+  test("a map adapter failure leaves the vehicle list usable", async ({ page }) => {
+    await page.goto("/map?map=fake&adapter=error");
+    await expect(page.getByText("The map couldn't load")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("button", { name: "Retry" }).first()).toBeVisible();
+    await openPanel(page);
+    await expect(page.getByText("Showing 25 of 25")).toBeVisible();
+    await expectNoAxeViolations(page);
+    await captureForReview(page, "02-map-adapter-error");
+  });
+
+  test("a crash in the map overlay is contained by the panel boundary", async ({ page }) => {
+    await page.goto("/map?map=fake&crash=map");
+    await expect(page.getByText("This part of the page stopped working")).toBeVisible({
+      timeout: 15_000,
+    });
+    await openPanel(page);
+    await expect(page.getByText("Showing 25 of 25")).toBeVisible();
+    await expectNoAxeViolations(page);
+    await captureForReview(page, "02-map-render-crash");
+  });
+
+  test("a slow snapshot request reports progress instead of a silent skeleton", async ({
+    page,
+  }) => {
+    await page.goto("/map?map=fake&fault=live-snapshot:slow");
+    await openPanel(page);
+    await expect(page.getByText("Still working…")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Taking longer than usual")).toBeVisible({ timeout: 15_000 });
+    await captureForReview(page, "02-map-slow");
   });
 
   test("the mobile sheet has three snap points and keeps the map interactive", async ({ page }) => {

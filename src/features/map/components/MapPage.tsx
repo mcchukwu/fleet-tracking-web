@@ -248,6 +248,7 @@ export function MapPage() {
     filters,
     depots,
     loading: snapshotQuery.isPending,
+    fetching: snapshotQuery.isFetching,
     error: snapshotError,
     stale,
     staleLabel,

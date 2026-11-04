@@ -12,11 +12,11 @@ import type {
   Padding,
   Viewport,
 } from "../types";
+import { MapError } from "../../errors/types";
 
 const WORLD: Bounds = { south: -85, west: -180, north: 85, east: 180 };
 
-export class FakeAdapter implements MapAdapter {
-  readonly id = "fake";
+export class FakeAdapter implements MapAdapter {  readonly id = "fake";
   readonly capabilities: MapCapabilities = {
     offline: true,
     drawing: false,
@@ -108,5 +108,12 @@ export class FakeAdapter implements MapAdapter {
     for (const listener of this.listeners.get(event) ?? []) {
       (listener as (value: MapEvents[K]) => void)(payload);
     }
+  }
+}
+
+/** Deterministic adapter failure for the e2e fault matrix. Only loaded in dev mock mode. */
+export class BrokenAdapter extends FakeAdapter {
+  override mount(): Promise<void> {
+    return Promise.reject(new MapError("Injected adapter failure"));
   }
 }

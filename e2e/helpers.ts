@@ -81,7 +81,14 @@ export async function expectTouchTargets(page: Page, minimum = 44): Promise<void
       .filter((element) => {
         const rect = element.getBoundingClientRect();
         const style = window.getComputedStyle(element);
-        return rect.width > 0 && rect.height > 0 && style.visibility !== "hidden";
+        if (rect.width === 0 || rect.height === 0 || style.visibility === "hidden") return false;
+        // A checkbox or radio is one target with its wrapping label.
+        const label = element.closest("label");
+        if (label && element.matches('input[type="checkbox"], input[type="radio"]')) {
+          const box = label.getBoundingClientRect();
+          if (box.width >= size && box.height >= size) return false;
+        }
+        return true;
       })
       .map((element) => {
         const rect = element.getBoundingClientRect();

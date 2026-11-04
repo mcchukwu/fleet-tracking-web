@@ -275,8 +275,53 @@ TanStack Router re-serializes string values that begin with a digit as JSON (`vi
 
 Trade-off: the search param is a number rather than a string; `onlyInView` is `search.view === 1`.
 
-## 2026-11-04: Live frames are coalesced per key and applied once per batch
+## 2026-11-04: Live frames are parsed and coalesced inside the frame batch
 
-The batcher keeps the newest frame per vehicle, and `applyFrames` writes the Zustand store once per animation frame. The list and map read a one-second view, so 500 messages per second never re-sort 5,000 rows or ping the adapter per message.
+The socket manager forwards raw payloads and buffers raw payloads during a resync. `LiveProvider` parses, validates and coalesces frames in the batched callback, keeping the newest position per vehicle, then writes the Zustand store once per animation frame. The list and map read a one-second view, so 500 messages per second never re-sort 5,000 rows or ping the adapter per message.
 
 Trade-off: a vehicle's intermediate positions are not kept; the map shows the latest known position and the history belongs to playback.
+
+## 2026-11-05: A 31-second live capture is committed as a fixture
+
+A Playwright session logged into staging on 2026-11-04T23:21:59Z and recorded 606 `position` frames for 20 vehicles over 31 seconds (one frame per vehicle per second, 30–31 per vehicle, no per-vehicle out-of-order timestamps). Every frame has exactly `type, tenant_id, vehicle_id, lat, lon, recorded_at`; no `speed_kph` or `heading_deg`, and no alert frame was observed. The capture is sanitised (demo tenant only) and committed as `src/mocks/fixtures/liveCapture.ts`, and a schema test parses every frame.
+
+Trade-off: the 117 KB fixture is real evidence, not hand-written; it must be recaptured when the feed shape changes, and it cannot prove alert-frame behaviour because staging still emits none.
+
+## 2026-11-05: Reconnect backoff counts resync failures
+
+The socket attempt counter resets only after a successful snapshot resync and `live` state, not when the socket opens. A socket that connects while `/live/snapshot` keeps failing now backs off (1s, 2s, 4s … 30s) instead of retrying roughly once a second forever.
+
+Trade-off: a transient resync failure delays the next attempt by an extra backoff step; the alternative is a hot retry loop against a failing API.
+
+## 2026-11-05: Alert bursts are coalesced over a 250 ms window
+
+Alert frames are summarised 250 ms after the first alert in a window, not per animation frame. A burst split across frames therefore produces one toast and one assertion, and multi-alert toast keys include a window sequence so the 10s toast dedupe cannot swallow a later batch. Critical alerts use Radix Toast's assertive live region; there is no second app-level announcement for the same alert.
+
+Trade-off: an alert toast can appear up to 250 ms after the frame; the window is one constant in `src/live/LiveProvider.tsx`.
+
+## 2026-11-05: `renderedVehicleCount` is now `targetVehicleCount`
+
+The debug field counted the array passed to the adapter, before clustering or layer installation. It is renamed to `targetVehicleCount` so the name matches the fact; a true rendered count would require the adapter to report marker and cluster counts after layout.
+
+Trade-off: the perf test now proves the target size, not the number of visible glyphs; the adapter contract test still proves clustering behaviour.
+
+## 2026-11-05: Offline is a state on the map, and filters filter the map
+
+While offline, snapshot, geofence and alert query failures do not become region errors or error toasts. The cached rows, markers and KPIs stay visible, the map dims, and the panel shows its stale treatment; the global offline banner carries the cause. The map target is built from the filtered rows (plus the selected vehicle), so a status or depot filter changes the markers and `targetVehicleCount`, not just the list.
+
+Trade-off: an offline visitor with no cached snapshot sees an empty panel rather than a retry surface; returning online clears the banner and the queries resume. Keeping the selected vehicle on the map means a selection can outlive the filter that excluded it.
+
+## 2026-11-05: Slow map queries report progress after 3s and 10s
+
+`SlowNotice` mounts while the snapshot is fetching, announces "Still working…" after three seconds and "Taking longer than usual" after ten, and unmounts when the request settles. It does not cancel the request; the panel's Retry remains the manual recovery.
+
+Trade-off: a slow query shows both the skeleton and the notice; the copy is shared with the login slow states through `src/errors/slow.ts`.
+
+## 2026-11-05: The MapLibre comfort count is measured, not assumed
+
+With a 5,000-vehicle target in Chromium at 1440×900, the real MapLibre adapter loaded in 154 ms of longest task, and a 20-step pan produced a 348 ms longest task. The adapter therefore declares `comfortableVehicleCount: 1_000`, well below the stress target, and the 5,000 case remains a stress test rather than a claim of 60 fps.
+
+Trade-off: the declared budget is conservative because the measurement only covers one desktop run; the UI does not yet cluster earlier from this value, so it is documentation and a contract fact until a slice consumes it.
+
+
+

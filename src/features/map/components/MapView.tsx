@@ -28,8 +28,14 @@ export interface MapViewProps {
   onAdapterReady: (adapter: MapAdapter | null) => void;
 }
 
-export function MapView({
-  vehicles,
+/** Dev-only render-crash injection for the e2e fault matrix. */
+const INJECT_CRASH =
+  import.meta.env.DEV &&
+  import.meta.env.VITE_MOCK === "1" &&
+  typeof window !== "undefined" &&
+  new URLSearchParams(window.location.search).get("crash") === "map";
+
+export function MapView({  vehicles,
   geofences,
   selectedKey,
   hoveredKey,
@@ -105,6 +111,8 @@ export function MapView({
   function handleError(): void {
     setMapDebug({ mapLoaded: false });
   }
+
+  if (INJECT_CRASH) throw new Error("Injected map crash");
 
   return (
     <div className="relative h-full w-full">

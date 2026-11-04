@@ -1,5 +1,6 @@
 import { PanelLeftClose } from "lucide-react";
 import type { AppError } from "../../../errors/types";
+import { SlowNotice } from "../../../errors/SlowNotice";
 import { Button } from "../../../ui/Button";
 import { IconButton } from "../../../ui/IconButton";
 import { EmptyState } from "../../../ui/StatePanel";
@@ -17,6 +18,7 @@ export interface VehiclePanelProps {
   filters: MapFilterValues;
   depots: readonly string[];
   loading: boolean;
+  fetching?: boolean;
   error?: AppError | null;
   stale: boolean;
   staleLabel: string;
@@ -40,6 +42,7 @@ export function VehiclePanel({
   filters,
   depots,
   loading,
+  fetching = false,
   error = null,
   stale,
   staleLabel,
@@ -130,6 +133,8 @@ export function VehiclePanel({
         onChange={onFilterChange}
         onReset={onReset}
       />
+
+      {loading || fetching ? <SlowNotice /> : null}
 
       <StateBoundary
         state={state}
