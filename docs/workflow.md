@@ -65,3 +65,38 @@ Each slice ends with a working screen, its states, and a Playwright check.
 - Do not import across features. Shared UI lives in `src/ui`.
 - Do not put backend source in this repo.
 - Stop and ask when a token or product decision is missing.
+
+## Commands
+
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Development |
+| `npm run check` | Typecheck, oxlint, guard and unit tests |
+| `npm run guard` | Architectural guards |
+| `npm run test` | Unit tests |
+| `npm run e2e` | Playwright |
+| `npm run e2e:review` | Generate visual review screenshots |
+| `npm run build` | Production build |
+
+Use npm and `package-lock.json`.
+
+## Development Workflow
+
+- Work only on the assigned slice.
+- Implement in coherent checkpoints.
+- Run `npm run check` at each checkpoint.
+- Commit successful checkpoints before continuing.
+- Never proceed on failing checks.
+- Stop after three unsuccessful attempts to fix a check.
+- Record out-of-scope ideas in one line in `docs/backlog.md`.
+- Never guess API behaviour. Verify against staging and record findings in `docs/decisions.md`.
+
+## Completion
+
+A slice is agent-complete when:
+- `npm run check` passes.
+- Its Playwright tests pass.
+- No TODOs remain.
+- Review screenshots are generated at 1440px and 390px.
+
+Human visual approval is separate from agent completion.

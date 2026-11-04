@@ -105,3 +105,11 @@ Neutral, high contrast, one accent colour. Dense but calm. No gradients, no deco
 4. Security replays the segment and acknowledges.
 5. Import screen: 5,000 rows already processed, then a small live upload.
 6. System screen: everything green, device last-seen visible.
+
+## Route Contract
+
+Placeholder routes exist for every screen until their implementation slice ships.
+
+`/` redirects to `/styleguide`.
+
+`/styleguide` is the shared component and visual-state reference.
