@@ -6,17 +6,22 @@ import {
   Link,
   Outlet,
   redirect,
+  useRouter,
   useRouterState,
+  type ErrorComponentProps,
 } from "@tanstack/react-router";
 import type { QueryClient } from "@tanstack/react-query";
 import type { User } from "../api/types";
 import { can, type Capability } from "../auth/roles";
 import { ensureSession } from "../auth/session";
 import { ErrorBoundary } from "../errors/ErrorBoundary";
+import { ErrorState } from "../errors/ErrorState";
+import { normalize } from "../errors/normalize";
 import { StyleGuidePage } from "../features/styleguide/StyleGuidePage";
 import { ForbiddenState } from "../ui/StatePanel";
 import { NotFound } from "./NotFound";
 import { PlaceholderPage } from "./PlaceholderPage";
+import { safeRedirect } from "./redirect";
 import {
   alertsSearchSchema,
   auditSearchSchema,
@@ -39,6 +44,22 @@ async function requireUser(_context: RouterContext, href: string): Promise<User>
     throw redirect({ to: "/login", search: { redirect: href } });
   }
   return user;
+}
+
+function RouteError({ error, reset }: ErrorComponentProps) {
+  const router = useRouter();
+  const normalized = normalize(error, {
+    route: typeof window === "undefined" ? "/" : window.location.pathname,
+  });
+  const retry = () => {
+    reset();
+    void router.invalidate();
+  };
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-bg p-6 text-text">
+      <ErrorState error={normalized} blocking onRetry={retry} onAction={retry} />
+    </main>
+  );
 }
 
 function requireCapability(user: User, capability: Capability): void {
@@ -67,6 +88,7 @@ function RootLayout() {
 const rootRoute = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
   notFoundComponent: NotFound,
+  errorComponent: RouteError,
 });
 
 const indexRoute = createRoute({
@@ -95,7 +117,7 @@ const loginRoute = createRoute({
   validateSearch: loginSearchSchema,
   beforeLoad: async ({ search }) => {
     const user = await ensureSession();
-    if (user) throw redirect({ to: search.redirect ?? "/map" });
+    if (user) throw redirect({ to: safeRedirect(search.redirect) });
   },
   component: placeholder("Sign in", "The login screen ships in Slice 1."),
 });
@@ -105,7 +127,7 @@ const mapRoute = createRoute({
   path: "/map",
   validateSearch: mapSearchSchema,
   beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.pathname);
+    const user = await requireUser(context, location.href);
     requireCapability(user, "read");
   },
   component: placeholder("Map", "The live map ships in Slice 2."),
@@ -116,7 +138,7 @@ const alertsRoute = createRoute({
   path: "/alerts",
   validateSearch: alertsSearchSchema,
   beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.pathname);
+    const user = await requireUser(context, location.href);
     requireCapability(user, "read");
   },
   component: placeholder("Alerts", "The alerts list ships in Slice 4."),
@@ -127,7 +149,7 @@ const tripsRoute = createRoute({
   path: "/trips",
   validateSearch: tripsSearchSchema,
   beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.pathname);
+    const user = await requireUser(context, location.href);
     requireCapability(user, "read");
   },
   component: placeholder("Trips", "The trips table ships in Slice 6."),
@@ -138,7 +160,7 @@ const driversRoute = createRoute({
   path: "/drivers",
   validateSearch: driversSearchSchema,
   beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.pathname);
+    const user = await requireUser(context, location.href);
     requireCapability(user, "read");
   },
   component: placeholder("Drivers", "The drivers table ships in Slice 7."),
@@ -149,7 +171,7 @@ const geofencesRoute = createRoute({
   path: "/geofences",
   validateSearch: geofencesSearchSchema,
   beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.pathname);
+    const user = await requireUser(context, location.href);
     requireCapability(user, "read");
   },
   component: placeholder("Geofences", "The geofence editor ships in Slice 8."),
@@ -159,7 +181,7 @@ const importRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/import",
   beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.pathname);
+    const user = await requireUser(context, location.href);
     requireCapability(user, "mutate");
   },
   component: placeholder("Import", "The vehicle import ships in Slice 9."),
@@ -170,7 +192,7 @@ const reportsRoute = createRoute({
   path: "/reports",
   validateSearch: reportsSearchSchema,
   beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.pathname);
+    const user = await requireUser(context, location.href);
     requireCapability(user, "read");
   },
   component: placeholder("Reports", "The reports screen ships in Slice 10."),
@@ -180,7 +202,7 @@ const systemRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/system",
   beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.pathname);
+    const user = await requireUser(context, location.href);
     requireCapability(user, "read");
   },
   component: placeholder("System health", "The system health screen ships in Slice 11."),
@@ -191,7 +213,7 @@ const auditRoute = createRoute({
   path: "/audit",
   validateSearch: auditSearchSchema,
   beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.pathname);
+    const user = await requireUser(context, location.href);
     requireCapability(user, "audit");
   },
   component: placeholder("Audit", "The audit log ships in Slice 12."),
@@ -202,7 +224,7 @@ const playbackRoute = createRoute({
   path: "/playback",
   validateSearch: playbackSearchSchema,
   beforeLoad: async ({ context, location }) => {
-    const user = await requireUser(context, location.pathname);
+    const user = await requireUser(context, location.href);
     requireCapability(user, "read");
   },
   component: placeholder("Playback", "Playback ships in Slice 5."),
