@@ -7,6 +7,7 @@ import { isAppError } from "../errors/types";
 
 export function handleSessionExpired(): void {
   const state = useAuthStore.getState();
+  if (state.status === "expired") return;
   if (state.status === "unknown" || state.status === "anonymous") {
     state.clear();
   } else {

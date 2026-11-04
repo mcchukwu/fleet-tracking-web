@@ -78,6 +78,7 @@ test.describe("foundation smoke", () => {
     await page.goto("/audit");
     await expect(page).toHaveURL(/\/forbidden$/);
     await expect(page.getByText("You don't have access to this.")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Back to the map" })).toBeVisible();
 
     await page.goto("/import");
     await expect(page).toHaveURL(/\/forbidden$/);
