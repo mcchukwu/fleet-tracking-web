@@ -78,7 +78,7 @@ export function retryDelay(
 ): number {
   const retryAfterSec = isAppError(error) ? error.retryAfterSec : undefined;
   if (retryAfterSec !== undefined) return retryAfterSec * 1_000;
-  const base = Math.min(10_000, 1_000 * 3 ** Math.max(0, failureCount - 1));
+  const base = Math.min(10_000, 1_000 * 3 ** Math.max(0, failureCount));
   return base + Math.round(random() * base * 0.4);
 }
 

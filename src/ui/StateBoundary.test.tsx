@@ -85,9 +85,15 @@ describe("StateBoundary", () => {
     expect(screen.getByText("Stale · 14:02")).toBeInTheDocument();
   });
 
-  it("renders the forbidden state", () => {
-    render(<StateBoundary state="forbidden" />);
+  it("renders the forbidden state with a way back when given one", () => {
+    render(
+      <StateBoundary
+        state="forbidden"
+        forbiddenAction={<a href="/map">Back to the map</a>}
+      />,
+    );
     expect(screen.getByText("You don't have access to this.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to the map" })).toBeInTheDocument();
   });
 
   it("marks a pending update without moving the layout", () => {

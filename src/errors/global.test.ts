@@ -94,15 +94,15 @@ describe("error storm control", () => {
 describe("retry delay", () => {
   const network = normalize(new TypeError("Failed to fetch"), {}, { offline: false });
 
-  it("doubles from about one second with jitter", () => {
-    expect(retryDelay(1, network, () => 0)).toBe(1_000);
-    expect(retryDelay(2, network, () => 0)).toBe(3_000);
-    expect(retryDelay(1, network, () => 1)).toBe(1_400);
+  it("starts at one second and triples, because TanStack passes a zero-based count", () => {
+    expect(retryDelay(0, network, () => 0)).toBe(1_000);
+    expect(retryDelay(1, network, () => 0)).toBe(3_000);
+    expect(retryDelay(0, network, () => 1)).toBe(1_400);
     expect(retryDelay(9, network, () => 0)).toBe(10_000);
   });
 
   it("honours Retry-After exactly", () => {
     const limited = normalize(new ApiError(429, "rate_limited", "slow down", 12));
-    expect(retryDelay(1, limited, () => 1)).toBe(12_000);
+    expect(retryDelay(0, limited, () => 1)).toBe(12_000);
   });
 });

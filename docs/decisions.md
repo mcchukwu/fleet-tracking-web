@@ -144,3 +144,7 @@ Trade-off: four projects multiply runtime. With one worker the suite stays fast 
 `normalize` treats a fetch `TypeError` as `offline` when `navigator.onLine` is false and no explicit hint was passed. Callers can still override it. The connection store remains the UI source of truth; this only fixes classification at the error boundary.
 
 Trade-off: a service-worker-served response can succeed while `navigator.onLine` is false; that is a connectivity state, not a failed request, so no error is produced.
+
+## 2026-11-04: Slow-action states wait for the shell
+
+`getSlowState()` and its copy exist and are unit-tested, but Slice 0 has no screen that starts a user action, so there is no 3s/10s surface to exercise in Playwright. The fault lab exposes a 12s `slow` kind; the e2e scenario lands with Slice 1, which owns "Still working…", Cancel and Retry. Recorded here so the §11 gap is explicit rather than forgotten.

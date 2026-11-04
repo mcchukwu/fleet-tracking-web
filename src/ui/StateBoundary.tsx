@@ -23,6 +23,7 @@ export interface StateBoundaryProps {
   loading?: ReactNode;
   empty?: ReactNode;
   emptyReason?: "no-data" | "no-results";
+  forbiddenAction?: ReactNode;
   staleLabel?: string;
   pending?: boolean;
   className?: string;
@@ -44,6 +45,7 @@ export function StateBoundary({
   loading,
   empty,
   emptyReason = "no-data",
+  forbiddenAction,
   staleLabel,
   pending = false,
   className,
@@ -78,7 +80,7 @@ export function StateBoundary({
   if (state === "forbidden") {
     return (
       <div className={className}>
-        <ForbiddenState />
+        <ForbiddenState action={forbiddenAction} />
       </div>
     );
   }

@@ -36,6 +36,7 @@ export function useUpdateTrip() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["trips"] }),
         queryClient.invalidateQueries({ queryKey: queryKeys.liveSnapshot }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.systemHealth }),
       ]);
     },
     meta: { scope: "screen", resource: "trips" },

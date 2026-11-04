@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import {
   createRootRouteWithContext,
   createRoute,
@@ -18,6 +18,7 @@ import { ensureSession } from "../auth/session";
 import { ErrorBoundary } from "../errors/ErrorBoundary";
 import { ErrorState } from "../errors/ErrorState";
 import { normalize } from "../errors/normalize";
+import { recordError } from "../errors/report";
 import { StyleGuidePage } from "../features/styleguide/StyleGuidePage";
 import { ForbiddenState } from "../ui/StatePanel";
 import { NotFound } from "./NotFound";
@@ -49,17 +50,31 @@ async function requireUser(_context: RouterContext, href: string): Promise<User>
 
 function RouteError({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
-  const normalized = normalize(error, {
-    route: typeof window === "undefined" ? "/" : window.location.pathname,
-  });
+  const route = typeof window === "undefined" ? "/" : window.location.pathname;
+  const normalized = normalize(error, { route });
+
+  useEffect(() => {
+    recordError(normalize(error, { route }));
+  }, [error, route]);
+
   const retry = () => {
     reset();
     void router.invalidate();
   };
+  const action =
+    normalized.kind === "unauthenticated"
+      ? () => {
+          const redirect = `${window.location.pathname}${window.location.search}`;
+          void router.navigate({ to: "/login", search: { redirect } });
+        }
+      : normalized.kind === "offline"
+        ? retry
+        : undefined;
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-bg p-6 text-text">
       <h1 className="sr-only">Something went wrong</h1>
-      <ErrorState error={normalized} blocking onRetry={retry} onAction={retry} />
+      <ErrorState error={normalized} blocking onRetry={retry} onAction={action} />
     </main>
   );
 }

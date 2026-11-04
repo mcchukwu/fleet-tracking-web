@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { api } from "../instance";
 import { queryKeys } from "../keys";
 import { useAckAlert } from "./alerts";
-import { useCreateTrip } from "./trips";
+import { useCreateTrip, useUpdateTrip } from "./trips";
 
 function wrapperFor(queryClient: QueryClient) {
   return function Wrapper({ children }: { children: ReactNode }) {
@@ -34,8 +34,23 @@ describe("mutation invalidation", () => {
     expect(keys).toContainEqual(queryKeys.systemHealth);
   });
 
-  it("refreshes health after acknowledging an alert", async () => {
-    vi.spyOn(api, "ackAlert").mockResolvedValue(undefined);
+  it("refreshes health after a trip transition", async () => {
+    vi.spyOn(api, "updateTrip").mockResolvedValue(undefined);
+    const queryClient = new QueryClient();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+
+    const { result } = renderHook(() => useUpdateTrip(), { wrapper: wrapperFor(queryClient) });
+    await act(async () => {
+      await result.current.mutateAsync({ id: "trip-1", update: { status: "completed" } });
+    });
+
+    const keys = invalidate.mock.calls.map(([filters]) => filters?.queryKey);
+    expect(keys).toContainEqual(["trips"]);
+    expect(keys).toContainEqual(queryKeys.liveSnapshot);
+    expect(keys).toContainEqual(queryKeys.systemHealth);
+  });
+
+  it("refreshes health after acknowledging an alert", async () => {    vi.spyOn(api, "ackAlert").mockResolvedValue(undefined);
     const queryClient = new QueryClient();
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");
 
