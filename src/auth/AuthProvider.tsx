@@ -37,8 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const onExpired = () => {
       const state = useAuthStore.getState();
-      if (state.status !== "authenticated") return;
-      state.expire();
+      if (state.status === "authenticated") state.expire();
       void queryClient.cancelQueries();
     };
     window.addEventListener("fleet:session-expired", onExpired);

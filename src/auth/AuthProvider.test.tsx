@@ -1,5 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { handleSessionExpired } from "./AuthProvider";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, render } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { AuthProvider, handleSessionExpired } from "./AuthProvider";
 import { useAuthStore } from "./store";
 
 const user = {
@@ -36,5 +38,29 @@ describe("session expiry handler", () => {
     useAuthStore.getState().expire();
     handleSessionExpired();
     expect(useAuthStore.getState().status).toBe("expired");
+  });
+});
+
+describe("AuthProvider", () => {
+  it("cancels active queries when a 401 expires the session", () => {
+    useAuthStore.getState().setSession(user, "token");
+    const queryClient = new QueryClient();
+    const cancel = vi.spyOn(queryClient, "cancelQueries");
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <div />
+        </AuthProvider>
+      </QueryClientProvider>,
+    );
+
+    act(() => {
+      handleSessionExpired();
+      window.dispatchEvent(new CustomEvent("fleet:session-expired"));
+    });
+
+    expect(useAuthStore.getState().status).toBe("expired");
+    expect(cancel).toHaveBeenCalledTimes(1);
   });
 });
