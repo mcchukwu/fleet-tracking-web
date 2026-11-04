@@ -9,7 +9,7 @@ import {
   retryDelay,
   subscribeErrorStorm,
 } from "./global";
-import { clearDiagnostics } from "./report";
+import { clearDiagnostics, diagnostics } from "./report";
 import { normalize } from "./normalize";
 import { ApiError } from "./types";
 
@@ -77,6 +77,39 @@ describe("error storm control", () => {
     unsubscribe();
     recordRequestFailure("drivers", "server");
     expect(listener).toHaveBeenCalledTimes(2);
+  });
+
+  it("ignores aborted requests entirely", () => {
+    const announced = vi.fn();
+    window.addEventListener("fleet:error-announced", announced);
+    clearDiagnostics();
+
+    handleGlobalError(new DOMException("aborted", "AbortError"), {
+      scope: "auth",
+      resource: "/auth/login",
+    });
+
+    expect(diagnostics()).toHaveLength(0);
+    expect(announced).not.toHaveBeenCalled();
+    window.removeEventListener("fleet:error-announced", announced);
+  });
+
+  it("does not emit session expiry for a rejected login", () => {
+    const expired = vi.fn();
+    window.addEventListener("fleet:session-expired", expired);
+
+    handleGlobalError(normalize(new ApiError(401, "invalid_credentials", "bad password")), {
+      scope: "auth",
+      resource: "/auth/login",
+    });
+    expect(expired).not.toHaveBeenCalled();
+
+    handleGlobalError(normalize(new ApiError(401, "unauthorized", "login required")), {
+      scope: "auth",
+      resource: "/me",
+    });
+    expect(expired).toHaveBeenCalledOnce();
+    window.removeEventListener("fleet:session-expired", expired);
   });
 
   it("announces an error once per dedupe window", () => {

@@ -7,6 +7,7 @@ import { useAuthStore } from "./store";
 
 export async function ensureSession(queryClient: QueryClient): Promise<User | null> {
   const state = useAuthStore.getState();
+  if (state.status === "expired") return state.user;
   if (state.status === "authenticated" && state.user) return state.user;
   if (state.status === "anonymous") return null;
 

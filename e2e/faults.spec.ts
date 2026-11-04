@@ -98,13 +98,13 @@ test.describe("fault scenarios", () => {
     await clearFault(page);
 
     await page.getByRole("button", { name: "Retry" }).click();
-    await expect(page.locator("ul li").first()).toBeVisible();
+    await expect(page.locator('section[aria-labelledby="fault-alerts"] li').first()).toBeVisible();
   });
 
   test("a failed refresh keeps the cached rows and labels them", async ({ page }) => {
     const errors = collectErrors(page);
     await page.goto("/dev/faults");
-    await expect(page.locator("ul li").first()).toBeVisible();
+    await expect(page.locator('section[aria-labelledby="fault-alerts"] li').first()).toBeVisible();
 
     await page.evaluate(() =>
       history.replaceState({}, "", "/dev/faults?fault=alerts:server"),
@@ -112,7 +112,7 @@ test.describe("fault scenarios", () => {
     await page.getByRole("button", { name: "Refetch alerts" }).click();
 
     await expect(page.getByText("Couldn't refresh")).toBeVisible({ timeout: 15_000 });
-    await expect(page.locator("ul li").first()).toBeVisible();
+    await expect(page.locator('section[aria-labelledby="fault-alerts"] li').first()).toBeVisible();
     await expectNoAxeViolations(page);
     await captureForReview(page, "00-cached-error");
     expect(unexpectedConsole(errors)).toEqual([]);

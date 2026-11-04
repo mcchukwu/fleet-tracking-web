@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Menu, Search, Truck, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useConnection } from "../../../stores/connection";
 import { ThemeToggle } from "../../../theme/ThemeToggle";
 import { ConnectionIndicator, type ConnectionState } from "../../../ui/Badge";
@@ -16,6 +16,18 @@ export interface TopBarProps {
 export function TopBar({ onOpenMenu, onOpenShortcuts }: TopBarProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const { network, socket } = useConnection();
+
+  useEffect(() => {
+    const focusSearch = () => {
+      if (window.matchMedia("(min-width: 768px)").matches) {
+        document.getElementById("vehicle-search")?.focus();
+        return;
+      }
+      setSearchOpen(true);
+    };
+    window.addEventListener("fleet:focus-search", focusSearch);
+    return () => window.removeEventListener("fleet:focus-search", focusSearch);
+  }, []);
   const connection: ConnectionState =
     network === "offline"
       ? "offline"

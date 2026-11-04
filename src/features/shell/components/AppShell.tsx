@@ -1,17 +1,33 @@
-import { Outlet, useRouterState } from "@tanstack/react-router";
-import { useState } from "react";
+import { Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useCallback, useState } from "react";
 import { ErrorBoundary } from "../../../errors/ErrorBoundary";
+import { useShortcuts } from "../hooks/useShortcuts";
+import type { NavPath } from "../nav";
+import { GlobalBanners } from "./GlobalBanners";
 import { MobileNav } from "./MobileNav";
 import { NavRail } from "./NavRail";
+import { ShortcutsDialog } from "./ShortcutsDialog";
 import { TopBar } from "./TopBar";
 
 export function AppShell() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const navigate = useNavigate();
+  const openShortcuts = useCallback(() => setShortcutsOpen(true), []);
+  const go = useCallback(
+    (path: NavPath) => {
+      void navigate({ to: path });
+    },
+    [navigate],
+  );
+
+  useShortcuts({ onOpenShortcuts: openShortcuts, onNavigate: go });
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-bg text-text">
-      <TopBar onOpenMenu={() => setMenuOpen(true)} />
+      <TopBar onOpenMenu={() => setMenuOpen(true)} onOpenShortcuts={openShortcuts} />
+      <GlobalBanners />
 
       <div className="flex min-h-0 flex-1">
         <NavRail />
@@ -23,6 +39,7 @@ export function AppShell() {
       </div>
 
       <MobileNav open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
     </div>
   );
 }

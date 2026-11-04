@@ -103,6 +103,15 @@ test.describe("login", () => {
     await expect(page.getByRole("heading", { name: "Map" })).toBeVisible({ timeout: 10_000 });
   });
 
+  test("a slow sign-in shows the working notice", async ({ page }) => {
+    await startAnonymous(page);
+    await page.goto("/login?fault=login:slow");
+    await signIn(page);
+
+    await expect(page.getByText("Still working…")).toBeVisible({ timeout: 6_000 });
+    await captureForReview(page, "01-login-slow");
+  });
+
   test("offline disables submit with a reason", async ({ page }) => {
     await page.addInitScript(() => {
       Object.defineProperty(navigator, "onLine", { configurable: true, get: () => false });

@@ -237,6 +237,8 @@ Neutrals are the zinc scale. One accent. Status colours carry meaning and are us
 | Control heights | 28 (sm), 32 (md, default), 36 (lg) |
 | Minimum pointer target | 28px desktop, 44px on touch breakpoints |
 
+Shell and dialog sizes are tokens: `--spacing-touch: 44px`, `--spacing-rail-expanded: 200px`, `--container-dialog: 480px`, `--container-content: 1440px`. Use `size-touch`/`h-touch` below `md`, `max-w-dialog` for dialogs and `max-w-content` for non-map page content.
+
 ### 5.2 App layout
 
 ```
@@ -278,6 +280,7 @@ Below `lg`, the left panel and drawer become a **bottom sheet** with three snap 
 | `--radius-md` | 6px | buttons, inputs, menus |
 | `--radius-lg` | 10px | floating panels, drawers, dialogs |
 | `--radius-full` | 9999px | status pills, avatars, marker dots |
+| `--overlay` | 40% black light, 60% black dark | dialog and sheet backdrops |
 
 ```css
 --shadow-float: 0 1px 2px rgb(0 0 0 / 0.06), 0 8px 24px rgb(0 0 0 / 0.10);
@@ -362,7 +365,7 @@ Defaults, tune against real update intervals:
 | 30s to 5min | `delayed`: timestamp turns `--idle-fg`, clock icon |
 | > 5min or socket down | `stale`: timestamp `--alert-fg`, striped top border on the panel, label `Stale · 14:02` |
 
-The KPI strip always shows `last data age`. The top-bar connection indicator has three states: `Live` (green dot), `Reconnecting…` (amber dot), `Offline` (grey dot, `Showing data from 14:02`).
+The KPI strip always shows `last data age`. The top-bar connection indicator has four states: `Live` (green dot), `Reconnecting…` (amber dot), `Offline` (grey dot, `Showing data from 14:02`) and, until the live socket ships in Slice 2, `Online` (green dot, meaning the browser can reach the server). The label collapses to a dot with the accessible name `Connection: …` below `md`.
 
 ### 9.3 Map layers
 
@@ -476,7 +479,9 @@ Global banner states (below the top bar, 32px, dismissible only when resolved):
 
 - **Offline:** `You're offline. Showing data from 14:02. Changes are disabled.` Neutral background, wifi-off icon.
 - **Reconnecting:** `Reconnecting to live updates…` amber.
-- **Session expired:** `Your session expired. Sign in again.` with a `Sign in` button; this is the only blocking banner.
+- **Session expired:** `Your session expired. Sign in again.` with a `Sign in` button; this is the only blocking banner. Slice 1 implements it as a blocking dialog instead of a banner so the unsaved route and form state stay visible behind it.
+- **Error storm:** `We're having trouble reaching the server. Retrying…` with an `Open System` link, warning tone. One banner only; regions switch to the compact error state while it is up.
+- **Update available:** `A new version is available.` with a `Reload` button, info tone. Never reload mid-view without the click.
 
 ---
 
@@ -587,3 +592,34 @@ const pill = cva("inline-flex h-5 items-center gap-1 rounded-full px-2 text-xs f
 - WCAG 2.2 quick reference: https://www.w3.org/WAI/WCAG22/quickref/
 - Map style specs per adapter, e.g. MapLibre: https://maplibre.org/maplibre-style-spec/
 - Refactoring UI (practical visual hierarchy and spacing): https://www.refactoringui.com
+
+---
+
+## Theme Runtime
+
+`ThemeProvider` persists:
+- Theme: `fleet.theme` (`light`, `dark`, `system`)
+- Accent: `fleet.accent`
+
+The inline script in `index.html` applies the saved theme before first paint.
+
+The accent is exposed as `data-accent` on `<html>`:
+- blue
+- violet
+- teal
+
+Accents affect interface chrome only. They never replace semantic status colours.
+
+---
+
+## Visual Contract
+
+`/styleguide` is the visual contract.
+Add new shared components and their states there.
+
+Review components in:
+- Light theme
+- Dark theme
+- Blue accent
+- Violet accent
+- Teal accent

@@ -75,14 +75,14 @@ describe("ensureSession", () => {
     expect(me).toHaveBeenCalledTimes(2);
   });
 
-  it("re-probes after a session expires", async () => {
+  it("keeps an expired session expired instead of restoring it from the cache", async () => {
+    useAuthStore.getState().setSession(user, "token");
+    useAuthStore.getState().expire();
     const me = vi.spyOn(api, "me").mockResolvedValue({ user, csrf_token: "token" });
     const queryClient = createClient();
 
-    await ensureSession(queryClient);
-    useAuthStore.getState().expire();
-    await ensureSession(queryClient);
-
-    expect(me).toHaveBeenCalledTimes(1);
+    await expect(ensureSession(queryClient)).resolves.toEqual(user);
+    expect(me).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().status).toBe("expired");
   });
 });

@@ -118,8 +118,8 @@ export function FaultLab() {
   useDocumentTitle("Fault lab");
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 bg-bg p-6 text-text">
-      <h1 className="text-xl font-semibold">Fault lab</h1>
+    <div className="mx-auto flex w-full max-w-content flex-col gap-6 p-4 text-text sm:p-6">
+      <h1 className="text-lg font-semibold">Fault lab</h1>
       <p className="text-sm text-muted">
         Development-only page. Add ?fault=resource:kind to the URL to force failures.
       </p>
@@ -144,6 +144,6 @@ export function FaultLab() {
         </h2>
         <p className="text-sm text-text">{alertTypeLabel("solar_flare")}</p>
       </section>
-    </main>
+    </div>
   );
 }

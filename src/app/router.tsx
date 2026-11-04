@@ -22,6 +22,7 @@ import { recordError } from "../errors/report";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
 import { LoginPage } from "../features/login/components/LoginPage";
 import { AppShell } from "../features/shell/components/AppShell";
+import { SessionExpiryDialog } from "../features/shell/components/SessionExpiryDialog";
 import { ShellSkeleton } from "../features/shell/components/ShellSkeleton";
 import { StyleGuidePage } from "../features/styleguide/StyleGuidePage";
 import { ForbiddenState } from "../ui/StatePanel";
@@ -100,9 +101,12 @@ function RouteBoundary({ children }: { children: ReactNode }) {
 
 function RootLayout() {
   return (
-    <RouteBoundary>
-      <Outlet />
-    </RouteBoundary>
+    <>
+      <RouteBoundary>
+        <Outlet />
+      </RouteBoundary>
+      <SessionExpiryDialog />
+    </>
   );
 }
 
@@ -260,7 +264,7 @@ const forbiddenRoute = createRoute({
 const devRoutes = import.meta.env.DEV
   ? [
       createRoute({
-        getParentRoute: () => rootRoute,
+        getParentRoute: () => appRoute,
         path: "/dev/faults",
         component: lazyRouteComponent(() => import("../dev/FaultLab"), "FaultLab"),
       }),
@@ -283,8 +287,8 @@ const routeTree = rootRoute.addChildren([
     auditRoute,
     playbackRoute,
     forbiddenRoute,
+    ...devRoutes,
   ]),
-  ...devRoutes,
 ]);
 
 export function createAppRouter(queryClient: QueryClient) {

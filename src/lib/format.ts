@@ -96,6 +96,15 @@ export function formatRelativeTime(iso: string, now: number, timeZone?: string):
   return formatAbsoluteTime(iso, timeZone);
 }
 
+export function formatClockTime(timestamp: number | null | undefined): string {
+  if (!isNumber(timestamp)) return MISSING;
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(timestamp));
+}
+
 export function formatAgeSeconds(seconds: number | null | undefined): string {
   if (!isNumber(seconds)) return MISSING;
   if (seconds < 60) return `${Math.floor(seconds)}s`;

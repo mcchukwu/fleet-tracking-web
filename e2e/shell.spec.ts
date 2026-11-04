@@ -124,6 +124,88 @@ test.describe("app shell", () => {
     await expect(page.getByRole("dialog", { name: "Navigation" })).toHaveCount(0);
   });
 
+  test("keyboard shortcuts focus search, navigate and open the dialog", async ({ page }) => {
+    await page.goto("/map");
+    await expect(page.getByRole("heading", { name: "Map" })).toBeVisible();
+    await page.keyboard.press("/");
+    await expect(page.getByRole("searchbox", { name: "Search vehicles" }).first()).toBeFocused();
+
+    await page.getByRole("heading", { name: "Map" }).click();
+    await page.keyboard.press("g");
+    await page.keyboard.press("a");
+    await expect(page).toHaveURL(/\/alerts$/);
+
+    await page.keyboard.press("?");
+    await expect(page.getByRole("dialog", { name: "Keyboard shortcuts" })).toBeVisible();
+    await expect(page.getByText("Focus vehicle search")).toBeVisible();
+    await captureForReview(page, "01-shell-shortcuts");
+
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog", { name: "Keyboard shortcuts" })).toHaveCount(0);
+  });
+
+  test("shortcuts do not fire while typing in the search field", async ({ page }) => {
+    await page.goto("/map");
+    if (isMobile(page)) {
+      await page.getByRole("button", { name: "Search vehicles" }).click();
+    }
+    const search = page.getByRole("searchbox", { name: "Search vehicles" }).first();
+    await search.click();
+    await search.pressSequentially("?ga");
+
+    await expect(page.getByRole("dialog", { name: "Keyboard shortcuts" })).toHaveCount(0);
+    await expect(page).toHaveURL(/\/map$/);
+    await expect(search).toHaveValue("?ga");
+  });
+
+  test("a 401 mid-session opens the blocking expiry dialog and resumes", async ({ page }) => {
+    await page.goto("/map");
+    await page.goto("/dev/faults");
+    await expect(page.getByRole("heading", { name: "Fault lab" })).toBeVisible();
+    await page.evaluate(() =>
+      history.replaceState({}, "", "/dev/faults?fault=alerts:unauthenticated"),
+    );
+    await page.getByRole("button", { name: "Refetch alerts" }).click();
+
+    const dialog = page.getByRole("dialog", { name: "Your session expired" });
+    await expect(dialog).toBeVisible({ timeout: 10_000 });
+    await expect(dialog).toContainText("You'll stay where you are.");
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeVisible();
+    await captureForReview(page, "01-shell-session-expired");
+
+    await page.evaluate(() => history.replaceState({}, "", "/dev/faults"));
+    await page.getByLabel("Email", { exact: true }).fill("dispatcher@demo.ftb");
+    await page.getByLabel("Password", { exact: true }).fill("DemoPass123!");
+    await page.getByRole("button", { name: "Sign in" }).click();
+
+    await expect(dialog).toHaveCount(0, { timeout: 10_000 });
+    await expect(page.getByRole("heading", { name: "Fault lab" })).toBeVisible();
+  });
+
+  test("offline shows the global banner with a disabled-change warning", async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "onLine", { configurable: true, get: () => false });
+    });
+    await page.goto("/map");
+
+    await expect(page.getByText(/You're offline/)).toBeVisible();
+    await expect(page.getByText(/Changes are disabled/)).toBeVisible();
+    await expectNoHorizontalScroll(page);
+    await expectNoAxeViolations(page);
+    await captureForReview(page, "01-shell-offline-banner");
+  });
+
+  test("an update announcement shows the reload banner", async ({ page }) => {
+    await page.goto("/map");
+    await expect(page.getByRole("heading", { name: "Map" })).toBeVisible();
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent("fleet:update-available")));
+
+    await expect(page.getByText("A new version is available.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Reload" })).toBeVisible();
+    await captureForReview(page, "01-shell-update-banner");
+  });
+
   test("a viewer who deep-links to audit gets the shell forbidden state", async ({ page }) => {
     await setRoleOnLoad(page, "viewer");
     await page.goto("/audit");

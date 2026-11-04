@@ -148,3 +148,39 @@ Trade-off: a service-worker-served response can succeed while `navigator.onLine`
 ## 2026-11-04: Slow-action states wait for the shell
 
 `getSlowState()` and its copy exist and are unit-tested, but Slice 0 has no screen that starts a user action, so there is no 3s/10s surface to exercise in Playwright. The fault lab exposes a 12s `slow` kind; the e2e scenario lands with Slice 1, which owns "Still working…", Cancel and Retry. Recorded here so the §11 gap is explicit rather than forgotten.
+
+## 2026-11-04: Session restore is a shared query, and expiry survives navigation
+
+`ensureSession(queryClient)` resolves through `queryClient.ensureQueryData(meQueryOptions())`, so a route guard and any later reader share one `/me` response. An `expired` session is returned as-is and is never restored from the cached response: a router re-render or URL change while the expiry dialog is open must not silently sign the user back in. Only a successful `POST /auth/login` moves `expired` to `authenticated`.
+
+Trade-off: an explicit logout or a different-user sign-in is the only path that clears the cached `/me` result. The auth store stays the single source of truth for the session state.
+
+## 2026-11-04: The mock models the real session lifecycle
+
+`/auth/login` sets a persisted mock session and returns the real `invalid_credentials` / `invalid_request` codes. `POST /auth/logout` requires the CSRF header and returns the real `csrf_failed` code, then marks the mock signed out so a reload stays anonymous. `fleet.mockRole` remains an explicit role switch for e2e, and login clears it. Wrong-password `401` is reported to the form but never raises the session-expiry event.
+
+Trade-off: the mock has a default demo dispatcher session when nothing is stored, so existing foundation tests keep working. Tests that need an anonymous start clear it explicitly.
+
+## 2026-11-04: Login 429 and Retry-After remain unverified
+
+Sixteen rapid failures against staging never produced a `429`, and no rate-limit headers appeared. The form parses `Retry-After` (seconds or HTTP date), counts down live, and falls back to "Try again shortly." when the header is absent. Both paths are covered by MSW and e2e. This is recorded as an unverified contract, not a confirmed one.
+
+Trade-off: if staging later sends a different code or header name, the catalog needs one edit and the countdown keeps working without it.
+
+## 2026-11-04: `Online` is honest before the live socket exists
+
+Slice 1 has no WebSocket, so the top-bar indicator shows `Online` (green dot) while the browser is online rather than claiming `Live`. The shell computes `live` and `reconnecting` from the connection store and will use them automatically when Slice 2 opens the socket. The label collapses to a dot with the accessible name `Connection: Online` below `md`.
+
+Trade-off: the state name is temporary; Slice 2 changes the derivation, not the component anatomy.
+
+## 2026-11-04: Shell navigation is capability-driven
+
+The rail and mobile menu render from `navForRole(role)` with `read`, `mutate` and `audit` capabilities. Hidden destinations are not disabled: a deep link to a hidden route reaches `/forbidden` inside the shell with a link back to the map. Active items use `aria-current="page"` and the accent-soft background.
+
+Trade-off: adding a screen means adding one line to `src/features/shell/nav.ts`; the role matrix test fails if the capability is wrong.
+
+## 2026-11-04: Shell-only tokens are added, not hard-coded
+
+`--spacing-touch` (44px), `--spacing-rail-expanded` (200px), `--container-dialog` (480px) and `--container-content` (1440px) are design tokens, plus `--overlay` for dialog backdrops and small `z-menu`/`z-dialog`/`z-toast`/`z-banner` utilities for the stacking scale. The guard forbids arbitrary Tailwind values, so these values have to exist as tokens.
+
+Trade-off: four layout tokens and one overlay token now live in the design system; the alternative was arbitrary values in five components.

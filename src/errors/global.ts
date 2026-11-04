@@ -87,12 +87,16 @@ export function handleGlobalError(cause: unknown, meta?: FleetMeta): AppError {
     resource: meta?.resource,
     route: typeof window === "undefined" ? "/" : window.location.pathname,
   });
+  if (error.kind === "aborted") return error;
+
   recordError(error);
   recordRequestFailure(meta?.resource ?? error.context.resource ?? "unknown", error.kind);
 
-  if (error.kind === "unauthenticated") appEvent("fleet:session-expired");
+  if (error.kind === "unauthenticated" && meta?.resource !== "/auth/login") {
+    appEvent("fleet:session-expired");
+  }
   if (error.kind === "chunk") appEvent("fleet:update-available");
-  if (error.kind !== "aborted" && !shouldDedupe(error.kind, errorKey(error), error.at)) {
+  if (!shouldDedupe(error.kind, errorKey(error), error.at)) {
     appEvent("fleet:error-announced", { kind: error.kind, key: errorKey(error) });
   }
 

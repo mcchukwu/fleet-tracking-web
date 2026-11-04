@@ -26,6 +26,25 @@ test.describe("foundation smoke", () => {
     expect(errors).toEqual([]);
   });
 
+  test("the styleguide captures the shell primitives in both accents", async ({ page }) => {
+    await page.goto("/styleguide");
+
+    for (const [id, name] of [
+      ["overlays", "01-styleguide-overlays"],
+      ["menus", "01-styleguide-menus"],
+      ["toasts", "01-styleguide-toasts"],
+      ["banners", "01-styleguide-banners"],
+      ["shell", "01-styleguide-shell-login"],
+    ] as const) {
+      await page.locator(`#${id}`).scrollIntoViewIfNeeded();
+      await captureForReview(page, name);
+    }
+
+    await page.getByRole("button", { name: "Violet accent" }).click();
+    await page.locator("#shell").scrollIntoViewIfNeeded();
+    await captureForReview(page, "01-styleguide-shell-violet");
+  });
+
   test("the index route opens the map inside the shell", async ({ page }) => {
     await page.goto("/");
     await expect(page).toHaveURL(/\/map$/);
