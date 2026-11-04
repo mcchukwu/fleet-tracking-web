@@ -1,7 +1,8 @@
 import { QueryCache, QueryClient, MutationCache } from "@tanstack/react-query";
-import { normalize, isAutoRetryable } from "./normalize";
+import { useSyncExternalStore } from "react";
+import { normalize, isAutoRetryable, errorKey } from "./normalize";
 import { isAppError } from "./types";
-import { recordError } from "./report";
+import { recordError, shouldDedupe } from "./report";
 import { claimChunkReload } from "../lib/storage";
 import type { AppError, AppErrorKind } from "./types";
 import type { FleetMeta } from "../api/queryMeta";
@@ -15,6 +16,28 @@ interface Failure {
 }
 
 let failures: Failure[] = [];
+let stormActive = false;
+const stormListeners = new Set<() => void>();
+
+function syncStorm(now: number): void {
+  const next = failures.filter((failure) => now - failure.at <= STORM_WINDOW_MS).length >= 3;
+  if (next === stormActive) return;
+  stormActive = next;
+  for (const listener of stormListeners) listener();
+}
+
+export function subscribeErrorStorm(listener: () => void): () => void {
+  stormListeners.add(listener);
+  return () => stormListeners.delete(listener);
+}
+
+export function getErrorStorm(): boolean {
+  return stormActive;
+}
+
+export function useErrorStorm(): boolean {
+  return useSyncExternalStore(subscribeErrorStorm, getErrorStorm, () => false);
+}
 
 export function recordRequestFailure(
   resource: string,
@@ -26,6 +49,7 @@ export function recordRequestFailure(
   if (!failures.some((failure) => failure.resource === resource)) {
     failures = [...failures, { resource, at }];
   }
+  syncStorm(at);
 }
 
 export function isErrorStorm(now = Date.now()): boolean {
@@ -34,10 +58,12 @@ export function isErrorStorm(now = Date.now()): boolean {
 
 export function recordRequestSuccess(): void {
   failures = [];
+  syncStorm(Date.now());
 }
 
 export function resetErrorStorm(): void {
   failures = [];
+  stormActive = false;
 }
 
 function appEvent(name: string, detail?: unknown): void {
@@ -55,6 +81,9 @@ export function handleGlobalError(cause: unknown, meta?: FleetMeta): AppError {
 
   if (error.kind === "unauthenticated") appEvent("fleet:session-expired");
   if (error.kind === "chunk") appEvent("fleet:update-available");
+  if (error.kind !== "aborted" && !shouldDedupe(error.kind, errorKey(error), error.at)) {
+    appEvent("fleet:error-announced", { kind: error.kind, key: errorKey(error) });
+  }
 
   return error;
 }

@@ -1,8 +1,11 @@
 import { ZodError } from "zod";
 import {
+  ClipboardError,
   MapError,
+  StorageError,
   isApiError,
   isAppError,
+  isChunkLoadError,
   isTimeoutError,
   type AppError,
   type AppErrorKind,
@@ -41,12 +44,18 @@ function retryableKind(kind: AppErrorKind): boolean {
   return kind === "network" || kind === "timeout" || kind === "server" || kind === "unavailable";
 }
 
+function browserIsOffline(): boolean {
+  return typeof navigator === "undefined" ? false : navigator.onLine === false;
+}
+
 export function normalize(
   cause: unknown,
   context: ErrorContext = {},
   options: NormalizeOptions = {},
 ): AppError {
   if (isAppError(cause)) return cause;
+
+  const offline = options.offline ?? browserIsOffline();
 
   const base = {
     outcome: options.outcome ?? "failed",
@@ -79,6 +88,18 @@ export function normalize(
     return { ...base, kind: "map", retryable: true };
   }
 
+  if (isChunkLoadError(cause)) {
+    return { ...base, kind: "chunk", retryable: false };
+  }
+
+  if (cause instanceof StorageError) {
+    return { ...base, kind: "storage", retryable: false };
+  }
+
+  if (cause instanceof ClipboardError) {
+    return { ...base, kind: "clipboard", retryable: false };
+  }
+
   if (isApiError(cause)) {
     const kind = kindForStatus(cause.status, cause.code);
     return {
@@ -98,7 +119,7 @@ export function normalize(
   }
 
   if (cause instanceof TypeError) {
-    return { ...base, kind: options.offline ? "offline" : "network", retryable: !options.offline };
+    return { ...base, kind: offline ? "offline" : "network", retryable: !offline };
   }
 
   return { ...base, kind: "client", retryable: false };

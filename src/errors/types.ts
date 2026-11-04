@@ -71,6 +71,32 @@ export class MapError extends Error {
   }
 }
 
+export class StorageError extends Error {
+  constructor(message = "Offline storage is unavailable") {
+    super(message);
+    this.name = "StorageError";
+  }
+}
+
+export class ClipboardError extends Error {
+  constructor(message = "Copy was denied", options?: ErrorOptions) {
+    super(message, options);
+    this.name = "ClipboardError";
+  }
+}
+
+const chunkMessages = [
+  "failed to fetch dynamically imported module",
+  "error loading dynamically imported module",
+  "importing a module script failed",
+];
+
+export function isChunkLoadError(value: unknown): boolean {
+  if (!(value instanceof Error)) return false;
+  const message = value.message.toLowerCase();
+  return chunkMessages.some((fragment) => message.includes(fragment));
+}
+
 export function isAppError(value: unknown): value is AppError {
   if (typeof value !== "object" || value === null) return false;
   const candidate = value as Partial<AppError>;

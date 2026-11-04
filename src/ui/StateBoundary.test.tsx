@@ -1,6 +1,7 @@
-import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { act, render, screen } from "@testing-library/react";
 import { StateBoundary } from "./StateBoundary";
+import { recordRequestFailure, resetErrorStorm } from "../errors/global";
 import type { AppError } from "../errors/types";
 
 const requestError: AppError = {
@@ -10,6 +11,10 @@ const requestError: AppError = {
   context: { route: "/alerts" },
   at: 0,
 };
+
+afterEach(() => {
+  resetErrorStorm();
+});
 
 describe("StateBoundary", () => {
   it("renders a skeleton while loading", () => {
@@ -30,8 +35,21 @@ describe("StateBoundary", () => {
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
-  it("keeps cached content dimmed when a refresh fails", () => {
-    render(
+  it("renders region errors compact during an error storm", () => {
+    render(<StateBoundary state="error" error={requestError} onRetry={vi.fn()} />);
+    expect(screen.getByText("Can't reach the server")).toBeInTheDocument();
+
+    act(() => {
+      recordRequestFailure("alerts", "server");
+      recordRequestFailure("vehicles", "network");
+      recordRequestFailure("trips", "unavailable");
+    });
+
+    expect(screen.queryByText("Check your connection. Your data is safe.")).toBeNull();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+  });
+
+  it("keeps cached content dimmed when a refresh fails", () => {    render(
       <StateBoundary state="error" error={requestError} onRetry={vi.fn()}>
         <p>cached vehicles</p>
       </StateBoundary>,

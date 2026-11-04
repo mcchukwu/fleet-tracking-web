@@ -15,7 +15,7 @@ import { normalize } from "./normalize";
 import { diagnosticsJson, recordError } from "./report";
 import { Button } from "../ui/Button";
 import { cn } from "../ui/cn";
-import type { AppError, AppErrorKind } from "./types";
+import { ClipboardError, type AppError, type AppErrorKind } from "./types";
 
 const icons: Partial<Record<AppErrorKind, typeof TriangleAlert>> = {
   offline: WifiOff,
@@ -73,7 +73,12 @@ export function ErrorState({
       await navigator.clipboard.writeText(diagnosticsJson());
       setCopyStatus("copied");
     } catch (cause) {
-      recordError(normalize(cause, { route: error.context.route, action: "copy diagnostics" }));
+      recordError(
+        normalize(new ClipboardError(undefined, { cause }), {
+          route: error.context.route,
+          action: "copy diagnostics",
+        }),
+      );
       setCopyStatus("failed");
     }
   }

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { ErrorState } from "../errors/ErrorState";
+import { useErrorStorm } from "../errors/global";
 import type { AppError } from "../errors/types";
 import { cn } from "./cn";
 import { EmptyState, ForbiddenState, LoadingState } from "./StatePanel";
@@ -45,6 +46,8 @@ export function StateBoundary({
   className,
   children,
 }: StateBoundaryProps) {
+  const storm = useErrorStorm();
+
   if (state === "loading") {
     return <div className={className}>{loading ?? <LoadingState />}</div>;
   }
@@ -75,7 +78,7 @@ export function StateBoundary({
     if (!children) {
       return (
         <div className={className}>
-          <ErrorState error={resolved} onRetry={onRetry} />
+          <ErrorState error={resolved} onRetry={onRetry} compact={storm} />
         </div>
       );
     }

@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { ZodError } from "zod";
-import { ApiError, TimeoutError } from "./types";
+import {
+  ApiError,
+  ClipboardError,
+  MapError,
+  StorageError,
+  TimeoutError,
+} from "./types";
 import { normalize } from "./normalize";
 
 const context = { route: "/map" };
@@ -25,6 +31,37 @@ describe("normalize", () => {
   it("prefers offline over a generic network failure", () => {
     expect(kindOf(new TypeError("Failed to fetch"), { offline: true }).kind).toBe("offline");
     expect(kindOf(new TypeError("Failed to fetch"), { offline: false }).kind).toBe("network");
+  });
+
+  it("detects an offline browser when no hint is given", () => {
+    const online = Object.getOwnPropertyDescriptor(navigator, "onLine");
+    Object.defineProperty(navigator, "onLine", { configurable: true, value: false });
+    try {
+      const error = kindOf(new TypeError("Failed to fetch"));
+      expect(error.kind).toBe("offline");
+      expect(error.retryable).toBe(false);
+    } finally {
+      if (online) Object.defineProperty(navigator, "onLine", online);
+      else Reflect.deleteProperty(navigator, "onLine");
+    }
+    expect(kindOf(new TypeError("Failed to fetch")).kind).toBe("network");
+  });
+
+  it("maps a map adapter failure", () => {
+    const error = kindOf(new MapError("WebGL context lost"));
+    expect(error.kind).toBe("map");
+    expect(error.retryable).toBe(true);
+  });
+
+  it("maps a failed lazy chunk to chunk", () => {
+    const error = kindOf(new TypeError("Failed to fetch dynamically imported module: /assets/map.js"));
+    expect(error.kind).toBe("chunk");
+    expect(error.retryable).toBe(false);
+  });
+
+  it("maps storage and clipboard failures", () => {
+    expect(kindOf(new StorageError()).kind).toBe("storage");
+    expect(kindOf(new ClipboardError()).kind).toBe("clipboard");
   });
 
   it("maps a timeout", () => {

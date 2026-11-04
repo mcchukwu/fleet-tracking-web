@@ -1,14 +1,19 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  getErrorStorm,
+  handleGlobalError,
   isErrorStorm,
   recordRequestFailure,
   recordRequestSuccess,
   resetErrorStorm,
+  subscribeErrorStorm,
 } from "./global";
+import { clearDiagnostics } from "./report";
 
 describe("error storm control", () => {
   beforeEach(() => {
     resetErrorStorm();
+    clearDiagnostics();
   });
 
   it("triggers after three distinct resources fail within thirty seconds", () => {
@@ -47,5 +52,38 @@ describe("error storm control", () => {
     expect(isErrorStorm(4_000)).toBe(true);
     recordRequestSuccess();
     expect(isErrorStorm(5_000)).toBe(false);
+  });
+
+  it("notifies subscribers when the storm starts and clears", () => {
+    const listener = vi.fn();
+    const unsubscribe = subscribeErrorStorm(listener);
+
+    recordRequestFailure("alerts", "server");
+    recordRequestFailure("vehicles", "network");
+    expect(listener).not.toHaveBeenCalled();
+    expect(getErrorStorm()).toBe(false);
+
+    recordRequestFailure("trips", "unavailable");
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(getErrorStorm()).toBe(true);
+
+    recordRequestSuccess();
+    expect(listener).toHaveBeenCalledTimes(2);
+    expect(getErrorStorm()).toBe(false);
+
+    unsubscribe();
+    recordRequestFailure("drivers", "server");
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
+
+  it("announces an error once per dedupe window", () => {
+    const announced = vi.fn();
+    window.addEventListener("fleet:error-announced", announced);
+
+    handleGlobalError(new TypeError("Failed to fetch"), { scope: "screen", resource: "alerts" });
+    handleGlobalError(new TypeError("Failed to fetch"), { scope: "screen", resource: "alerts" });
+
+    expect(announced).toHaveBeenCalledTimes(1);
+    window.removeEventListener("fleet:error-announced", announced);
   });
 });
