@@ -132,6 +132,7 @@ export function vehicleLayers(tokens: MapTokens): LayerSpecification[] {
         "icon-allow-overlap": true,
         "icon-ignore-placement": true,
         "icon-rotation-alignment": "map",
+        "icon-rotate": ["coalesce", ["get", "heading"], 0],
       },
       paint: {
         "icon-opacity": ["case", ["get", "stale"], 0.6, 1],

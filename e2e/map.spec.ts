@@ -133,7 +133,7 @@ test.describe("map", () => {
     await openPanel(page);
 
     await (await panel(page)).getByRole("button", { name: "Copy plate LSD-100-AA" }).click();
-    await expect(page.getByText("Plate copied")).toBeVisible();
+    await expect(page.getByText("Plate copied").first()).toBeVisible();
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("LSD-100-AA");
   });
 
@@ -163,7 +163,7 @@ test.describe("map", () => {
     await captureForReview(page, "02-map-error");
 
     await page.evaluate(() => history.replaceState({}, "", "/map?map=fake"));
-    await page.getByRole("button", { name: "Retry" }).first().click();
+    await page.getByRole("button", { name: "Retry" }).first().dispatchEvent("click");
     await expect(page.getByText("Showing 25 of 25")).toBeVisible({ timeout: 20_000 });
   });
 

@@ -353,7 +353,7 @@ The API gives `online`; the UI derives a display status. The derivation lives in
 | Offline | `--offline` | hollow circle (2px stroke) | Offline |
 | Alert | `--alert` | filled circle with a white `!` and an outer ring | Alert |
 
-Alert outranks the other statuses for display. The list shows the status as a pill (§10.4) next to the plate.
+Alert outranks the other statuses for display. The list shows the status as a pill (§10.4) next to the plate. On the map, alert status comes from open alerts inside a 15-minute window (not from every historical open alert); the KPI and Alerts screen still count every open alert.
 
 ### 9.2 Data freshness
 
@@ -370,7 +370,7 @@ The KPI strip always shows `last data age`. The top-bar connection indicator has
 ### 9.3 Map layers
 
 - **Basemap:** desaturated, low contrast, minimal labels, so markers carry the visual weight. The map is provider-neutral: colours, stroke patterns and marker anatomy reach every adapter through `MapTokens` (`src/map/tokens.ts`), and each adapter ships light and dark styles. Offline support is a declared adapter capability; the MapLibre adapter uses a self-hosted PMTiles file.
-- **Vehicle marker:** 24px circle, 2px ring in `--surface`, shadow-menu. Plate label appears at zoom ≥ 13 in a 12px mono chip. Below zoom 11, vehicles cluster; the cluster shows its count and takes the colour of the worst status inside.
+- **Vehicle marker:** 24px circle, 2px ring in `--surface`, shadow-menu. Plate label appears at zoom ≥ 13 in a 12px chip. The label uses the basemap's Noto Sans glyphs until the self-hosted mono glyph pack ships; this is a recorded deviation, not a design change. Below zoom 11, vehicles cluster; the cluster shows its count and takes the colour of the worst status inside.
 - **Selected vehicle:** 2px `--accent` outer ring and the marker raised above the others.
 - **Geofence:** polygon fill at 12% opacity, 2px stroke. Kind is encoded by colour *and* stroke pattern:
 
@@ -437,6 +437,8 @@ Anatomy: `[icon or dot] [label]`, 20px tall, `--radius-full`, `text-xs` weight 5
 ### 10.5 Stat (KPI)
 
 Not a decorative card. A bordered cell in a single strip with 16px horizontal and vertical padding: `label-caps` label above a `stat` number, one optional delta or hint line in `text-xs`. Clicking a stat filters the relevant view (`Open alerts` opens Alerts filtered to open).
+
+Below `lg`, the map uses the compact variant: a 2×2 grid of the same four cells with a 20px number, `py-2`, and no left border. The strip leaves a right gutter for native map controls.
 
 ### 10.6 Drawer (vehicle detail)
 
@@ -530,7 +532,7 @@ Global banner states (below the top bar, 32px, dismissible only when resolved):
 
 | Screen | Pattern |
 |---|---|
-| Map | Full-bleed map, left list panel, KPI strip, right drawer, geofence layer toggle in map controls |
+| Map | Full-bleed map, left list panel, KPI strip, right drawer, geofence layer toggle in map controls. Below `lg` the panel becomes a bottom sheet with peek (96px), half and full snap points; the KPI strip becomes the compact 2×2 grid; fit and geofence controls move into the sheet header. Vehicle rows are 48px, two lines: status pill, mono plate and data age; driver and speed. The plate is a copy button layered above the row's selection button. The map tooltip shows plate, speed and data age, clamped to the map edge. Attribution is a static link rendered by the feature, never injected from a remote style. |
 | Alerts, Trips, Drivers, Audit | Page title, filter row (selects and search, 32px), dense table, detail in a right drawer, never a separate page |
 | Geofences | Split view: list left (360px), map right with draw tools; unsaved polygon shown with dashed `--accent` stroke |
 | Playback | Map with route, bottom control bar: range selector, play, speed, scrubber, `Resolution: 30s` label from the API |

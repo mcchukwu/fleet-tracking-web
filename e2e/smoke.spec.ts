@@ -36,6 +36,7 @@ test.describe("foundation smoke", () => {
       ["toasts", "01-styleguide-toasts"],
       ["banners", "01-styleguide-banners"],
       ["shell", "01-styleguide-shell-login"],
+      ["data-display", "02-styleguide-data-display"],
     ] as const) {
       await page.locator(`#${id}`).scrollIntoViewIfNeeded();
       await captureForReview(page, name);

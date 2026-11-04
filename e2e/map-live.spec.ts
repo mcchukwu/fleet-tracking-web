@@ -10,6 +10,12 @@ async function gotoLiveMap(page: Page, search = ""): Promise<void> {
     .toBe(true);
 }
 
+async function waitForLive(page: Page): Promise<void> {
+  await expect
+    .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.connection.socket), { timeout: 20_000 })
+    .toBe("live");
+}
+
 async function waitForPosition(page: Page, key: string): Promise<void> {
   await expect
     .poll(() => page.evaluate((vehicle) => window.__FLEET_DEBUG__?.live.positions[vehicle]?.positionAt ?? 0, key), {
@@ -35,6 +41,7 @@ test.describe("live feed", () => {
     liveSocket,
   }) => {
     await gotoLiveMap(page);
+    await waitForLive(page);
     await waitForPosition(page, "demo-imei-0019");
     const before = await page.evaluate(
       () => window.__FLEET_DEBUG__?.live.positions["demo-imei-0019"]?.positionAt ?? 0,
@@ -64,6 +71,7 @@ test.describe("live feed", () => {
     });
 
     await gotoLiveMap(page);
+    await waitForLive(page);
     await waitForPosition(page, "demo-imei-0019");
     const before = snapshots;
 
@@ -84,6 +92,7 @@ test.describe("live feed", () => {
     liveSocket,
   }) => {
     await gotoLiveMap(page);
+    await waitForLive(page);
     await waitForPosition(page, "demo-imei-0002");
     const titleBefore = await page.title();
 
@@ -123,6 +132,7 @@ test.describe("live feed", () => {
 
   test("a burst of alert frames produces one summary toast", async ({ page, liveSocket }) => {
     await gotoLiveMap(page);
+    await waitForLive(page);
     await waitForPosition(page, "demo-imei-0002");
     const socket = liveSocket.latest();
     if (!socket) throw new Error("The live socket is not connected");
@@ -157,6 +167,7 @@ test.describe("live feed", () => {
   test("batching keeps frame work out of the per-message path", async ({ page, liveSocket }) => {
     test.setTimeout(120_000);
     await gotoLiveMap(page, "perf=5000");
+    await waitForLive(page);
     await expect
       .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.renderedVehicleCount), {
         timeout: 30_000,
