@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useErrorStorm } from "../../../errors/global";
 import { formatClockTime } from "../../../lib/format";
-import { useConnection } from "../../../stores/connection";
+import { useConnection, type SocketState } from "../../../stores/connection";
 import { Banner } from "../../../ui/Banner";
 
 function useUpdateAvailable(): boolean {
@@ -15,8 +15,24 @@ function useUpdateAvailable(): boolean {
   return available;
 }
 
+export const RECONNECT_BANNER_DELAY_MS = 10_000;
+
+function useReconnectVisible(socket: SocketState, socketDownAt: number | null): boolean {
+  const [dueAt, setDueAt] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (socket !== "reconnecting" || socketDownAt === null) return;
+    const remaining = RECONNECT_BANNER_DELAY_MS - (Date.now() - socketDownAt);
+    const timer = setTimeout(() => setDueAt(socketDownAt), Math.max(0, remaining));
+    return () => clearTimeout(timer);
+  }, [socket, socketDownAt]);
+
+  return socket === "reconnecting" && socketDownAt !== null && dueAt === socketDownAt;
+}
+
 export function GlobalBanners() {
-  const { network, socket, lastDataAt } = useConnection();
+  const { network, socket, socketDownAt, lastDataAt } = useConnection();
+  const reconnecting = useReconnectVisible(socket, socketDownAt);
   const storm = useErrorStorm();
   const update = useUpdateAvailable();
   const navigate = useNavigate();
@@ -35,7 +51,7 @@ export function GlobalBanners() {
     );
   }
 
-  if (socket === "reconnecting") {
+  if (socket === "reconnecting" && reconnecting) {
     return <Banner tone="warning" message="Reconnecting to live updates…" />;
   }
 

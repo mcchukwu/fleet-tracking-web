@@ -136,7 +136,7 @@ test.describe("app shell", () => {
 
   test("escape clears the map search query", async ({ page }) => {
     await page.goto("/map?q=KJA");
-    await expect(page.getByRole("heading", { name: "Map" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
 
     await page.keyboard.press("Escape");
 
@@ -160,13 +160,13 @@ test.describe("app shell", () => {
 
   test("keyboard shortcuts focus search, navigate and open the dialog", async ({ page }) => {
     await page.goto("/map");
-    await expect(page.getByRole("heading", { name: "Map" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
     await page.keyboard.press("/");
     const search = page.getByRole("searchbox", { name: "Search vehicles" }).first();
     await expect(search).toBeFocused();
     await expectFocusVisible(search);
 
-    await page.getByRole("heading", { name: "Map" }).click();
+    await page.locator("main").focus();
     await page.keyboard.press("g");
     await page.keyboard.press("a");
     await expect(page).toHaveURL(/\/alerts$/);
@@ -236,7 +236,7 @@ test.describe("app shell", () => {
 
   test("an update announcement shows the reload banner", async ({ page }) => {
     await page.goto("/map");
-    await expect(page.getByRole("heading", { name: "Map" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
     await page.evaluate(() => window.dispatchEvent(new CustomEvent("fleet:update-available")));
 
     await expect(page.getByText("A new version is available.")).toBeVisible();

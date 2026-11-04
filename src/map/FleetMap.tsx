@@ -175,7 +175,9 @@ export function FleetMap({
         className,
       )}
     >
-      <div ref={canvasRef} data-testid="fleet-map-canvas" aria-hidden="true" className="absolute inset-0" />
+      <div className="absolute inset-0">
+        <div ref={canvasRef} data-testid="fleet-map-canvas" aria-hidden="true" className="h-full w-full" />
+      </div>
       {!loaded && !error ? (
         <div className="absolute inset-x-0 top-0 z-10 bg-surface">
           <LoadingBar label="Loading map" />

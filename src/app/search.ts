@@ -6,7 +6,9 @@ export const mapSearchSchema = z.object({
   q: text,
   status: text,
   depot: text,
-  v: text,
+  sort: z.enum(["plate", "lastSeen", "status"]).optional().catch(undefined),
+  view: z.coerce.number().int().min(0).max(1).optional().catch(undefined),
+  v: z.uuid().optional().catch(undefined),
 });
 
 export const alertsSearchSchema = z.object({

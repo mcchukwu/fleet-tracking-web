@@ -1,17 +1,26 @@
 import { cn } from "./cn";
 
-interface StatProps {
+export interface StatProps {
   label: string;
   value: string | number;
   hint?: string;
+  size?: "md" | "sm";
   className?: string;
 }
 
-export function Stat({ label, value, hint, className }: StatProps) {
+export function Stat({ label, value, hint, size = "md", className }: StatProps) {
   return (
-    <div className={cn("flex flex-col gap-1 border-l border-border px-4 py-4 first:border-l-0", className)}>
+    <div
+      className={cn(
+        "flex flex-col gap-1 border-l border-border first:border-l-0",
+        size === "md" ? "px-4 py-4" : "px-3 py-2",
+        className,
+      )}
+    >
       <span className="label-caps text-muted">{label}</span>
-      <span className="text-stat text-text">{value}</span>
+      <span className={cn("tabular-nums text-text", size === "md" ? "text-stat" : "text-lg font-medium")}>
+        {value}
+      </span>
       {hint ? <span className="text-xs text-muted">{hint}</span> : null}
     </div>
   );

@@ -1,6 +1,7 @@
 import { Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { ErrorBoundary } from "../../../errors/ErrorBoundary";
+import { LiveProvider } from "../../../live/LiveProvider";
 import { useShortcuts } from "../hooks/useShortcuts";
 import type { NavPath } from "../nav";
 import { GlobalBanners } from "./GlobalBanners";
@@ -32,7 +33,8 @@ export function AppShell() {
   useShortcuts({ onOpenShortcuts: openShortcuts, onNavigate: go, onEscape: clearTransientView });
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-bg text-text">
+    <LiveProvider>
+      <div className="flex h-screen flex-col overflow-hidden bg-bg text-text">
       <TopBar onOpenMenu={() => setMenuOpen(true)} onOpenShortcuts={openShortcuts} />
       <GlobalBanners />
 
@@ -45,8 +47,9 @@ export function AppShell() {
         </main>
       </div>
 
-      <MobileNav open={menuOpen} onClose={() => setMenuOpen(false)} />
-      <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
-    </div>
+        <MobileNav open={menuOpen} onClose={() => setMenuOpen(false)} />
+        <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+      </div>
+    </LiveProvider>
   );
 }

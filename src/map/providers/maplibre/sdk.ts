@@ -1,5 +1,9 @@
-import { Map, NavigationControl } from "maplibre-gl";
+import { Map, NavigationControl, setWorkerUrl } from "maplibre-gl";
+import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import "maplibre-gl/dist/maplibre-gl.css";
+import "./maplibre.css";
+
+setWorkerUrl(workerUrl);
 
 export type {
   GeoJSONSource,

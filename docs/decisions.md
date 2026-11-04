@@ -226,3 +226,57 @@ Trade-off: the user reaches the login screen before knowing the server did not r
 The advertised `Esc` shortcut now clears a non-empty global search (dialogs already close on Escape). Selection and drawers still belong to Slice 2/3.
 
 Trade-off: the shortcut's behaviour grows per screen; the registry lists one label, so later slices extend the handler rather than the copy.
+
+## 2026-11-04: Live positions key on `external_id`, alerts on the UUID
+
+Staging's live frames carry `vehicle_id: "demo-imei-0019"`, which is `Vehicle.external_id`; `Alert.vehicle_id` is the UUID. The live store and map markers key on `external_id` through `vehicleKey()`, and the map builds a `uuid → external_id` map from the snapshot before it maps alerts. `?v=` stores the UUID (the approved selection decision), so Slice 3 can call `GET /vehicles/{id}` and a deep link survives a reload.
+
+Trade-off: the URL is opaque and a link built from an IMEI does not select a vehicle; a mixed key would silently produce zero alerts per vehicle.
+
+## 2026-11-04: Data age comes from `recorded_at`, not `last_seen_at`
+
+Every staging snapshot row has `recorded_at`; none has `last_seen_at`, although the handoff type declares it. The snapshot schema treats position fields as optional, and a missing position means Offline with `—` for speed and age, not an error.
+
+Trade-off: the five offline vehicles appear in the list without a position; `last_seen_at` stays in the wider `Vehicle` type until a slice needs it.
+
+## 2026-11-04: Speed and heading freeze at the snapshot
+
+Captured position frames contain only `lat`, `lon` and `recorded_at`; they never carry `speed_kph` or `heading_deg`. The live store keeps the last snapshot speed/heading and records when they were reported, and the snapshot refetches every 60 seconds so a moving vehicle does not stay "moving" after it stops.
+
+Trade-off: speed can be up to 60 seconds old; the tooltip names the reported time, and the map status uses the snapshot-derived speed rather than inventing a live one.
+
+## 2026-11-04: The alert mark window is 15 minutes
+
+All 45 open staging alerts are about two days old and every online vehicle has at least one, so any-open-alert would paint the whole fleet red forever. The map shows alert status only for open alerts inside a 15-minute window; the KPI and the Alerts screen count every open alert.
+
+Trade-off: an old unacknowledged alert does not redden its vehicle on the map; the window is one constant in `src/features/map/lib/constants.ts`.
+
+## 2026-11-04: OpenFreeMap is the basemap and the adapter reports `offline: false`
+
+The MapLibre adapter uses OpenFreeMap Positron/Dark style URLs, builds every data layer from `MapTokens`, and reports `offline: false` until the self-hosted PMTiles pack arrives in Slice 13. The MapLibre worker URL is imported with Vite's `?worker&url`; without it the dev server fails to load the worker.
+
+Trade-off: the basemap needs the network and its style is not ours; the operational layers still render from tokens and the local token-built fallback style when the remote style fails within 3 seconds.
+
+## 2026-11-04: The fallback style is built from tokens, not a JSON asset
+
+The plan listed `public/map/fallback-*.json`. The adapter instead builds a background-only fallback from the current `MapTokens`, so it follows light/dark and accent changes without a second source of truth.
+
+Trade-off: there is no static fallback file for CI to diff; the fallback stays in one place.
+
+## 2026-11-04: Cached error states keep data legible, not dimmed
+
+`StateBoundary` used `opacity-60` over cached children during a refresh error. Axe measured the blended status and secondary text below 4.5:1, so the map panel now keeps the rows at full contrast and relies on the explicit "Couldn't refresh · Retry" line to carry the state.
+
+Trade-off: a deliberate deviation from design-system §11's "dimmed" treatment; accessibility wins and the error line remains visible.
+
+## 2026-11-04: `view=1` is a numeric search value
+
+TanStack Router re-serializes string values that begin with a digit as JSON (`view="1"`), so the map schema coerces `view` to `0 | 1` and the URL stays `view=1`.
+
+Trade-off: the search param is a number rather than a string; `onlyInView` is `search.view === 1`.
+
+## 2026-11-04: Live frames are coalesced per key and applied once per batch
+
+The batcher keeps the newest frame per vehicle, and `applyFrames` writes the Zustand store once per animation frame. The list and map read a one-second view, so 500 messages per second never re-sort 5,000 rows or ping the adapter per message.
+
+Trade-off: a vehicle's intermediate positions are not kept; the map shows the latest known position and the history belongs to playback.

@@ -51,7 +51,7 @@ test.describe("fault scenarios", () => {
     await captureForReview(page, "00-route-error");
 
     await page.goto("/map");
-    await expect(page.getByRole("heading", { name: "Map" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
     expect(unexpectedConsole(errors)).toEqual([]);
   });
 

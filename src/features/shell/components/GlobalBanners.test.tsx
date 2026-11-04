@@ -19,13 +19,14 @@ function storm(): void {
 }
 
 beforeEach(() => {
-  useConnectionStore.setState({ network: "online", socket: "down", lastDataAt: null });
+  useConnectionStore.setState({ network: "online", socket: "down", lastDataAt: null, socketDownAt: null });
   resetErrorStorm();
   clearDiagnostics();
 });
 
 afterEach(() => {
-  useConnectionStore.setState({ network: "online", socket: "down", lastDataAt: null });
+  useConnectionStore.setState({ network: "online", socket: "down", lastDataAt: null, socketDownAt: null });
+  vi.useRealTimers();
   resetErrorStorm();
 });
 
@@ -53,17 +54,37 @@ describe("GlobalBanners", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Showing data from 14:02");
   });
 
-  it("shows the reconnecting banner when the socket is recovering", () => {
-    useConnectionStore.setState({ socket: "reconnecting" });
+  it("waits ten seconds before showing the reconnecting banner", () => {
+    vi.useFakeTimers();
+    useConnectionStore.setState({ socket: "reconnecting", socketDownAt: Date.now() });
     render(<GlobalBanners />);
+
+    expect(screen.queryByText("Reconnecting to live updates…")).not.toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(10_000);
+    });
     expect(screen.getByRole("status")).toHaveTextContent("Reconnecting to live updates…");
   });
 
-  it("keeps reconnecting ahead of the error-storm banner", () => {
-    useConnectionStore.setState({ socket: "reconnecting" });
+  it("keeps a long reconnect ahead of the error-storm banner", () => {
+    vi.useFakeTimers();
+    useConnectionStore.setState({ socket: "reconnecting", socketDownAt: Date.now() });
     storm();
     render(<GlobalBanners />);
+    act(() => {
+      vi.advanceTimersByTime(10_000);
+    });
 
+    expect(screen.getByRole("status")).toHaveTextContent("Reconnecting to live updates…");
+  });
+
+  it("shows reconnecting on the next tick when it has already been down ten seconds", () => {
+    vi.useFakeTimers();
+    useConnectionStore.setState({ socket: "reconnecting", socketDownAt: Date.now() - 11_000 });
+    render(<GlobalBanners />);
+    act(() => {
+      vi.advanceTimersByTime(0);
+    });
     expect(screen.getByRole("status")).toHaveTextContent("Reconnecting to live updates…");
   });
 

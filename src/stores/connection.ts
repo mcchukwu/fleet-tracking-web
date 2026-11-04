@@ -45,6 +45,7 @@ export function useConnection() {
       network: state.network,
       socket: state.socket,
       lastDataAt: state.lastDataAt,
+      socketDownAt: state.socketDownAt,
     })),
   );
 }

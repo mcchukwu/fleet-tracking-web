@@ -29,9 +29,9 @@ async function signIn(page: Page, email = "dispatcher@demo.ftb", password = PASS
 test.describe("login", () => {
   test("an anonymous deep link opens sign in and keeps the target", async ({ page, theme }) => {
     await startAnonymous(page);
-    await page.goto("/map?v=abc&status=moving");
+    await page.goto("/map?v=4324a768-9b14-4223-a299-eb8da4d8d309&status=moving");
 
-    await expect(page).toHaveURL(/\/login\?redirect=%2Fmap%3Fv%3Dabc%26status%3Dmoving$/);
+    await expect(page).toHaveURL(/\/login\?redirect=%2Fmap%3Fv%3D4324a768-9b14-4223-a299-eb8da4d8d309%26status%3Dmoving$/);
     await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
     await expect(page).toHaveTitle("Sign in · Fleet Console");
     await expectTheme(page, theme);
@@ -74,21 +74,21 @@ test.describe("login", () => {
 
   test("a correct password returns to the requested route", async ({ page }) => {
     await startAnonymous(page);
-    await page.goto("/map?v=abc&status=moving");
+    await page.goto("/map?v=4324a768-9b14-4223-a299-eb8da4d8d309&status=moving");
     await signIn(page);
 
-    await expect(page).toHaveURL(/\/map\?v=abc&status=moving$/);
-    await expect(page.getByRole("heading", { name: "Map" })).toBeVisible();
+    await expect(page).toHaveURL(/\/map\?v=4324a768-9b14-4223-a299-eb8da4d8d309&status=moving$/);
+    await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
   });
 
   test("a reload restores the session instead of flashing the login screen", async ({ page }) => {
     await startAnonymous(page);
     await page.goto("/map");
     await signIn(page);
-    await expect(page.getByRole("heading", { name: "Map" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
 
     await page.reload();
-    await expect(page.getByRole("heading", { name: "Map" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Sign in" })).toHaveCount(0);
   });
 
@@ -116,7 +116,7 @@ test.describe("login", () => {
 
     await page.evaluate(() => history.replaceState({}, "", "/login"));
     await page.getByRole("button", { name: "Retry" }).click();
-    await expect(page.getByRole("heading", { name: "Map" })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("region", { name: "Live map" })).toBeVisible({ timeout: 10_000 });
   });
 
   test("a slow sign-in shows the working notice", async ({ page }) => {

@@ -104,7 +104,7 @@ export function StateBoundary({
             </Button>
           ) : null}
         </div>
-        <div className="opacity-60">{children}</div>
+        <div>{children}</div>
       </div>
     );
   }

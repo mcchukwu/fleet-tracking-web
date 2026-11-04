@@ -14,11 +14,22 @@ describe("route search schemas", () => {
   });
 
   it("keeps valid map filters", () => {
-    expect(mapSearchSchema.parse({ q: "LSD", status: "moving,idle", v: "demo-imei-0001" })).toEqual({
+    const id = "4324a768-9b14-4223-a299-eb8da4d8d309";
+    expect(
+      mapSearchSchema.parse({ q: "LSD", status: "moving,idle", sort: "lastSeen", view: "1", v: id }),
+    ).toEqual({
       q: "LSD",
       status: "moving,idle",
-      v: "demo-imei-0001",
+      sort: "lastSeen",
+      view: 1,
+      v: id,
     });
+  });
+
+  it("drops an invalid sort, view or vehicle id", () => {
+    expect(
+      mapSearchSchema.parse({ sort: "nonsense", view: "yes", v: "demo-imei-0001" }),
+    ).toEqual({});
   });
 
   it("falls back when a value has the wrong type", () => {

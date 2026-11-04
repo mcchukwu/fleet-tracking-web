@@ -23,6 +23,7 @@ import {
   systemHealthFixture,
 } from "./fixtures/untyped";
 import { vehiclesFixture } from "./fixtures/vehicles";
+import { perfVehicles } from "./perf";
 import { withFault } from "./faults";
 
 const API = "/api/v1";
@@ -97,6 +98,39 @@ export function resetMockState(userEmail = "dispatcher@demo.ftb"): void {
 
 export function mockCurrentUser(): User {
   return resolveUser() ?? state.user;
+}
+
+/** Keeps the list and map honest in mock mode: online vehicles have just reported. */
+export function freshenVehicles(vehicles: readonly Vehicle[], now = Date.now()): Vehicle[] {
+  return vehicles.map((vehicle, index) =>
+    vehicle.online
+      ? {
+          ...vehicle,
+          recorded_at: new Date(now - (index % 20) * 1_000).toISOString(),
+          speed_kph: vehicle.speed_kph ?? 48,
+          heading_deg: vehicle.heading_deg ?? 90,
+        }
+      : vehicle,
+  );
+}
+
+export function appendMockAlert(vehicleId?: string): Alert {
+  const vehicle = vehicleId
+    ? state.vehicles.find((item) => item.id === vehicleId || item.external_id === vehicleId)
+    : state.vehicles[0];
+  if (!vehicle) throw new Error("The mock has no vehicles");
+  const alert: Alert = {
+    id: `mock-alert-${Date.now()}`,
+    vehicle_id: vehicle.id,
+    plate: vehicle.plate,
+    type: "geofence_exit",
+    severity: "high",
+    status: "open",
+    occurred_at: new Date().toISOString(),
+    evidence: { mock: true },
+  };
+  state.alerts = [alert, ...state.alerts];
+  return alert;
 }
 
 const MOCK_SESSION_KEY = "fleet.mockSession";
@@ -249,7 +283,7 @@ export const handlers = [
           vehicle.external_id.toLowerCase().includes(q);
         return matchesQuery && (!status || vehicle.status === status);
       });
-      return HttpResponse.json({ data });
+      return HttpResponse.json({ data: freshenVehicles(data) });
     });
   }),
 
@@ -294,9 +328,24 @@ export const handlers = [
     });
   }),
 
-  http.get(`${API}/live/snapshot`, ({ request }) =>
-    withFault("live-snapshot", request, () => HttpResponse.json({ data: state.vehicles })),
-  ),
+  http.get(`${API}/live/snapshot`, ({ request }) => {
+    return withFault("live-snapshot", request, () => {
+      const fromRequest = new URL(request.url).searchParams.get("perf");
+      const fromPage =
+        typeof window === "undefined"
+          ? null
+          : new URLSearchParams(window.location.search).get("perf");
+      if ((fromRequest ?? fromPage) === "5000") {
+        return HttpResponse.json({ data: perfVehicles(5_000) });
+      }
+      return HttpResponse.json({ data: freshenVehicles(state.vehicles) });
+    });
+  }),
+
+  http.post(`${API}/__mock/alerts`, async ({ request }) => {
+    const body = (await readJson(request)) as { vehicle_id?: string } | null;
+    return HttpResponse.json({ data: appendMockAlert(body?.vehicle_id) });
+  }),
 
   http.get(`${API}/trips`, ({ request }) => {
     return withFault("trips", request, () => {
@@ -386,9 +435,14 @@ export const handlers = [
     });
   }),
 
-  http.get(`${API}/geofences`, ({ request }) =>
-    withFault("geofences", request, () => HttpResponse.json({ data: state.geofences })),
-  ),
+  http.get(`${API}/geofences`, ({ request }) => {
+    const fault = new URL(request.url).searchParams.get("fault");
+    if (fault === "geofences:unknown_enum") {
+      const first = state.geofences[0];
+      return HttpResponse.json({ data: first ? [{ ...first, kind: "solar" }] : [] });
+    }
+    return withFault("geofences", request, () => HttpResponse.json({ data: state.geofences }));
+  }),
 
   http.post(`${API}/geofences`, async ({ request }) => {
     return withFault("geofences", request, async () => {

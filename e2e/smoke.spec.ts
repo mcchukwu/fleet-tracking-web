@@ -49,7 +49,7 @@ test.describe("foundation smoke", () => {
   test("the index route opens the map inside the shell", async ({ page }) => {
     await page.goto("/");
     await expect(page).toHaveURL(/\/map$/);
-    await expect(page.getByRole("heading", { name: "Map" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
 
     if ((page.viewportSize()?.width ?? 1440) < 768) {
       await page.getByRole("button", { name: "Open navigation" }).click();
@@ -57,19 +57,25 @@ test.describe("foundation smoke", () => {
     await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
   });
 
-  test("placeholder map route renders with the debug hook", async ({ page, theme }) => {
+  test("the map route renders the live map shell", async ({ page, theme }) => {
     await page.goto("/map");
-    await expect(page.getByRole("heading", { name: "Map" })).toBeVisible();
-    await expect(page).toHaveTitle("Map · Fleet Console");
+    await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
+    await expect(page).toHaveTitle(/Map · Fleet Console$/);
     await expectTheme(page, theme);
-    await expectNoHorizontalScroll(page);
-    await expectNoAxeViolations(page);
+    await expect(page.getByText("Showing 25 of 25")).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.mapLoaded), {
+        timeout: 20_000,
+      })
+      .toBe(true);
 
     const debug = await page.evaluate(() => window.__FLEET_DEBUG__);
     expect(debug?.connection.network).toBe("online");
-    expect(debug?.map.mapLoaded).toBe(false);
+    expect(debug?.map.renderedVehicleCount).toBe(20);
 
-    await captureForReview(page, "00-map-placeholder");
+    await expectNoHorizontalScroll(page);
+    await expectNoAxeViolations(page);
+    await captureForReview(page, "00-map");
   });
 
   test("unknown routes show the not-found page", async ({ page }) => {
@@ -93,9 +99,9 @@ test.describe("foundation smoke", () => {
     await page.addInitScript(() => {
       localStorage.setItem("fleet.mockAuth", "anonymous");
     });
-    await page.goto("/map?v=abc&status=moving");
+    await page.goto("/map?v=4324a768-9b14-4223-a299-eb8da4d8d309&status=moving");
     await expect(page).toHaveURL(
-      /\/login\?redirect=%2Fmap%3Fv%3Dabc%26status%3Dmoving$/,
+      /\/login\?redirect=%2Fmap%3Fv%3D4324a768-9b14-4223-a299-eb8da4d8d309%26status%3Dmoving$/,
     );
     await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
     await page.waitForTimeout(500);

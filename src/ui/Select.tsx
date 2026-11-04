@@ -20,7 +20,7 @@ export function Select({ className, label, hint, children, ...props }: SelectPro
           id={id}
           aria-describedby={hintId}
           className={cn(
-            "h-control-md w-full appearance-none rounded-md border border-border-strong bg-surface px-4 pr-10 text-base text-text transition-colors duration-100 focus-visible:border-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus-ring/30",
+            "h-touch w-full appearance-none rounded-md border border-border-strong bg-surface px-4 pr-10 text-base text-text transition-colors duration-100 focus-visible:border-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus-ring/30 md:h-control-md",
             className,
           )}
           {...props}

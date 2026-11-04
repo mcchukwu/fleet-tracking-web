@@ -42,6 +42,8 @@ import { Input } from "../../ui/Input";
 import { SearchInput } from "../../ui/SearchInput";
 import { Select } from "../../ui/Select";
 import { Stat } from "../../ui/Stat";
+import { CopyButton } from "../../ui/CopyButton";
+import { Timestamp } from "../../ui/Timestamp";
 import { EmptyState, ForbiddenState, LoadingBar, LoadingState, Skeleton } from "../../ui/StatePanel";
 import { ErrorState } from "../../errors/ErrorState";
 import type { AppError } from "../../errors/types";
@@ -311,6 +313,32 @@ export function StyleGuidePage() {
             <Stat label="Active trips" value="5" hint="2 behind schedule" />
             <Stat label="Open alerts" value="3" hint="1 critical" />
             <Stat label="Last data age" value="4s" hint="Live" />
+          </div>
+        </Section>
+
+        <Section
+          id="data-display"
+          title="Data display"
+          description="Relative times carry a local and UTC tooltip. Plates and IMEIs copy on click. Compact stats fit the mobile KPI grid."
+        >
+          <div className="flex flex-wrap items-center gap-4 rounded-lg border border-border bg-surface p-4">
+            <Timestamp iso="2026-11-04T09:58:00Z" />
+            <CopyButton value="LSD-100-AA" label="Plate" />
+            <CopyButton value="demo-imei-0001" label="IMEI" />
+            <div className="grid w-full max-w-sm grid-cols-2 gap-px rounded-lg border border-border bg-border">
+              <div className="bg-surface">
+                <Stat size="sm" label="Online" value="20 of 25" />
+              </div>
+              <div className="bg-surface">
+                <Stat size="sm" label="Active trips" value="4" />
+              </div>
+              <div className="bg-surface">
+                <Stat size="sm" label="Open alerts" value="45" />
+              </div>
+              <div className="bg-surface">
+                <Stat size="sm" label="Last data" value="4s" />
+              </div>
+            </div>
           </div>
         </Section>
 

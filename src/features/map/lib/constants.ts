@@ -1,0 +1,8 @@
+export const ALERT_MARK_WINDOW_MS = 15 * 60_000;
+export const LIST_CLOCK_MS = 1_000;
+export const MAP_ROW_HEIGHT = 48;
+export const MAP_ROW_HEIGHT_TOUCH = 56;
+export const FIT_MAX_ZOOM = 12;
+export const PANEL_INSET = 12;
+export const PANEL_WIDTH = 360;
+export const SHEET_PEEK = 96;

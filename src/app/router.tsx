@@ -21,6 +21,7 @@ import { normalize } from "../errors/normalize";
 import { recordError } from "../errors/report";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
 import { LoginPage } from "../features/login/components/LoginPage";
+import { MapPage } from "../features/map/components/MapPage";
 import { AppShell } from "../features/shell/components/AppShell";
 import { SessionExpiryDialog } from "../features/shell/components/SessionExpiryDialog";
 import { ShellSkeleton } from "../features/shell/components/ShellSkeleton";
@@ -182,7 +183,7 @@ const mapRoute = createRoute({
   path: "/map",
   validateSearch: mapSearchSchema,
   beforeLoad: ({ context }) => requireCapability(context.user, "read"),
-  component: placeholder("Map", "The live map ships in Slice 2."),
+  component: MapPage,
 });
 
 const alertsRoute = createRoute({
