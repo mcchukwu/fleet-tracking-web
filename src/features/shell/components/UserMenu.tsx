@@ -1,5 +1,6 @@
 import { ChevronDown, Keyboard, LogOut, Monitor, Moon, Sun, UserRound } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { useLogoutMutation } from "../../../api/hooks/auth";
 import { useAuthStore } from "../../../auth/store";
 import { useTheme, type ThemeMode } from "../../../theme/theme-context";
@@ -35,6 +36,7 @@ export function UserMenu({ onShortcuts }: UserMenuProps) {
   const navigate = useNavigate();
   const { mode, setMode } = useTheme();
   const { toast } = useToast();
+  const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(null);
 
   if (!user) return null;
 
@@ -55,74 +57,76 @@ export function UserMenu({ onShortcuts }: UserMenuProps) {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          aria-label={`Account menu for ${user.name}`}
-          className="flex h-control-md items-center gap-2 rounded-md px-1.5 text-sm text-text hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring"
-        >
-          <span
-            aria-hidden="true"
-            className="flex size-control-sm items-center justify-center rounded-full bg-accent-soft text-accent-fg"
+    <div ref={setPortalContainer} className="contents">
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            aria-label={`Account menu for ${user.name}`}
+            className="flex h-touch items-center gap-2 rounded-md px-2 text-sm text-text hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:h-control-md"
           >
-            <UserRound className="size-4" strokeWidth={1.5} />
-          </span>
-          <span aria-hidden="true" className="hidden max-w-32 truncate lg:inline" title={user.name}>
-            {user.name}
-          </span>
-          <ChevronDown aria-hidden="true" className="hidden size-3 text-subtle lg:inline" strokeWidth={1.5} />
-        </button>
-      </DropdownMenuTrigger>
+            <span
+              aria-hidden="true"
+              className="flex size-control-sm items-center justify-center rounded-full bg-accent-soft text-accent-fg"
+            >
+              <UserRound className="size-4" strokeWidth={1.5} />
+            </span>
+            <span aria-hidden="true" className="hidden max-w-32 truncate lg:inline" title={user.name}>
+              {user.name}
+            </span>
+            <ChevronDown aria-hidden="true" className="hidden size-3 text-subtle lg:inline" strokeWidth={1.5} />
+          </button>
+        </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel>
-          <span className="block truncate text-sm text-text" title={user.name}>
-            {user.name}
-          </span>
-          <span className="block truncate text-xs text-muted" title={user.email}>
-            {user.email}
-          </span>
-          <Badge tone="accent" className="mt-1 capitalize">
-            {user.role}
-          </Badge>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
+        <DropdownMenuContent align="end" container={portalContainer} className="w-64">
+          <DropdownMenuLabel>
+            <span className="block truncate text-sm text-text" title={user.name}>
+              {user.name}
+            </span>
+            <span className="block truncate text-xs text-muted" title={user.email}>
+              {user.email}
+            </span>
+            <Badge tone="accent" className="mt-1 capitalize">
+              {user.role}
+            </Badge>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
 
-        <div className="md:hidden">
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <Sun aria-hidden="true" className="size-4" strokeWidth={1.5} />
-              Theme
-            </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent>
-              <DropdownMenuRadioGroup
-                value={mode}
-                onValueChange={(value) => setMode(value as ThemeMode)}
-              >
-                {themeOptions.map((option) => (
-                  <DropdownMenuRadioItem key={option.value} value={option.value}>
-                    <option.icon aria-hidden="true" className="size-4" strokeWidth={1.5} />
-                    {option.label}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuSubContent>
-          </DropdownMenuSub>
-        </div>
+          <div className="md:hidden">
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <Sun aria-hidden="true" className="size-4" strokeWidth={1.5} />
+                Theme
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuRadioGroup
+                  value={mode}
+                  onValueChange={(value) => setMode(value as ThemeMode)}
+                >
+                  {themeOptions.map((option) => (
+                    <DropdownMenuRadioItem key={option.value} value={option.value}>
+                      <option.icon aria-hidden="true" className="size-4" strokeWidth={1.5} />
+                      {option.label}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          </div>
 
-        {onShortcuts ? (
-          <DropdownMenuItem onSelect={onShortcuts}>
-            <Keyboard aria-hidden="true" className="size-4" strokeWidth={1.5} />
-            Keyboard shortcuts
+          {onShortcuts ? (
+            <DropdownMenuItem onSelect={onShortcuts}>
+              <Keyboard aria-hidden="true" className="size-4" strokeWidth={1.5} />
+              Keyboard shortcuts
+            </DropdownMenuItem>
+          ) : null}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => void signOut()} className="text-danger">
+            <LogOut aria-hidden="true" className="size-4" strokeWidth={1.5} />
+            Sign out
           </DropdownMenuItem>
-        ) : null}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={() => void signOut()} className="text-danger">
-          <LogOut aria-hidden="true" className="size-4" strokeWidth={1.5} />
-          Sign out
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

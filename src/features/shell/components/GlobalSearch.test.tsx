@@ -35,4 +35,19 @@ describe("GlobalSearch", () => {
     render(<GlobalSearch focusOnMount />);
     expect(screen.getByRole("searchbox", { name: "Search vehicles" })).toHaveFocus();
   });
+
+  it("clears the query with the clear button and Escape", async () => {
+    const user = userEvent.setup();
+    render(<GlobalSearch />);
+    const search = screen.getByRole("searchbox", { name: "Search vehicles" });
+
+    await user.type(search, "KJA 123");
+    await user.click(screen.getByRole("button", { name: "Clear search" }));
+    expect(search).toHaveValue("");
+    expect(search).toHaveFocus();
+
+    await user.type(search, "KJA 123");
+    await user.keyboard("{Escape}");
+    expect(search).toHaveValue("");
+  });
 });

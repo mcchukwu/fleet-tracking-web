@@ -67,11 +67,13 @@ describe("GlobalBanners", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Reconnecting to live updates…");
   });
 
-  it("shows the error-storm banner and links to System", () => {
+  it("shows the error-storm banner in the warning tone and links to System", () => {
     storm();
     render(<GlobalBanners />);
 
-    expect(screen.getByRole("status")).toHaveTextContent("We're having trouble reaching the server");
+    const banner = screen.getByRole("status");
+    expect(banner).toHaveTextContent("We're having trouble reaching the server");
+    expect(banner).toHaveClass("border-idle");
     expect(screen.getByRole("button", { name: "Open System" })).toBeVisible();
   });
 

@@ -38,15 +38,18 @@ export async function expectNoAxeViolations(page: Page): Promise<void> {
 
 export async function expectFocusVisible(locator: Locator): Promise<void> {
   await locator.focus();
-  const outline = await locator.evaluate((element) => {
+  const focus = await locator.evaluate((element) => {
     const style = window.getComputedStyle(element);
     return {
-      style: style.outlineStyle,
-      width: Number.parseFloat(style.outlineWidth),
+      outlineStyle: style.outlineStyle,
+      outlineWidth: Number.parseFloat(style.outlineWidth),
+      boxShadow: style.boxShadow,
     };
   });
-  expect(outline.style, "focused element has no outline").not.toBe("none");
-  expect(outline.width, "focused element has a zero-width outline").toBeGreaterThan(0);
+  // Inputs use an inset focus ring instead of an outline (design-system §12).
+  const hasOutline = focus.outlineStyle !== "none" && focus.outlineWidth > 0;
+  const hasRing = focus.boxShadow !== "none" && /[1-9]\d*px/.test(focus.boxShadow);
+  expect(hasOutline || hasRing, "focused element has no visible focus indicator").toBe(true);
 }
 
 export async function expectTabularNums(locator: Locator): Promise<void> {

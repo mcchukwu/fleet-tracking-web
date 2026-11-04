@@ -14,11 +14,14 @@ const itemStyles =
 export function DropdownMenuContent({
   className,
   sideOffset = 6,
+  container,
   children,
   ...props
-}: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>) {
+}: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content> & {
+  container?: HTMLElement | null;
+}) {
   return (
-    <DropdownMenuPrimitive.Portal>
+    <DropdownMenuPrimitive.Portal container={container ?? undefined}>
       <DropdownMenuPrimitive.Content
         sideOffset={sideOffset}
         className={cn(

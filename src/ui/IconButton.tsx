@@ -11,8 +11,8 @@ const iconButtonStyles = cva(
         secondary: "border border-border-strong bg-surface text-text hover:bg-surface-2",
       },
       size: {
-        sm: "size-control-sm",
-        md: "size-control-md",
+        sm: "size-touch md:size-control-sm",
+        md: "size-touch md:size-control-md",
       },
     },
     defaultVariants: { variant: "ghost", size: "md" },

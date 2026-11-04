@@ -55,7 +55,7 @@ export function Banner({
         <button
           type="button"
           onClick={action.onClick}
-          className="h-control-sm shrink-0 rounded-md px-2 font-medium underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-focus-ring"
+          className="h-touch shrink-0 rounded-md px-2 font-medium underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-focus-ring md:h-control-sm"
         >
           {action.label}
         </button>

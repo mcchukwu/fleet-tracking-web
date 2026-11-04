@@ -2,8 +2,10 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import {
   captureForReview,
+  expectFocusVisible,
   expectNoAxeViolations,
   expectNoHorizontalScroll,
+  expectTouchTargets,
 } from "./helpers";
 
 function isMobile(page: Page): boolean {
@@ -40,6 +42,7 @@ test.describe("app shell", () => {
     );
     await expectNoHorizontalScroll(page);
     await expectNoAxeViolations(page);
+    if (isMobile(page)) await expectTouchTargets(page);
     await captureForReview(page, "01-shell-map");
   });
 
@@ -81,8 +84,12 @@ test.describe("app shell", () => {
     const menu = page.getByRole("menu");
     await expect(menu.getByText("dispatcher@demo.ftb")).toBeVisible();
     await expect(menu.getByText("dispatcher", { exact: true })).toBeVisible();
+    await expectNoAxeViolations(page);
     await captureForReview(page, "01-shell-user-menu");
 
+    await page.keyboard.press("Escape");
+    await expect(menu).toHaveCount(0);
+    await page.getByRole("button", { name: "Account menu for Demo Dispatcher" }).click();
     await menu.getByRole("menuitem", { name: "Sign out" }).click();
     await expect(page).toHaveURL(/\/login$/);
     await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
@@ -128,7 +135,9 @@ test.describe("app shell", () => {
     await page.goto("/map");
     await expect(page.getByRole("heading", { name: "Map" })).toBeVisible();
     await page.keyboard.press("/");
-    await expect(page.getByRole("searchbox", { name: "Search vehicles" }).first()).toBeFocused();
+    const search = page.getByRole("searchbox", { name: "Search vehicles" }).first();
+    await expect(search).toBeFocused();
+    await expectFocusVisible(search);
 
     await page.getByRole("heading", { name: "Map" }).click();
     await page.keyboard.press("g");
@@ -138,6 +147,7 @@ test.describe("app shell", () => {
     await page.keyboard.press("?");
     await expect(page.getByRole("dialog", { name: "Keyboard shortcuts" })).toBeVisible();
     await expect(page.getByText("Focus vehicle search")).toBeVisible();
+    await expectNoAxeViolations(page);
     await captureForReview(page, "01-shell-shortcuts");
 
     await page.keyboard.press("Escape");
@@ -172,6 +182,7 @@ test.describe("app shell", () => {
     await expect(dialog).toContainText("You'll stay where you are.");
     await page.keyboard.press("Escape");
     await expect(dialog).toBeVisible();
+    await expectNoAxeViolations(page);
     await captureForReview(page, "01-shell-session-expired");
 
     await page.evaluate(() => history.replaceState({}, "", "/dev/faults"));
@@ -203,6 +214,7 @@ test.describe("app shell", () => {
 
     await expect(page.getByText("A new version is available.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Reload" })).toBeVisible();
+    await expectNoAxeViolations(page);
     await captureForReview(page, "01-shell-update-banner");
   });
 

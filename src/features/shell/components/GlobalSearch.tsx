@@ -1,6 +1,7 @@
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { IconButton } from "../../../ui/IconButton";
 
 export interface GlobalSearchProps {
   focusOnMount?: boolean;
@@ -48,11 +49,30 @@ export function GlobalSearch({
         placeholder="Search plate or IMEI"
         value={value}
         onChange={(event) => setValue(event.target.value)}
-        className="h-control-md w-full rounded-md border border-border-strong bg-surface pl-9 pr-9 text-sm text-text transition-colors duration-100 placeholder:text-subtle focus-visible:border-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus-ring/30"
+        onKeyDown={(event) => {
+          if (event.key === "Escape" && value !== "") {
+            event.preventDefault();
+            setValue("");
+          }
+        }}
+        className="h-touch w-full rounded-md border border-border-strong bg-surface pl-8 pr-12 text-sm text-text transition-colors duration-100 placeholder:text-subtle focus-visible:border-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus-ring/30 md:h-control-md md:pr-8"
       />
-      <kbd className="pointer-events-none absolute right-3 rounded-sm border border-border bg-surface-2 px-1 font-mono text-xs text-muted">
-        /
-      </kbd>
+      {value ? (
+        <IconButton
+          className="absolute right-0"
+          label="Clear search"
+          size="sm"
+          onClick={() => {
+            setValue("");
+            inputRef.current?.focus();
+          }}
+          icon={<X aria-hidden="true" className="size-icon-sm" strokeWidth={1.5} />}
+        />
+      ) : (
+        <kbd className="pointer-events-none absolute right-3 rounded-sm border border-border bg-surface-2 px-1 font-mono text-xs text-muted">
+          /
+        </kbd>
+      )}
     </form>
   );
 }

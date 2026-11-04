@@ -42,7 +42,7 @@ export function Input({
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
           className={cn(
-            "h-control-md w-full rounded-md border bg-surface px-4 text-base text-text transition-colors duration-100 placeholder:text-subtle focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus-ring/30 disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-muted",
+            "h-touch w-full rounded-md border bg-surface px-4 md:h-control-md text-base text-text transition-colors duration-100 placeholder:text-subtle focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus-ring/30 disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-muted",
             leadingIcon ? "pl-10" : "",
             trailing ? "pr-14" : "",
             error ? "border-danger focus-visible:border-danger" : "border-border-strong focus-visible:border-accent",

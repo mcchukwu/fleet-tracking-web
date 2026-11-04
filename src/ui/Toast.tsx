@@ -117,7 +117,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 >
                   <button
                     type="button"
-                    className="h-control-sm shrink-0 rounded-md px-2 text-sm font-medium text-accent-fg hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus-ring"
+                    className="h-touch shrink-0 rounded-md px-2 text-sm font-medium text-accent-fg hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus-ring md:h-control-sm"
                   >
                     {item.action.label}
                   </button>

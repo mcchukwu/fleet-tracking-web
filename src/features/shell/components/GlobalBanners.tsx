@@ -42,7 +42,7 @@ export function GlobalBanners() {
   if (storm) {
     return (
       <Banner
-        tone="danger"
+        tone="warning"
         message="We're having trouble reaching the server. Retrying…"
         action={{ label: "Open System", onClick: () => void navigate({ to: "/system" }) }}
       />

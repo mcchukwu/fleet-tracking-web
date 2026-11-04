@@ -18,7 +18,12 @@ export function ShortcutsDialog({ open, onClose }: ShortcutsDialogProps) {
       title="Keyboard shortcuts"
       description="Shortcuts are disabled while you're typing in a field."
     >
-      <div className="max-h-96 space-y-4 overflow-y-auto">
+      {/* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- focusable so a keyboard user can scroll the list (axe scrollable-region-focusable) */}
+      <section
+        className="max-h-96 space-y-4 overflow-y-auto"
+        tabIndex={0}
+        aria-label="Shortcut list"
+      >
         {scopes.map((scope) => {
           const items = shortcuts.filter((shortcut) => shortcut.scope === scope);
           if (items.length === 0) return null;
@@ -37,7 +42,7 @@ export function ShortcutsDialog({ open, onClose }: ShortcutsDialogProps) {
                       {shortcut.keys.map((key, index) => (
                         <span key={`${shortcut.id}-${key}`} className="flex items-center gap-1">
                           {index > 0 ? <span className="text-xs text-subtle">then</span> : null}
-                          <kbd className="rounded-sm border border-border bg-surface-2 px-1.5 py-0.5 font-mono text-xs text-text">
+                          <kbd className="rounded-sm border border-border bg-surface-2 px-2 py-1 font-mono text-xs text-text">
                             {key}
                           </kbd>
                         </span>
@@ -49,7 +54,8 @@ export function ShortcutsDialog({ open, onClose }: ShortcutsDialogProps) {
             </section>
           );
         })}
-      </div>
+      </section>
+      {/* oxlint-enable jsx-a11y/no-noninteractive-tabindex */}
     </Dialog>
   );
 }

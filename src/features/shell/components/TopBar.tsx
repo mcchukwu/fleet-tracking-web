@@ -50,7 +50,7 @@ export function TopBar({ onOpenMenu, onOpenShortcuts }: TopBarProps) {
         <Link
           to="/map"
           aria-label="Fleet Console home"
-          className="flex shrink-0 items-center gap-2 rounded-md focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring"
+          className="flex h-touch w-touch shrink-0 items-center justify-center gap-2 rounded-md focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring sm:w-auto sm:justify-start md:h-auto"
         >
           <span className="flex size-control-sm items-center justify-center rounded-md bg-accent text-text-inverse">
             <Truck aria-hidden="true" className="size-4" strokeWidth={1.5} />

@@ -14,9 +14,9 @@ const buttonStyles = cva(
         destructive: "border border-border-strong bg-surface text-danger hover:bg-alert-bg",
       },
       size: {
-        sm: "h-control-sm px-3 text-xs",
-        md: "h-control-md px-3 text-base",
-        lg: "h-control-lg px-4 text-base",
+        sm: "h-touch px-3 text-xs md:h-control-sm",
+        md: "h-touch px-3 text-base md:h-control-md",
+        lg: "h-touch px-4 text-base md:h-control-lg",
       },
     },
     defaultVariants: { variant: "secondary", size: "md" },

@@ -5,9 +5,14 @@ import {
   expectNoAxeViolations,
   expectNoHorizontalScroll,
   expectTheme,
+  expectTouchTargets,
 } from "./helpers";
 
 const PASSWORD = "DemoPass123!";
+
+function isMobile(page: Page): boolean {
+  return (page.viewportSize()?.width ?? 1440) < 768;
+}
 
 async function startAnonymous(page: Page): Promise<void> {
   await page.goto("/styleguide");
@@ -31,6 +36,7 @@ test.describe("login", () => {
     await expectTheme(page, theme);
     await expectNoHorizontalScroll(page);
     await expectNoAxeViolations(page);
+    if (isMobile(page)) await expectTouchTargets(page);
     await captureForReview(page, "01-login-default");
   });
 
