@@ -17,7 +17,10 @@ export function useAckAlert() {
   return useMutation({
     mutationFn: (id: string) => api.ackAlert(id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["alerts"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["alerts"] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.systemHealth }),
+      ]);
     },
     meta: { scope: "screen", resource: "alerts" },
   });

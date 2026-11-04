@@ -17,7 +17,11 @@ export function useCreateTrip() {
   return useMutation({
     mutationFn: (input: TripInput) => api.createTrip(input),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["trips"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["trips"] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.liveSnapshot }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.systemHealth }),
+      ]);
     },
     meta: { scope: "screen", resource: "trips" },
   });

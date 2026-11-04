@@ -94,8 +94,7 @@ describe("live socket manager", () => {
     manager.stop();
   });
 
-  it("stays down while offline and reconnects when online returns", () => {
-    vi.useFakeTimers();
+  it("stays down while offline and reconnects when online returns", () => {    vi.useFakeTimers();
     let online = true;
     const sockets: FakeSocket[] = [];
     const manager = new LiveSocketManager({
@@ -120,5 +119,57 @@ describe("live socket manager", () => {
     manager.notifyOnline();
     expect(sockets).toHaveLength(2);
     manager.stop();
+  });
+
+  it("ignores a resync that finishes after the socket closed", async () => {
+    const socket = new FakeSocket();
+    const frames: unknown[] = [];
+    let finishResync: () => void = () => undefined;
+    const resync = new Promise<void>((resolve) => {
+      finishResync = () => resolve();
+    });
+    const manager = new LiveSocketManager({
+      createSocket: () => socket,
+      onFrame: (frame) => frames.push(frame),
+      resync: () => resync,
+      random: () => 0,
+    });
+
+    manager.start();
+    socket.emit("open");
+    socket.emit("message", { data: JSON.stringify(positionFrame) });
+    socket.emit("close");
+
+    finishResync();
+    await flush();
+
+    expect(frames).toHaveLength(0);
+    expect(manager.getState()).toBe("reconnecting");
+    manager.stop();
+  });
+
+  it("drops buffered frames when stopped during a resync", async () => {
+    const socket = new FakeSocket();
+    const frames: unknown[] = [];
+    let finishResync: () => void = () => undefined;
+    const resync = new Promise<void>((resolve) => {
+      finishResync = () => resolve();
+    });
+    const manager = new LiveSocketManager({
+      createSocket: () => socket,
+      onFrame: (frame) => frames.push(frame),
+      resync: () => resync,
+    });
+
+    manager.start();
+    socket.emit("open");
+    socket.emit("message", { data: JSON.stringify(positionFrame) });
+    manager.stop();
+
+    finishResync();
+    await flush();
+
+    expect(frames).toHaveLength(0);
+    expect(manager.getState()).toBe("down");
   });
 });

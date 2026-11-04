@@ -104,30 +104,32 @@ export class LiveSocketManager {
     this.socket = socket;
 
     socket.addEventListener("open", () => {
-      void this.handleOpen();
+      void this.handleOpen(socket);
     });
     socket.addEventListener("message", (event) => {
-      this.handleMessage(event);
+      this.handleMessage(socket, event);
     });
     socket.addEventListener("close", () => {
-      this.handleClose();
+      this.handleClose(socket);
     });
   }
 
-  private async handleOpen(): Promise<void> {
+  private async handleOpen(socket: LiveSocketLike): Promise<void> {
     this.attempt = 0;
     this.resyncing = true;
     try {
       await this.options.resync();
     } catch {
+      if (this.stopped || this.socket !== socket) return;
       this.resyncing = false;
-      const socket = this.socket;
       this.socket = null;
-      socket?.close();
+      socket.close();
       this.setState("reconnecting");
       this.scheduleReconnect();
       return;
     }
+
+    if (this.stopped || this.socket !== socket) return;
 
     this.resyncing = false;
     this.setState("live");
@@ -136,7 +138,9 @@ export class LiveSocketManager {
     for (const frame of buffered) this.options.onFrame(frame);
   }
 
-  private handleMessage(event: unknown): void {
+  private handleMessage(socket: LiveSocketLike, event: unknown): void {
+    if (this.stopped || this.socket !== socket) return;
+
     const raw = messageData(event);
     if (raw === null) return;
 
@@ -158,7 +162,8 @@ export class LiveSocketManager {
     this.options.onFrame(result.data);
   }
 
-  private handleClose(): void {
+  private handleClose(socket: LiveSocketLike): void {
+    if (this.socket !== socket) return;
     this.socket = null;
     this.resyncing = false;
     this.buffer = [];

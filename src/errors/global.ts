@@ -71,6 +71,17 @@ function appEvent(name: string, detail?: unknown): void {
   window.dispatchEvent(new CustomEvent(name, { detail }));
 }
 
+export function retryDelay(
+  failureCount: number,
+  error: unknown,
+  random: () => number = Math.random,
+): number {
+  const retryAfterSec = isAppError(error) ? error.retryAfterSec : undefined;
+  if (retryAfterSec !== undefined) return retryAfterSec * 1_000;
+  const base = Math.min(10_000, 1_000 * 3 ** Math.max(0, failureCount - 1));
+  return base + Math.round(random() * base * 0.4);
+}
+
 export function handleGlobalError(cause: unknown, meta?: FleetMeta): AppError {
   const error = isAppError(cause) ? cause : normalize(cause, {
     resource: meta?.resource,
@@ -110,6 +121,7 @@ export function createQueryClient(): QueryClient {
     defaultOptions: {
       queries: {
         retry: (failureCount, error) => failureCount < 2 && isAutoRetryable(error),
+        retryDelay: (failureCount, error) => retryDelay(failureCount, error),
         networkMode: "offlineFirst",
         staleTime: 30_000,
         refetchOnWindowFocus: false,
