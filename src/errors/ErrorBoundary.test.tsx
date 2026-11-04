@@ -19,7 +19,7 @@ describe("ErrorBoundary", () => {
       </div>,
     );
     expect(screen.getByText("map still works")).toBeInTheDocument();
-    expect(screen.getByText("Couldn't load")).toBeInTheDocument();
+    expect(screen.getByText("This part of the page stopped working")).toBeInTheDocument();
   });
 
   it("resets when its reset keys change", () => {

@@ -3,6 +3,7 @@ import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { ErrorState } from "../errors/ErrorState";
 import { useErrorStorm } from "../errors/global";
+import { useDelayedFlag } from "../lib/useDelayedFlag";
 import type { AppError } from "../errors/types";
 import { cn } from "./cn";
 import { EmptyState, ForbiddenState, LoadingState } from "./StatePanel";
@@ -21,6 +22,7 @@ export interface StateBoundaryProps {
   onRetry?: () => void;
   loading?: ReactNode;
   empty?: ReactNode;
+  emptyReason?: "no-data" | "no-results";
   staleLabel?: string;
   pending?: boolean;
   className?: string;
@@ -41,26 +43,34 @@ export function StateBoundary({
   onRetry,
   loading,
   empty,
+  emptyReason = "no-data",
   staleLabel,
   pending = false,
   className,
   children,
 }: StateBoundaryProps) {
   const storm = useErrorStorm();
+  const showLoading = useDelayedFlag(state === "loading");
 
   if (state === "loading") {
-    return <div className={className}>{loading ?? <LoadingState />}</div>;
+    return <div className={className}>{showLoading ? (loading ?? <LoadingState />) : null}</div>;
   }
 
   if (state === "empty") {
     return (
       <div className={className}>
-        {empty ?? (
-          <EmptyState
-            title="Nothing here yet"
-            description="There is nothing to show for this view."
-          />
-        )}
+        {empty ??
+          (emptyReason === "no-results" ? (
+            <EmptyState
+              title="No matches"
+              description="Try a different search or clear the filters."
+            />
+          ) : (
+            <EmptyState
+              title="Nothing here yet"
+              description="This will fill in once there is data to show."
+            />
+          ))}
       </div>
     );
   }

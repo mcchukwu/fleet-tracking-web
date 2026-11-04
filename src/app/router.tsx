@@ -236,10 +236,16 @@ const forbiddenRoute = createRoute({
   component: function Forbidden() {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-2 bg-bg text-text">
-        <ForbiddenState />
-        <Link to="/map" className="text-sm font-medium text-accent-fg underline-offset-4 hover:underline">
-          Back to the map
-        </Link>
+        <ForbiddenState
+          action={
+            <Link
+              to="/map"
+              className="text-sm font-medium text-accent-fg underline-offset-4 hover:underline"
+            >
+              Back to the map
+            </Link>
+          }
+        />
       </main>
     );
   },

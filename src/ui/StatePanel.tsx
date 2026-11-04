@@ -1,4 +1,5 @@
 import { Ban, Inbox } from "lucide-react";
+import type { ReactNode } from "react";
 import { cn } from "./cn";
 
 export function Skeleton({ className }: { className?: string }) {
@@ -46,12 +47,13 @@ export function EmptyState({ title, description, action }: EmptyStateProps) {
   );
 }
 
-export function ForbiddenState() {
+export function ForbiddenState({ action }: { action?: ReactNode }) {
   return (
     <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
       <Ban aria-hidden="true" className="size-6 text-subtle" strokeWidth={1.5} />
       <p className="text-base font-medium text-text">You don't have access to this.</p>
       <p className="text-sm text-muted">Ask an administrator to review your role.</p>
+      {action}
     </div>
   );
 }

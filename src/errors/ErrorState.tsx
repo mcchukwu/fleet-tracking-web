@@ -90,7 +90,7 @@ export function ErrorState({
         className={cn("flex items-center gap-2 px-3 py-2", className)}
       >
         <TriangleAlert aria-hidden="true" className="size-4 shrink-0 text-danger" strokeWidth={1.5} />
-        <p className="min-w-0 flex-1 truncate text-sm text-text">Couldn't load</p>
+        <p className="min-w-0 flex-1 truncate text-sm text-text">{copy.title}</p>
         {actionHandler ? (
           <Button size="sm" variant="ghost" onClick={actionHandler}>
             {actionLabels[copy.action === "none" ? "retry" : copy.action]}

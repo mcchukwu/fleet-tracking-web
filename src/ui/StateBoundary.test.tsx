@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, render, screen } from "@testing-library/react";
-import { StateBoundary } from "./StateBoundary";
+import { act, render, screen } from "@testing-library/react";import { StateBoundary } from "./StateBoundary";
 import { recordRequestFailure, resetErrorStorm } from "../errors/global";
 import type { AppError } from "../errors/types";
 
@@ -17,9 +16,25 @@ afterEach(() => {
 });
 
 describe("StateBoundary", () => {
-  it("renders a skeleton while loading", () => {
+  it("renders a skeleton only after 200ms", () => {
+    vi.useFakeTimers();
     render(<StateBoundary state="loading" />);
+    expect(screen.queryByLabelText("Loading")).toBeNull();
+
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
     expect(screen.getByLabelText("Loading")).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it("distinguishes no data yet from no results", () => {
+    const { rerender } = render(<StateBoundary state="empty" />);
+    expect(screen.getByText("Nothing here yet")).toBeInTheDocument();
+
+    rerender(<StateBoundary state="empty" emptyReason="no-results" />);
+    expect(screen.getByText("No matches")).toBeInTheDocument();
+    expect(screen.queryByText("Nothing here yet")).toBeNull();
   });
 
   it("renders the empty state when there is no data", () => {
@@ -45,7 +60,9 @@ describe("StateBoundary", () => {
       recordRequestFailure("trips", "unavailable");
     });
 
-    expect(screen.queryByText("Check your connection. Your data is safe.")).toBeNull();
+    expect(
+      screen.queryByText("Check your connection. Your data is safe."),
+    ).toBeNull();
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
 

@@ -25,9 +25,10 @@ describe("ErrorState", () => {
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
-  it("renders a compact scope for a failed panel", () => {
+  it("renders a compact scope for a failed panel with the catalog title", () => {
     render(<ErrorState error={error()} compact onRetry={vi.fn()} />);
-    expect(screen.getByText("Couldn't load")).toBeInTheDocument();
+    expect(screen.getByText("Something went wrong on our side")).toBeInTheDocument();
+    expect(screen.queryByText("Try again in a moment. If it keeps happening, check System.")).toBeNull();
   });
 
   it("offers to copy diagnostics for contract failures", async () => {
