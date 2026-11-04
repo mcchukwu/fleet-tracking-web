@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
 import { cn } from "./cn";
 
 const iconButtonStyles = cva(
@@ -24,11 +24,22 @@ interface IconButtonProps
     VariantProps<typeof iconButtonStyles> {
   label: string;
   icon: ReactNode;
+  ref?: Ref<HTMLButtonElement>;
 }
 
-export function IconButton({ className, variant, size, label, icon, type = "button", ...props }: IconButtonProps) {
+export function IconButton({
+  className,
+  variant,
+  size,
+  label,
+  icon,
+  type = "button",
+  ref,
+  ...props
+}: IconButtonProps) {
   return (
     <button
+      ref={ref}
       type={type}
       aria-label={label}
       title={label}

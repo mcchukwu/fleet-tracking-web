@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
 import { cn } from "./cn";
 import { Spinner } from "./Spinner";
 
@@ -28,6 +28,7 @@ export interface ButtonProps
     VariantProps<typeof buttonStyles> {
   loading?: boolean;
   leadingIcon?: ReactNode;
+  ref?: Ref<HTMLButtonElement>;
 }
 
 export function Button({
@@ -39,10 +40,12 @@ export function Button({
   children,
   disabled,
   type = "button",
+  ref,
   ...props
 }: ButtonProps) {
   return (
     <button
+      ref={ref}
       type={type}
       className={cn(buttonStyles({ variant, size }), className)}
       disabled={disabled || loading}

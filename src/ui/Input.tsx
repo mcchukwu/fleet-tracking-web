@@ -1,5 +1,5 @@
 import { CircleAlert } from "lucide-react";
-import { useId, type InputHTMLAttributes, type ReactNode } from "react";
+import { useId, type InputHTMLAttributes, type ReactNode, type Ref } from "react";
 import { cn } from "./cn";
 
 interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "id"> {
@@ -8,9 +8,19 @@ interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "id"> {
   error?: string;
   leadingIcon?: ReactNode;
   trailing?: ReactNode;
+  ref?: Ref<HTMLInputElement>;
 }
 
-export function Input({ className, label, hint, error, leadingIcon, trailing, ...props }: InputProps) {
+export function Input({
+  className,
+  label,
+  hint,
+  error,
+  leadingIcon,
+  trailing,
+  ref,
+  ...props
+}: InputProps) {
   const generatedId = useId();
   const id = props.name ? `${props.name}-${generatedId}` : generatedId;
   const describedBy = [hint ? `${id}-hint` : "", error ? `${id}-error` : ""].filter(Boolean).join(" ") || undefined;
@@ -27,6 +37,7 @@ export function Input({ className, label, hint, error, leadingIcon, trailing, ..
           </span>
         ) : null}
         <input
+          ref={ref}
           id={id}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}

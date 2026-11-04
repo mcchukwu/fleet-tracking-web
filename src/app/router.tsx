@@ -19,6 +19,7 @@ import { ErrorBoundary } from "../errors/ErrorBoundary";
 import { ErrorState } from "../errors/ErrorState";
 import { normalize } from "../errors/normalize";
 import { recordError } from "../errors/report";
+import { LoginPage } from "../features/login/components/LoginPage";
 import { StyleGuidePage } from "../features/styleguide/StyleGuidePage";
 import { ForbiddenState } from "../ui/StatePanel";
 import { NotFound } from "./NotFound";
@@ -136,7 +137,7 @@ const loginRoute = createRoute({
     const user = await ensureSession(context.queryClient);
     if (user) throw redirect({ to: safeRedirect(search.redirect) });
   },
-  component: placeholder("Sign in", "The login screen ships in Slice 1."),
+  component: LoginPage,
 });
 
 const mapRoute = createRoute({
