@@ -155,7 +155,11 @@ export function LoginForm({ variant = "page", onSuccess }: LoginFormProps) {
         />
       </div>
 
-      <div ref={errorRef} tabIndex={-1} className="focus-visible:outline-none">
+      <div
+        ref={errorRef}
+        tabIndex={-1}
+        className="rounded-sm focus:outline-2 focus:outline-offset-2 focus:outline-focus-ring"
+      >
         {login.error && copy ? (
           <InlineError
             id={`${id}-error`}

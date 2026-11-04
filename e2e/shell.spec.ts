@@ -85,6 +85,7 @@ test.describe("app shell", () => {
     await expect(menu.getByText("dispatcher@demo.ftb")).toBeVisible();
     await expect(menu.getByText("dispatcher", { exact: true })).toBeVisible();
     await expectNoAxeViolations(page);
+    if (isMobile(page)) await expectTouchTargets(page);
     await captureForReview(page, "01-shell-user-menu");
 
     await page.keyboard.press("Escape");
@@ -108,6 +109,8 @@ test.describe("app shell", () => {
       const dark = page.getByRole("menuitemradio", { name: "Dark" });
       await dark.waitFor();
       await dark.focus();
+      await expectNoAxeViolations(page);
+      await expectTouchTargets(page);
       await page.keyboard.press("Enter");
     } else {
       await page.getByRole("button", { name: "Dark theme" }).click();
@@ -129,6 +132,30 @@ test.describe("app shell", () => {
     await expect(page).toHaveURL(/\/alerts$/);
     await expect(page.getByRole("heading", { name: "Alerts" })).toBeVisible();
     await expect(page.getByRole("dialog", { name: "Navigation" })).toHaveCount(0);
+  });
+
+  test("escape clears the map search query", async ({ page }) => {
+    await page.goto("/map?q=KJA");
+    await expect(page.getByRole("heading", { name: "Map" })).toBeVisible();
+
+    await page.keyboard.press("Escape");
+
+    await expect(page).toHaveURL(/\/map$/);
+  });
+
+  test("a failed sign out still leaves the device and says so", async ({ page }) => {
+    await page.goto("/map?fault=logout:network");
+    await page.getByRole("button", { name: "Account menu for Demo Dispatcher" }).click();
+    await page.getByRole("menuitem", { name: "Sign out" }).click();
+
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByText("Signed out on this device", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("The server couldn't be reached, so your session may still be active there.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expectNoAxeViolations(page);
   });
 
   test("keyboard shortcuts focus search, navigate and open the dialog", async ({ page }) => {
@@ -228,6 +255,7 @@ test.describe("app shell", () => {
     await expect(page.getByRole("button", { name: "Account menu for Demo Viewer" })).toBeVisible();
     await expectNoHorizontalScroll(page);
     await expectNoAxeViolations(page);
+    if (isMobile(page)) await expectTouchTargets(page);
     await captureForReview(page, "01-shell-forbidden");
   });
 });

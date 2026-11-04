@@ -642,7 +642,7 @@ export function StyleGuidePage() {
               action={{ label: "Reload", onClick: () => undefined }}
             />
             <Banner
-              tone="danger"
+              tone="warning"
               message="We're having trouble reaching the server. Retrying…"
               action={{ label: "Open System", onClick: () => undefined }}
             />

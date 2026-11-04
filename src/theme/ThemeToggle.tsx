@@ -14,7 +14,7 @@ export function ThemeToggle() {
   return (
     <fieldset
       aria-label="Colour theme"
-      className="m-0 inline-flex h-control-md items-center rounded-md border border-border bg-surface p-1"
+      className="m-0 inline-flex h-control-md items-center rounded-md border border-border bg-surface"
     >
       {options.map(({ mode: value, label, Icon }) => {
         const active = mode === value;

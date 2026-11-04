@@ -215,6 +215,12 @@ A failed login `POST` is an uncertain write, so the shared catalog would say "Ch
 
 Trade-off: two copy pairs are duplicated between the catalog and the login screen; they must stay aligned if the global wording changes.
 
+## 2026-11-04: Sign out is one pessimistic helper that names the failure
+
+The user menu and the session-expiry dialog now call `useSignOut`, which awaits `POST /auth/logout`, clears local state even on failure (the mutation's `onSettled` already did), and shows one persistent error toast. The toast separates an unreachable server (`network`, `offline`, `timeout`) from a rejected call (`403`, `5xx`), because only the first means the request never arrived. Both surfaces disable the control while the request is in flight.
+
+Trade-off: the user reaches the login screen before knowing the server did not revoke the session; the toast is the only place that fact is stated. That matches the policy's "toast when the surface has already closed" rule.
+
 ## 2026-11-04: Escape clears the vehicle search
 
 The advertised `Esc` shortcut now clears a non-empty global search (dialogs already close on Escape). Selection and drawers still belong to Slice 2/3.

@@ -21,8 +21,15 @@ export function AppShell() {
     },
     [navigate],
   );
+  const clearTransientView = useCallback(() => {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("q") && !url.searchParams.has("v")) return;
+    url.searchParams.delete("q");
+    url.searchParams.delete("v");
+    void navigate({ href: `${url.pathname}${url.search}`, replace: true });
+  }, [navigate]);
 
-  useShortcuts({ onOpenShortcuts: openShortcuts, onNavigate: go });
+  useShortcuts({ onOpenShortcuts: openShortcuts, onNavigate: go, onEscape: clearTransientView });
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-bg text-text">

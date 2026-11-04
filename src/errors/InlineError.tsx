@@ -52,10 +52,10 @@ export function InlineError({
     >
       <div className="flex items-start gap-2">
         <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" strokeWidth={1.5} />
-        <p className="min-w-0 flex-1">
-          {showTitle && title ? <span className="font-medium">{title} </span> : null}
-          {detail}
-        </p>
+        <div className="min-w-0 flex-1">
+          {showTitle && title ? <p className="font-medium">{title}</p> : null}
+          {detail ? <p>{detail}</p> : null}
+        </div>
         {resolved.action === "retry" && onRetry ? (
           <Button size="sm" variant="ghost" onClick={onRetry}>
             Retry

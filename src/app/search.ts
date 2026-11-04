@@ -48,7 +48,7 @@ export const auditSearchSchema = z.object({
 });
 
 export const loginSearchSchema = z.object({
-  redirect: z.string().optional(),
+  redirect: z.string().optional().catch(undefined),
 });
 
 export type MapSearch = z.infer<typeof mapSearchSchema>;

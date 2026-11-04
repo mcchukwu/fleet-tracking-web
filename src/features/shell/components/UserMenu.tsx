@@ -1,7 +1,5 @@
 import { ChevronDown, Keyboard, LogOut, Monitor, Moon, Sun, UserRound } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { useLogoutMutation } from "../../../api/hooks/auth";
 import { useAuthStore } from "../../../auth/store";
 import { useTheme, type ThemeMode } from "../../../theme/theme-context";
 import { Badge } from "../../../ui/Badge";
@@ -18,7 +16,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "../../../ui/DropdownMenu";
-import { useToast } from "../../../ui/Toast";
+import { useSignOut } from "../hooks/useSignOut";
 
 const themeOptions: Array<{ value: ThemeMode; label: string; icon: typeof Sun }> = [
   { value: "light", label: "Light", icon: Sun },
@@ -32,29 +30,11 @@ export interface UserMenuProps {
 
 export function UserMenu({ onShortcuts }: UserMenuProps) {
   const user = useAuthStore((state) => state.user);
-  const logout = useLogoutMutation();
-  const navigate = useNavigate();
+  const { signOut, pending } = useSignOut();
   const { mode, setMode } = useTheme();
-  const { toast } = useToast();
   const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(null);
 
   if (!user) return null;
-
-  async function signOut(): Promise<void> {
-    const failure = await logout
-      .mutateAsync()
-      .then(() => null)
-      .catch((cause: unknown) => cause);
-
-    if (failure) {
-      toast({
-        tone: "error",
-        title: "Signed out on this device. The server couldn't be reached.",
-        key: "logout-failed",
-      });
-    }
-    await navigate({ to: "/login" });
-  }
 
   return (
     <div ref={setPortalContainer} className="contents">
@@ -98,7 +78,7 @@ export function UserMenu({ onShortcuts }: UserMenuProps) {
                 <Sun aria-hidden="true" className="size-4" strokeWidth={1.5} />
                 Theme
               </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
+              <DropdownMenuSubContent container={portalContainer}>
                 <DropdownMenuRadioGroup
                   value={mode}
                   onValueChange={(value) => setMode(value as ThemeMode)}
@@ -121,7 +101,11 @@ export function UserMenu({ onShortcuts }: UserMenuProps) {
             </DropdownMenuItem>
           ) : null}
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => void signOut()} className="text-danger">
+          <DropdownMenuItem
+            onSelect={() => void signOut()}
+            disabled={pending}
+            className="text-danger"
+          >
             <LogOut aria-hidden="true" className="size-4" strokeWidth={1.5} />
             Sign out
           </DropdownMenuItem>

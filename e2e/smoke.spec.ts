@@ -4,6 +4,7 @@ import {
   expectNoAxeViolations,
   expectNoHorizontalScroll,
   expectTheme,
+  expectTouchTargets,
 } from "./helpers";
 
 test.describe("foundation smoke", () => {
@@ -77,6 +78,7 @@ test.describe("foundation smoke", () => {
     await expect(page).toHaveTitle("Page not found · Fleet Console");
     await expectNoHorizontalScroll(page);
     await expectNoAxeViolations(page);
+    if ((page.viewportSize()?.width ?? 1440) < 768) await expectTouchTargets(page);
     await captureForReview(page, "00-not-found");
   });
 
@@ -111,6 +113,7 @@ test.describe("foundation smoke", () => {
 
     await page.goto("/import");
     await expect(page).toHaveURL(/\/forbidden$/);
+    if ((page.viewportSize()?.width ?? 1440) < 768) await expectTouchTargets(page);
     await captureForReview(page, "00-forbidden");
   });
 

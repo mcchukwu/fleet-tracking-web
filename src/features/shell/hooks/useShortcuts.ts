@@ -21,9 +21,10 @@ function requestSearchFocus(): void {
 export interface ShortcutActions {
   onOpenShortcuts: () => void;
   onNavigate: (path: NavPath) => void;
+  onEscape: () => void;
 }
 
-export function useShortcuts({ onOpenShortcuts, onNavigate }: ShortcutActions): void {
+export function useShortcuts({ onOpenShortcuts, onNavigate, onEscape }: ShortcutActions): void {
   const chord = useRef(false);
   const timer = useRef<number | null>(null);
 
@@ -40,6 +41,15 @@ export function useShortcuts({ onOpenShortcuts, onNavigate }: ShortcutActions): 
       if (event.defaultPrevented) return;
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (isEditable(event.target) || isModalOpen()) return;
+
+      if (event.key === "Escape") {
+        if (chord.current) {
+          clearChord();
+          return;
+        }
+        onEscape();
+        return;
+      }
 
       if (event.key === "/") {
         event.preventDefault();
@@ -74,7 +84,7 @@ export function useShortcuts({ onOpenShortcuts, onNavigate }: ShortcutActions): 
       window.removeEventListener("keydown", onKeyDown);
       clearChord();
     };
-  }, [onNavigate, onOpenShortcuts]);
+  }, [onEscape, onNavigate, onOpenShortcuts]);
 }
 
 export { CHORD_TIMEOUT_MS, isEditable, isModalOpen };

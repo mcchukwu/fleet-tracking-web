@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../../api/instance";
 import { useAuthStore } from "../../../auth/store";
+import { ApiError } from "../../../errors/types";
 import { ThemeProvider } from "../../../theme/ThemeProvider";
 import { ToastProvider } from "../../../ui/Toast";
 import { UserMenu } from "./UserMenu";
@@ -78,8 +79,28 @@ describe("UserMenu", () => {
     await userEventApi.click(screen.getByRole("button", { name: `Account menu for ${user.name}` }));
     await userEventApi.click(screen.getByRole("menuitem", { name: "Sign out" }));
 
+    expect(await screen.findByText("Signed out on this device")).toBeVisible();
     expect(
-      await screen.findByText("Signed out on this device. The server couldn't be reached."),
+      screen.getByText(
+        "The server couldn't be reached, so your session may still be active there.",
+      ),
+    ).toBeVisible();
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: "/login" }));
+  });
+
+  it("distinguishes a rejected logout from an unreachable server", async () => {
+    const userEventApi = userEvent.setup();
+    vi.spyOn(api, "logout").mockRejectedValue(
+      new ApiError(403, "forbidden", "forbidden"),
+    );
+    renderMenu();
+
+    await userEventApi.click(screen.getByRole("button", { name: `Account menu for ${user.name}` }));
+    await userEventApi.click(screen.getByRole("menuitem", { name: "Sign out" }));
+
+    expect(await screen.findByText("Signed out on this device")).toBeVisible();
+    expect(
+      screen.getByText("The server didn't end the session, so it may still be active there."),
     ).toBeVisible();
     await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: "/login" }));
   });

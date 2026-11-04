@@ -46,6 +46,18 @@ describe("InlineError", () => {
     expect(screen.getByRole("alert")).not.toHaveTextContent("Your session expired");
   });
 
+  it("separates the title from the detail instead of running them together", () => {
+    render(
+      <InlineError
+        error={{ ...error, kind: "network" }}
+        copy={{ title: "Can't reach the server", detail: "Check your connection." }}
+      />,
+    );
+
+    expect(screen.getByText("Can't reach the server").tagName).toBe("P");
+    expect(screen.getByText("Check your connection.").tagName).toBe("P");
+  });
+
   it("offers Copy diagnostics for server errors", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", {

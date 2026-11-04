@@ -99,11 +99,14 @@ export function DropdownMenuSubTrigger({
 
 export function DropdownMenuSubContent({
   className,
+  container,
   children,
   ...props
-}: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent>) {
+}: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent> & {
+  container?: HTMLElement | null;
+}) {
   return (
-    <DropdownMenuPrimitive.Portal>
+    <DropdownMenuPrimitive.Portal container={container ?? undefined}>
       <DropdownMenuPrimitive.SubContent
         className={cn(
           "z-menu min-w-40 animate-fade-in rounded-md border border-border bg-surface p-1 shadow-menu",

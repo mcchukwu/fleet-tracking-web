@@ -208,17 +208,19 @@ export const handlers = [
   }),
 
   http.post(`${API}/auth/logout`, ({ request }) => {
-    if (request.headers.get("X-CSRF-Token") !== state.csrf) {
-      return HttpResponse.json(
-        { error: { code: "csrf_failed", message: "csrf validation failed" } },
-        { status: 403 },
-      );
-    }
-    writeOverride(MOCK_SESSION_KEY, "none");
-    clearOverride(MOCK_ROLE_KEY);
-    clearOverride(MOCK_AUTH_KEY);
-    state.user = demoUsers[DEFAULT_EMAIL] ?? state.user;
-    return new HttpResponse(null, { status: 204 });
+    return withFault("logout", request, () => {
+      if (request.headers.get("X-CSRF-Token") !== state.csrf) {
+        return HttpResponse.json(
+          { error: { code: "csrf_failed", message: "csrf validation failed" } },
+          { status: 403 },
+        );
+      }
+      writeOverride(MOCK_SESSION_KEY, "none");
+      clearOverride(MOCK_ROLE_KEY);
+      clearOverride(MOCK_AUTH_KEY);
+      state.user = demoUsers[DEFAULT_EMAIL] ?? state.user;
+      return new HttpResponse(null, { status: 204 });
+    });
   }),
 
   http.get(`${API}/me`, ({ request }) => {

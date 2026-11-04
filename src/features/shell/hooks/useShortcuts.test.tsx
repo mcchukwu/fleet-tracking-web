@@ -5,7 +5,7 @@ import { useShortcuts } from "./useShortcuts";
 
 function Harness({ onNavigate = vi.fn() }: { onNavigate?: (path: string) => void }) {
   const [open, setOpen] = useState(false);
-  useShortcuts({ onOpenShortcuts: () => setOpen(true), onNavigate });
+  useShortcuts({ onOpenShortcuts: () => setOpen(true), onNavigate, onEscape: () => undefined });
   return (
     <div>
       <input aria-label="Note" />
@@ -18,9 +18,15 @@ function Harness({ onNavigate = vi.fn() }: { onNavigate?: (path: string) => void
   );
 }
 
-function HarnessWithoutDialog({ onNavigate }: { onNavigate: (path: string) => void }) {
+function HarnessWithoutDialog({
+  onNavigate,
+  onEscape = vi.fn(),
+}: {
+  onNavigate: (path: string) => void;
+  onEscape?: () => void;
+}) {
   const [open, setOpen] = useState(false);
-  useShortcuts({ onOpenShortcuts: () => setOpen(true), onNavigate });
+  useShortcuts({ onOpenShortcuts: () => setOpen(true), onNavigate, onEscape });
   useEffect(() => {
     const focus = () => document.getElementById("vehicle-search")?.focus();
     window.addEventListener("fleet:focus-search", focus);
@@ -50,6 +56,28 @@ describe("useShortcuts", () => {
     render(<HarnessWithoutDialog onNavigate={vi.fn()} />);
     fireEvent.keyDown(window, { key: "?" });
     expect(screen.getByText("shortcuts open")).toBeVisible();
+  });
+
+  it("closes the transient view on Escape", () => {
+    const onEscape = vi.fn();
+    render(<HarnessWithoutDialog onNavigate={vi.fn()} onEscape={onEscape} />);
+
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    expect(onEscape).toHaveBeenCalledOnce();
+  });
+
+  it("does not close the transient view while typing or when a dialog is open", () => {
+    const onEscape = vi.fn();
+    render(<HarnessWithoutDialog onNavigate={vi.fn()} onEscape={onEscape} />);
+    const input = screen.getByRole("textbox", { name: "Note" });
+    input.focus();
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(onEscape).not.toHaveBeenCalled();
+
+    render(<Harness onNavigate={vi.fn()} />);
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(onEscape).not.toHaveBeenCalled();
   });
 
   it("navigates on a g chord", () => {

@@ -119,7 +119,7 @@ function ForbiddenPage() {
         action={
           <Link
             to="/map"
-            className="text-sm font-medium text-accent-fg underline-offset-4 hover:underline"
+            className="inline-flex h-touch items-center text-sm font-medium text-accent-fg underline-offset-4 hover:underline md:h-control-md"
           >
             Back to the map
           </Link>

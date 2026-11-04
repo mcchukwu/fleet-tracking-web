@@ -1,19 +1,18 @@
-import { useNavigate, useRouter } from "@tanstack/react-router";
+import { useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
-import { useLogoutMutation } from "../../../api/hooks/auth";
 import { useAuthStore } from "../../../auth/store";
 import { Button } from "../../../ui/Button";
 import { Dialog } from "../../../ui/Dialog";
 import { LoginForm } from "../../login/components/LoginForm";
+import { useSignOut } from "../hooks/useSignOut";
 
 export function SessionExpiryDialog() {
   const status = useAuthStore((state) => state.status);
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
   const router = useRouter();
-  const navigate = useNavigate();
-  const logout = useLogoutMutation();
+  const { signOut, pending } = useSignOut();
   const previousUserId = useRef<string | null>(null);
 
   useEffect(() => {
@@ -33,12 +32,6 @@ export function SessionExpiryDialog() {
     await queryClient.refetchQueries({ type: "active" });
   }
 
-  async function signOut(): Promise<void> {
-    const redirect = `${window.location.pathname}${window.location.search}`;
-    await logout.mutateAsync().catch(() => undefined);
-    await navigate({ to: "/login", search: { redirect } });
-  }
-
   if (status !== "expired") return null;
 
   return (
@@ -49,7 +42,14 @@ export function SessionExpiryDialog() {
       title="Your session expired"
       description="Sign in to continue. You'll stay where you are."
       footer={
-        <Button variant="ghost" onClick={() => void signOut()}>
+        <Button
+          variant="ghost"
+          loading={pending}
+          disabled={pending}
+          onClick={() =>
+            void signOut({ redirect: `${window.location.pathname}${window.location.search}` })
+          }
+        >
           Sign out
         </Button>
       }

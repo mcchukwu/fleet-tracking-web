@@ -4,6 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../../api/instance";
 import { useAuthStore } from "../../../auth/store";
+import { ApiError } from "../../../errors/types";
+import { ToastProvider } from "../../../ui/Toast";
 import { SessionExpiryDialog } from "./SessionExpiryDialog";
 
 const { navigate, invalidate } = vi.hoisted(() => ({
@@ -42,7 +44,9 @@ function renderDialog() {
   const clearSpy = vi.spyOn(queryClient, "clear");
   render(
     <QueryClientProvider client={queryClient}>
-      <SessionExpiryDialog />
+      <ToastProvider>
+        <SessionExpiryDialog />
+      </ToastProvider>
     </QueryClientProvider>,
   );
   return { queryClient, refetchSpy, clearSpy };
@@ -111,5 +115,32 @@ describe("SessionExpiryDialog", () => {
       });
     });
     expect(useAuthStore.getState().status).toBe("anonymous");
+  });
+
+  it("surfaces a rejected logout before going to login", async () => {
+    const userEventApi = userEvent.setup();
+    vi.spyOn(api, "logout").mockRejectedValue(new ApiError(403, "forbidden", "forbidden"));
+    renderDialog();
+
+    await userEventApi.click(screen.getByRole("button", { name: "Sign out" }));
+
+    expect(await screen.findByText("Signed out on this device")).toBeVisible();
+    expect(
+      screen.getByText("The server didn't end the session, so it may still be active there."),
+    ).toBeVisible();
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: "/login", search: { redirect: "/" } }));
+  });
+
+  it("disables sign out while the request is in flight", async () => {
+    const userEventApi = userEvent.setup();
+    const logout = vi.spyOn(api, "logout").mockReturnValue(new Promise(() => undefined));
+    renderDialog();
+
+    const signOut = screen.getByRole("button", { name: "Sign out" });
+    await userEventApi.click(signOut);
+
+    await waitFor(() => expect(signOut).toBeDisabled());
+    await userEventApi.click(signOut);
+    expect(logout).toHaveBeenCalledOnce();
   });
 });

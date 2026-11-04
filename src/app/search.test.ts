@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   alertsSearchSchema,
   auditSearchSchema,
+  loginSearchSchema,
   mapSearchSchema,
   playbackSearchSchema,
   reportsSearchSchema,
@@ -34,6 +35,14 @@ describe("route search schemas", () => {
     expect(auditSearchSchema.parse({ offset: "12" }).offset).toBe(12);
     expect(auditSearchSchema.parse({ offset: -1 }).offset).toBeUndefined();
     expect(auditSearchSchema.parse({}).offset).toBeUndefined();
+  });
+
+  it("recovers a malformed or repeated login redirect", () => {
+    expect(loginSearchSchema.parse({ redirect: "/map" }).redirect).toBe("/map");
+    expect(
+      loginSearchSchema.parse({ redirect: ["/map", "/alerts"] }).redirect,
+    ).toBeUndefined();
+    expect(loginSearchSchema.parse({ redirect: 42 }).redirect).toBeUndefined();
   });
 
   it("keeps report ranges", () => {

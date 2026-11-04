@@ -14,7 +14,7 @@ export function NotFound() {
       </p>
       <Link
         to="/map"
-        className="mt-2 inline-flex h-control-md items-center rounded-md border border-border-strong bg-surface px-3 text-base font-medium text-text hover:bg-surface-2"
+        className="mt-2 inline-flex h-touch items-center rounded-md border border-border-strong bg-surface px-3 text-base font-medium text-text hover:bg-surface-2 md:h-control-md"
       >
         Back to the map
       </Link>

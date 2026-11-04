@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import {
   captureForReview,
+  expectFocusVisible,
   expectNoAxeViolations,
   expectNoHorizontalScroll,
   expectTheme,
@@ -58,8 +59,17 @@ test.describe("login", () => {
       return alertElement ? document.activeElement?.contains(alertElement) ?? false : false;
     });
     expect(errorFocused).toBe(true);
+    await expectFocusVisible(page.getByRole("alert").locator(".."));
     await expectNoAxeViolations(page);
     await captureForReview(page, "01-login-invalid");
+  });
+
+  test("a malformed or repeated redirect still opens the form", async ({ page }) => {
+    await startAnonymous(page);
+    await page.goto("/login?redirect=/map&redirect=/alerts");
+
+    await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+    await expect(page.getByText("This part of the page stopped working")).toHaveCount(0);
   });
 
   test("a correct password returns to the requested route", async ({ page }) => {
