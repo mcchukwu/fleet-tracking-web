@@ -1,41 +1,37 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import {
   captureForReview,
   expectNoAxeViolations,
   expectNoHorizontalScroll,
-  setStoredTheme,
+  expectTheme,
 } from "./helpers";
 
-const themes = ["light", "dark"] as const;
-
 test.describe("foundation smoke", () => {
-  test("styleguide renders in both themes", async ({ page }) => {
+  test("styleguide renders in the project theme", async ({ page, theme }) => {
     const errors: string[] = [];
     page.on("console", (message) => {
       if (message.type() === "error") errors.push(message.text());
     });
 
-    for (const theme of themes) {
-      await setStoredTheme(page, theme);
-      await page.goto("/");
-      await expect(page).toHaveURL(/\/styleguide$/);
-      await expect(
-        page.getByRole("heading", { name: "Fleet Console foundations" }),
-      ).toBeVisible();
-      await expect(page).toHaveTitle("Styleguide · Fleet Console");
-      await expectNoHorizontalScroll(page);
-      await expectNoAxeViolations(page);
-      await captureForReview(page, "00-styleguide");
-    }
+    await page.goto("/");
+    await expect(page).toHaveURL(/\/styleguide$/);
+    await expect(
+      page.getByRole("heading", { name: "Fleet Console foundations" }),
+    ).toBeVisible();
+    await expect(page).toHaveTitle("Styleguide · Fleet Console");
+    await expectTheme(page, theme);
+    await expectNoHorizontalScroll(page);
+    await expectNoAxeViolations(page);
+    await captureForReview(page, "00-styleguide");
 
     expect(errors).toEqual([]);
   });
 
-  test("placeholder map route renders with the debug hook", async ({ page }) => {
-    await setStoredTheme(page, "light");
+  test("placeholder map route renders with the debug hook", async ({ page, theme }) => {
     await page.goto("/map");
     await expect(page.getByRole("heading", { name: "Map" })).toBeVisible();
     await expect(page).toHaveTitle("Map · Fleet Console");
+    await expectTheme(page, theme);
     await expectNoHorizontalScroll(page);
     await expectNoAxeViolations(page);
 
@@ -47,7 +43,6 @@ test.describe("foundation smoke", () => {
   });
 
   test("unknown routes show the not-found page", async ({ page }) => {
-    await setStoredTheme(page, "dark");
     await page.goto("/does-not-exist");
     await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
     await expect(page).toHaveTitle("Page not found · Fleet Console");
@@ -56,7 +51,7 @@ test.describe("foundation smoke", () => {
     await captureForReview(page, "00-not-found");
   });
 
-  test("an unauthenticated deep link redirects to sign in without a request storm", async ({
+  test("an unauthenticated deep link redirects to sign in with its query intact", async ({
     page,
   }) => {
     let meCalls = 0;
@@ -67,8 +62,10 @@ test.describe("foundation smoke", () => {
     await page.addInitScript(() => {
       localStorage.setItem("fleet.mockAuth", "anonymous");
     });
-    await page.goto("/map");
-    await expect(page).toHaveURL(/\/login(\?|$)/);
+    await page.goto("/map?v=abc&status=moving");
+    await expect(page).toHaveURL(
+      /\/login\?redirect=%2Fmap%3Fv%3Dabc%26status%3Dmoving$/,
+    );
     await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
     await page.waitForTimeout(500);
     expect(meCalls).toBeLessThanOrEqual(4);

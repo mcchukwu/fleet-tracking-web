@@ -14,7 +14,10 @@ export type FaultKind =
   | "server"
   | "unavailable"
   | "contract"
-  | "slow";
+  | "slow"
+  | "malformed"
+  | "unknown_enum"
+  | "lost";
 
 const faultKinds = new Set<string>([
   "offline",
@@ -31,6 +34,9 @@ const faultKinds = new Set<string>([
   "unavailable",
   "contract",
   "slow",
+  "malformed",
+  "unknown_enum",
+  "lost",
 ]);
 
 export function isFaultKind(value: string): value is FaultKind {
@@ -109,6 +115,12 @@ export function faultResponse(kind: FaultKind, retryAfterSec = 30): Promise<Resp
       );
     case "contract":
       return Promise.resolve(HttpResponse.json({ data: [{ unexpected: true }] }));
+    case "malformed":
+      return Promise.resolve(malformed());
+    case "unknown_enum":
+      return Promise.resolve(unknownEnum());
+    case "lost":
+      return lostResponse();
     case "slow":
       return delay(12_000).then(() => HttpResponse.json({ data: [] }));
   }

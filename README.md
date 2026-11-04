@@ -45,12 +45,12 @@ Set `VITE_MOCK=1` to run the app against MSW instead of staging.
 | `npm run check` | Typecheck, type-aware lint, design guard and unit tests |
 | `npm run guard` | Run only the design guard |
 | `npm run test` | Run Vitest |
-| `npm run e2e` | Run Playwright in desktop and mobile projects |
+| `npm run e2e` | Run Playwright in desktop and mobile projects, light and dark |
 | `npm run e2e:review` | Run Playwright and write screenshots to `test-results/review/` |
 | `npm run build` | Type-check and build for production |
 | `npm run preview` | Preview the production build |
 
-If Playwright's bundled Chromium is not installed, point it at a system browser: `PLAYWRIGHT_CHROMIUM_PATH=/usr/bin/chromium npm run e2e`.
+Install Playwright's browser once after `npm ci`: `npx playwright install --with-deps chromium`. CI needs the same step before `npm run e2e`. If the bundled Chromium is not installed, point it at a system browser instead: `PLAYWRIGHT_CHROMIUM_PATH=/usr/bin/chromium npm run e2e`.
 
 ## Documentation
 

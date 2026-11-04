@@ -15,6 +15,12 @@ export async function setStoredTheme(page: Page, theme: ReviewTheme): Promise<vo
   }, theme);
 }
 
+export async function expectTheme(page: Page, theme: ReviewTheme): Promise<void> {
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.dataset.theme))
+    .toBe(theme);
+}
+
 export async function expectNoHorizontalScroll(page: Page): Promise<void> {
   const overflows = await page.evaluate(
     () => document.documentElement.scrollWidth > window.innerWidth,

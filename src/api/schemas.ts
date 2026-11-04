@@ -12,6 +12,17 @@ export const errorResponseSchema = z.object({
   }),
 });
 
+export const loginResponseSchema = z.object({
+  user: z.object({
+    id: z.string(),
+    tenant_id: z.string(),
+    email: z.string(),
+    name: z.string(),
+    role: z.enum(["admin", "dispatcher", "security", "viewer"]),
+  }),
+  csrf_token: z.string(),
+});
+
 export const positionMessageSchema = z.object({
   type: z.literal("position"),
   tenant_id: z.string(),

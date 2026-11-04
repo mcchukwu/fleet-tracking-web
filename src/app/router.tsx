@@ -3,6 +3,7 @@ import {
   createRootRouteWithContext,
   createRoute,
   createRouter,
+  lazyRouteComponent,
   Link,
   Outlet,
   redirect,
@@ -57,6 +58,7 @@ function RouteError({ error, reset }: ErrorComponentProps) {
   };
   return (
     <main className="flex min-h-screen items-center justify-center bg-bg p-6 text-text">
+      <h1 className="sr-only">Something went wrong</h1>
       <ErrorState error={normalized} blocking onRetry={retry} onAction={retry} />
     </main>
   );
@@ -251,6 +253,16 @@ const forbiddenRoute = createRoute({
   },
 });
 
+const devRoutes = import.meta.env.DEV
+  ? [
+      createRoute({
+        getParentRoute: () => rootRoute,
+        path: "/dev/faults",
+        component: lazyRouteComponent(() => import("../dev/FaultLab"), "FaultLab"),
+      }),
+    ]
+  : [];
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   styleguideRoute,
@@ -265,6 +277,7 @@ const routeTree = rootRoute.addChildren([
   systemRoute,
   auditRoute,
   playbackRoute,
+  ...devRoutes,
   forbiddenRoute,
 ]);
 
@@ -273,6 +286,7 @@ export function createAppRouter(queryClient: QueryClient) {
     routeTree,
     context: { queryClient },
     defaultPreload: "intent",
+    defaultErrorComponent: RouteError,
   });
 }
 

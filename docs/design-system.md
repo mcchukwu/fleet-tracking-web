@@ -366,7 +366,7 @@ The KPI strip always shows `last data age`. The top-bar connection indicator has
 
 ### 9.3 Map layers
 
-- **Basemap:** provider-neutral, via `MapTokens`. Desaturated, low contrast, minimal labels so markers carry the visual weight. Ship two styles (light and dark) and swap with the theme. Offline tiles are a provider capability; a provider that ships an offline tile pack enables the offline layer.
+- **Basemap:** desaturated, low contrast, minimal labels, so markers carry the visual weight. The map is provider-neutral: colours, stroke patterns and marker anatomy reach every adapter through `MapTokens` (`src/map/tokens.ts`), and each adapter ships light and dark styles. Offline support is a declared adapter capability; the MapLibre adapter uses a self-hosted PMTiles file.
 - **Vehicle marker:** 24px circle, 2px ring in `--surface`, shadow-menu. Plate label appears at zoom ≥ 13 in a 12px mono chip. Below zoom 11, vehicles cluster; the cluster shows its count and takes the colour of the worst status inside.
 - **Selected vehicle:** 2px `--accent` outer ring and the marker raised above the others.
 - **Geofence:** polygon fill at 12% opacity, 2px stroke. Kind is encoded by colour *and* stroke pattern:
@@ -585,5 +585,5 @@ const pill = cva("inline-flex h-5 items-center gap-1 rounded-full px-2 text-xs f
 - Tailwind v4 theme variables: https://tailwindcss.com/docs/theme
 - shadcn/ui theming: https://ui.shadcn.com/docs/theming
 - WCAG 2.2 quick reference: https://www.w3.org/WAI/WCAG22/quickref/
-- MapLibre style specification: https://maplibre.org/maplibre-style-spec/
+- Map style specs per adapter, e.g. MapLibre: https://maplibre.org/maplibre-style-spec/
 - Refactoring UI (practical visual hierarchy and spacing): https://www.refactoringui.com

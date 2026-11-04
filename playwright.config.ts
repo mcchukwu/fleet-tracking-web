@@ -19,23 +19,20 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   projects: [
-    {
-      name: "desktop",
-      use: {
-        ...devices["Desktop Chrome"],
-        viewport: { width: 1440, height: 900 },
-        launchOptions,
-      },
-    },
-    {
-      name: "mobile",
-      use: {
-        ...devices["Desktop Chrome"],
-        viewport: { width: 390, height: 844 },
-        hasTouch: true,
-        launchOptions,
-      },
-    },
+    ...(["desktop", "mobile"] as const).flatMap((device) =>
+      (["light", "dark"] as const).map((theme) => ({
+        name: `${device}-${theme}`,
+        use: {
+          ...devices["Desktop Chrome"],
+          viewport:
+            device === "mobile"
+              ? { width: 390, height: 844 }
+              : { width: 1440, height: 900 },
+          ...(device === "mobile" ? { hasTouch: true } : {}),
+          launchOptions,
+        },
+      })),
+    ),
   ],
   webServer: {
     command: "npm run dev -- --host 127.0.0.1 --port 4173",

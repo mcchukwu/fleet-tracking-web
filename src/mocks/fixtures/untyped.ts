@@ -42,6 +42,8 @@ export const auditResponseFixture = {
   ],
 };
 
+// Provisional: shape taken from the OpenAPI `type: object` response; replace with a
+// captured staging payload before Slice 9 depends on it.
 export const importResultFixture = {
   job_id: "job-2026-11-03-001",
   total: 12,

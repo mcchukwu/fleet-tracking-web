@@ -68,6 +68,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.props.level === "app") {
       return (
         <main className="flex min-h-screen items-center justify-center bg-bg p-6">
+          <h1 className="sr-only">Something went wrong</h1>
           <ErrorState error={error} blocking onAction={() => window.location.reload()} />
         </main>
       );

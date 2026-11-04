@@ -175,15 +175,17 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
-  http.get(`${API}/me`, () => {
-    if (readOverride("fleet.mockAuth") === "anonymous") {
-      return HttpResponse.json(
-        { error: { code: "unauthenticated", message: "no session" } },
-        { status: 401 },
-      );
-    }
-    applyRoleOverride();
-    return HttpResponse.json({ user: state.user, csrf_token: state.csrf });
+  http.get(`${API}/me`, ({ request }) => {
+    return withFault("me", request, () => {
+      if (readOverride("fleet.mockAuth") === "anonymous") {
+        return HttpResponse.json(
+          { error: { code: "unauthenticated", message: "no session" } },
+          { status: 401 },
+        );
+      }
+      applyRoleOverride();
+      return HttpResponse.json({ user: state.user, csrf_token: state.csrf });
+    });
   }),
 
   http.get(`${API}/vehicles`, ({ request }) => {

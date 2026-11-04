@@ -16,6 +16,13 @@
   },
   "overrides": [
     { "files": ["src/errors/report.ts", "scripts/**"], "rules": { "no-console": "off" } },
-    { "files": ["**/*.test.*", "e2e/**"], "rules": { "typescript/no-non-null-assertion": "off" } }
+    {
+      "files": ["**/*.test.*", "e2e/**"],
+      "rules": { "typescript/no-non-null-assertion": "off" }
+    },
+    {
+      "files": ["e2e/**"],
+      "rules": { "react/rules-of-hooks": "off" }
+    }
   ]
 }

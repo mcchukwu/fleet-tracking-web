@@ -11,6 +11,7 @@ import {
   auditResponseSchema,
   errorResponseSchema,
   importResultSchema,
+  loginResponseSchema,
   systemHealthSchema,
   type AuditResponse,
   type SystemHealth,
@@ -78,6 +79,12 @@ function queryString(values: object): string {
   return query ? `?${query}` : "";
 }
 
+function faultOverride(): string | null {
+  if (!import.meta.env.DEV || import.meta.env.VITE_MOCK !== "1") return null;
+  if (typeof window === "undefined") return null;
+  return new URLSearchParams(window.location.search).get("fault");
+}
+
 export class FleetApiClient {
   private csrfToken = "";
   private handlers: SessionHandlers = {};
@@ -108,7 +115,11 @@ export class FleetApiClient {
   }
 
   private url(path: string): string {
-    return `${this.baseUrl.replace(/\/$/, "")}/api/v1${path}`;
+    const fault = faultOverride();
+    const target = fault
+      ? `${path}${path.includes("?") ? "&" : "?"}fault=${encodeURIComponent(fault)}`
+      : path;
+    return `${this.baseUrl.replace(/\/$/, "")}/api/v1${target}`;
   }
 
   private async request<T>(
@@ -236,11 +247,9 @@ export class FleetApiClient {
   }
 
   async login(email: string, password: string, options: RequestOptions = {}): Promise<LoginResponse> {
-    const result = await this.request<LoginResponse>(
-      "POST",
-      "/auth/login",
-      { email, password },
-      options,
+    const result = await this.validated(
+      this.request<unknown>("POST", "/auth/login", { email, password }, options),
+      loginResponseSchema,
     );
     this.csrfToken = result.csrf_token;
     return result;
@@ -255,7 +264,10 @@ export class FleetApiClient {
   }
 
   async me(options: RequestOptions = {}): Promise<LoginResponse> {
-    const result = await this.request<LoginResponse>("GET", "/me", undefined, options);
+    const result = await this.validated(
+      this.request<unknown>("GET", "/me", undefined, options),
+      loginResponseSchema,
+    );
     this.csrfToken = result.csrf_token;
     return result;
   }

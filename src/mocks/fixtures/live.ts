@@ -16,6 +16,8 @@ export const olderPositionFrame: PositionMessage = {
   recorded_at: "2026-11-03T08:10:00Z",
 };
 
+// Provisional: the alert frame shape is derived from the OpenAPI message schema.
+// Capture a real alert frame from staging before Slice 4 builds its UI on it.
 export const alertFrame: AlertMessage = {
   type: "alert" as const,
   tenant_id: "tenant-demo",

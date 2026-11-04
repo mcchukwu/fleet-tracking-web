@@ -120,3 +120,27 @@ Trade-off: the helper is not a UI component. Slice 1 wires it into the shell, wh
 ## 2026-11-03: One error model
 
 Every failure normalizes to `AppError` and is handled by `src/errors/`; features render error states from the hook result and never branch on raw status codes or server messages. `docs/error-handling.md` is authoritative for classification, copy, surfaces, reconciliation and diagnostics.
+
+## 2026-11-04: Route failures share the app error surface
+
+Every route loader and `beforeLoad` failure is rendered by one `defaultErrorComponent` that normalizes the cause and renders `ErrorState` inside a `main` with a hidden level-one heading. Retry resets the boundary and invalidates the router. Before this, a failed `/me` fell through to the router's built-in panel.
+
+Trade-off: the route error page has no shell, because the shell ships in Slice 1. When it lands, the error component moves inside it.
+
+## 2026-11-04: Fault injection travels through the API client
+
+In dev with `VITE_MOCK=1`, the client appends the page's `?fault=resource:kind` parameter to every API request. MSW handlers read it and return that fault. `malformed`, `unknown_enum` and `lost` reuse the §11 helpers. This keeps the switch out of production code paths and lets Playwright force faults without runtime handler injection.
+
+Trade-off: the fault applies to all calls for one resource until the page URL changes. Tests clear it with `history.replaceState` when they need recovery.
+
+## 2026-11-04: Four Playwright projects for the theme matrix
+
+The suite runs desktop and mobile at 1440x900 and 390x844, each in light and dark (`desktop-light`, `desktop-dark`, `mobile-light`, `mobile-dark`). A fixture reads the project name and stores the theme before first paint; tests receive the same theme as a fixture and assert the resolved `data-theme`.
+
+Trade-off: four projects multiply runtime. With one worker the suite stays fast enough for a per-slice gate.
+
+## 2026-11-04: Offline defaults to the browser signal
+
+`normalize` treats a fetch `TypeError` as `offline` when `navigator.onLine` is false and no explicit hint was passed. Callers can still override it. The connection store remains the UI source of truth; this only fixes classification at the error boundary.
+
+Trade-off: a service-worker-served response can succeed while `navigator.onLine` is false; that is a connectivity state, not a failed request, so no error is produced.
