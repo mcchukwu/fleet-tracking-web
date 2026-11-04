@@ -9,6 +9,7 @@ export interface ConnectionState {
   network: NetworkState;
   socket: SocketState;
   lastDataAt: number | null;
+  socketDownAt: number | null;
   setNetwork: (network: NetworkState) => void;
   setSocket: (socket: SocketState) => void;
   markData: (at: number) => void;
@@ -18,10 +19,25 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
   network: typeof navigator === "undefined" || navigator.onLine ? "online" : "offline",
   socket: "down",
   lastDataAt: null,
+  socketDownAt: null,
   setNetwork: (network) => set({ network }),
-  setSocket: (socket) => set({ socket }),
+  setSocket: (socket) =>
+    set((state) => {
+      if (socket === state.socket) return state;
+      if (socket === "live") return { socket, socketDownAt: null };
+      return { socket, socketDownAt: state.socketDownAt ?? Date.now() };
+    }),
   markData: (at) => set({ lastDataAt: at }),
 }));
+
+export function resetConnection(): void {
+  useConnectionStore.setState({
+    network: typeof navigator === "undefined" || navigator.onLine ? "online" : "offline",
+    socket: "down",
+    lastDataAt: null,
+    socketDownAt: null,
+  });
+}
 
 export function useConnection() {
   return useConnectionStore(

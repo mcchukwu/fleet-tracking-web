@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 import {
   ApiError,
   ClipboardError,
+  ContractError,
   MapError,
   StorageError,
   TimeoutError,
@@ -102,6 +103,7 @@ describe("normalize", () => {
   it("maps schema failures to contract", () => {
     expect(kindOf(new ZodError([])).kind).toBe("contract");
     expect(kindOf(new SyntaxError("Unexpected token")).kind).toBe("contract");
+    expect(kindOf(new ContractError("unexpected payload")).kind).toBe("contract");
   });
 
   it("maps unknown thrown values to client", () => {

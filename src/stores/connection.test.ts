@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   installNetworkListeners,
+  resetConnection,
   useConnectionStore,
   type ConnectionState,
 } from "./connection";
@@ -8,7 +9,7 @@ import { resetTicker } from "../lib/ticker";
 
 afterEach(() => {
   resetTicker();
-  useConnectionStore.setState({ network: "online", socket: "down", lastDataAt: null });
+  useConnectionStore.setState({ network: "online", socket: "down", lastDataAt: null, socketDownAt: null });
   vi.useRealTimers();
 });
 
@@ -34,5 +35,35 @@ describe("connection store", () => {
     window.dispatchEvent(new Event("online"));
     expect(useConnectionStore.getState().network).toBe("online");
     cleanup();
+  });
+
+  it("stamps when the socket drops and clears it when live", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000);
+    const store = useConnectionStore.getState();
+
+    store.setSocket("live");
+    expect(useConnectionStore.getState().socketDownAt).toBeNull();
+
+    vi.setSystemTime(5_000);
+    store.setSocket("reconnecting");
+    expect(useConnectionStore.getState().socketDownAt).toBe(5_000);
+
+    vi.setSystemTime(8_000);
+    store.setSocket("down");
+    expect(useConnectionStore.getState().socketDownAt).toBe(5_000);
+
+    store.setSocket("live");
+    expect(useConnectionStore.getState().socketDownAt).toBeNull();
+  });
+
+  it("resets connection state on sign-out", () => {
+    useConnectionStore.getState().setSocket("live");
+    useConnectionStore.getState().markData(1_000);
+    resetConnection();
+    const state = useConnectionStore.getState();
+    expect(state.socket).toBe("down");
+    expect(state.lastDataAt).toBeNull();
+    expect(state.socketDownAt).toBeNull();
   });
 });

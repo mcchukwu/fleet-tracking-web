@@ -30,6 +30,18 @@ afterEach(() => {
 });
 
 describe("live socket manager", () => {
+  it("stays down until the first socket opens", () => {
+    const socket = new FakeSocket();
+    const manager = new LiveSocketManager({
+      createSocket: () => socket,
+      onFrame: vi.fn(),
+      resync: () => Promise.resolve(),
+    });
+    manager.start();
+    expect(manager.getState()).toBe("down");
+    manager.stop();
+  });
+
   it("resyncs the snapshot before applying buffered frames", async () => {
     const socket = new FakeSocket();
     const frames: unknown[] = [];

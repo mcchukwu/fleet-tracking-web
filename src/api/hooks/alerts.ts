@@ -1,7 +1,27 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../instance";
 import { queryKeys } from "../keys";
 import type { AlertFilters } from "../types";
+
+export const OPEN_ALERT_LIMIT = 500;
+
+const openAlertFilters: AlertFilters = { status: "open", limit: OPEN_ALERT_LIMIT };
+
+export function openAlertsQueryOptions() {
+  return queryOptions({
+    queryKey: queryKeys.alerts(openAlertFilters),
+    queryFn: ({ signal }: { signal: AbortSignal }) =>
+      api.alerts(openAlertFilters, { signal }).then((response) => response.data),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+    placeholderData: keepPreviousData,
+    meta: { scope: "map", resource: "alerts" },
+  });
+}
+
+export function useOpenAlerts() {
+  return useQuery(openAlertsQueryOptions());
+}
 
 export function useAlerts(filters: AlertFilters = {}) {
   return useQuery({

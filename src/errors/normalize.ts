@@ -1,6 +1,7 @@
 import { ZodError } from "zod";
 import {
   ClipboardError,
+  ContractError,
   MapError,
   StorageError,
   isApiError,
@@ -81,6 +82,10 @@ export function normalize(
   }
 
   if (cause instanceof ZodError) {
+    return { ...base, kind: "contract", retryable: true };
+  }
+
+  if (cause instanceof ContractError) {
     return { ...base, kind: "contract", retryable: true };
   }
 

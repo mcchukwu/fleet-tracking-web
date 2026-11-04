@@ -71,6 +71,13 @@ export class MapError extends Error {
   }
 }
 
+export class ContractError extends Error {
+  constructor(message = "Unexpected response from the server") {
+    super(message);
+    this.name = "ContractError";
+  }
+}
+
 export class StorageError extends Error {
   constructor(message = "Offline storage is unavailable") {
     super(message);

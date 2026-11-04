@@ -99,7 +99,6 @@ export class LiveSocketManager {
     }
 
     this.clearTimer();
-    this.setState("reconnecting");
     const socket = this.options.createSocket();
     this.socket = socket;
 

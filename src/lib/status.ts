@@ -73,6 +73,10 @@ const alertTypeLabels: Record<AlertType, string> = {
 
 const alertTypeLookup: Record<string, string> = alertTypeLabels;
 
+export function isAlertType(value: string): value is AlertType {
+  return value in alertTypeLabels;
+}
+
 export function alertTypeLabel(type: string): string {
   return alertTypeLookup[type] ?? `Unknown type: ${type}`;
 }

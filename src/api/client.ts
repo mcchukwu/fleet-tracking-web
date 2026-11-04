@@ -1,17 +1,21 @@
 import type { ZodType } from "zod";
 import {
   ApiError,
+  ContractError,
   isApiError,
   TimeoutError,
   type AppError,
 } from "../errors/types";
 import { normalize } from "../errors/normalize";
+import { recordError } from "../errors/report";
 import { endpointTimeouts } from "./timeouts";
 import {
   auditResponseSchema,
   errorResponseSchema,
   importResultSchema,
   loginResponseSchema,
+  parseGeofences,
+  parseSnapshot,
   systemHealthSchema,
   type AuditResponse,
   type SystemHealth,
@@ -24,7 +28,6 @@ import type {
   Driver,
   DriverInput,
   DriverUpdate,
-  Geofence,
   GeofenceInput,
   HistoryRange,
   ImportResult,
@@ -246,6 +249,25 @@ export class FleetApiClient {
     }
   }
 
+  private parse<T>(payload: unknown, resource: string, parse: (value: unknown) => T): T {
+    try {
+      return parse(payload);
+    } catch (cause) {
+      throw normalize(cause, { route: currentRoute(), resource, action: "read" });
+    }
+  }
+
+  private noteRejectedRows(resource: string, rejected: number): void {
+    if (rejected <= 0) return;
+    recordError(
+      normalize(new ContractError(`${rejected} row(s) did not match the contract`), {
+        route: currentRoute(),
+        resource,
+        action: "parse",
+      }),
+    );
+  }
+
   async login(email: string, password: string, options: RequestOptions = {}): Promise<LoginResponse> {
     const result = await this.validated(
       this.request<unknown>("POST", "/auth/login", { email, password }, options),
@@ -302,8 +324,11 @@ export class FleetApiClient {
     );
   }
 
-  liveSnapshot(options: RequestOptions = {}) {
-    return this.request<{ data: Vehicle[] }>("GET", "/live/snapshot", undefined, options);
+  async liveSnapshot(options: RequestOptions = {}) {
+    const payload = await this.request<unknown>("GET", "/live/snapshot", undefined, options);
+    const result = this.parse(payload, "/live/snapshot", parseSnapshot);
+    this.noteRejectedRows("/live/snapshot", result.rejected);
+    return { data: result.vehicles };
   }
 
   trips(filters: TripFilters = {}, options: RequestOptions = {}) {
@@ -338,8 +363,11 @@ export class FleetApiClient {
     return this.request<void>("PATCH", `/alert-rules/${id}`, update, options);
   }
 
-  geofences(options: RequestOptions = {}) {
-    return this.request<{ data: Geofence[] }>("GET", "/geofences", undefined, options);
+  async geofences(options: RequestOptions = {}) {
+    const payload = await this.request<unknown>("GET", "/geofences", undefined, options);
+    const result = this.parse(payload, "/geofences", parseGeofences);
+    this.noteRejectedRows("/geofences", result.rejected);
+    return { data: result.geofences };
   }
 
   createGeofence(input: GeofenceInput, options: RequestOptions = {}) {

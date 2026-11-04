@@ -1,4 +1,4 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../instance";
 import { queryKeys } from "../keys";
 import type {
@@ -8,12 +8,21 @@ import type {
   VehicleUpdate,
 } from "../types";
 
-export function useLiveSnapshot() {
-  return useQuery({
+const SNAPSHOT_REFRESH_MS = 60_000;
+
+export function liveSnapshotQueryOptions() {
+  return queryOptions({
     queryKey: queryKeys.liveSnapshot,
-    queryFn: ({ signal }) => api.liveSnapshot({ signal }).then((response) => response.data),
+    queryFn: ({ signal }: { signal: AbortSignal }) =>
+      api.liveSnapshot({ signal }).then((response) => response.data),
+    staleTime: 0,
+    refetchInterval: SNAPSHOT_REFRESH_MS,
     meta: { scope: "map", resource: "live-snapshot" },
   });
+}
+
+export function useLiveSnapshot() {
+  return useQuery(liveSnapshotQueryOptions());
 }
 
 export function useVehicles(filters: VehicleFilters = {}) {

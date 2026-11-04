@@ -62,6 +62,24 @@ export interface Point {
   heading_deg: number;
 }
 
+/** The subset of a snapshot row the map and its list use. Position fields are optional. */
+export interface SnapshotVehicle {
+  id: string;
+  external_id: string;
+  plate: string;
+  depot: string;
+  driver_name?: string;
+  online: boolean;
+  lat?: number;
+  lon?: number;
+  speed_kph?: number;
+  heading_deg?: number;
+  recorded_at?: string;
+  trip_id?: string;
+  destination?: string;
+  trip_status?: TripStatus;
+}
+
 export interface Trip {
   id: string;
   vehicle_id: string;
