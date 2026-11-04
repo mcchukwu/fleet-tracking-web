@@ -21,9 +21,14 @@ export function useMe(options: { enabled?: boolean } = {}) {
 }
 
 export function useLoginMutation() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) =>
       api.login(email, password),
+    onSuccess: (response) => {
+      useAuthStore.getState().setSession(response.user, response.csrf_token);
+      queryClient.setQueryData(queryKeys.me, response);
+    },
     meta: { scope: "auth", resource: "/auth/login" },
   });
 }

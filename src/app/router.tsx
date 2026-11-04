@@ -40,8 +40,8 @@ export interface RouterContext {
   queryClient: QueryClient;
 }
 
-async function requireUser(_context: RouterContext, href: string): Promise<User> {
-  const user = await ensureSession();
+async function requireUser(context: RouterContext, href: string): Promise<User> {
+  const user = await ensureSession(context.queryClient);
   if (!user) {
     throw redirect({ to: "/login", search: { redirect: href } });
   }
@@ -132,8 +132,8 @@ const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
   validateSearch: loginSearchSchema,
-  beforeLoad: async ({ search }) => {
-    const user = await ensureSession();
+  beforeLoad: async ({ context, search }) => {
+    const user = await ensureSession(context.queryClient);
     if (user) throw redirect({ to: safeRedirect(search.redirect) });
   },
   component: placeholder("Sign in", "The login screen ships in Slice 1."),

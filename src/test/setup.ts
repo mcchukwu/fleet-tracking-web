@@ -28,6 +28,9 @@ afterEach(() => {
   cleanup();
   server.resetHandlers();
   resetMockState();
+  localStorage.removeItem("fleet.mockSession"); // guard-ignore: test-only mock session reset.
+  localStorage.removeItem("fleet.mockRole"); // guard-ignore: test-only mock session reset.
+  localStorage.removeItem("fleet.mockAuth"); // guard-ignore: test-only mock session reset.
 });
 
 afterAll(() => {

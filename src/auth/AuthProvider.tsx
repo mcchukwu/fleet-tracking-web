@@ -1,9 +1,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/instance";
-import { useMe } from "../api/hooks/auth";
 import { useAuthStore } from "./store";
-import { isAppError } from "../errors/types";
 
 export function handleSessionExpired(): void {
   const state = useAuthStore.getState();
@@ -26,30 +24,15 @@ api.setSessionHandlers({
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const status = useAuthStore((state) => state.status);
-  const me = useMe({ enabled: status === "unknown" || status === "authenticated" });
+  const userId = useAuthStore((state) => state.user?.id ?? null);
   const previousUserId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!me.data) return;
-    const { user, csrf_token: csrfToken } = me.data;
-    if (previousUserId.current !== null && previousUserId.current !== user.id) {
+    if (previousUserId.current !== null && userId !== null && previousUserId.current !== userId) {
       queryClient.clear();
     }
-    previousUserId.current = user.id;
-    api.setCsrfToken(csrfToken);
-    useAuthStore.getState().setSession(user, csrfToken);
-  }, [me.data, queryClient]);
-
-  useEffect(() => {
-    if (!me.isError || !isAppError(me.error) || me.error.kind !== "unauthenticated") return;
-    const state = useAuthStore.getState();
-    if (state.status === "authenticated" || state.status === "expired") {
-      state.expire();
-    } else {
-      state.clear();
-    }
-  }, [me.isError, me.error]);
+    if (userId !== null) previousUserId.current = userId;
+  }, [userId, queryClient]);
 
   useEffect(() => {
     const onExpired = () => {

@@ -1,14 +1,17 @@
+import type { QueryClient } from "@tanstack/react-query";
 import { api } from "../api/instance";
+import { meQueryOptions } from "../api/hooks/auth";
 import type { User } from "../api/types";
 import { isAppError } from "../errors/types";
 import { useAuthStore } from "./store";
 
-let restoring: Promise<User | null> | null = null;
-
-async function restoreSession(): Promise<User | null> {
+export async function ensureSession(queryClient: QueryClient): Promise<User | null> {
   const state = useAuthStore.getState();
+  if (state.status === "authenticated" && state.user) return state.user;
+  if (state.status === "anonymous") return null;
+
   try {
-    const response = await api.me();
+    const response = await queryClient.ensureQueryData(meQueryOptions());
     api.setCsrfToken(response.csrf_token);
     state.setSession(response.user, response.csrf_token);
     return response.user;
@@ -19,17 +22,4 @@ async function restoreSession(): Promise<User | null> {
     }
     throw cause;
   }
-}
-
-export function ensureSession(): Promise<User | null> {
-  const state = useAuthStore.getState();
-  if (state.status === "authenticated" && state.user) return Promise.resolve(state.user);
-  if (state.status === "anonymous") return Promise.resolve(null);
-
-  if (!restoring) {
-    restoring = restoreSession().finally(() => {
-      restoring = null;
-    });
-  }
-  return restoring;
 }

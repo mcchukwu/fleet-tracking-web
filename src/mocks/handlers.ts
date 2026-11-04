@@ -96,7 +96,41 @@ export function resetMockState(userEmail = "dispatcher@demo.ftb"): void {
 }
 
 export function mockCurrentUser(): User {
-  return state.user;
+  return resolveUser() ?? state.user;
+}
+
+const MOCK_SESSION_KEY = "fleet.mockSession";
+const MOCK_ROLE_KEY = "fleet.mockRole";
+const MOCK_AUTH_KEY = "fleet.mockAuth";
+const DEFAULT_EMAIL = "dispatcher@demo.ftb";
+
+function resolveUser(): User | null {
+  if (readOverride(MOCK_AUTH_KEY) === "anonymous") return null;
+  const role = readOverride(MOCK_ROLE_KEY);
+  if (role) {
+    const user = demoUsers[`${role}@demo.ftb`];
+    if (user) return user;
+  }
+  const session = readOverride(MOCK_SESSION_KEY);
+  if (session === "none") return null;
+  if (session && demoUsers[session]) return demoUsers[session];
+  return demoUsers[DEFAULT_EMAIL] ?? null;
+}
+
+function writeOverride(key: string, value: string): void {
+  try {
+    if (typeof localStorage !== "undefined") localStorage.setItem(key, value); // guard-ignore: mock-only session override.
+  } catch {
+    // The mock keeps working without persistence.
+  }
+}
+
+function clearOverride(key: string): void {
+  try {
+    if (typeof localStorage !== "undefined") localStorage.removeItem(key); // guard-ignore: mock-only session override.
+  } catch {
+    // The mock keeps working without persistence.
+  }
 }
 
 const loginSchema = z.object({ email: z.string(), password: z.string() });
@@ -137,13 +171,6 @@ function readOverride(key: string): string | null {
   }
 }
 
-function applyRoleOverride(): void {
-  const role = readOverride("fleet.mockRole");
-  if (!role) return;
-  const user = demoUsers[`${role}@demo.ftb`];
-  if (user) state.user = user;
-}
-
 function badRequest(): Response {
   return HttpResponse.json(
     { error: { code: "invalid_input", message: "Check the request body." } },
@@ -156,35 +183,55 @@ function forbidden(): Response {
 }
 
 export const handlers = [
-  http.post(`${API}/auth/login`, async ({ request }) => {
-    const parsed = loginSchema.safeParse(await readJson(request));
-    if (!parsed.success) return badRequest();
-    const user = demoUsers[parsed.data.email];
-    if (!user || parsed.data.password !== "DemoPass123!") {
-      return HttpResponse.json(
-        { error: { code: "invalid_credentials", message: "invalid email or password" } },
-        { status: 401 },
-      );
-    }
-    state.user = user;
-    return HttpResponse.json({ user, csrf_token: state.csrf });
+  http.post(`${API}/auth/login`, ({ request }) => {
+    return withFault("login", request, async () => {
+      const parsed = loginSchema.safeParse(await readJson(request));
+      if (!parsed.success) {
+        return HttpResponse.json(
+          { error: { code: "invalid_request", message: "email and password are required" } },
+          { status: 400 },
+        );
+      }
+      const user = demoUsers[parsed.data.email];
+      if (!user || parsed.data.password !== "DemoPass123!") {
+        return HttpResponse.json(
+          { error: { code: "invalid_credentials", message: "invalid email or password" } },
+          { status: 401 },
+        );
+      }
+      state.user = user;
+      clearOverride(MOCK_AUTH_KEY);
+      clearOverride(MOCK_ROLE_KEY);
+      writeOverride(MOCK_SESSION_KEY, parsed.data.email);
+      return HttpResponse.json({ user, csrf_token: state.csrf });
+    });
   }),
 
-  http.post(`${API}/auth/logout`, () => {
-    state.user = demoUsers["dispatcher@demo.ftb"] ?? state.user;
+  http.post(`${API}/auth/logout`, ({ request }) => {
+    if (request.headers.get("X-CSRF-Token") !== state.csrf) {
+      return HttpResponse.json(
+        { error: { code: "csrf_failed", message: "csrf validation failed" } },
+        { status: 403 },
+      );
+    }
+    writeOverride(MOCK_SESSION_KEY, "none");
+    clearOverride(MOCK_ROLE_KEY);
+    clearOverride(MOCK_AUTH_KEY);
+    state.user = demoUsers[DEFAULT_EMAIL] ?? state.user;
     return new HttpResponse(null, { status: 204 });
   }),
 
   http.get(`${API}/me`, ({ request }) => {
     return withFault("me", request, () => {
-      if (readOverride("fleet.mockAuth") === "anonymous") {
+      const user = resolveUser();
+      if (!user) {
         return HttpResponse.json(
-          { error: { code: "unauthenticated", message: "no session" } },
+          { error: { code: "unauthorized", message: "login required" } },
           { status: 401 },
         );
       }
-      applyRoleOverride();
-      return HttpResponse.json({ user: state.user, csrf_token: state.csrf });
+      state.user = user;
+      return HttpResponse.json({ user, csrf_token: state.csrf });
     });
   }),
 
@@ -448,7 +495,8 @@ export const handlers = [
 
   http.get(`${API}/audit`, ({ request }) => {
     return withFault("audit", request, () => {
-      if (state.user.role !== "admin" && state.user.role !== "security") return forbidden();
+      const user = mockCurrentUser();
+      if (user.role !== "admin" && user.role !== "security") return forbidden();
       return HttpResponse.json(auditResponseFixture);
     });
   }),
