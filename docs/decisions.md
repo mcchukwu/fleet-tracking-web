@@ -163,7 +163,7 @@ Trade-off: the mock has a default demo dispatcher session when nothing is stored
 
 ## 2026-11-04: Login 429 and Retry-After remain unverified
 
-Sixteen rapid failures against staging never produced a `429`, and no rate-limit headers appeared. The form parses `Retry-After` (seconds or HTTP date), counts down live, and falls back to "Try again shortly." when the header is absent. Both paths are covered by MSW and e2e. This is recorded as an unverified contract, not a confirmed one.
+Sixteen rapid failures against staging never produced a `429`, and no rate-limit headers appeared. The form parses `Retry-After` (seconds or HTTP date), counts down live, and falls back to "Try again shortly." when the header is absent. The countdown path with the header is covered by MSW and e2e; the no-header path is covered by unit tests only, because the shared fault layer always sends the header. This is recorded as an unverified contract, not a confirmed one.
 
 Trade-off: if staging later sends a different code or header name, the catalog needs one edit and the countdown keeps working without it.
 
@@ -184,3 +184,39 @@ Trade-off: adding a screen means adding one line to `src/features/shell/nav.ts`;
 `--spacing-touch` (44px), `--spacing-rail-expanded` (200px), `--container-dialog` (480px) and `--container-content` (1440px) are design tokens, plus `--overlay` for dialog backdrops and small `z-menu`/`z-dialog`/`z-toast`/`z-banner` utilities for the stacking scale. The guard forbids arbitrary Tailwind values, so these values have to exist as tokens.
 
 Trade-off: four layout tokens and one overlay token now live in the design system; the alternative was arbitrary values in five components.
+
+## 2026-11-04: Demo hints never enter the production bundle
+
+`DemoHints` holds the staging demo accounts, so `LoginForm` loads it through a DEV-and-`VITE_DEMO_HINTS`-gated dynamic import instead of a static one. Vite removes the dead branch in a production build, and `npm run build` now runs `scripts/assert-bundle.sh`, which fails if `dist` contains the demo password or any `@demo.ftb` address.
+
+Trade-off: the demo buttons appear one tick after first paint in dev; production ships no credentials and no extra chunk.
+
+## 2026-11-04: Touch targets switch at the `md` breakpoint
+
+Shared primitives use `h-touch`/`size-touch` below `md` and the existing control height at `md` and up, per design-system §5.1 (44px on touch breakpoints, 28px desktop). `expectTouchTargets(44)` now runs in the mobile projects for login and the shell.
+
+Trade-off: mobile rows and inputs are taller than the desktop density; the two densities have to be designed, not interpolated.
+
+## 2026-11-04: The account menu is non-modal and portals into the header
+
+The user menu uses `modal={false}` so the rest of the app stays in the accessibility tree, and its content is portalled into a container inside the `<header>` landmark to clear axe's `region` rule. Both behaviours are asserted by an axe scan while the menu is open.
+
+Trade-off: focus is not trapped while the menu is open; Escape and click-outside still close it.
+
+## 2026-11-04: Session expiry cancels queries after the store flips
+
+The API client calls `onSessionExpired` before it throws the `401`, so by the time `fleet:session-expired` fires the auth store is already `expired`. The listener now cancels active queries regardless of the status it finds, instead of returning early and leaving retry loops running behind the dialog.
+
+Trade-off: the initial anonymous `/me` failure also cancels queries; nothing is in flight at that point, so it is harmless.
+
+## 2026-11-04: Login copy owns its network and timeout wording
+
+A failed login `POST` is an uncertain write, so the shared catalog would say "Check /auth/login before trying again". Login is the one screen where that is both wrong and an information leak, so `loginErrorCopy` handles `network` and `timeout` before falling through to the catalog.
+
+Trade-off: two copy pairs are duplicated between the catalog and the login screen; they must stay aligned if the global wording changes.
+
+## 2026-11-04: Escape clears the vehicle search
+
+The advertised `Esc` shortcut now clears a non-empty global search (dialogs already close on Escape). Selection and drawers still belong to Slice 2/3.
+
+Trade-off: the shortcut's behaviour grows per screen; the registry lists one label, so later slices extend the handler rather than the copy.
