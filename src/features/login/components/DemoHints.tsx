@@ -1,6 +1,8 @@
 import type { RefObject } from "react";
 import { Button } from "../../../ui/Button";
 
+// Loaded only through the DEV-gated dynamic import in LoginForm; a static import leaks the staging password into dist.
+
 export const DEMO_PASSWORD = "DemoPass123!";
 
 export const demoAccounts = [
@@ -10,23 +12,12 @@ export const demoAccounts = [
   { label: "Viewer", email: "viewer@demo.ftb" },
 ] as const;
 
-interface DemoEnv {
-  DEV: boolean;
-  VITE_DEMO_HINTS?: string | boolean;
-}
-
-export function demoHintsEnabled(env: DemoEnv = import.meta.env): boolean {
-  return env.DEV === true && env.VITE_DEMO_HINTS === "1";
-}
-
 export interface DemoHintsProps {
   onPrefill: (email: string, password: string) => void;
   submitRef?: RefObject<HTMLButtonElement | null>;
 }
 
 export function DemoHints({ onPrefill, submitRef }: DemoHintsProps) {
-  if (!demoHintsEnabled()) return null;
-
   return (
     <div className="space-y-2 border-t border-border pt-4">
       <p className="label-caps text-muted">Demo accounts</p>

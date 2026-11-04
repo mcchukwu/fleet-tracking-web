@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../api/instance";
@@ -11,12 +11,12 @@ import { LoginForm } from "./components/LoginForm";
 function renderForm() {
   const queryClient = new QueryClient();
   const onSuccess = vi.fn();
-  render(
+  const { container } = render(
     <QueryClientProvider client={queryClient}>
       <LoginForm onSuccess={onSuccess} />
     </QueryClientProvider>,
   );
-  return { onSuccess };
+  return { onSuccess, container };
 }
 
 function credentials() {
@@ -33,6 +33,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllEnvs();
   useConnectionStore.getState().setNetwork("online");
 });
 
@@ -44,8 +45,8 @@ describe("LoginForm", () => {
 
     await user.click(credentials().submit);
 
-    expect(await screen.findByText("Enter a valid email address.")).toBeVisible();
-    expect(screen.getByText("Enter your password.")).toBeVisible();
+    expect((await screen.findAllByText("Enter a valid email address.")).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Enter your password.").length).toBeGreaterThan(0);
     expect(login).not.toHaveBeenCalled();
   });
 
@@ -84,7 +85,7 @@ describe("LoginForm", () => {
     expect(credentials().submit).toBeDisabled();
   });
 
-  it("keeps both fields after a network failure", async () => {
+  it("keeps both fields and the connection copy after a network failure", async () => {
     const user = userEvent.setup();
     vi.spyOn(api, "login").mockRejectedValue(new TypeError("Failed to fetch"));
     renderForm();
@@ -94,8 +95,64 @@ describe("LoginForm", () => {
     await user.click(credentials().submit);
 
     expect(await screen.findByText("Can't reach the server")).toBeVisible();
+    expect(screen.getByText("Check your connection. Your data is safe.")).toBeVisible();
+    expect(screen.queryByText(/\/auth\/login/)).not.toBeInTheDocument();
     expect(credentials().email).toHaveValue("dispatcher@demo.ftb");
     expect(credentials().password).toHaveValue("secret");
+  });
+
+  it("offers Retry for retryable server and contract failures", async () => {
+    for (const cause of [new ApiError(500, "internal", "boom"), new SyntaxError("bad json")]) {
+      const user = userEvent.setup();
+      vi.spyOn(api, "login").mockRejectedValue(normalize(cause));
+      renderForm();
+
+      await user.type(credentials().email, "dispatcher@demo.ftb");
+      await user.type(credentials().password, "secret");
+      await user.click(credentials().submit);
+
+      expect(await screen.findByRole("button", { name: "Retry" })).toBeVisible();
+      cleanup();
+    }
+  });
+
+  it("summarises multiple validation errors at the top of the form", async () => {
+    const user = userEvent.setup();
+    renderForm();
+
+    await user.click(credentials().submit);
+
+    const summary = await screen.findByRole("alert");
+    expect(summary).toHaveTextContent("Check the highlighted fields.");
+    expect(summary).toHaveTextContent("Enter a valid email address.");
+    expect(summary).toHaveTextContent("Enter your password.");
+  });
+
+  it("links the form to the request error for assistive technology", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(api, "login").mockRejectedValue(new ApiError(500, "internal", "boom"));
+    const { container } = renderForm();
+
+    await user.type(credentials().email, "dispatcher@demo.ftb");
+    await user.type(credentials().password, "secret");
+    await user.click(credentials().submit);
+
+    const alert = await screen.findByRole("alert");
+    const form = container.querySelector("form");
+    expect(form?.getAttribute("aria-describedby")?.split(" ")).toContain(alert.id);
+  });
+
+  it("loads the demo hints only when the staging flag is set", async () => {
+    vi.stubEnv("VITE_DEMO_HINTS", "1");
+    renderForm();
+
+    expect(await screen.findByText("Demo accounts")).toBeVisible();
+  });
+
+  it("does not load the demo hints by default", () => {
+    renderForm();
+
+    expect(screen.queryByText("Demo accounts")).not.toBeInTheDocument();
   });
 
   it("disables submit with a reason while offline", () => {

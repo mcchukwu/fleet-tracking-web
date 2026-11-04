@@ -52,6 +52,16 @@ describe("loginErrorCopy", () => {
     expect(loginErrorCopy(error("server")).title).toBe("Something went wrong on our side");
   });
 
+  it("keeps connection copy when a POST has an unknown outcome", () => {
+    const network = loginErrorCopy(error("network", { outcome: "unknown" }));
+    expect(network.detail).toBe("Check your connection. Your data is safe.");
+    expect(network.detail).not.toContain("/auth/login");
+
+    const timeout = loginErrorCopy(error("timeout", { outcome: "unknown" }));
+    expect(timeout.detail).toBe("The server didn't respond in time.");
+    expect(timeout.detail).not.toContain("/auth/login");
+  });
+
   it("shows the safe validation message and no raw text for server errors", () => {
     const validation = loginErrorCopy(
       error("validation", { code: "invalid_request", serverMessage: "email and password are required" }),

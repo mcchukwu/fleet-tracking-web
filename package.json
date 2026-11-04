@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc -b",
-    "build": "npm run typecheck && vite build",
+    "build": "npm run typecheck && vite build && bash scripts/assert-bundle.sh",
     "lint": "oxlint --type-aware --type-check",
     "guard": "bash scripts/guard.sh",
     "test": "vitest run",

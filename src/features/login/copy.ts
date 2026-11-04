@@ -30,5 +30,13 @@ export function loginErrorCopy(error: AppError, hints: LoginCopyHints = {}): Log
     return { title: "You're offline", detail: "Reconnect to sign in." };
   }
 
+  if (error.kind === "network") {
+    return { title: "Can't reach the server", detail: "Check your connection. Your data is safe." };
+  }
+
+  if (error.kind === "timeout") {
+    return { title: "This is taking too long", detail: "The server didn't respond in time." };
+  }
+
   return errorCopy(error);
 }

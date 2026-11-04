@@ -14,7 +14,6 @@ import { cn } from "../../../ui/cn";
 import { loginErrorCopy } from "../copy";
 import { useLogin, type LoginOutcome } from "../hooks/useLogin";
 import { useRateLimitCountdown } from "../hooks/useRateLimitCountdown";
-import { DemoHints } from "./DemoHints";
 
 const schema = z.object({
   email: z.email("Enter a valid email address."),
@@ -22,6 +21,7 @@ const schema = z.object({
 });
 
 type LoginValues = z.infer<typeof schema>;
+type DemoHintsComponent = typeof import("./DemoHints")["DemoHints"];
 
 export interface LoginFormProps {
   variant?: "page" | "dialog";
@@ -34,6 +34,7 @@ export function LoginForm({ variant = "page", onSuccess }: LoginFormProps) {
   const network = useConnectionStore((state) => state.network);
   const offline = network === "offline";
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [DemoHints, setDemoHints] = useState<DemoHintsComponent | null>(null);
   const submitRef = useRef<HTMLButtonElement>(null);
   const errorRef = useRef<HTMLDivElement>(null);
   const remaining = useRateLimitCountdown(login.error);
@@ -56,9 +57,33 @@ export function LoginForm({ variant = "page", onSuccess }: LoginFormProps) {
     setFocus("email");
   }, [setFocus]);
 
+  useEffect(() => {
+    let active = true;
+    if (import.meta.env.DEV && import.meta.env.VITE_DEMO_HINTS === "1") {
+      void import("./DemoHints").then((module) => {
+        if (active) setDemoHints(() => module.DemoHints);
+      });
+    }
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const copy = login.error
     ? loginErrorCopy(login.error, { remainingSec: remaining ?? undefined })
     : null;
+  const fieldErrors = [errors.email?.message, errors.password?.message].filter(
+    (message): message is string => Boolean(message),
+  );
+  const retryable =
+    login.error !== null &&
+    login.error.retryable &&
+    login.error.kind !== "unauthenticated" &&
+    login.error.kind !== "rate_limited";
+  const describedBy =
+    [offline ? `${id}-offline` : "", login.error ? `${id}-error` : ""]
+      .filter(Boolean)
+      .join(" ") || undefined;
 
   function handleOutcome(outcome: LoginOutcome): void {
     if (outcome.status === "success") {
@@ -86,8 +111,19 @@ export function LoginForm({ variant = "page", onSuccess }: LoginFormProps) {
       noValidate
       onSubmit={(event) => void handleSubmit(onSubmit)(event)}
       className={cn("space-y-4", variant === "dialog" && "space-y-3")}
-      aria-describedby={offline ? `${id}-offline` : undefined}
+      aria-describedby={describedBy}
     >
+      {fieldErrors.length > 1 ? (
+        <div role="alert" className="rounded-md border border-danger bg-alert-bg p-3 text-sm text-danger">
+          <p className="font-medium">Check the highlighted fields.</p>
+          <ul className="mt-1 list-inside list-disc">
+            {fieldErrors.map((message) => (
+              <li key={message}>{message}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       <div className="space-y-3">
         <Input
           label="Email"
@@ -125,11 +161,7 @@ export function LoginForm({ variant = "page", onSuccess }: LoginFormProps) {
             id={`${id}-error`}
             error={login.error}
             copy={copy}
-            onRetry={
-              login.error.kind === "network" || login.error.kind === "timeout"
-                ? () => void retry()
-                : undefined
-            }
+            onRetry={retryable ? () => void retry() : undefined}
           />
         ) : null}
       </div>
@@ -169,13 +201,15 @@ export function LoginForm({ variant = "page", onSuccess }: LoginFormProps) {
         Sign in
       </Button>
 
-      <DemoHints
-        submitRef={submitRef}
-        onPrefill={(email, password) => {
-          setValue("email", email, { shouldValidate: true });
-          setValue("password", password, { shouldValidate: true });
-        }}
-      />
+      {DemoHints ? (
+        <DemoHints
+          submitRef={submitRef}
+          onPrefill={(email, password) => {
+            setValue("email", email, { shouldValidate: true });
+            setValue("password", password, { shouldValidate: true });
+          }}
+        />
+      ) : null}
     </form>
   );
 }
