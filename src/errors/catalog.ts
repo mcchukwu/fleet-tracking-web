@@ -25,6 +25,7 @@ const safeServerCodes = new Set([
   "geofence_has_events",
   "invalid_credentials",
   "invalid_input",
+  "invalid_request",
   "rate_limited",
   "validation_failed",
 ]);

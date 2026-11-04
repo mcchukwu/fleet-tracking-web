@@ -57,6 +57,7 @@
 
   --shadow-float: 0 1px 2px rgb(0 0 0 / 0.06), 0 8px 24px rgb(0 0 0 / 0.1);
   --shadow-menu: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 12px rgb(0 0 0 / 0.1);
+  --overlay: rgb(0 0 0 / 0.4);
 }
 
 .dark {
@@ -110,6 +111,7 @@
 
   --shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.5);
   --shadow-menu: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 12px rgb(0 0 0 / 0.5);
+  --overlay: rgb(0 0 0 / 0.6);
 }
 
 :root[data-accent="violet"] {
@@ -191,6 +193,8 @@
   --color-danger: var(--danger);
   --color-info: var(--info);
 
+  --color-overlay: var(--overlay);
+
   --font-sans: var(--font-ui);
   --font-mono: var(--font-data);
 }
@@ -225,8 +229,13 @@
   --spacing-icon-md: 16px;
   --spacing-topbar: 48px;
   --spacing-rail: 56px;
+  --spacing-rail-expanded: 200px;
   --spacing-panel: 360px;
   --spacing-drawer: 420px;
+  --spacing-touch: 44px;
+
+  --container-dialog: 480px;
+  --container-content: 1440px;
 
   --animate-fade-in: fade-in 150ms ease-out;
   --animate-slide-in: slide-in 200ms ease-out;

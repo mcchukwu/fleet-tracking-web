@@ -108,6 +108,22 @@
     box-shadow: var(--shadow-menu);
   }
 
+  .z-menu {
+    z-index: 50;
+  }
+
+  .z-dialog {
+    z-index: 60;
+  }
+
+  .z-toast {
+    z-index: 70;
+  }
+
+  .z-banner {
+    z-index: 80;
+  }
+
   .text-stat {
     font-size: 28px;
     line-height: 32px;

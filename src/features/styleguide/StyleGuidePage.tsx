@@ -3,9 +3,11 @@ import {
   Bell,
   ChevronRight,
   Filter,
+  Map,
   MoreHorizontal,
   Plus,
   Search,
+  Settings,
   Truck,
   WifiOff,
 } from "lucide-react";
@@ -22,9 +24,19 @@ import {
   type Severity,
   type TripStatus,
 } from "../../ui/Badge";
+import { Banner } from "../../ui/Banner";
 import { Button } from "../../ui/Button";
 import { Checkbox } from "../../ui/Checkbox";
+import { Dialog } from "../../ui/Dialog";
 import { Drawer } from "../../ui/Drawer";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../../ui/DropdownMenu";
 import { IconButton } from "../../ui/IconButton";
 import { Input } from "../../ui/Input";
 import { SearchInput } from "../../ui/SearchInput";
@@ -36,7 +48,11 @@ import type { AppError } from "../../errors/types";
 import { useDocumentTitle } from "../../lib/useDocumentTitle";
 import { Spinner } from "../../ui/Spinner";
 import { TBody, TD, TH, THead, TR, Table } from "../../ui/Table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/Tabs";
 import { Textarea } from "../../ui/Textarea";
+import { useToast } from "../../ui/Toast";
+import { Tooltip } from "../../ui/Tooltip";
+import { InlineError } from "../../errors/InlineError";
 
 function Section({
   id,
@@ -147,7 +163,10 @@ export function StyleGuidePage() {
   useDocumentTitle("Styleguide");
   const [search, setSearch] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [blockingOpen, setBlockingOpen] = useState(false);
   const [tableState, setTableState] = useState<TableState>("default");
+  const { toast } = useToast();
 
   return (
     <div className="min-h-screen bg-bg text-text">
@@ -321,6 +340,7 @@ export function StyleGuidePage() {
               <p className="label-caps text-muted">Connection</p>
               <div className="mt-3 flex flex-col gap-3">
                 <ConnectionIndicator state="live" />
+                <ConnectionIndicator state="online" />
                 <ConnectionIndicator state="reconnecting" />
                 <ConnectionIndicator state="offline" />
               </div>
@@ -489,6 +509,205 @@ export function StyleGuidePage() {
                 Showing the last known positions.
               </div>
             </div>
+          </div>
+        </Section>
+
+        <Section
+          id="overlays"
+          title="Dialogs"
+          description="Centred, 480px maximum, focus trapped, focus returns to the opener. Only session expiry is blocking."
+        >
+          <div className="flex flex-wrap gap-2">
+            <Button variant="primary" onClick={() => setDialogOpen(true)}>
+              Open dialog
+            </Button>
+            <Button onClick={() => setBlockingOpen(true)}>Open blocking dialog</Button>
+          </div>
+
+          <Dialog
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+            title="Assign driver"
+            description="Choose a driver for LSD-100-AA."
+            footer={
+              <>
+                <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+                <Button variant="primary" onClick={() => setDialogOpen(false)}>
+                  Assign
+                </Button>
+              </>
+            }
+          >
+            <Input label="Driver" placeholder="Search drivers" name="dialog-driver" />
+          </Dialog>
+
+          <Dialog
+            open={blockingOpen}
+            onOpenChange={setBlockingOpen}
+            variant="blocking"
+            title="Your session expired"
+            description="Sign in to continue. You'll stay where you are."
+            footer={<Button variant="primary">Sign in</Button>}
+          >
+            <div className="space-y-3">
+              <Input label="Email" type="email" name="blocking-email" />
+              <Input label="Password" type="password" name="blocking-password" />
+            </div>
+          </Dialog>
+        </Section>
+
+        <Section
+          id="menus"
+          title="Menus and tooltips"
+          description="Tooltips appear after 400ms on hover and focus. Menus use 32px items on desktop and 44px on touch."
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            <Tooltip label="Open the map">
+              <Button leadingIcon={<Map aria-hidden="true" className="size-4" strokeWidth={1.5} />}>
+                Map
+              </Button>
+            </Tooltip>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button>Account</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuLabel>Demo Dispatcher</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Shortcuts</DropdownMenuItem>
+                <DropdownMenuItem>Sign out</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <Tabs defaultValue="vehicle">
+            <TabsList aria-label="Detail sections">
+              <TabsTrigger value="vehicle">Vehicle</TabsTrigger>
+              <TabsTrigger value="trip">Trip</TabsTrigger>
+              <TabsTrigger value="events">Events</TabsTrigger>
+            </TabsList>
+            <TabsContent value="vehicle">
+              <p className="text-sm text-muted">Current state, driver and vehicle details.</p>
+            </TabsContent>
+            <TabsContent value="trip">
+              <p className="text-sm text-muted">Origin, destination and trip status.</p>
+            </TabsContent>
+            <TabsContent value="events">
+              <p className="text-sm text-muted">Geofence events and alerts, newest first.</p>
+            </TabsContent>
+          </Tabs>
+        </Section>
+
+        <Section
+          id="toasts"
+          title="Toasts"
+          description="Bottom-right. Success and info dismiss after 4s; errors persist until dismissed and announce assertively."
+        >
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => toast({ title: "Trip created", tone: "success" })}>
+              Success toast
+            </Button>
+            <Button onClick={() => toast({ title: "Vehicle updated", tone: "info" })}>
+              Info toast
+            </Button>
+            <Button
+              onClick={() =>
+                toast({
+                  title: "Couldn't save",
+                  description: "Check your connection and retry.",
+                  tone: "error",
+                })
+              }
+            >
+              Error toast
+            </Button>
+          </div>
+        </Section>
+
+        <Section
+          id="banners"
+          title="Banners"
+          description="One 32px slot below the top bar, priority offline, reconnecting, error storm, update. Never a second banner."
+        >
+          <div className="space-y-2">
+            <Banner
+              tone="neutral"
+              message="You're offline. Showing data from 14:02. Changes are disabled."
+            />
+            <Banner tone="warning" message="Reconnecting to live updates…" />
+            <Banner
+              tone="info"
+              message="A new version is available."
+              action={{ label: "Reload", onClick: () => undefined }}
+            />
+            <Banner
+              tone="danger"
+              message="We're having trouble reaching the server. Retrying…"
+              action={{ label: "Open System", onClick: () => undefined }}
+            />
+          </div>
+        </Section>
+
+        <Section
+          id="shell"
+          title="Shell chrome and sign-in"
+          description="Top bar 48px, icon rail 56px (200px expanded). The login form is a centred 360px panel with visible labels and inline errors."
+        >
+          <div className="overflow-hidden rounded-lg border border-border bg-surface">
+            <div className="flex h-topbar items-center gap-2 border-b border-border px-3">
+              <span className="flex size-control-sm items-center justify-center rounded-md bg-accent text-text-inverse">
+                <Truck aria-hidden="true" className="size-4" strokeWidth={1.5} />
+              </span>
+              <span className="text-sm font-medium text-text">Fleet Console</span>
+              <div className="mx-auto flex h-control-md w-panel max-w-full items-center gap-2 rounded-md border border-border-strong bg-surface px-3 text-sm text-subtle">
+                <Search aria-hidden="true" className="size-4" strokeWidth={1.5} />
+                Search vehicles
+                <kbd className="ml-auto rounded-sm border border-border bg-surface-2 px-1 font-mono text-xs text-muted">
+                  /
+                </kbd>
+              </div>
+              <ConnectionIndicator state="online" />
+              <ThemeToggle />
+            </div>
+            <div className="flex min-h-24">
+              <nav
+                aria-label="Main preview"
+                className="flex w-rail flex-col items-center gap-1 border-r border-border py-2"
+              >
+                <span className="flex size-control-lg items-center justify-center rounded-md bg-accent-soft text-accent-fg">
+                  <Map aria-hidden="true" className="size-5" strokeWidth={1.5} />
+                </span>
+                <span className="flex size-control-lg items-center justify-center rounded-md text-muted">
+                  <Bell aria-hidden="true" className="size-5" strokeWidth={1.5} />
+                </span>
+                <span className="flex size-control-lg items-center justify-center rounded-md text-muted">
+                  <Settings aria-hidden="true" className="size-5" strokeWidth={1.5} />
+                </span>
+              </nav>
+              <div className="flex flex-1 items-center justify-center bg-bg text-sm text-muted">
+                Map content
+              </div>
+            </div>
+          </div>
+
+          <div className="mx-auto w-panel max-w-full space-y-3 rounded-lg border border-border bg-surface p-4">
+            <p className="text-md font-medium text-text">Sign in</p>
+            <p className="text-sm text-muted">Use your Fleet Console account.</p>
+            <Input label="Email" type="email" name="preview-email" autoComplete="username" />
+            <Input
+              label="Password"
+              type="password"
+              name="preview-password"
+              autoComplete="current-password"
+            />
+            <InlineError
+              error={{ ...sampleError, kind: "unauthenticated" }}
+              copy={{ title: "Email or password is incorrect.", detail: "" }}
+            />
+            <Button variant="primary" className="w-full">
+              Sign in
+            </Button>
           </div>
         </Section>
       </main>

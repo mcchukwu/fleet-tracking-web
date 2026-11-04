@@ -7,6 +7,8 @@ import { installDebugHook } from "./dev/install";
 import { ErrorBoundary } from "./errors/ErrorBoundary";
 import { createQueryClient } from "./errors/global";
 import { ThemeProvider } from "./theme/ThemeProvider";
+import { ToastProvider } from "./ui/Toast";
+import { TooltipProvider } from "./ui/Tooltip";
 
 const queryClient = createQueryClient();
 const router = createAppRouter(queryClient);
@@ -18,9 +20,13 @@ export function App() {
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <ErrorBoundary level="app">
-            <RouterProvider router={router} />
-          </ErrorBoundary>
+          <TooltipProvider>
+            <ToastProvider>
+              <ErrorBoundary level="app">
+                <RouterProvider router={router} />
+              </ErrorBoundary>
+            </ToastProvider>
+          </TooltipProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>

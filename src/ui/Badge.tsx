@@ -15,16 +15,18 @@ const statusPill = cva("inline-flex h-status items-center gap-1 rounded-full px-
 
 export type VehicleStatus = "moving" | "idle" | "offline" | "alert";
 
-export type ConnectionState = "live" | "reconnecting" | "offline";
+export type ConnectionState = "live" | "online" | "reconnecting" | "offline";
 
 const connectionLabel: Record<ConnectionState, string> = {
   live: "Live",
+  online: "Online",
   reconnecting: "Reconnecting…",
   offline: "Offline",
 };
 
 const connectionDot: Record<ConnectionState, string> = {
   live: "bg-moving",
+  online: "bg-moving",
   reconnecting: "bg-idle",
   offline: "bg-offline",
 };

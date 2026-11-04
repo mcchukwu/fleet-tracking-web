@@ -33,4 +33,30 @@ describe("InlineError", () => {
     screen.getByRole("button", { name: "Retry" }).click();
     expect(onRetry).toHaveBeenCalledOnce();
   });
+
+  it("uses a surface-specific copy override and omits an empty detail", () => {
+    render(
+      <InlineError
+        error={{ ...error, kind: "unauthenticated" }}
+        copy={{ title: "Email or password is incorrect.", detail: "" }}
+      />,
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Email or password is incorrect.");
+    expect(screen.getByRole("alert")).not.toHaveTextContent("Your session expired");
+  });
+
+  it("offers Copy diagnostics for server errors", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+
+    render(<InlineError error={{ ...error, kind: "server" }} />);
+    screen.getByRole("button", { name: "Copy diagnostics" }).click();
+
+    expect(writeText).toHaveBeenCalledOnce();
+    expect(await screen.findByText("Copied")).toBeVisible();
+  });
 });
