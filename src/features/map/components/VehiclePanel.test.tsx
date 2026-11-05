@@ -82,7 +82,7 @@ describe("VehiclePanel", () => {
     expect(await screen.findByLabelText("Loading vehicles", {}, { timeout: 1_500 })).toBeInTheDocument();
   });
 
-  it("distinguishes no data from no results and still lists vehicles without a position", () => {
+  it("distinguishes no data, no positions and no results", () => {
     const { rerender } = renderPanel({ total: 0, rows: [] });
     expect(screen.getByText("No vehicles yet")).toBeInTheDocument();
 
@@ -102,8 +102,8 @@ describe("VehiclePanel", () => {
         </TooltipProvider>
       </ToastProvider>,
     );
-    expect(screen.getByRole("list", { name: "Vehicles" })).toBeInTheDocument();
-    expect(screen.queryByText("No vehicles are reporting a position")).not.toBeInTheDocument();
+    expect(screen.getByText("No vehicles are reporting a position")).toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: "Vehicles" })).not.toBeInTheDocument();
 
     rerender(
       <ToastProvider>

@@ -111,8 +111,10 @@ export function MapPage() {
   // Offline is a state, not an error: keep the cached map and rows and let the
   // banner and stale treatment explain why nothing is refreshing.
   const snapshotError = !offline && snapshotQuery.error ? normalize(snapshotQuery.error) : null;
-  const geofenceError =
-    !offline && geofencesFailed && geofencesCause ? normalize(geofencesCause) : null;
+  const geofenceError = useMemo(
+    () => (!offline && geofencesFailed && geofencesCause ? normalize(geofencesCause) : null),
+    [offline, geofencesFailed, geofencesCause],
+  );
   const alertsError = !offline && alertsQuery.error ? normalize(alertsQuery.error) : null;
   const hasData = data.total > 0;
   const snapshotUnavailable = snapshotError !== null && !hasData;
@@ -136,6 +138,19 @@ export function MapPage() {
       (vehicle) => visible.has(vehicle.key) || vehicle.key === selectedKey,
     );
   }, [data.mapVehicles, rows, selectedKey]);
+
+  const mapGeofences = useMemo(
+    () => (preferences.geofencesVisible ? toMapGeofences(geofences ?? []) : []),
+    [geofences, preferences.geofencesVisible],
+  );
+
+  const handleHover = useCallback(
+    (hover: { key: string; point: { x: number; y: number } } | null) => {
+      setHoveredKey(hover?.key ?? null);
+      setHoverPoint(hover?.point ?? null);
+    },
+    [],
+  );
 
   useDocumentTitle("Map", openAlertCount);
 
@@ -303,7 +318,7 @@ export function MapPage() {
       <ErrorBoundary level="panel" resetKeys={[selectedKey]}>
         <MapView
           vehicles={mapVehicles}
-          geofences={preferences.geofencesVisible ? toMapGeofences(geofences ?? []) : []}
+          geofences={mapGeofences}
           selectedKey={selectedKey}
           hoveredKey={hoveredKey}
           hoveredRow={hoveredRow}
@@ -315,10 +330,7 @@ export function MapPage() {
           showErrorOverlay
           onRetry={() => void snapshotQuery.refetch()}
           onSelect={selectKey}
-          onHover={(hover) => {
-            setHoveredKey(hover?.key ?? null);
-            setHoverPoint(hover?.point ?? null);
-          }}
+          onHover={handleHover}
           onViewport={setBounds}
           onAdapterReady={handleAdapterReady}
         />
@@ -357,6 +369,7 @@ export function MapPage() {
           shown={rows.length}
           total={data.total}
           geofencesVisible={preferences.geofencesVisible}
+          fitDisabled={data.positioned === 0}
           onFit={fitFleet}
           onToggleGeofences={preferences.toggleGeofences}
         >

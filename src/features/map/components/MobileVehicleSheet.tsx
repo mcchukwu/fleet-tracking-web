@@ -23,6 +23,7 @@ export interface MobileVehicleSheetProps {
   shown: number;
   total: number;
   geofencesVisible: boolean;
+  fitDisabled?: boolean;
   onFit: () => void;
   onToggleGeofences: () => void;
   children: ReactNode;
@@ -34,12 +35,14 @@ export function MobileVehicleSheet({
   shown,
   total,
   geofencesVisible,
+  fitDisabled = false,
   onFit,
   onToggleGeofences,
   children,
 }: MobileVehicleSheetProps) {
   const dragStart = useRef<number | null>(null);
   const previousSnap = useRef<Exclude<SheetSnap, "peek">>("half");
+  const fitLabel = fitDisabled ? "No vehicles are reporting a position" : "Fit the fleet";
 
   useEffect(() => {
     if (snap !== "peek") previousSnap.current = snap;
@@ -108,8 +111,9 @@ export function MobileVehicleSheet({
             />
           </button>
           <IconButton
-            label="Fit the fleet"
+            label={fitLabel}
             size="sm"
+            disabled={fitDisabled}
             onClick={onFit}
             icon={<Maximize2 aria-hidden="true" className="size-4" strokeWidth={1.5} />}
           />

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { isEditable, isModalOpen } from "../../shell/hooks/useShortcuts";
+import { isEditable, isModalOpen } from "../../../lib/keyboard";
 import { nextSelectionKey, type VehicleRow } from "../lib/filter";
 
 export interface MapShortcutActions {

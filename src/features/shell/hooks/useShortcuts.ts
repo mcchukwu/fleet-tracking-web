@@ -1,18 +1,9 @@
 import { useEffect, useRef } from "react";
+import { isEditable, isModalOpen } from "../../../lib/keyboard";
 import type { NavPath } from "../nav";
 import { chordTargets } from "../shortcuts";
 
 const CHORD_TIMEOUT_MS = 1_000;
-
-function isEditable(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  if (target.isContentEditable) return true;
-  return ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
-}
-
-function isModalOpen(): boolean {
-  return document.querySelector('dialog[open], [role="dialog"], [role="menu"]') !== null;
-}
 
 function requestSearchFocus(): void {
   window.dispatchEvent(new CustomEvent("fleet:focus-search"));
@@ -87,4 +78,4 @@ export function useShortcuts({ onOpenShortcuts, onNavigate, onEscape }: Shortcut
   }, [onEscape, onNavigate, onOpenShortcuts]);
 }
 
-export { CHORD_TIMEOUT_MS, isEditable, isModalOpen };
+export { CHORD_TIMEOUT_MS };

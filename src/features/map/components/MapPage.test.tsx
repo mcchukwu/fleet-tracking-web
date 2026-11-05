@@ -28,16 +28,27 @@ const mocks = vi.hoisted(() => ({
   geofences: {
     data: [],
     isPending: false,
+    isError: false,
     error: null as unknown,
     refetch: vi.fn(),
   },
+  toast: vi.fn(),
   mapProps: [] as Array<{
     vehicles: readonly unknown[];
+    geofences: readonly unknown[];
     dimmed: boolean;
     error: unknown;
     showErrorOverlay?: boolean;
   }>,
 }));
+
+vi.mock("../../../ui/Toast", async () => {
+  const actual = await vi.importActual<typeof import("../../../ui/Toast")>("../../../ui/Toast");
+  return {
+    ...actual,
+    useToast: () => ({ toast: mocks.toast, dismiss: vi.fn() }),
+  };
+});
 
 vi.mock("@tanstack/react-router", () => ({
   useSearch: () => mocks.search,
@@ -64,6 +75,7 @@ vi.mock("../../../api/hooks/geofences", () => ({
 vi.mock("./MapView", () => ({
   MapView: (props: {
     vehicles: readonly unknown[];
+    geofences: readonly unknown[];
     dimmed: boolean;
     error: unknown;
     showErrorOverlay?: boolean;
@@ -123,7 +135,11 @@ beforeEach(() => {
   mocks.desktop = true;
   mocks.mapProps = [];
   mocks.navigate.mockReset();
+  mocks.toast.mockReset();
   mocks.alerts.data = [];
+  mocks.geofences.data = [];
+  mocks.geofences.isError = false;
+  mocks.geofences.error = null;
   mocks.snapshot.error = null;
   mocks.snapshot.isPending = false;
   mocks.snapshot.data = [
@@ -224,5 +240,24 @@ describe("MapPage", () => {
     await waitFor(() => expect(mocks.mapProps.at(-1)?.dimmed).toBe(true));
     expect(mocks.mapProps.at(-1)?.error).toBeNull();
     useConnectionStore.getState().setNetwork("online");
+  });
+
+  it("re-adds a persistent geofence error toast only once per failure", async () => {
+    mocks.geofences.isError = true;
+    mocks.geofences.error = new Error("geofences down");
+    renderPage();
+
+    await waitFor(() => expect(mocks.toast).toHaveBeenCalledTimes(1));
+    await new Promise((resolve) => setTimeout(resolve, 1_200));
+    expect(mocks.toast).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the geofence target stable across list ticks", async () => {
+    renderPage();
+
+    await waitFor(() => expect(mocks.mapProps.length).toBeGreaterThan(0));
+    const first = mocks.mapProps.at(-1)?.geofences;
+    await new Promise((resolve) => setTimeout(resolve, 1_200));
+    expect(mocks.mapProps.at(-1)?.geofences).toBe(first);
   });
 });

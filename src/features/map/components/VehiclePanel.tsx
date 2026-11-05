@@ -39,6 +39,7 @@ export interface VehiclePanelProps {
 export function VehiclePanel({
   rows,
   total,
+  positioned,
   filters,
   depots,
   loading,
@@ -61,6 +62,7 @@ export function VehiclePanel({
 }: VehiclePanelProps) {
   const forbidden = error?.kind === "forbidden";
   const hasData = total > 0;
+  const noPositions = total > 0 && positioned === 0;
 
   const state: StateBoundaryState = forbidden
     ? "forbidden"
@@ -68,37 +70,41 @@ export function VehiclePanel({
       ? "loading"
       : error
         ? "error"
-        : rows.length === 0
+        : noPositions || rows.length === 0
           ? "empty"
           : stale
             ? "stale"
             : "ready";
 
-  const emptyNode =
-    total === 0 ? (
-      <EmptyState
-        title="No vehicles yet"
-        description="They appear here after a device reports its first position."
-      />
-    ) : (
-      <EmptyState
-        title={
-          filters.q
-            ? `No vehicles match "${filters.q}"`
-            : "No vehicles match these filters"
-        }
-        description={
-          filters.q
-            ? `Clear the filter to see all ${total}.`
-            : `Reset the filters to see all ${total}.`
-        }
-        action={
-          <Button size="sm" variant="secondary" onClick={onReset}>
-            Clear filters
-          </Button>
-        }
-      />
-    );
+  const emptyNode = noPositions ? (
+    <EmptyState
+      title="No vehicles are reporting a position"
+      description="They appear on the map after a device sends its first position."
+    />
+  ) : total === 0 ? (
+    <EmptyState
+      title="No vehicles yet"
+      description="They appear here after a device reports its first position."
+    />
+  ) : (
+    <EmptyState
+      title={
+        filters.q
+          ? `No vehicles match "${filters.q}"`
+          : "No vehicles match these filters"
+      }
+      description={
+        filters.q
+          ? `Clear the filter to see all ${total}.`
+          : `Reset the filters to see all ${total}.`
+      }
+      action={
+        <Button size="sm" variant="secondary" onClick={onReset}>
+          Clear filters
+        </Button>
+      }
+    />
+  );
 
   return (
     <section

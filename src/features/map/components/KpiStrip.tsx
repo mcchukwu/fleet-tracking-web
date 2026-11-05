@@ -2,6 +2,7 @@ import { cn } from "../../../ui/cn";
 import { Spinner } from "../../../ui/Spinner";
 import { Skeleton } from "../../../ui/StatePanel";
 import { Stat } from "../../../ui/Stat";
+import { useDelayedFlag } from "../../../lib/useDelayedFlag";
 
 export interface KpiCell {
   label: string;
@@ -20,6 +21,8 @@ export interface KpiStripProps {
 }
 
 export function KpiStrip({ cells, compact = false, loading = false, className }: KpiStripProps) {
+  const showSkeleton = useDelayedFlag(loading);
+
   return (
     <div
       className={cn(
@@ -42,7 +45,14 @@ export function KpiStrip({ cells, compact = false, loading = false, className }:
               )}
             >
               <span className="label-caps text-muted">{cell.label}</span>
-              <Skeleton className={compact ? "h-5 w-12" : "h-7 w-16"} />
+              {showSkeleton ? (
+                <Skeleton className={compact ? "h-5 w-12" : "h-7 w-16"} />
+              ) : (
+                <span
+                  aria-hidden="true"
+                  className={cn("block", compact ? "h-5 w-12" : "h-7 w-16")}
+                />
+              )}
             </div>
           ))
         : cells.map((cell) => {

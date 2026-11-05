@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { KpiStrip } from "./KpiStrip";
@@ -40,7 +40,7 @@ describe("KpiStrip", () => {
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
-  it("renders loading placeholders instead of presenting zeroes as data", () => {
+  it("shows loading placeholders only after the 200ms delay", async () => {
     const { container } = render(
       <KpiStrip
         loading
@@ -54,7 +54,12 @@ describe("KpiStrip", () => {
     );
     expect(screen.queryByText("0 of 0")).not.toBeInTheDocument();
     expect(container.firstElementChild).toHaveAttribute("aria-busy", "true");
-    expect(container.querySelectorAll('[aria-hidden="true"]')).toHaveLength(4);
+    expect(container.querySelectorAll(".animate-pulse-soft")).toHaveLength(0);
+
+    await waitFor(
+      () => expect(container.querySelectorAll(".animate-pulse-soft")).toHaveLength(4),
+      { timeout: 1_000 },
+    );
   });
 
   it("renders a compact grid without borders between cells", () => {

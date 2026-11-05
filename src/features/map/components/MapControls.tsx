@@ -26,12 +26,14 @@ export function MapControls({
   onToggleGeofences,
   className,
 }: MapControlsProps) {
+  const fitLabel = fitDisabled ? "No vehicles are reporting a position" : "Fit the fleet";
+
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       <div className="flex flex-col gap-1 rounded-lg border border-border bg-surface p-1 shadow-float">
-        <Tooltip label="Fit the fleet">
+        <Tooltip label={fitLabel}>
           <IconButton
-            label="Fit the fleet"
+            label={fitLabel}
             variant="ghost"
             disabled={fitDisabled}
             onClick={onFit}
