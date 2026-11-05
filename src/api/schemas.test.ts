@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   auditResponseSchema,
   liveMessageSchema,
+  parseAlerts,
   parseGeofences,
   parseSnapshot,
   systemHealthSchema,
@@ -19,6 +20,7 @@ import {
 import { liveCaptureFrames, liveCaptureMeta } from "../mocks/fixtures/liveCapture";
 import { vehiclesFixture } from "../mocks/fixtures/vehicles";
 import { geofencesFixture } from "../mocks/fixtures/geofences";
+import { alertsFixture } from "../mocks/fixtures/alerts";
 
 describe("contract schemas", () => {
   it("accepts a real position frame", () => {
@@ -122,5 +124,25 @@ describe("contract schemas", () => {
 
   it("rejects a geofence envelope that is not a data array", () => {
     expect(() => parseGeofences(null)).toThrow();
+  });
+
+  it("salvages valid alert rows and drops malformed or unknown-enum rows", () => {
+    const result = parseAlerts({
+      data: [
+        alertsFixture[0],
+        { id: "broken", vehicle_id: "v" },
+        { ...alertsFixture[0], id: "unknown-type", type: "solar_flare" },
+        { ...alertsFixture[0], id: "unknown-severity", severity: "extreme" },
+      ],
+    });
+
+    expect(result.alerts).toHaveLength(1);
+    expect(result.alerts[0]?.id).toBe(alertsFixture[0]?.id);
+    expect(result.rejected).toBe(3);
+  });
+
+  it("rejects an alert envelope that is not a data array", () => {
+    expect(() => parseAlerts({ rows: [] })).toThrow();
+    expect(() => parseAlerts({ data: [{ nope: true }] })).toThrow();
   });
 });

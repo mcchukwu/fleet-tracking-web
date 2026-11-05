@@ -14,6 +14,7 @@ import {
   errorResponseSchema,
   importResultSchema,
   loginResponseSchema,
+  parseAlerts,
   parseGeofences,
   parseSnapshot,
   systemHealthSchema,
@@ -21,7 +22,6 @@ import {
   type SystemHealth,
 } from "./schemas";
 import type {
-  Alert,
   AlertFilters,
   AlertRule,
   AuditFilters,
@@ -343,8 +343,16 @@ export class FleetApiClient {
     return this.request<void>("PATCH", `/trips/${id}`, update, options);
   }
 
-  alerts(filters: AlertFilters = {}, options: RequestOptions = {}) {
-    return this.request<{ data: Alert[] }>("GET", `/alerts${queryString(filters)}`, undefined, options);
+  async alerts(filters: AlertFilters = {}, options: RequestOptions = {}) {
+    const payload = await this.request<unknown>(
+      "GET",
+      `/alerts${queryString(filters)}`,
+      undefined,
+      options,
+    );
+    const result = this.parse(payload, "/alerts", parseAlerts);
+    this.noteRejectedRows("/alerts", result.rejected);
+    return { data: result.alerts };
   }
 
   ackAlert(id: string, options: RequestOptions = {}) {

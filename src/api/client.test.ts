@@ -85,6 +85,11 @@ describe("api client", () => {
     expect((await request).kind).toBe("aborted");
   });
 
+  it("turns a malformed alert body into a contract error instead of a cast", async () => {
+    const client = new FleetApiClient("", fetcherOf(jsonResponse({ data: [{ nope: true }] })));
+    expect((await caught(client.alerts())).kind).toBe("contract");
+  });
+
   it("does not emit session expiry for a rejected login", async () => {
     const onSessionExpired = vi.fn();
     const client = new FleetApiClient(

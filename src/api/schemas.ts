@@ -1,6 +1,15 @@
 import { z } from "zod";
 import { ContractError } from "../errors/types";
-import type { Geofence, GeofenceKind, SnapshotVehicle, TripStatus } from "./types";
+import type {
+  Alert,
+  AlertSeverity,
+  AlertStatus,
+  AlertType,
+  Geofence,
+  GeofenceKind,
+  SnapshotVehicle,
+  TripStatus,
+} from "./types";
 
 const timestamp = z
   .string()
@@ -167,6 +176,78 @@ export function parseGeofences(payload: unknown): GeofenceParseResult {
     throw new ContractError("No geofence row matched the expected shape");
   }
   return { geofences, rejected };
+}
+
+const alertTypes: readonly AlertType[] = [
+  "geofence_enter",
+  "geofence_exit",
+  "route_deviation",
+  "idle",
+  "speeding",
+  "device_offline",
+  "unplanned_trip",
+];
+const alertSeverities: readonly AlertSeverity[] = ["low", "medium", "high", "critical"];
+const alertStatuses: readonly AlertStatus[] = ["open", "acked", "closed"];
+
+function isAlertTypeValue(value: string): value is AlertType {
+  return alertTypes.some((type) => type === value);
+}
+
+function isAlertSeverityValue(value: string): value is AlertSeverity {
+  return alertSeverities.some((severity) => severity === value);
+}
+
+function isAlertStatusValue(value: string): value is AlertStatus {
+  return alertStatuses.some((status) => status === value);
+}
+
+export const alertEntitySchema = z.object({
+  id: z.union([z.string(), z.number()]).transform(String),
+  vehicle_id: z.string().min(1),
+  plate: z.string().optional().default(""),
+  trip_id: z.string().optional(),
+  type: z.string(),
+  severity: z.string(),
+  status: z.string(),
+  occurred_at: timestamp,
+  acked_at: timestamp.optional(),
+  evidence: z.record(z.string(), z.unknown()).optional().default({}),
+});
+
+export const alertsSchema = z.object({ data: z.array(z.unknown()) });
+
+export type AlertsParseResult = { alerts: Alert[]; rejected: number };
+
+export function parseAlerts(payload: unknown): AlertsParseResult {
+  const envelope = alertsSchema.safeParse(payload);
+  if (!envelope.success) throw new ContractError("Alert envelope is not { data: [] }");
+
+  const alerts: Alert[] = [];
+  let rejected = 0;
+  for (const row of envelope.data.data) {
+    const parsed = alertEntitySchema.safeParse(row);
+    if (
+      !parsed.success ||
+      !isAlertTypeValue(parsed.data.type) ||
+      !isAlertSeverityValue(parsed.data.severity) ||
+      !isAlertStatusValue(parsed.data.status)
+    ) {
+      rejected += 1;
+      continue;
+    }
+    alerts.push({
+      ...parsed.data,
+      type: parsed.data.type,
+      severity: parsed.data.severity,
+      status: parsed.data.status,
+    });
+  }
+
+  if (envelope.data.data.length > 0 && alerts.length === 0) {
+    throw new ContractError("No alert row matched the expected shape");
+  }
+  return { alerts, rejected };
 }
 
 export const auditEntrySchema = z.object({
