@@ -112,9 +112,10 @@ export interface Alert {
   vehicle_id: string;
   plate: string;
   trip_id?: string;
-  type: AlertType;
-  severity: AlertSeverity;
-  status: AlertStatus;
+  // The server may add enum values; the UI renders a neutral fallback instead of failing the list.
+  type: string;
+  severity: string;
+  status: string;
   occurred_at: string;
   acked_at?: string;
   evidence: Record<string, unknown>;

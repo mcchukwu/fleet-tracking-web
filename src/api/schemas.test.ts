@@ -126,7 +126,7 @@ describe("contract schemas", () => {
     expect(() => parseGeofences(null)).toThrow();
   });
 
-  it("salvages valid alert rows and drops malformed or unknown-enum rows", () => {
+  it("salvages valid alert rows and keeps unknown enums for the neutral fallback", () => {
     const result = parseAlerts({
       data: [
         alertsFixture[0],
@@ -136,9 +136,11 @@ describe("contract schemas", () => {
       ],
     });
 
-    expect(result.alerts).toHaveLength(1);
+    expect(result.alerts).toHaveLength(3);
     expect(result.alerts[0]?.id).toBe(alertsFixture[0]?.id);
-    expect(result.rejected).toBe(3);
+    expect(result.alerts[1]?.type).toBe("solar_flare");
+    expect(result.alerts[2]?.severity).toBe("extreme");
+    expect(result.rejected).toBe(1);
   });
 
   it("rejects an alert envelope that is not a data array", () => {

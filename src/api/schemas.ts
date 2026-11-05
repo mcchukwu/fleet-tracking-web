@@ -2,9 +2,6 @@ import { z } from "zod";
 import { ContractError } from "../errors/types";
 import type {
   Alert,
-  AlertSeverity,
-  AlertStatus,
-  AlertType,
   Geofence,
   GeofenceKind,
   SnapshotVehicle,
@@ -178,30 +175,6 @@ export function parseGeofences(payload: unknown): GeofenceParseResult {
   return { geofences, rejected };
 }
 
-const alertTypes: readonly AlertType[] = [
-  "geofence_enter",
-  "geofence_exit",
-  "route_deviation",
-  "idle",
-  "speeding",
-  "device_offline",
-  "unplanned_trip",
-];
-const alertSeverities: readonly AlertSeverity[] = ["low", "medium", "high", "critical"];
-const alertStatuses: readonly AlertStatus[] = ["open", "acked", "closed"];
-
-function isAlertTypeValue(value: string): value is AlertType {
-  return alertTypes.some((type) => type === value);
-}
-
-function isAlertSeverityValue(value: string): value is AlertSeverity {
-  return alertSeverities.some((severity) => severity === value);
-}
-
-function isAlertStatusValue(value: string): value is AlertStatus {
-  return alertStatuses.some((status) => status === value);
-}
-
 export const alertEntitySchema = z.object({
   id: z.union([z.string(), z.number()]).transform(String),
   vehicle_id: z.string().min(1),
@@ -227,21 +200,11 @@ export function parseAlerts(payload: unknown): AlertsParseResult {
   let rejected = 0;
   for (const row of envelope.data.data) {
     const parsed = alertEntitySchema.safeParse(row);
-    if (
-      !parsed.success ||
-      !isAlertTypeValue(parsed.data.type) ||
-      !isAlertSeverityValue(parsed.data.severity) ||
-      !isAlertStatusValue(parsed.data.status)
-    ) {
+    if (!parsed.success) {
       rejected += 1;
       continue;
     }
-    alerts.push({
-      ...parsed.data,
-      type: parsed.data.type,
-      severity: parsed.data.severity,
-      status: parsed.data.status,
-    });
+    alerts.push(parsed.data);
   }
 
   if (envelope.data.data.length > 0 && alerts.length === 0) {
