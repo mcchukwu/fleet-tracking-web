@@ -1,5 +1,5 @@
 import type { LayerSpecification } from "maplibre-gl";
-import type { FeatureCollection, LineString, Point, Polygon } from "geojson";
+import type { Feature, FeatureCollection, LineString, Point, Polygon } from "geojson";
 import type { LngLat, MapGeofence, MapRoute, MapTokens, MapVehicle } from "../../types";
 
 export const SOURCE_IDS = {
@@ -139,7 +139,13 @@ export function vehicleLayers(tokens: MapTokens): LayerSpecification[] {
         "icon-allow-overlap": true,
         "icon-ignore-placement": true,
         "icon-rotation-alignment": "map",
-        "icon-rotate": ["coalesce", ["get", "heading"], 0],
+        // The alert glyph is upright; only the heading chevron rotates.
+        "icon-rotate": [
+          "case",
+          ["==", ["get", "status"], "alert"],
+          0,
+          ["coalesce", ["get", "heading"], 0],
+        ],
       },
       paint: {
         "icon-opacity": ["case", ["get", "stale"], 0.6, 1],
@@ -329,30 +335,63 @@ export function routeLayers(tokens: MapTokens): LayerSpecification[] {
   ];
 }
 
+export interface VehicleFeatureCache {
+  features: Map<string, Feature<Point>>;
+}
+
+function sameVehicle(
+  feature: Feature<Point>,
+  vehicle: MapVehicle,
+  position: LngLat,
+): boolean {
+  const properties = feature.properties;
+  return (
+    feature.geometry.coordinates[0] === position[0] &&
+    feature.geometry.coordinates[1] === position[1] &&
+    properties?.key === vehicle.key &&
+    properties.label === vehicle.label &&
+    properties.status === vehicle.status &&
+    properties.selected === vehicle.selected &&
+    properties.hovered === vehicle.hovered &&
+    properties.stale === vehicle.stale &&
+    properties.heading === (vehicle.headingDeg ?? 0)
+  );
+}
+
 export function vehicleCollection(
   vehicles: readonly MapVehicle[],
   positions?: ReadonlyMap<string, LngLat>,
+  cache?: VehicleFeatureCache,
 ): FeatureCollection<Point> {
-  return {
-    type: "FeatureCollection",
-    features: vehicles.map((vehicle) => {
-      const position = positions?.get(vehicle.key) ?? vehicle.position;
-      return {
-        type: "Feature",
-        id: vehicle.key,
-        properties: {
-          key: vehicle.key,
-          label: vehicle.label,
-          status: vehicle.status,
-          selected: vehicle.selected,
-          hovered: vehicle.hovered,
-          stale: vehicle.stale,
-          heading: vehicle.headingDeg ?? 0,
-        },
-        geometry: { type: "Point", coordinates: position },
-      };
-    }),
-  };
+  const next = new Map<string, Feature<Point>>();
+  const features = vehicles.map((vehicle) => {
+    const position = positions?.get(vehicle.key) ?? vehicle.position;
+    const cached = cache?.features.get(vehicle.key);
+    if (cached && sameVehicle(cached, vehicle, position)) {
+      next.set(vehicle.key, cached);
+      return cached;
+    }
+
+    const feature: Feature<Point> = {
+      type: "Feature",
+      id: vehicle.key,
+      properties: {
+        key: vehicle.key,
+        label: vehicle.label,
+        status: vehicle.status,
+        selected: vehicle.selected,
+        hovered: vehicle.hovered,
+        stale: vehicle.stale,
+        heading: vehicle.headingDeg ?? 0,
+      },
+      geometry: { type: "Point", coordinates: position },
+    };
+    next.set(vehicle.key, feature);
+    return feature;
+  });
+
+  if (cache) cache.features = next;
+  return { type: "FeatureCollection", features };
 }
 
 export function geofenceCollection(geofences: readonly MapGeofence[]): FeatureCollection<Polygon> {

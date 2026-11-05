@@ -1,3 +1,4 @@
+import { normalize } from "../../../errors/normalize";
 import { MapError } from "../../../errors/types";
 import { mapConfig } from "../../config";
 import type {
@@ -26,6 +27,7 @@ import {
   SOURCE_IDS,
   vehicleCollection,
   vehicleLayers,
+  type VehicleFeatureCache,
 } from "./layers";
 import {
   createMap,
@@ -37,6 +39,7 @@ import {
 import { fallbackStyle, styleUrlFor } from "./style";
 
 const STYLE_TIMEOUT_MS = 3_000;
+const HIGH_VOLUME_UPDATE_MS = 50;
 
 function prefersReducedMotion(): boolean {
   return (
@@ -74,6 +77,12 @@ export function createMapLibreAdapter(): MapAdapter {
   let frame: number | null = null;
   let lastVehiclesAt: number | null = null;
   let hoveredKey: string | null = null;
+  let clusterMaxZoom = 0;
+  let lastDataAt = 0;
+  let dataTimer: ReturnType<typeof setTimeout> | null = null;
+  let contextCanvas: HTMLCanvasElement | null = null;
+  let contextLostHandler: ((event: Event) => void) | null = null;
+  const featureCache: VehicleFeatureCache = { features: new Map() };
 
   const listeners = new Map<keyof MapEvents, Set<(payload: never) => void>>();
 
@@ -97,13 +106,58 @@ export function createMapLibreAdapter(): MapAdapter {
     return found ? (found as GeoJSONSource) : null;
   }
 
+  function fail(cause: unknown, fallback: string): void {
+    if (!map) return;
+    const error = cause instanceof MapError ? cause : new MapError(fallback);
+    emit("error", normalize(error, { action: "load the map" }));
+  }
+
   function applyData(id: string, data: ReturnType<typeof geofenceCollection> | ReturnType<typeof vehicleCollection> | ReturnType<typeof routeCollection>): void {
     const target = source(id);
-    if (target) void target.setData(data).catch(() => undefined);
+    if (target) {
+      void target
+        .setData(data)
+        .catch((cause: unknown) => fail(cause, "The map data could not load"));
+    }
   }
 
   function setVehicleData(): void {
-    applyData(SOURCE_IDS.vehicles, vehicleCollection(vehicleTargets, displayed));
+    applyData(
+      SOURCE_IDS.vehicles,
+      vehicleCollection(vehicleTargets, displayed, featureCache),
+    );
+  }
+
+  function cancelDataTimer(): void {
+    if (dataTimer !== null) {
+      clearTimeout(dataTimer);
+      dataTimer = null;
+    }
+  }
+
+  /** Large fleets update the source at most 20 times per second. */
+  function setVehicleDataSoon(): void {
+    if (vehicleTargets.length <= capabilities.comfortableVehicleCount) {
+      cancelDataTimer();
+      setVehicleData();
+      return;
+    }
+
+    const now = performance.now();
+    const wait = HIGH_VOLUME_UPDATE_MS - (now - lastDataAt);
+    if (wait <= 0) {
+      cancelDataTimer();
+      lastDataAt = now;
+      setVehicleData();
+      return;
+    }
+    if (dataTimer === null) {
+      dataTimer = setTimeout(() => {
+        dataTimer = null;
+        lastDataAt = performance.now();
+        setVehicleData();
+      }, wait);
+    }
   }
 
   function cancelAnimation(): void {
@@ -122,7 +176,7 @@ export function createMapLibreAdapter(): MapAdapter {
         lerpPosition(current.from.get(vehicle.key) ?? vehicle.position, vehicle.position, progress),
       ]),
     );
-    setVehicleData();
+    setVehicleDataSoon();
 
     if (progress < 1 && typeof requestAnimationFrame === "function") {
       frame = requestAnimationFrame(animateVehicles);
@@ -171,7 +225,7 @@ export function createMapLibreAdapter(): MapAdapter {
         type: "geojson",
         data: emptyCollection(),
         cluster: true,
-        clusterRadius: 44,
+        clusterRadius: tokens.marker.clusterRadius * 2,
         clusterMaxZoom: tokens.marker.clusterMaxZoom,
         clusterProperties: {
           worstStatus: [
@@ -189,9 +243,31 @@ export function createMapLibreAdapter(): MapAdapter {
           ],
         },
       });
+      clusterMaxZoom = tokens.marker.clusterMaxZoom;
     }
     addLayers();
     applyAllData();
+  }
+
+  /** A fleet above the comfort budget clusters up to two zoom levels earlier. */
+  function applyClusterOptions(): void {
+    if (!map || !tokens) return;
+    const next =
+      vehicleTargets.length > capabilities.comfortableVehicleCount
+        ? tokens.marker.clusterMaxZoom + 2
+        : tokens.marker.clusterMaxZoom;
+    if (next === clusterMaxZoom) return;
+
+    const target = source(SOURCE_IDS.vehicles);
+    if (!target) return;
+    clusterMaxZoom = next;
+    void target
+      .setClusterOptions({
+        cluster: true,
+        clusterRadius: tokens.marker.clusterRadius * 2,
+        clusterMaxZoom: next,
+      })
+      .catch((cause: unknown) => fail(cause, "The map clusters could not load"));
   }
 
   function refreshTokens(): void {
@@ -203,6 +279,15 @@ export function createMapLibreAdapter(): MapAdapter {
   }
 
   function wireEvents(instance: MapLibreMap): void {
+    instance.on("error", (event) => {
+      if (instance !== map) return;
+      const message = event.error?.message ?? "";
+      // Glyph, sprite, tile and style failures degrade to a plainer basemap.
+      // A style that cannot load at all is reported by waitForStyle instead.
+      if (/glyph|sprite|tile|image|style/i.test(message)) return;
+      fail(new MapError("The map could not load"), "The map could not load");
+    });
+
     instance.on("moveend", () => {
       if (instance !== map) return;
       emit("viewportChange", viewportOf(instance));
@@ -233,7 +318,7 @@ export function createMapLibreAdapter(): MapAdapter {
             .then((zoom) => {
               if (instance === map) instance.easeTo({ center: coordinates, zoom: zoom + 0.2 });
             })
-            .catch(() => undefined);
+            .catch((cause: unknown) => fail(cause, "The map cluster could not open"));
         }
         emit("clusterClick", { clusterId: String(clusterId), count });
         return;
@@ -343,6 +428,18 @@ export function createMapLibreAdapter(): MapAdapter {
       instance.addControl(createNavigationControl(), "top-right");
       wireEvents(instance);
 
+      contextCanvas = instance.getCanvas();
+      const onContextLost = (event: Event) => {
+        event.preventDefault();
+        if (instance !== map) return;
+        fail(
+          new MapError("The map paused because its graphics context was lost"),
+          "The map paused because its graphics context was lost",
+        );
+      };
+      contextCanvas.addEventListener("webglcontextlost", onContextLost);
+      contextLostHandler = onContextLost;
+
       await waitForStyle(instance, 0, options.tokens);
       if (map !== instance || !tokens) return;
       installLayers();
@@ -351,11 +448,20 @@ export function createMapLibreAdapter(): MapAdapter {
 
     destroy(): void {
       cancelAnimation();
+      cancelDataTimer();
+      if (contextCanvas && contextLostHandler) {
+        contextCanvas.removeEventListener("webglcontextlost", contextLostHandler);
+      }
       const instance = map;
       map = null;
       animation = null;
       displayed = new Map();
+      featureCache.features.clear();
+      clusterMaxZoom = 0;
+      lastDataAt = 0;
       hoveredKey = null;
+      contextCanvas = null;
+      contextLostHandler = null;
       if (instance) instance.remove();
     },
 
@@ -376,7 +482,10 @@ export function createMapLibreAdapter(): MapAdapter {
             if (map !== instance || generation !== styleGeneration) return;
             installLayers();
           })
-          .catch(() => undefined);
+          .catch((cause: unknown) => {
+            if (map !== instance || generation !== styleGeneration) return;
+            fail(cause, "The map style could not load");
+          });
         return;
       }
 
@@ -386,16 +495,20 @@ export function createMapLibreAdapter(): MapAdapter {
     setVehicles(vehicles: readonly MapVehicle[]): void {
       vehicleTargets = vehicles;
       if (!map) return;
+      applyClusterOptions();
 
       const now = performance.now();
-      const duration = glideDuration(lastVehiclesAt, now, prefersReducedMotion());
+      const crowded = vehicles.length > capabilities.comfortableVehicleCount;
+      const duration = crowded
+        ? 0
+        : glideDuration(lastVehiclesAt, now, prefersReducedMotion());
       lastVehiclesAt = now;
       cancelAnimation();
 
       if (duration <= 0 || typeof requestAnimationFrame !== "function") {
         animation = null;
         displayed = new Map(vehicles.map((vehicle) => [vehicle.key, vehicle.position]));
-        setVehicleData();
+        setVehicleDataSoon();
         return;
       }
 

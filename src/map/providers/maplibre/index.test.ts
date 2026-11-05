@@ -13,8 +13,12 @@ const holder = vi.hoisted(() => {
       this.id = id;
       this.spec = spec;
     }
+    clusterOptions: Record<string, unknown> | null = null;
     async setData(data: unknown): Promise<void> {
       this.data = data;
+    }
+    async setClusterOptions(options: Record<string, unknown>): Promise<void> {
+      this.clusterOptions = options;
     }
     getClusterExpansionZoom(): Promise<number> {
       return Promise.resolve(12);
@@ -27,7 +31,7 @@ const holder = vi.hoisted(() => {
     readonly layers = new Map<string, Record<string, unknown>>();
     readonly styles: string[] = [];
     readonly controls: unknown[] = [];
-    readonly canvas = { style: { cursor: "" } };
+    readonly canvas = document.createElement("canvas");
     readonly images = new Set<string>();
     features: unknown[] = [];
     zoom = 7;
@@ -107,7 +111,7 @@ const holder = vi.hoisted(() => {
       return this;
     }
 
-    getCanvas(): { style: { cursor: string } } {
+    getCanvas(): HTMLCanvasElement {
       return this.canvas;
     }
 
@@ -311,6 +315,83 @@ describe("MapLibre adapter", () => {
     instance.emit("moveend");
     expect(viewport).toHaveBeenCalled();
 
+    adapter.destroy();
+  });
+
+  it("reuses unchanged vehicle features between updates", async () => {
+    const adapter = createMapLibreAdapter();
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+    const source = map().sources.get(SOURCE_IDS.vehicles);
+    if (!source) throw new Error("vehicle source is missing");
+    const unchanged: MapVehicle = { ...vehicle, key: "demo-imei-0002", position: [3.6, 6.7] };
+
+    adapter.setVehicles([vehicle, unchanged]);
+    const first = source.data as { features: unknown[] };
+    adapter.setVehicles([{ ...vehicle, position: [3.5, 6.6] }, unchanged]);
+    const second = source.data as { features: unknown[] };
+
+    expect(second.features[1]).toBe(first.features[1]);
+    expect(second.features[0]).not.toBe(first.features[0]);
+    adapter.destroy();
+  });
+
+  it("clusters earlier once the fleet exceeds its comfort budget", async () => {
+    const adapter = createMapLibreAdapter();
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+    const source = map().sources.get(SOURCE_IDS.vehicles);
+    if (!source) throw new Error("vehicle source is missing");
+
+    const crowded = Array.from({ length: 1_001 }, (_, index): MapVehicle => ({
+      ...vehicle,
+      key: `demo-imei-${String(index).padStart(4, "0")}`,
+      position: [3.4 + index * 0.0001, 6.5],
+    }));
+    adapter.setVehicles(crowded);
+
+    await vi.waitFor(() =>
+      expect(source.clusterOptions?.clusterMaxZoom).toBe(
+        contractTokens.marker.clusterMaxZoom + 2,
+      ),
+    );
+    adapter.destroy();
+  });
+
+  it("keeps the alert glyph upright while the chevron follows the heading", async () => {
+    const adapter = createMapLibreAdapter();
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+    const layout = map().layers.get(LAYER_IDS.vehicleGlyph)?.layout as
+      | Record<string, unknown>
+      | undefined;
+    const rotation = JSON.stringify(layout?.["icon-rotate"]);
+
+    expect(rotation).toContain('"alert"');
+    expect(rotation).toContain('"heading"');
+    adapter.destroy();
+  });
+
+  it("emits a map error when the renderer fails after mount", async () => {
+    const adapter = createMapLibreAdapter();
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+    const onError = vi.fn();
+    adapter.on("error", onError);
+
+    map().emit("error", { error: new Error("renderer crashed") });
+
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError.mock.calls[0]?.[0]).toMatchObject({ kind: "map" });
+    adapter.destroy();
+  });
+
+  it("emits a map error when the WebGL context is lost", async () => {
+    const adapter = createMapLibreAdapter();
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+    const onError = vi.fn();
+    adapter.on("error", onError);
+
+    map().getCanvas().dispatchEvent(new Event("webglcontextlost", { cancelable: true }));
+
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError.mock.calls[0]?.[0]).toMatchObject({ kind: "map" });
     adapter.destroy();
   });
 
