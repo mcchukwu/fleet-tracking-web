@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { SnapshotVehicle } from "../../../api/types";
+import type { Alert, SnapshotVehicle } from "../../../api/types";
 import { useLiveStore } from "../../../stores/live";
 import { useMapData } from "./useMapData";
 
@@ -56,9 +56,10 @@ describe("useMapData", () => {
     expect(result.current.mapVehicles[0]?.selected).toBe(true);
   });
 
-  it("reflects a newer live frame on the next one-second tick", () => {
+  it("moves the map target immediately and the list on the next second", () => {
+    const noAlerts: Alert[] = [];
     const { result } = renderHook(() =>
-      useMapData({ snapshot: vehicles, alerts: [], selectedId: null, hoveredKey: null }),
+      useMapData({ snapshot: vehicles, alerts: noAlerts, selectedId: null, hoveredKey: null }),
     );
 
     act(() => {
@@ -76,12 +77,17 @@ describe("useMapData", () => {
         ],
         Date.now(),
       );
+    });
+
+    expect(result.current.mapVehicles[0]?.position).toEqual([3.6, 6.7]);
+    expect(result.current.rows[0]?.lat).toBe(6.5);
+
+    act(() => {
       vi.advanceTimersByTime(1_000);
     });
 
     expect(result.current.rows[0]?.lat).toBe(6.7);
     expect(result.current.rows[0]?.lon).toBe(3.6);
-    expect(result.current.mapVehicles[0]?.position).toEqual([3.6, 6.7]);
   });
 
   it("uses a recent alert to raise the display status", () => {
