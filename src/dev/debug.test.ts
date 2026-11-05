@@ -15,6 +15,7 @@ const snapshot: FleetDebugSnapshot = {
     fitBounds: null,
     fitCount: 0,
     geofenceCount: 0,
+    stale: false,
   },
 };
 

@@ -11,6 +11,7 @@ export interface FleetDebugMapState {
   fitBounds: Bounds | null;
   fitCount: number;
   geofenceCount: number;
+  stale: boolean;
 }
 
 export interface FleetDebugLivePosition {
@@ -55,6 +56,7 @@ const emptyMapState: FleetDebugMapState = {
   fitBounds: null,
   fitCount: 0,
   geofenceCount: 0,
+  stale: false,
 };
 
 let reader: DebugReader | null = null;

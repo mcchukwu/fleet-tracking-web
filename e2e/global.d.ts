@@ -38,6 +38,7 @@ declare global {
         fitBounds: { south: number; west: number; north: number; east: number } | null;
         fitCount: number;
         geofenceCount: number;
+        stale: boolean;
       };
     } | null;
   }

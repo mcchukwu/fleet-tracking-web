@@ -325,3 +325,13 @@ Trade-off: the declared budget is conservative because the measurement only cove
 
 
 
+
+## 2026-11-05: Slice 2 review fixes (map freshness, rendering budget, retry)
+
+- The map target now subscribes to the live-store version and updates once per frame; above 1,000 vehicles it is throttled to 20 fps. Rows and KPIs stay on the shared one-second view. This keeps 500 messages per second off the 1 Hz path without re-sorting the list per frame.
+- The MapLibre adapter reuses unchanged GeoJSON features by key, snaps instead of gliding above `comfortableVehicleCount`, updates the source at most 20 times per second in that range, and raises `clusterMaxZoom` by two levels with `setClusterOptions` when crowded. The comfort count is now consumed rather than documented.
+- Staleness is derived from the frame-fed `lastDataAt` in the connection store, with a 10-second socket-silence grace and the 5-minute data-age limit. A live socket whose frames stop is therefore marked stale even though `socket` is still `live`.
+- `SlowNotice` grows Cancel and Retry actions once the 10-second state is reached; Cancel calls `cancelQueries` for the snapshot. The map snapshot error overlay is always rendered, including with the desktop panel open, and unavailable KPI cells show `—` instead of invented zeroes.
+- `FleetMap` clears the failed loaded adapter before a retry so the stale adapter cannot remount behind the cleared error. Unknown alert severities parse as strings and degrade to no severity rather than dropping the frame.
+
+Trade-off: the 20 fps cap and earlier clustering trade animation smoothness for main-thread headroom above the comfort budget; the timestamp trigger is now a 44px button on touch so keyboard and touch users can reach the local/UTC detail.

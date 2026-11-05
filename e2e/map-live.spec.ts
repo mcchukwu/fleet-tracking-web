@@ -154,6 +154,17 @@ test.describe("live feed", () => {
     ).toBeAttached();
   });
 
+  test("a silent stream is marked stale without dropping the socket", async ({ page }) => {
+    await gotoLiveMap(page);
+    await waitForLive(page);
+    await waitForPosition(page, "demo-imei-0019");
+
+    await expect
+      .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.stale), { timeout: 20_000 })
+      .toBe(true);
+    expect(await page.evaluate(() => window.__FLEET_DEBUG__?.connection.socket)).toBe("live");
+  });
+
   test("batching keeps frame work out of the per-message path", async ({ page, liveSocket }) => {
     test.setTimeout(120_000);
     await gotoLiveMap(page, "perf=5000");
@@ -163,6 +174,14 @@ test.describe("live feed", () => {
         timeout: 30_000,
       })
       .toBe(5_000);
+
+    await page.evaluate(() => {
+      const probe = window as Window & { __mapLongTasks?: number[] };
+      probe.__mapLongTasks = [];
+      new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) probe.__mapLongTasks?.push(entry.duration);
+      }).observe({ entryTypes: ["longtask"] });
+    });
 
     const socket = liveSocket.latest();
     if (!socket) throw new Error("The live socket is not connected");
@@ -188,5 +207,13 @@ test.describe("live feed", () => {
     const stats = await page.evaluate(() => window.__FLEET_DEBUG__?.live);
     expect(stats?.batchCount ?? 0).toBeGreaterThan(0);
     expect(stats?.frameCount ?? 0).toBeGreaterThan((stats?.batchCount ?? 1) * 5);
+
+    const longest = await page.evaluate(() =>
+      Math.max(
+        0,
+        ...((window as Window & { __mapLongTasks?: number[] }).__mapLongTasks ?? []),
+      ),
+    );
+    expect(longest, `longest main-thread task ${longest}ms`).toBeLessThan(500);
   });
 });

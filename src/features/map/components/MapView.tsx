@@ -133,7 +133,10 @@ export function MapView({  vehicles,
       ) : null}
 
       {error && !hasData && showErrorOverlay ? (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-surface/90 p-4">
+        <div
+          data-testid="map-error-overlay"
+          className="absolute inset-0 z-10 flex items-center justify-center bg-surface/90 p-4"
+        >
           <ErrorState error={error} onRetry={onRetry} />
         </div>
       ) : null}

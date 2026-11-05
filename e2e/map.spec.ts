@@ -162,11 +162,14 @@ test.describe("map", () => {
     });
     await expect(page.getByText("Something broke.")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Retry" }).first()).toBeVisible();
+    await expect(page.getByTestId("map-error-overlay")).toBeVisible();
+    await expect(page.getByLabel("Fleet summary").getByText("0 of 0")).toHaveCount(0);
     await expectNoAxeViolations(page);
     await captureForReview(page, "02-map-error");
 
     await page.evaluate(() => history.replaceState({}, "", "/map?map=fake"));
-    await page.getByRole("button", { name: "Retry" }).first().dispatchEvent("click");
+    // Clearing the fault lets either the visible Retry or the query's own
+    // backoff recover the snapshot.
     await expect(page.getByText("Showing 25 of 25")).toBeVisible({ timeout: 20_000 });
   });
 
@@ -202,7 +205,9 @@ test.describe("map", () => {
     await expect(page.getByText("Unexpected response from the server").first()).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByRole("button", { name: "Copy diagnostics" })).toBeVisible();
+    await expect(
+      page.getByTestId("map-error-overlay").getByRole("button", { name: "Copy diagnostics" }),
+    ).toBeVisible();
     await expectNoAxeViolations(page);
     await captureForReview(page, "02-map-contract");
   });
@@ -292,6 +297,8 @@ test.describe("map", () => {
     await openPanel(page);
     await expect(page.getByText("Still working…")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("Taking longer than usual")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("button", { name: "Retry" }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
     await captureForReview(page, "02-map-slow");
   });
 
@@ -333,6 +340,15 @@ test.describe("map", () => {
 
     await expectNoHorizontalScroll(page);
     await expectNoAxeViolations(page);
+  });
+
+  test("closing the desktop panel returns focus to its toggle", async ({ page }) => {
+    test.skip(isMobile(page), "desktop-only panel");
+    await gotoMap(page);
+
+    await page.getByRole("button", { name: "Hide the vehicle panel" }).first().click();
+
+    await expect(page.getByRole("button", { name: "Show the vehicle panel" })).toBeFocused();
   });
 
   test("the desktop panel floats without covering the KPI strip", async ({ page }) => {

@@ -139,6 +139,10 @@ export function MapPage() {
 
   useDocumentTitle("Map", openAlertCount);
 
+  useEffect(() => {
+    setMapDebug({ stale });
+  }, [stale]);
+
   const padding = fitPadding({ isDesktop, panelOpen: preferences.panelOpen, sheetSnap });
   const rowHeight = isDesktop ? MAP_ROW_HEIGHT : MAP_ROW_HEIGHT_TOUCH;
 
