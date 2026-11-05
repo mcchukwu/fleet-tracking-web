@@ -155,7 +155,7 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
       const positions = coalescePositions(frames);
       if (positions.length > 0) {
         const newest = useLiveStore.getState().applyFrames(positions);
-        useConnectionStore.getState().markData(newest ?? Date.now());
+        if (newest !== null) useConnectionStore.getState().markData(newest);
       }
 
       const now = Date.now();

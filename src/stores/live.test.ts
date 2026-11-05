@@ -120,6 +120,20 @@ describe("live store", () => {
     unsubscribe();
   });
 
+  it("drops positions for keys removed from the snapshot", () => {
+    useLiveStore.getState().applySnapshot(
+      [
+        snapshotVehicle(),
+        snapshotVehicle({ id: "uuid-2", external_id: "demo-imei-0002", plate: "LSD-101-AA" }),
+      ],
+      NOW,
+    );
+    useLiveStore.getState().applySnapshot([snapshotVehicle()], NOW);
+
+    expect(useLiveStore.getState().positions["demo-imei-0001"]).toBeDefined();
+    expect(useLiveStore.getState().positions["demo-imei-0002"]).toBeUndefined();
+  });
+
   it("marks an alert frame and resets everything", () => {
     useLiveStore.getState().applySnapshot([snapshotVehicle()], NOW);
     useLiveStore.getState().markAlert("demo-imei-0001", NOW);

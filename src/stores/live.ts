@@ -105,6 +105,10 @@ export const useLiveStore = create<LiveState>((set, get) => ({
       };
     }
 
+    for (const key of Object.keys(positions)) {
+      if (!knownKeys.has(key)) delete positions[key];
+    }
+
     set((state) => ({
       positions,
       knownKeys,

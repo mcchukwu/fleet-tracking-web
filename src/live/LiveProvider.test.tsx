@@ -154,6 +154,23 @@ describe("LiveProvider", () => {
     });
   });
 
+  it("does not advance the live data clock for a batch of ignored old frames", async () => {
+    const socket = await start();
+    const before = useConnectionStore.getState().lastDataAt;
+
+    socket.send({
+      type: "position",
+      tenant_id: "tenant-demo",
+      vehicle_id: "demo-imei-0001",
+      lat: 6.5,
+      lon: 3.4,
+      recorded_at: "2020-01-01T00:00:00Z",
+    });
+
+    await waitFor(() => expect(useLiveStore.getState().frameCount).toBe(1));
+    expect(useConnectionStore.getState().lastDataAt).toBe(before);
+  });
+
   it("drops malformed frames without disturbing the socket", async () => {
     const socket = await start();
     socket.emit("message", { data: "{not json" });
