@@ -20,6 +20,12 @@ export interface AlertBatchSummary {
   assertive: boolean;
 }
 
+const severities = new Set<AlertSeverity>(["low", "medium", "high", "critical"]);
+
+function toSeverity(value: string | null | undefined): AlertSeverity | null {
+  return value && severities.has(value as AlertSeverity) ? (value as AlertSeverity) : null;
+}
+
 const geofenceEvents: Record<string, string> = {
   enter: "Geofence entry",
   exit: "Geofence exit",
@@ -39,7 +45,7 @@ export function normalizeAlertFrame(message: AlertMessage): NormalizedAlertFrame
   const eventType = inner?.type ?? inner?.event_type ?? message.event_type ?? null;
   const occurredAt =
     inner?.occurred_at ?? message.occurred_at ?? inner?.event_time ?? message.event_time ?? null;
-  const severity: AlertSeverity | null = inner?.severity ?? message.severity ?? null;
+  const severity = toSeverity(inner?.severity ?? message.severity ?? null);
   const geofence = inner?.geofence_id ?? message.geofence_id ?? inner?.geofence_name ?? message.geofence_name ?? "";
 
   return {

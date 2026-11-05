@@ -4,9 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 import { KpiStrip } from "./KpiStrip";
 
 describe("KpiStrip", () => {
-  it("renders four clickable cells", async () => {
+  it("renders four clickable cells with dividers between them", async () => {
     const onOnline = vi.fn();
-    render(
+    const { container } = render(
       <KpiStrip
         cells={[
           { label: "Online", value: "20 of 25", onClick: onOnline },
@@ -19,6 +19,8 @@ describe("KpiStrip", () => {
 
     expect(screen.getByText("20 of 25")).toBeInTheDocument();
     expect(screen.getByText("4s")).toBeInTheDocument();
+    const cells = container.firstElementChild?.children;
+    expect(cells?.[1]).toHaveClass("border-l");
     await userEvent.click(screen.getByRole("button", { name: /Online/ }));
     expect(onOnline).toHaveBeenCalledOnce();
   });

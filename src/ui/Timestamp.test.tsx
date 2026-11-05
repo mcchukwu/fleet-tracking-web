@@ -13,6 +13,7 @@ describe("Timestamp", () => {
     const element = screen.getByText("2m ago");
     expect(element.tagName).toBe("TIME");
     expect(element).toHaveAttribute("datetime", "2026-11-04T09:58:00Z");
+    expect(element.closest("button")).toBeInTheDocument();
   });
 
   it("falls back to the missing marker for an invalid timestamp", () => {

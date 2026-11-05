@@ -38,7 +38,7 @@ const alertFrame = z
   .object({
     id: z.union([z.string(), z.number()]).optional(),
     type: z.string().optional(),
-    severity: z.enum(["low", "medium", "high", "critical"]).optional(),
+    severity: z.string().optional(),
     occurred_at: timestamp.optional(),
     geofence_id: z.string().optional(),
     geofence_name: z.string().optional(),
@@ -56,7 +56,7 @@ export const alertMessageSchema = z
     vehicle_id: z.string(),
     alert: alertFrame.optional(),
     id: z.union([z.string(), z.number()]).optional(),
-    severity: z.enum(["low", "medium", "high", "critical"]).optional(),
+    severity: z.string().optional(),
     occurred_at: timestamp.optional(),
     geofence_id: z.string().optional(),
     geofence_name: z.string().optional(),

@@ -39,7 +39,6 @@ export interface VehiclePanelProps {
 export function VehiclePanel({
   rows,
   total,
-  positioned,
   filters,
   depots,
   loading,
@@ -80,11 +79,6 @@ export function VehiclePanel({
       <EmptyState
         title="No vehicles yet"
         description="They appear here after a device reports its first position."
-      />
-    ) : positioned === 0 ? (
-      <EmptyState
-        title="No vehicles are reporting a position"
-        description="The list still shows the fleet."
       />
     ) : (
       <EmptyState

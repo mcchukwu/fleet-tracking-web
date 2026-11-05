@@ -89,6 +89,12 @@ describe("alert frame normalisation", () => {
     expect(many.description).toBe("Open Alerts to review them.");
   });
 
+  it("degrades an unknown severity to no severity and a polite announcement", () => {
+    const frame = normalizeAlertFrame({ ...openApiFrame, severity: "extreme" });
+    expect(frame.severity).toBeNull();
+    expect(alertBatchSummary([frame]).assertive).toBe(false);
+  });
+
   it("marks a critical alert for an assertive announcement", () => {
     const frame = normalizeAlertFrame({ ...openApiFrame, severity: "critical" });
     expect(alertBatchSummary([frame]).assertive).toBe(true);

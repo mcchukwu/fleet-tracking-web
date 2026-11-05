@@ -46,6 +46,12 @@ describe("contract schemas", () => {
     expect(liveMessageSchema.safeParse(openApiAlertFrame).success).toBe(true);
   });
 
+  it("accepts an alert with an unknown severity instead of dropping the frame", () => {
+    expect(
+      liveMessageSchema.safeParse({ ...openApiAlertFrame, severity: "extreme" }).success,
+    ).toBe(true);
+  });
+
   it.each(malformedLiveFrames)("rejects a malformed live frame", (frame) => {
     expect(liveMessageSchema.safeParse(frame).success).toBe(false);
   });

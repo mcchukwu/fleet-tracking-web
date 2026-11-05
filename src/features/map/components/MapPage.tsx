@@ -18,6 +18,7 @@ import { mapConfig } from "../../../map/config";
 import type { Bounds, MapAdapter } from "../../../map/types";
 import { useConnection } from "../../../stores/connection";
 import { useToast } from "../../../ui/Toast";
+import { cn } from "../../../ui/cn";
 import { useMapData } from "../hooks/useMapData";
 import { useMapPreferences } from "../hooks/useMapPreferences";
 import { useMapShortcuts } from "../hooks/useMapShortcuts";
@@ -319,7 +320,12 @@ export function MapPage() {
         />
       </ErrorBoundary>
 
-      <div className="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center pl-3 pr-14 lg:left-93 lg:right-3 lg:px-3">
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center pl-3 pr-14 lg:right-3 lg:px-3",
+          preferences.panelOpen ? "lg:left-93" : "lg:left-3",
+        )}
+      >
         <div className="pointer-events-auto w-full max-w-md">
           <ErrorBoundary level="panel">
             <KpiStrip cells={kpiCells} compact={!isDesktop} loading={snapshotQuery.isPending} />

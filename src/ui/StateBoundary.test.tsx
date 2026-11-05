@@ -66,13 +66,15 @@ describe("StateBoundary", () => {
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
 
-  it("keeps cached content dimmed when a refresh fails", () => {    render(
-      <StateBoundary state="error" error={requestError} onRetry={vi.fn()}>
+  it("keeps cached content dimmed when a refresh fails", () => {
+    render(
+      <StateBoundary state="error" error={requestError} onRetry={vi.fn()} staleLabel="14:02">
         <p>cached vehicles</p>
       </StateBoundary>,
     );
     expect(screen.getByText("cached vehicles")).toBeInTheDocument();
     expect(screen.getByText("Couldn't refresh")).toBeInTheDocument();
+    expect(screen.getByText("Stale · 14:02")).toBeInTheDocument();
   });
 
   it("labels stale data without hiding it", () => {

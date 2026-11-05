@@ -71,6 +71,9 @@ export function VehicleFilters({ values, depots, onChange, onReset, className }:
           onChange={(event) => onChange({ depot: event.target.value || null })}
         >
           <option value="">All depots</option>
+          {values.depot && !depots.includes(values.depot) ? (
+            <option value={values.depot}>{values.depot}</option>
+          ) : null}
           {depots.map((depot) => (
             <option key={depot} value={depot}>
               {depot}

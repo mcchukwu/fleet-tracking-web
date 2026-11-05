@@ -82,18 +82,28 @@ describe("VehiclePanel", () => {
     expect(await screen.findByLabelText("Loading vehicles", {}, { timeout: 1_500 })).toBeInTheDocument();
   });
 
-  it("distinguishes no data from no positions from no results", () => {
+  it("distinguishes no data from no results and still lists vehicles without a position", () => {
     const { rerender } = renderPanel({ total: 0, rows: [] });
     expect(screen.getByText("No vehicles yet")).toBeInTheDocument();
 
     rerender(
       <ToastProvider>
         <TooltipProvider>
-          <VehiclePanel {...props({ total: 3, positioned: 0 })} />
+          <VehiclePanel
+            {...props({
+              total: 2,
+              positioned: 0,
+              rows: [
+                { ...row, lat: null, lon: null, ageSeconds: null, status: "offline" },
+                { ...row, id: "uuid-2", key: "demo-imei-0002", plate: "TEST-101-AA", lat: null, lon: null },
+              ],
+            })}
+          />
         </TooltipProvider>
       </ToastProvider>,
     );
-    expect(screen.getByText("No vehicles are reporting a position")).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Vehicles" })).toBeInTheDocument();
+    expect(screen.queryByText("No vehicles are reporting a position")).not.toBeInTheDocument();
 
     rerender(
       <ToastProvider>
@@ -103,6 +113,18 @@ describe("VehiclePanel", () => {
       </ToastProvider>,
     );
     expect(screen.getByText("No vehicles match these filters")).toBeInTheDocument();
+  });
+
+  it("keeps an unknown depot from the URL visible and selected", () => {
+    renderPanel({
+      total: 1,
+      rows: [{ ...row, depot: "Closed Depot" }],
+      depots: ["Lekki Depot"],
+      filters: { ...filters, depot: "Closed Depot" },
+    });
+
+    expect(screen.getByLabelText("Depot")).toHaveValue("Closed Depot");
+    expect(screen.getByRole("option", { name: "Closed Depot" })).toBeInTheDocument();
   });
 
   it("clears the filters from the no-results action", async () => {

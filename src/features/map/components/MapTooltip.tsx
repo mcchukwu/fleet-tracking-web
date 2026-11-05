@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
-import { formatAgeSeconds, formatSpeed } from "../../../lib/format";
+import { formatAgeSeconds, formatSpeed, formatTimeTooltip } from "../../../lib/format";
+import { useNow } from "../../../lib/ticker";
 import type { VehicleRow } from "../lib/filter";
 
 export interface Size {
@@ -27,16 +28,24 @@ export function tooltipStyle(
 export interface MapTooltipProps {
   row: VehicleRow;
   point: { x: number; y: number };
+  now?: number;
 }
 
-function speedText(row: VehicleRow): string {
+function ageSeconds(now: number, at: number | null): number | null {
+  return at === null ? null : Math.max(0, Math.floor((now - at) / 1_000));
+}
+
+function speedText(row: VehicleRow, age: number | null): string {
   if (row.speedKph === null) return "No speed reported";
-  if (row.speedReportedAtMs === null) return formatSpeed(row.speedKph);
-  const age = Math.max(0, Math.floor((Date.now() - row.speedReportedAtMs) / 1_000));
+  if (age === null) return formatSpeed(row.speedKph);
   return `${formatSpeed(row.speedKph)} · reported ${formatAgeSeconds(age)} ago`;
 }
 
-export function MapTooltip({ row, point }: MapTooltipProps) {
+export function MapTooltip({ row, point, now: fixedNow }: MapTooltipProps) {
+  const tick = useNow();
+  const now = fixedNow ?? tick;
+  const speedAge = ageSeconds(now, row.speedReportedAtMs);
+  const positionAge = ageSeconds(now, row.recordedAtMs);
   const ref = useRef<HTMLDivElement>(null);
   const [metrics, setMetrics] = useState<{ tooltip: Size; container?: Size }>({
     tooltip: { width: 0, height: 0 },
@@ -60,11 +69,20 @@ export function MapTooltip({ row, point }: MapTooltipProps) {
       className="pointer-events-none absolute z-20 max-w-panel rounded-md border border-border bg-surface px-2 py-1 text-xs shadow-menu"
     >
       <p className="font-mono font-medium text-text">{row.plate}</p>
-      <p className="text-muted">{speedText(row)}</p>
-      <p className="text-muted">
-        {row.ageSeconds === null
+      <p
+        className="text-muted"
+        title={
+          row.speedReportedAtMs === null
+            ? undefined
+            : formatTimeTooltip(new Date(row.speedReportedAtMs).toISOString())
+        }
+      >
+        {speedText(row, speedAge)}
+      </p>
+      <p className="text-muted" title={row.recordedAt ? formatTimeTooltip(row.recordedAt) : undefined}>
+        {positionAge === null
           ? "No position reported"
-          : `Position ${formatAgeSeconds(row.ageSeconds)} ago`}
+          : `Position ${formatAgeSeconds(positionAge)} ago`}
       </p>
     </div>
   );

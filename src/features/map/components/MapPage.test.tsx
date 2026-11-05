@@ -157,6 +157,18 @@ describe("MapPage", () => {
     await waitFor(() => expect(document.activeElement).toBe(toggle));
   });
 
+  it("centres the KPI strip in the map area when the panel closes", async () => {
+    const { container } = renderPage();
+    const strip = container.querySelector(".pointer-events-none.absolute");
+    expect(strip).toHaveClass("lg:left-93");
+
+    await userEvent.click(
+      screen.getAllByRole("button", { name: "Hide the vehicle panel" })[0]!,
+    );
+
+    await waitFor(() => expect(strip).toHaveClass("lg:left-3"));
+  });
+
   it("filters the map target with the panel filters", async () => {
     mocks.search = { status: "offline" };
     renderPage();

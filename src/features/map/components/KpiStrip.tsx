@@ -35,8 +35,10 @@ export function KpiStrip({ cells, compact = false, loading = false, className }:
             <div
               key={cell.label}
               className={cn(
-                "flex min-w-0 flex-col gap-1 border-l border-border first:border-l-0",
-                compact ? "px-3 py-2" : "px-4 py-4",
+                "flex min-w-0 flex-col gap-1",
+                compact
+                  ? "px-3 py-2"
+                  : "border-l border-border px-4 py-4 first:border-l-0",
               )}
             >
               <span className="label-caps text-muted">{cell.label}</span>
@@ -51,14 +53,20 @@ export function KpiStrip({ cells, compact = false, loading = false, className }:
             {...(cell.hint ? { hint: cell.hint } : {})}
             size={compact ? "sm" : "md"}
             className={cn(
-              compact ? "border-l-0" : undefined,
+              "border-l-0",
               cell.onClick ? "h-full w-full text-left" : undefined,
             )}
           />
         );
 
         return (
-          <div key={cell.label} className="relative min-w-0">
+          <div
+            key={cell.label}
+            className={cn(
+              "relative min-w-0",
+              compact ? undefined : "border-l border-border first:border-l-0",
+            )}
+          >
             {cell.onClick ? (
               <button
                 type="button"

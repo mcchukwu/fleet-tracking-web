@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { MapTooltip, tooltipStyle } from "./MapTooltip";
 import type { VehicleRow } from "../lib/filter";
 
+const now = Date.now();
 const row: VehicleRow = {
   id: "uuid-1",
   key: "demo-imei-0001",
@@ -12,10 +13,10 @@ const row: VehicleRow = {
   online: true,
   lat: 6.5,
   lon: 3.4,
-  recordedAt: new Date().toISOString(),
-  recordedAtMs: Date.now(),
+  recordedAt: new Date(now - 2_000).toISOString(),
+  recordedAtMs: now - 2_000,
   speedKph: 62,
-  speedReportedAtMs: Date.now() - 60_000,
+  speedReportedAtMs: now - 60_000,
   headingDeg: 90,
   status: "moving",
   freshness: "fresh",
@@ -25,16 +26,19 @@ const row: VehicleRow = {
 
 describe("MapTooltip", () => {
   it("discloses when the frozen speed was reported", () => {
-    render(<MapTooltip row={row} point={{ x: 20, y: 20 }} />);
+    render(<MapTooltip row={row} point={{ x: 20, y: 20 }} now={now} />);
     expect(screen.getByText("62 km/h · reported 1m ago")).toBeInTheDocument();
-    expect(screen.getByText("Position 2s ago")).toBeInTheDocument();
+    const position = screen.getByText("Position 2s ago");
+    expect(position).toBeInTheDocument();
+    expect(position.getAttribute("title")).toContain("UTC");
   });
 
   it("does not render a missing age as '— ago'", () => {
     render(
       <MapTooltip
-        row={{ ...row, speedKph: null, speedReportedAtMs: null, ageSeconds: null }}
+        row={{ ...row, speedKph: null, speedReportedAtMs: null, ageSeconds: null, recordedAtMs: null }}
         point={{ x: 20, y: 20 }}
+        now={now}
       />,
     );
     expect(screen.getByText("No speed reported")).toBeInTheDocument();
