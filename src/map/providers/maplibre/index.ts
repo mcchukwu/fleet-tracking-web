@@ -69,13 +69,12 @@ export function createMapLibreAdapter(): MapAdapter {
   let geofences: readonly MapGeofence[] = [];
   let route: MapRoute | null = null;
   let displayed = new Map<string, LngLat>();
-  let animation: {
-    from: ReadonlyMap<string, LngLat>;
-    startedAt: number;
-    duration: number;
-  } | null = null;
+  let glides = new Map<
+    string,
+    { from: LngLat; to: LngLat; startedAt: number; duration: number }
+  >();
+  let lastTargets = new Map<string, { position: LngLat; at: number }>();
   let frame: number | null = null;
-  let lastVehiclesAt: number | null = null;
   let hoveredKey: string | null = null;
   let clusterMaxZoom = 0;
   let lastDataAt = 0;
@@ -166,23 +165,19 @@ export function createMapLibreAdapter(): MapAdapter {
   }
 
   function animateVehicles(): void {
-    const current = animation;
-    if (!map || !current) return;
+    if (!map) return;
     const now = performance.now();
-    const progress = glideProgress(current.startedAt, now, current.duration);
-    displayed = new Map(
-      vehicleTargets.map((vehicle) => [
-        vehicle.key,
-        lerpPosition(current.from.get(vehicle.key) ?? vehicle.position, vehicle.position, progress),
-      ]),
-    );
+    for (const [key, glide] of glides) {
+      const progress = glideProgress(glide.startedAt, now, glide.duration);
+      displayed.set(key, lerpPosition(glide.from, glide.to, progress));
+      if (progress >= 1) glides.delete(key);
+    }
     setVehicleDataSoon();
 
-    if (progress < 1 && typeof requestAnimationFrame === "function") {
+    if (glides.size > 0 && typeof requestAnimationFrame === "function") {
       frame = requestAnimationFrame(animateVehicles);
     } else {
       frame = null;
-      animation = null;
     }
   }
 
@@ -454,7 +449,8 @@ export function createMapLibreAdapter(): MapAdapter {
       }
       const instance = map;
       map = null;
-      animation = null;
+      glides.clear();
+      lastTargets.clear();
       displayed = new Map();
       featureCache.features.clear();
       clusterMaxZoom = 0;
@@ -498,26 +494,42 @@ export function createMapLibreAdapter(): MapAdapter {
       applyClusterOptions();
 
       const now = performance.now();
+      const reducedMotion = prefersReducedMotion();
       const crowded = vehicles.length > capabilities.comfortableVehicleCount;
-      const duration = crowded
-        ? 0
-        : glideDuration(lastVehiclesAt, now, prefersReducedMotion());
-      lastVehiclesAt = now;
-      cancelAnimation();
+      const present = new Set(vehicles.map((vehicle) => vehicle.key));
+      for (const key of displayed.keys()) if (!present.has(key)) displayed.delete(key);
+      for (const key of glides.keys()) if (!present.has(key)) glides.delete(key);
+      for (const key of lastTargets.keys()) if (!present.has(key)) lastTargets.delete(key);
 
-      if (duration <= 0 || typeof requestAnimationFrame !== "function") {
-        animation = null;
-        displayed = new Map(vehicles.map((vehicle) => [vehicle.key, vehicle.position]));
-        setVehicleDataSoon();
-        return;
+      for (const vehicle of vehicles) {
+        const last = lastTargets.get(vehicle.key);
+        const changed =
+          !last ||
+          last.position[0] !== vehicle.position[0] ||
+          last.position[1] !== vehicle.position[1];
+        if (!changed) continue;
+        lastTargets.set(vehicle.key, { position: vehicle.position, at: now });
+
+        const from = displayed.get(vehicle.key);
+        const duration = last ? glideDuration(last.at, now, reducedMotion) : 0;
+        if (!from || crowded || duration <= 0 || typeof requestAnimationFrame !== "function") {
+          displayed.set(vehicle.key, vehicle.position);
+          glides.delete(vehicle.key);
+          continue;
+        }
+
+        glides.set(vehicle.key, {
+          from,
+          to: vehicle.position,
+          startedAt: now,
+          duration,
+        });
       }
 
-      animation = {
-        from: new Map(displayed),
-        startedAt: now,
-        duration,
-      };
-      frame = requestAnimationFrame(animateVehicles);
+      setVehicleDataSoon();
+      if (glides.size > 0 && frame === null && typeof requestAnimationFrame === "function") {
+        frame = requestAnimationFrame(animateVehicles);
+      }
     },
 
     setGeofences(nextGeofences: readonly MapGeofence[]): void {

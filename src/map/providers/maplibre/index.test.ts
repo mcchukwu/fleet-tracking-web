@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { contractTokens, runAdapterContract } from "../../testing/adapter-contract";
 import type { MapVehicle } from "../../types";
 
@@ -220,6 +220,10 @@ beforeEach(() => {
   });
 });
 
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 runAdapterContract("MapLibre", { create: () => createMapLibreAdapter() });
 
 describe("MapLibre adapter", () => {
@@ -260,6 +264,64 @@ describe("MapLibre adapter", () => {
     expect(setData).toHaveBeenCalledTimes(2);
     adapter.destroy();
   });
+
+  it("keeps an unchanged vehicle's glide running when another target changes", async () => {
+    const adapter = createMapLibreAdapter();
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+    const source = map().sources.get(SOURCE_IDS.vehicles);
+    if (!source) throw new Error("vehicle source is missing");
+
+    vi.mocked(window.matchMedia).mockImplementation(
+      (query: string) => ({ matches: false, media: query }) as unknown as MediaQueryList,
+    );
+    let now = 0;
+    vi.spyOn(performance, "now").mockImplementation(() => now);
+    let active: FrameRequestCallback | null = null;
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+      active = callback;
+      return 1;
+    });
+    vi.stubGlobal("cancelAnimationFrame", () => {
+      active = null;
+    });
+    const runFrame = (at: number) => {
+      now = at;
+      const callback = active;
+      active = null;
+      callback?.(at);
+    };
+    const positionOf = (key: string): [number, number] | undefined => {
+      const data = source.data as {
+        features: Array<{ properties: { key: string }; geometry: { coordinates: [number, number] } }>;
+      };
+      return data.features.find((feature) => feature.properties.key === key)?.geometry.coordinates;
+    };
+
+    const a0 = { ...vehicle, key: "a", position: [3, 6] as [number, number] };
+    const b0 = { ...vehicle, key: "b", position: [5, 8] as [number, number] };
+    adapter.setVehicles([a0, b0]);
+
+    now = 1_000;
+    adapter.setVehicles([
+      { ...a0, position: [3.1, 6] },
+      { ...b0, position: [5.1, 8] },
+    ]);
+    runFrame(1_000);
+    now = 1_500;
+    runFrame(1_500);
+
+    now = 1_600;
+    adapter.setVehicles([
+      { ...a0, position: [3.2, 6] },
+      { ...b0, position: [5.1, 8] },
+    ]);
+    now = 2_000;
+    runFrame(2_000);
+
+    expect(positionOf("b")).toEqual([5.1, 8]);
+    adapter.destroy();
+  });
+
 
   it("swaps the style on a theme change without duplicating layers", async () => {
     const adapter = createMapLibreAdapter();
