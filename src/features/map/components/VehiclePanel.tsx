@@ -32,6 +32,7 @@ export interface VehiclePanelProps {
   onFilterChange: (patch: Partial<MapFilterValues>) => void;
   onReset: () => void;
   onRetry: () => void;
+  onCancelLoading?: () => void;
   onClose?: () => void;
 }
 
@@ -56,6 +57,7 @@ export function VehiclePanel({
   onFilterChange,
   onReset,
   onRetry,
+  onCancelLoading,
   onClose,
 }: VehiclePanelProps) {
   const forbidden = error?.kind === "forbidden";
@@ -134,7 +136,12 @@ export function VehiclePanel({
         onReset={onReset}
       />
 
-      {loading || fetching ? <SlowNotice /> : null}
+      {loading || fetching ? (
+        <SlowNotice
+          onRetry={onRetry}
+          {...(onCancelLoading ? { onCancel: onCancelLoading } : {})}
+        />
+      ) : null}
 
       <StateBoundary
         state={state}

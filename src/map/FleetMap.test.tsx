@@ -29,6 +29,19 @@ class FailingAdapter extends FakeAdapter {
   }
 }
 
+class FlakyAdapter extends FakeAdapter {
+  attempts = 0;
+
+  override mount(
+    element: HTMLElement,
+    options: Parameters<FakeAdapter["mount"]>[1],
+  ): Promise<void> {
+    this.attempts += 1;
+    if (this.attempts === 1) return Promise.reject(new MapError("renderer failed"));
+    return super.mount(element, options);
+  }
+}
+
 describe("FleetMap", () => {
   it("mounts the adapter and pushes the vehicle state", async () => {
     const adapter = new FakeAdapter();
@@ -64,6 +77,21 @@ describe("FleetMap", () => {
     expect(await screen.findByText("The map couldn't load")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(adapter.attempts).toBe(2));
+  });
+
+  it("recovers when a retry mounts successfully", async () => {
+    const adapter = new FlakyAdapter();
+    render(
+      <ThemeProvider>
+        <FleetMap adapter={adapter} />
+      </ThemeProvider>,
+    );
+
+    expect(await screen.findByText("The map couldn't load")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+    await waitFor(() => expect(adapter.mounted).toBe(true));
+    expect(screen.queryByText("The map couldn't load")).not.toBeInTheDocument();
   });
 
   it("exposes the design tokens to the adapter", async () => {

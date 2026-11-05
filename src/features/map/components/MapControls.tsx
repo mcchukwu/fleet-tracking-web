@@ -1,3 +1,4 @@
+import type { Ref } from "react";
 import { Layers, Maximize2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { mapConfig } from "../../../map/config";
 import { IconButton } from "../../../ui/IconButton";
@@ -8,6 +9,7 @@ export interface MapControlsProps {
   panelOpen: boolean;
   geofencesVisible: boolean;
   fitDisabled?: boolean;
+  panelToggleRef?: Ref<HTMLButtonElement>;
   onFit: () => void;
   onTogglePanel: () => void;
   onToggleGeofences: () => void;
@@ -18,6 +20,7 @@ export function MapControls({
   panelOpen,
   geofencesVisible,
   fitDisabled = false,
+  panelToggleRef,
   onFit,
   onTogglePanel,
   onToggleGeofences,
@@ -47,6 +50,7 @@ export function MapControls({
         </Tooltip>
         <Tooltip label={panelOpen ? "Hide the vehicle panel" : "Show the vehicle panel"}>
           <IconButton
+            ref={panelToggleRef}
             label={panelOpen ? "Hide the vehicle panel" : "Show the vehicle panel"}
             variant="ghost"
             aria-expanded={panelOpen}

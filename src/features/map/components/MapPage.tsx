@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useOpenAlerts, OPEN_ALERT_LIMIT } from "../../../api/hooks/alerts";
 import { useGeofences } from "../../../api/hooks/geofences";
 import { useLiveSnapshot } from "../../../api/hooks/vehicles";
+import { queryKeys } from "../../../api/keys";
 import { useAuthStore } from "../../../auth/store";
 import { errorCopy } from "../../../errors/catalog";
 import { ErrorBoundary } from "../../../errors/ErrorBoundary";
@@ -45,6 +47,7 @@ import { VehiclePanel, type VehiclePanelProps } from "./VehiclePanel";
 export function MapPage() {
   const search = useSearch({ from: "/_app/map" });
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const authenticated = useAuthStore((state) => state.status === "authenticated");
   const snapshotQuery = useLiveSnapshot(authenticated);
@@ -64,6 +67,7 @@ export function MapPage() {
   const [bounds, setBounds] = useState<Bounds | null>(null);
   const [sheetSnap, setSheetSnap] = useState<SheetSnap>("peek");
   const adapterRef = useRef<MapAdapter | null>(null);
+  const panelToggleRef = useRef<HTMLButtonElement>(null);
   const fittedOnce = useRef(false);
 
   const filters: MapFilterValues = useMemo(
@@ -110,6 +114,7 @@ export function MapPage() {
     !offline && geofencesFailed && geofencesCause ? normalize(geofencesCause) : null;
   const alertsError = !offline && alertsQuery.error ? normalize(alertsQuery.error) : null;
   const hasData = data.total > 0;
+  const snapshotUnavailable = snapshotError !== null && !hasData;
 
   const freshness = mapFreshness({
     offline,
@@ -195,6 +200,11 @@ export function MapPage() {
     adapterRef.current = adapter;
   }, []);
 
+  const closePanel = useCallback(() => {
+    preferences.setPanelOpen(false);
+    setTimeout(() => panelToggleRef.current?.focus(), 0);
+  }, [preferences]);
+
   useEffect(() => {
     if (fittedOnce.current || !adapterRef.current || data.positioned === 0) return;
     fittedOnce.current = true;
@@ -223,13 +233,18 @@ export function MapPage() {
   const kpiCells: KpiCell[] = [
     {
       label: "Online",
-      value: `${formatNumber(data.online)} of ${formatNumber(data.total)}`,
-      hint: "vehicles reporting",
+      value: snapshotUnavailable
+        ? "—"
+        : `${formatNumber(data.online)} of ${formatNumber(data.total)}`,
+      ...(snapshotUnavailable ? {} : { hint: "vehicles reporting" }),
       onClick: () => changeFilters({ statuses: ["moving", "idle", "alert"] }),
+      ...(snapshotUnavailable
+        ? { error: true, onRetry: () => void snapshotQuery.refetch() }
+        : {}),
     },
     {
       label: "Active trips",
-      value: formatNumber(data.activeTrips),
+      value: snapshotUnavailable ? "—" : formatNumber(data.activeTrips),
       onClick: () => void navigate({ to: "/trips", search: { status: "active" } }),
     },
     {
@@ -240,8 +255,11 @@ export function MapPage() {
     },
     {
       label: "Last data",
-      value: freshness.ageSeconds === null ? "—" : formatAgeSeconds(freshness.ageSeconds),
-      ...(lastDataAt ? { hint: formatClockTime(lastDataAt) } : {}),
+      value:
+        snapshotUnavailable || freshness.ageSeconds === null
+          ? "—"
+          : formatAgeSeconds(freshness.ageSeconds),
+      ...(lastDataAt && !snapshotUnavailable ? { hint: formatClockTime(lastDataAt) } : {}),
       onClick: () => void snapshotQuery.refetch(),
     },
   ];
@@ -268,6 +286,9 @@ export function MapPage() {
     onFilterChange: changeFilters,
     onReset: resetFilters,
     onRetry: () => void snapshotQuery.refetch(),
+    onCancelLoading: () => {
+      void queryClient.cancelQueries({ queryKey: queryKeys.liveSnapshot });
+    },
   };
 
   return (
@@ -286,7 +307,7 @@ export function MapPage() {
           loading={snapshotQuery.isPending}
           error={snapshotQuery.isPending ? null : snapshotError}
           hasData={hasData}
-          showErrorOverlay={!isDesktop || !preferences.panelOpen}
+          showErrorOverlay
           onRetry={() => void snapshotQuery.refetch()}
           onSelect={selectKey}
           onHover={(hover) => {
@@ -313,7 +334,7 @@ export function MapPage() {
               {...panelProps}
               className="h-full rounded-lg border border-border shadow-float"
               showHeader
-              onClose={() => preferences.setPanelOpen(false)}
+              onClose={closePanel}
             />
           </ErrorBoundary>
         </aside>
@@ -350,6 +371,7 @@ export function MapPage() {
         <ErrorBoundary level="panel" resetKeys={[preferences.panelOpen, preferences.geofencesVisible]}>
           <MapControls
             className="absolute bottom-3 right-3 z-10"
+            panelToggleRef={panelToggleRef}
             panelOpen={preferences.panelOpen}
             geofencesVisible={preferences.geofencesVisible}
             fitDisabled={data.positioned === 0}

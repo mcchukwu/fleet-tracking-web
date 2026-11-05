@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -30,7 +31,12 @@ const mocks = vi.hoisted(() => ({
     error: null as unknown,
     refetch: vi.fn(),
   },
-  mapProps: [] as Array<{ vehicles: readonly unknown[]; dimmed: boolean; error: unknown }>,
+  mapProps: [] as Array<{
+    vehicles: readonly unknown[];
+    dimmed: boolean;
+    error: unknown;
+    showErrorOverlay?: boolean;
+  }>,
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -56,7 +62,12 @@ vi.mock("../../../api/hooks/geofences", () => ({
 }));
 
 vi.mock("./MapView", () => ({
-  MapView: (props: { vehicles: readonly unknown[]; dimmed: boolean; error: unknown }) => {
+  MapView: (props: {
+    vehicles: readonly unknown[];
+    dimmed: boolean;
+    error: unknown;
+    showErrorOverlay?: boolean;
+  }) => {
     mocks.mapProps.push(props);
     return <div data-testid="fleet-map" />;
   },
@@ -92,17 +103,22 @@ function vehicle(
   };
 }
 
+const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
 function renderPage() {
   return render(
-    <TooltipProvider>
-      <ToastProvider>
-        <MapPage />
-      </ToastProvider>
-    </TooltipProvider>,
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <ToastProvider>
+          <MapPage />
+        </ToastProvider>
+      </TooltipProvider>
+    </QueryClientProvider>,
   );
 }
 
 beforeEach(() => {
+  localStorage.clear();
   mocks.search = {};
   mocks.desktop = true;
   mocks.mapProps = [];
@@ -128,6 +144,17 @@ describe("MapPage", () => {
 
     renderPage();
     await waitFor(() => expect(document.title).toBe("(3) Map · Fleet Console"));
+  });
+
+  it("returns focus to the panel toggle after closing the panel", async () => {
+    renderPage();
+
+    await userEvent.click(
+      screen.getAllByRole("button", { name: "Hide the vehicle panel" })[0]!,
+    );
+
+    const toggle = await screen.findByRole("button", { name: "Show the vehicle panel" });
+    await waitFor(() => expect(document.activeElement).toBe(toggle));
   });
 
   it("filters the map target with the panel filters", async () => {
@@ -163,6 +190,17 @@ describe("MapPage", () => {
 
     expect(screen.getByRole("button", { name: /Showing 3 of 3/ })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Vehicles" })).not.toBeInTheDocument();
+  });
+
+  it("does not present zero KPIs or hide the map error when the snapshot fails", async () => {
+    mocks.snapshot.data = [];
+    mocks.snapshot.error = new Error("server down");
+    renderPage();
+
+    await waitFor(() => expect(mocks.mapProps.at(-1)?.error).not.toBeNull());
+    expect(mocks.mapProps.at(-1)?.showErrorOverlay).toBe(true);
+    expect(screen.queryByText("0 of 0")).not.toBeInTheDocument();
+    expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(3);
   });
 
   it("keeps cached vehicles and drops the region error while offline", async () => {

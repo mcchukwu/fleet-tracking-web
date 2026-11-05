@@ -158,6 +158,7 @@ export function FleetMap({
   const error = resolveError ?? mountError;
 
   function retry() {
+    if (!adapter) setLoadedAdapter(null);
     setResolveError(null);
     setMountError(null);
     setLoaded(false);
