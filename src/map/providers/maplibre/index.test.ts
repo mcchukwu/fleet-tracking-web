@@ -380,6 +380,28 @@ describe("MapLibre adapter", () => {
     adapter.destroy();
   });
 
+  it("emits cluster clicks and zooms to the cluster expansion", async () => {
+    const adapter = createMapLibreAdapter();
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+    const instance = map();
+    const clicked = vi.fn();
+    adapter.on("clusterClick", clicked);
+
+    instance.features = [
+      {
+        properties: { cluster_id: 42, point_count: 7 },
+        geometry: { type: "Point", coordinates: [3.2, 6.4] },
+      },
+    ];
+    instance.emit("click", { point: { x: 10, y: 20 }, lngLat: { lng: 3, lat: 6 } });
+
+    expect(clicked).toHaveBeenCalledWith({ clusterId: "42", count: 7 });
+    await vi.waitFor(() =>
+      expect(instance.easedTo).toEqual([{ center: [3.2, 6.4], zoom: 12.2 }]),
+    );
+    adapter.destroy();
+  });
+
   it("reuses unchanged vehicle features between updates", async () => {
     const adapter = createMapLibreAdapter();
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
