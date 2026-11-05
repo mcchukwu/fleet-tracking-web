@@ -295,6 +295,17 @@ test.describe("map", () => {
     await captureForReview(page, "02-map-slow");
   });
 
+  test("turning geofences off removes them from the map", async ({ page }) => {
+    test.skip(isMobile(page), "desktop-only map controls");
+    await gotoMap(page);
+
+    await page.getByRole("button", { name: "Hide geofences" }).click();
+    await expect
+      .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.geofenceCount))
+      .toBe(0);
+    await captureForReview(page, "02-map-geofences-off");
+  });
+
   test("the mobile sheet has three snap points and keeps the map interactive", async ({ page }) => {
     test.skip(!isMobile(page), "mobile-only sheet");
     await gotoMap(page);

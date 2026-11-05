@@ -86,6 +86,7 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
 
     if (previousUserId.current !== null && previousUserId.current !== userId) {
       useLiveStore.getState().reset();
+      seenAlerts.current.clear();
     }
     previousUserId.current = userId;
 
