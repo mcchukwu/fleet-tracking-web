@@ -33,6 +33,7 @@ import {
   sortRows,
   type MapFilterValues,
 } from "../lib/filter";
+import { mapFreshness } from "../lib/freshness";
 import { toMapGeofences } from "../lib/geofences";
 import { fitPadding, type SheetSnap } from "../lib/padding";
 import { KpiStrip, type KpiCell } from "./KpiStrip";
@@ -55,7 +56,7 @@ export function MapPage() {
   } = useGeofences(authenticated);
   const alertsQuery = useOpenAlerts(authenticated);
   const preferences = useMapPreferences();
-  const { network, socket, socketDownAt } = useConnection();
+  const { network, socket, socketDownAt, lastDataAt } = useConnection();
   const { toast } = useToast();
 
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
@@ -110,13 +111,17 @@ export function MapPage() {
   const alertsError = !offline && alertsQuery.error ? normalize(alertsQuery.error) : null;
   const hasData = data.total > 0;
 
-  const socketStale =
-    socket !== "live" && socketDownAt !== null && data.now - socketDownAt > SOCKET_STALE_GRACE_MS;
-  const stale =
-    offline ||
-    socketStale ||
-    (data.lastDataAgeSeconds !== null && data.lastDataAgeSeconds * 1_000 > STALE_AFTER_MS);
-  const staleLabel = formatClockTime(data.lastDataAtMs);
+  const freshness = mapFreshness({
+    offline,
+    socket,
+    socketDownAt,
+    lastDataAt,
+    now: data.now,
+    staleAfterMs: STALE_AFTER_MS,
+    socketGraceMs: SOCKET_STALE_GRACE_MS,
+  });
+  const stale = freshness.stale;
+  const staleLabel = formatClockTime(lastDataAt ?? data.lastDataAtMs);
   const openAlertCount = alertsQuery.data?.length;
 
   const mapVehicles = useMemo(() => {
@@ -235,8 +240,8 @@ export function MapPage() {
     },
     {
       label: "Last data",
-      value: data.lastDataAgeSeconds === null ? "—" : formatAgeSeconds(data.lastDataAgeSeconds),
-      ...(data.lastDataAtMs ? { hint: formatClockTime(data.lastDataAtMs) } : {}),
+      value: freshness.ageSeconds === null ? "—" : formatAgeSeconds(freshness.ageSeconds),
+      ...(lastDataAt ? { hint: formatClockTime(lastDataAt) } : {}),
       onClick: () => void snapshotQuery.refetch(),
     },
   ];

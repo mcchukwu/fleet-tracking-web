@@ -78,7 +78,19 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
-    if (snapshot) useLiveStore.getState().applySnapshot(snapshot);
+    if (!snapshot) return;
+    useLiveStore.getState().applySnapshot(snapshot);
+
+    // Seed the stream clock from the snapshot until the first frame arrives.
+    if (useConnectionStore.getState().lastDataAt === null) {
+      const newest = snapshot.reduce<number | null>((latest, vehicle) => {
+        if (!vehicle.recorded_at) return latest;
+        const at = Date.parse(vehicle.recorded_at);
+        if (Number.isNaN(at)) return latest;
+        return latest === null || at > latest ? at : latest;
+      }, null);
+      if (newest !== null) useConnectionStore.getState().markData(newest);
+    }
   }, [snapshot]);
 
   useEffect(() => {
@@ -140,8 +152,8 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
 
       const positions = coalescePositions(frames);
       if (positions.length > 0) {
-        const newest = useLiveStore.getState().applyFrames(positions);
-        if (newest !== null) useConnectionStore.getState().markData(newest);
+        useLiveStore.getState().applyFrames(positions);
+        useConnectionStore.getState().markData(Date.now());
       }
 
       const now = Date.now();

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useAuthStore } from "../auth/store";
 import { api } from "../api/instance";
 import { vehiclesFixture } from "../mocks/fixtures/vehicles";
+import { resetConnection, useConnectionStore } from "../stores/connection";
 import { useLiveStore } from "../stores/live";
 import { ToastProvider } from "../ui/Toast";
 import { LiveProvider } from "./LiveProvider";
@@ -94,6 +95,7 @@ async function start(): Promise<FakeWebSocket> {
 
 beforeEach(() => {
   useLiveStore.getState().reset();
+  resetConnection();
   useAuthStore.getState().setSession(user, "csrf");
   FakeWebSocket.instances = [];
   vi.stubGlobal("WebSocket", FakeWebSocket);
@@ -121,6 +123,17 @@ describe("LiveProvider", () => {
     const after = useLiveStore.getState();
     expect(after.batchCount - before.batchCount).toBe(1);
     expect(after.frameCount - before.frameCount).toBe(3);
+  });
+
+  it("advances the live data clock when a position frame arrives", async () => {
+    const socket = await start();
+    const before = useConnectionStore.getState().lastDataAt;
+
+    socket.send(position("demo-imei-0001", 0));
+
+    await waitFor(() => {
+      expect(useConnectionStore.getState().lastDataAt).toBeGreaterThan(before ?? 0);
+    });
   });
 
   it("drops malformed frames without disturbing the socket", async () => {
