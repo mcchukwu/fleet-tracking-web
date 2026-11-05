@@ -200,7 +200,10 @@ describe("LiveProvider", () => {
     socket.send(alert("demo-imei-0001", 0, "critical"));
 
     await waitFor(() => {
-      expect(document.querySelector('[aria-live="assertive"]')?.textContent).toContain("Speeding");
+      expect(document.querySelector('[aria-live="assertive"]')?.textContent).toContain(
+        "Speeding",
+      );
+      expect(screen.getByText("Speeding").closest("li")?.querySelector(".text-danger")).not.toBeNull();
     });
   });
 

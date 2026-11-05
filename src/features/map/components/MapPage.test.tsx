@@ -39,6 +39,7 @@ const mocks = vi.hoisted(() => ({
     dimmed: boolean;
     error: unknown;
     showErrorOverlay?: boolean;
+    onSelect: (key: string) => void;
   }>,
 }));
 
@@ -79,6 +80,7 @@ vi.mock("./MapView", () => ({
     dimmed: boolean;
     error: unknown;
     showErrorOverlay?: boolean;
+    onSelect: (key: string) => void;
   }) => {
     mocks.mapProps.push(props);
     return <div data-testid="fleet-map" />;
@@ -250,6 +252,15 @@ describe("MapPage", () => {
     await waitFor(() => expect(mocks.toast).toHaveBeenCalledTimes(1));
     await new Promise((resolve) => setTimeout(resolve, 1_200));
     expect(mocks.toast).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the map selection callback stable across list ticks", async () => {
+    renderPage();
+
+    await waitFor(() => expect(mocks.mapProps.length).toBeGreaterThan(0));
+    const first = mocks.mapProps.at(-1)?.onSelect;
+    await new Promise((resolve) => setTimeout(resolve, 1_200));
+    expect(mocks.mapProps.at(-1)?.onSelect).toBe(first);
   });
 
   it("keeps the geofence target stable across list ticks", async () => {

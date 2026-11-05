@@ -10,6 +10,7 @@ export interface KpiCell {
   hint?: string;
   onClick?: () => void;
   error?: boolean;
+  retrying?: boolean;
   onRetry?: () => void;
 }
 
@@ -91,10 +92,11 @@ export function KpiStrip({ cells, compact = false, loading = false, className }:
             {cell.error && cell.onRetry ? (
               <button
                 type="button"
+                aria-label={`Retry ${cell.label}`}
                 onClick={cell.onRetry}
                 className="absolute inset-x-0 bottom-0 flex h-touch items-center justify-center gap-1 text-xs font-medium text-accent-fg md:h-6"
               >
-                {loading ? <Spinner /> : null}
+                {cell.retrying ? <Spinner /> : null}
                 Retry
               </button>
             ) : null}

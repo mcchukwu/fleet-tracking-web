@@ -133,7 +133,7 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
       toastRef.current({
         title: summary.title,
         description: summary.description,
-        tone: "info",
+        tone: summary.assertive ? "error" : "info",
         assertive: summary.assertive,
         key,
         action: {

@@ -89,6 +89,10 @@ export function MapPage() {
     selectedId: search.v ?? null,
     hoveredKey,
   });
+  const rowsRef = useRef(data.rows);
+  useEffect(() => {
+    rowsRef.current = data.rows;
+  }, [data.rows]);
 
   const rows = useMemo(
     () => sortRows(filterRows(data.rows, filters, bounds), filters.sort),
@@ -205,10 +209,10 @@ export function MapPage() {
 
   const selectKey = useCallback(
     (key: string) => {
-      const row = data.rows.find((item) => item.key === key);
+      const row = rowsRef.current.find((item) => item.key === key);
       if (row) updateSearch({ v: row.id }, false);
     },
-    [data.rows, updateSearch],
+    [updateSearch],
   );
 
   const fitFleet = useCallback(() => {
@@ -273,7 +277,7 @@ export function MapPage() {
       ...(snapshotUnavailable ? {} : { hint: "vehicles reporting" }),
       onClick: () => changeFilters({ statuses: ["moving", "idle", "alert"] }),
       ...(snapshotUnavailable
-        ? { error: true, onRetry: retrySnapshot }
+        ? { error: true, retrying: snapshotQuery.isFetching, onRetry: retrySnapshot }
         : {}),
     },
     {
@@ -285,7 +289,13 @@ export function MapPage() {
       label: "Open alerts",
       value: alertsError ? "—" : openAlertCountLabel(openAlertCount, OPEN_ALERT_LIMIT),
       onClick: () => void navigate({ to: "/alerts", search: { status: "open" } }),
-      ...(alertsError ? { error: true, onRetry: () => void alertsQuery.refetch() } : {}),
+      ...(alertsError
+        ? {
+            error: true,
+            retrying: alertsQuery.isFetching,
+            onRetry: () => void alertsQuery.refetch(),
+          }
+        : {}),
     },
     {
       label: "Last data",

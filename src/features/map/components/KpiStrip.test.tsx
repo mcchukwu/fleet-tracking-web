@@ -25,19 +25,21 @@ describe("KpiStrip", () => {
     expect(onOnline).toHaveBeenCalledOnce();
   });
 
-  it("shows a retry action for a failed cell", async () => {
+  it("names the retry action for its cell and only spins the failing cell", async () => {
     const onRetry = vi.fn();
-    render(
+    const { container } = render(
       <KpiStrip
         cells={[
-          { label: "Online", value: "20 of 25" },
-          { label: "Open alerts", value: "—", error: true, onRetry },
+          { label: "Online", value: "20 of 25", error: true, onRetry: vi.fn() },
+          { label: "Open alerts", value: "—", error: true, retrying: true, onRetry },
         ]}
       />,
     );
 
-    await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await userEvent.click(screen.getByRole("button", { name: "Retry Open alerts" }));
     expect(onRetry).toHaveBeenCalledOnce();
+    expect(screen.getByRole("button", { name: "Retry Online" })).toBeInTheDocument();
+    expect(container.querySelectorAll(".animate-spin")).toHaveLength(1);
   });
 
   it("shows loading placeholders only after the 200ms delay", async () => {
