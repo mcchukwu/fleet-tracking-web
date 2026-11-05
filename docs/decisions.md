@@ -313,9 +313,9 @@ Trade-off: an offline visitor with no cached snapshot sees an empty panel rather
 
 ## 2026-11-05: Slow map queries report progress after 3s and 10s
 
-`SlowNotice` mounts while the snapshot is fetching, announces "Still working…" after three seconds and "Taking longer than usual" after ten, and unmounts when the request settles. It does not cancel the request; the panel's Retry remains the manual recovery.
+`SlowNotice` mounts while the snapshot is fetching, announces "Still working…" after three seconds and "Taking longer than usual" after ten, and unmounts when the request settles. Cancel aborts the snapshot query and clears its pending surface; the panel then offers Retry.
 
-Trade-off: a slow query shows both the skeleton and the notice; the copy is shared with the login slow states through `src/errors/slow.ts`.
+Trade-off: a slow query shows both the skeleton and the notice; the copy is shared with the login slow states through `src/errors/slow.ts`. A cancelled first load is an explicit empty state rather than a silent blank.
 
 ## 2026-11-05: The MapLibre comfort count is measured, not assumed
 
@@ -333,5 +333,7 @@ Trade-off: the declared budget is conservative because the measurement only cove
 - Staleness is derived from the frame-fed `lastDataAt` in the connection store, with a 10-second socket-silence grace and the 5-minute data-age limit. A live socket whose frames stop is therefore marked stale even though `socket` is still `live`.
 - `SlowNotice` grows Cancel and Retry actions once the 10-second state is reached; Cancel calls `cancelQueries` for the snapshot. The map snapshot error overlay is always rendered, including with the desktop panel open, and unavailable KPI cells show `—` instead of invented zeroes.
 - `FleetMap` clears the failed loaded adapter before a retry so the stale adapter cannot remount behind the cleared error. Unknown alert severities parse as strings and degrade to no severity rather than dropping the frame.
+- The 5,000-vehicle Playwright case is recorded as a stress test, not a pan measurement: the deterministic fake adapter has no pan gesture, so the browser cannot exercise map panning in that suite. The 348 ms real-adapter pan above remains the only pan evidence and is the recorded limitation for this slice.
+- The map's open-alert query now parses `/alerts` through a tolerant entity schema and salvages valid rows instead of casting the response. Unknown or malformed rows are dropped and counted; the full neutral-enum fallback for alert types and severities stays with the Alerts slice.
 
 Trade-off: the 20 fps cap and earlier clustering trade animation smoothness for main-thread headroom above the comfort budget; the timestamp trigger is now a 44px button on touch so keyboard and touch users can reach the local/UTC detail.

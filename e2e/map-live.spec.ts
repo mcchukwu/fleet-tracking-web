@@ -165,7 +165,10 @@ test.describe("live feed", () => {
     expect(await page.evaluate(() => window.__FLEET_DEBUG__?.connection.socket)).toBe("live");
   });
 
-  test("batching keeps frame work out of the per-message path", async ({ page, liveSocket }) => {
+  test("5,000-vehicle stress mode keeps frame work out of the per-message path", async ({
+    page,
+    liveSocket,
+  }) => {
     test.setTimeout(120_000);
     await gotoLiveMap(page, "perf=5000");
     await waitForLive(page);

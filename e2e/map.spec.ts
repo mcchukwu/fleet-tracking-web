@@ -182,13 +182,19 @@ test.describe("map", () => {
     await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
     await expect(page.getByText("Showing 25 of 25")).toBeVisible();
     await openPanel(page);
+    if (isMobile(page)) {
+      const handle = page.getByRole("button", { name: /Showing \d+ of \d+/ });
+      await handle.focus();
+      await page.keyboard.press("End");
+      await expect(handle).toHaveAttribute("aria-expanded", "true");
+    }
 
     const region = await panel(page);
     await expect(
       region.getByText("No vehicles are reporting a position. The list still shows the fleet."),
     ).toBeVisible();
     await expect(region.getByRole("list", { name: "Vehicles" })).toBeVisible();
-    await expect(region.getByText("LSD-100-AA")).toBeVisible();
+    await expect(region.getByRole("button", { name: "Select LSD-100-AA" })).toBeVisible();
     await expect(region.getByText("No position reported").first()).toBeVisible();
     await expectNoAxeViolations(page);
     await captureForReview(page, "02-map-no-positions");
