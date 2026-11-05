@@ -102,8 +102,11 @@ describe("VehiclePanel", () => {
         </TooltipProvider>
       </ToastProvider>,
     );
-    expect(screen.getByText("No vehicles are reporting a position")).toBeInTheDocument();
-    expect(screen.queryByRole("list", { name: "Vehicles" })).not.toBeInTheDocument();
+    expect(
+      screen.getByText("No vehicles are reporting a position. The list still shows the fleet."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Vehicles" })).toBeInTheDocument();
+    expect(screen.getByText("Showing 2 of 2")).toBeInTheDocument();
 
     rerender(
       <ToastProvider>
@@ -148,8 +151,18 @@ describe("VehiclePanel", () => {
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
-  it("shows the forbidden state for a 403", () => {
+  it("shows the forbidden state for a 403 with a way back", () => {
     renderPanel({ total: 0, error: forbidden });
     expect(screen.getByText("You don't have access to this.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Go back" })).toBeInTheDocument();
+  });
+
+  it("replaces a cancelled first load with a retry action", async () => {
+    const onRetry = vi.fn();
+    renderPanel({ total: 0, rows: [], cancelled: true, onRetry });
+
+    expect(screen.getByText("Loading cancelled")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(onRetry).toHaveBeenCalledOnce();
   });
 });

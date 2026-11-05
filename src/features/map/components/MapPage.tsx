@@ -65,6 +65,7 @@ export function MapPage() {
 
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
   const [hoverPoint, setHoverPoint] = useState<{ x: number; y: number } | null>(null);
+  const [loadingCancelled, setLoadingCancelled] = useState(false);
   const [bounds, setBounds] = useState<Bounds | null>(null);
   const [sheetSnap, setSheetSnap] = useState<SheetSnap>("peek");
   const adapterRef = useRef<MapAdapter | null>(null);
@@ -117,7 +118,20 @@ export function MapPage() {
   );
   const alertsError = !offline && alertsQuery.error ? normalize(alertsQuery.error) : null;
   const hasData = data.total > 0;
+  const loadingCancelledActive =
+    loadingCancelled && !snapshotQuery.isFetching && !hasData;
+  const snapshotPending = snapshotQuery.isPending && !loadingCancelledActive;
   const snapshotUnavailable = snapshotError !== null && !hasData;
+
+  const retrySnapshot = useCallback(() => {
+    setLoadingCancelled(false);
+    void snapshotQuery.refetch();
+  }, [snapshotQuery]);
+
+  const cancelSnapshot = useCallback(() => {
+    setLoadingCancelled(true);
+    void queryClient.cancelQueries({ queryKey: queryKeys.liveSnapshot });
+  }, [queryClient]);
 
   const freshness = mapFreshness({
     offline,
@@ -259,7 +273,7 @@ export function MapPage() {
       ...(snapshotUnavailable ? {} : { hint: "vehicles reporting" }),
       onClick: () => changeFilters({ statuses: ["moving", "idle", "alert"] }),
       ...(snapshotUnavailable
-        ? { error: true, onRetry: () => void snapshotQuery.refetch() }
+        ? { error: true, onRetry: retrySnapshot }
         : {}),
     },
     {
@@ -280,7 +294,7 @@ export function MapPage() {
           ? "—"
           : formatAgeSeconds(freshness.ageSeconds),
       ...(lastDataAt && !snapshotUnavailable ? { hint: formatClockTime(lastDataAt) } : {}),
-      onClick: () => void snapshotQuery.refetch(),
+      onClick: retrySnapshot,
     },
   ];
 
@@ -290,8 +304,9 @@ export function MapPage() {
     positioned: data.positioned,
     filters,
     depots,
-    loading: snapshotQuery.isPending,
+    loading: snapshotPending,
     fetching: snapshotQuery.isFetching,
+    cancelled: loadingCancelledActive,
     error: snapshotError,
     stale,
     staleLabel,
@@ -305,10 +320,8 @@ export function MapPage() {
     },
     onFilterChange: changeFilters,
     onReset: resetFilters,
-    onRetry: () => void snapshotQuery.refetch(),
-    onCancelLoading: () => {
-      void queryClient.cancelQueries({ queryKey: queryKeys.liveSnapshot });
-    },
+    onRetry: retrySnapshot,
+    onCancelLoading: cancelSnapshot,
   };
 
   return (
@@ -324,11 +337,11 @@ export function MapPage() {
           hoveredRow={hoveredRow}
           hoverPoint={hoverPoint}
           dimmed={offline}
-          loading={snapshotQuery.isPending}
-          error={snapshotQuery.isPending ? null : snapshotError}
+          loading={snapshotPending}
+          error={snapshotPending ? null : snapshotError}
           hasData={hasData}
           showErrorOverlay
-          onRetry={() => void snapshotQuery.refetch()}
+          onRetry={retrySnapshot}
           onSelect={selectKey}
           onHover={handleHover}
           onViewport={setBounds}
@@ -344,7 +357,7 @@ export function MapPage() {
       >
         <div className="pointer-events-auto w-full max-w-md">
           <ErrorBoundary level="panel">
-            <KpiStrip cells={kpiCells} compact={!isDesktop} loading={snapshotQuery.isPending} />
+            <KpiStrip cells={kpiCells} compact={!isDesktop} loading={snapshotPending} />
           </ErrorBoundary>
         </div>
       </div>

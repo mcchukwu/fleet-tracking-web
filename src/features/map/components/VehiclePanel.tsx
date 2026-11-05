@@ -1,6 +1,7 @@
 import { PanelLeftClose } from "lucide-react";
 import type { AppError } from "../../../errors/types";
 import { SlowNotice } from "../../../errors/SlowNotice";
+import { Banner } from "../../../ui/Banner";
 import { Button } from "../../../ui/Button";
 import { IconButton } from "../../../ui/IconButton";
 import { EmptyState } from "../../../ui/StatePanel";
@@ -19,6 +20,7 @@ export interface VehiclePanelProps {
   depots: readonly string[];
   loading: boolean;
   fetching?: boolean;
+  cancelled?: boolean;
   error?: AppError | null;
   stale: boolean;
   staleLabel: string;
@@ -44,6 +46,7 @@ export function VehiclePanel({
   depots,
   loading,
   fetching = false,
+  cancelled = false,
   error = null,
   stale,
   staleLabel,
@@ -70,23 +73,29 @@ export function VehiclePanel({
       ? "loading"
       : error
         ? "error"
-        : noPositions || rows.length === 0
+        : rows.length === 0
           ? "empty"
           : stale
             ? "stale"
             : "ready";
 
-  const emptyNode = noPositions ? (
-    <EmptyState
-      title="No vehicles are reporting a position"
-      description="They appear on the map after a device sends its first position."
-    />
-  ) : total === 0 ? (
-    <EmptyState
-      title="No vehicles yet"
-      description="They appear here after a device reports its first position."
-    />
-  ) : (
+  const emptyNode =
+    cancelled && !hasData ? (
+      <EmptyState
+        title="Loading cancelled"
+        description="Retry to load the fleet."
+        action={
+          <Button size="sm" variant="secondary" onClick={onRetry}>
+            Retry
+          </Button>
+        }
+      />
+    ) : total === 0 ? (
+      <EmptyState
+        title="No vehicles yet"
+        description="They appear here after a device reports its first position."
+      />
+    ) : (
     <EmptyState
       title={
         filters.q
@@ -143,12 +152,24 @@ export function VehiclePanel({
         />
       ) : null}
 
+      {noPositions && rows.length > 0 ? (
+        <Banner
+          tone="info"
+          message="No vehicles are reporting a position. The list still shows the fleet."
+        />
+      ) : null}
+
       <StateBoundary
         state={state}
         error={error ?? undefined}
         onRetry={onRetry}
         loading={<VehicleListSkeleton rowHeight={rowHeight} />}
         empty={emptyNode}
+        forbiddenAction={
+          <Button size="sm" variant="secondary" onClick={() => window.history.back()}>
+            Go back
+          </Button>
+        }
         staleLabel={staleLabel}
         className="flex min-h-0 flex-1 flex-col"
       >

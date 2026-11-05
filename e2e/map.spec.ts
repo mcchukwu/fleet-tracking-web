@@ -41,10 +41,14 @@ test.describe("map", () => {
     await expect(page.getByText("vehicles reporting")).toBeVisible();
     await expect(page.getByText("Active trips")).toBeVisible();
 
+    await expect
+      .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.fitCount ?? 0))
+      .toBeGreaterThan(0);
     const debug = await page.evaluate(() => window.__FLEET_DEBUG__);
     expect(debug?.map.provider).toBe("fake");
     expect(debug?.map.targetVehicleCount).toBe(20);
     expect(debug?.map.geofenceCount).toBe(4);
+    expect(debug?.map.fitBounds).not.toBeNull();
     expect(debug?.connection.network).toBe("online");
 
     await expectNoHorizontalScroll(page);
@@ -90,6 +94,24 @@ test.describe("map", () => {
     await (await panel(page)).getByLabel("Only in view").check();
     await expect(page).toHaveURL(/view=1/);
     await expect((await panel(page)).getByText("Showing 0 of 25")).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
+    await openPanel(page);
+    const restored = await panel(page);
+    await expect(page).toHaveURL(/status=offline/);
+    await expect(page).toHaveURL(/depot=Lekki\+Depot/);
+    await expect(page).toHaveURL(/sort=lastSeen/);
+    await expect(page).toHaveURL(/view=1/);
+    await expect(restored.getByRole("searchbox", { name: "Search vehicles" })).toHaveValue("");
+    await expect(restored.getByRole("button", { name: "Offline" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await expect(restored.getByLabel("Depot")).toHaveValue("Lekki Depot");
+    await expect(restored.getByLabel("Sort")).toHaveValue("lastSeen");
+    await expect(restored.getByLabel("Only in view")).toBeChecked();
+    await expect(restored.getByText("Showing 0 of 25")).toBeVisible();
   });
 
   test("a row selects the vehicle, highlights the marker and Back clears it", async ({ page }) => {
@@ -153,6 +175,23 @@ test.describe("map", () => {
 
     await (await panel(page)).getByRole("button", { name: "Clear filters" }).click();
     await expect((await panel(page)).getByText("Showing 25 of 25")).toBeVisible();
+  });
+
+  test("a snapshot with vehicles but no positions keeps the fleet list", async ({ page }) => {
+    await page.goto("/map?map=fake&positions=none");
+    await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
+    await expect(page.getByText("Showing 25 of 25")).toBeVisible();
+    await openPanel(page);
+
+    const region = await panel(page);
+    await expect(
+      region.getByText("No vehicles are reporting a position. The list still shows the fleet."),
+    ).toBeVisible();
+    await expect(region.getByRole("list", { name: "Vehicles" })).toBeVisible();
+    await expect(region.getByText("LSD-100-AA")).toBeVisible();
+    await expect(region.getByText("No position reported").first()).toBeVisible();
+    await expectNoAxeViolations(page);
+    await captureForReview(page, "02-map-no-positions");
   });
 
   test("a snapshot failure shows an error with Retry and recovers", async ({ page }) => {
@@ -300,6 +339,20 @@ test.describe("map", () => {
     await expect(page.getByRole("button", { name: "Retry" }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
     await captureForReview(page, "02-map-slow");
+  });
+
+  test("slow Cancel removes the pending surfaces and offers Retry", async ({ page }) => {
+    await page.goto("/map?map=fake&fault=live-snapshot:slow");
+    await openPanel(page);
+    await expect(page.getByText("Taking longer than usual")).toBeVisible({ timeout: 15_000 });
+
+    await page.getByRole("button", { name: "Cancel" }).click();
+
+    await expect(page.getByText("Taking longer than usual")).toHaveCount(0);
+    await expect(page.getByText("Still working…")).toHaveCount(0);
+    await expect(page.getByLabel("Loading vehicles")).toHaveCount(0);
+    await expect(page.getByText("Loading cancelled")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
   });
 
   test("turning geofences off removes them from the map", async ({ page }) => {

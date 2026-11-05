@@ -331,12 +331,24 @@ export const handlers = [
   http.get(`${API}/live/snapshot`, ({ request }) => {
     return withFault("live-snapshot", request, () => {
       const fromRequest = new URL(request.url).searchParams.get("perf");
-      const fromPage =
-        typeof window === "undefined"
-          ? null
-          : new URLSearchParams(window.location.search).get("perf");
+      const pageParams =
+        typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
+      const fromPage = pageParams?.get("perf");
       if ((fromRequest ?? fromPage) === "5000") {
         return HttpResponse.json({ data: perfVehicles(5_000) });
+      }
+      if (pageParams?.get("positions") === "none") {
+        return HttpResponse.json({
+          data: state.vehicles.map((vehicle) => ({
+            ...vehicle,
+            online: false,
+            lat: undefined,
+            lon: undefined,
+            speed_kph: undefined,
+            heading_deg: undefined,
+            recorded_at: undefined,
+          })),
+        });
       }
       return HttpResponse.json({ data: freshenVehicles(state.vehicles) });
     });
