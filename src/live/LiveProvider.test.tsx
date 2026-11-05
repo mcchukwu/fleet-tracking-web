@@ -60,13 +60,13 @@ function position(vehicleId: string, index: number) {
   };
 }
 
-function alert(vehicleId: string, index: number, severity = "high") {
+function alert(vehicleId: string, index: number, severity = "high", type = "speeding") {
   return {
     type: "alert",
     tenant_id: "tenant-demo",
     vehicle_id: vehicleId,
     alert: {
-      type: "speeding",
+      type,
       severity,
       occurred_at: new Date(Date.now() - index * 1_000).toISOString(),
     },
@@ -136,6 +136,24 @@ describe("LiveProvider", () => {
     });
   });
 
+  it("uses the newest frame timestamp for the live data clock", async () => {
+    const socket = await start();
+    const recordedAt = new Date(Date.now() - 60_000).toISOString();
+
+    socket.send({
+      type: "position",
+      tenant_id: "tenant-demo",
+      vehicle_id: "demo-imei-0001",
+      lat: 6.5,
+      lon: 3.4,
+      recorded_at: recordedAt,
+    });
+
+    await waitFor(() => {
+      expect(useConnectionStore.getState().lastDataAt).toBe(Date.parse(recordedAt));
+    });
+  });
+
   it("drops malformed frames without disturbing the socket", async () => {
     const socket = await start();
     socket.emit("message", { data: "{not json" });
@@ -168,6 +186,23 @@ describe("LiveProvider", () => {
       expect(document.querySelector('[aria-live="assertive"]')?.textContent).toContain("Speeding");
     });
   });
+
+  it(
+    "throttles alert announcements to one per five seconds",
+    async () => {
+      const socket = await start();
+
+      socket.send(alert("demo-imei-0001", 0, "high", "speeding"));
+      expect(await screen.findByText("Speeding")).toBeInTheDocument();
+
+      socket.send(alert("demo-imei-0002", 1, "high", "idle"));
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      expect(screen.queryByText("Idle")).not.toBeInTheDocument();
+
+      expect(await screen.findByText("Idle", undefined, { timeout: 6_000 })).toBeInTheDocument();
+    },
+    12_000,
+  );
 
   it("stops the socket when the session expires", async () => {
     const socket = await start();

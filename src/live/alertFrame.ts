@@ -20,6 +20,15 @@ export interface AlertBatchSummary {
   assertive: boolean;
 }
 
+export const ALERT_TOAST_WINDOW_MS = 250;
+export const ALERT_ANNOUNCE_MS = 5_000;
+
+/** Throttles live alert announcements to one per five seconds. */
+export function alertWindowDelay(lastFlushAt: number | null, now: number): number {
+  if (lastFlushAt === null) return ALERT_TOAST_WINDOW_MS;
+  return Math.max(ALERT_TOAST_WINDOW_MS, ALERT_ANNOUNCE_MS - (now - lastFlushAt));
+}
+
 const severities = new Set<AlertSeverity>(["low", "medium", "high", "critical"]);
 
 function toSeverity(value: string | null | undefined): AlertSeverity | null {

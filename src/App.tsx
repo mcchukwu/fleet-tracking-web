@@ -7,7 +7,6 @@ import { installDebugHook } from "./dev/install";
 import { ErrorBoundary } from "./errors/ErrorBoundary";
 import { createQueryClient } from "./errors/global";
 import { ThemeProvider } from "./theme/ThemeProvider";
-import { LiveRegionProvider } from "./ui/LiveRegion";
 import { ToastProvider } from "./ui/Toast";
 import { TooltipProvider } from "./ui/Tooltip";
 
@@ -23,11 +22,9 @@ export function App() {
         <AuthProvider>
           <TooltipProvider>
             <ToastProvider>
-              <LiveRegionProvider>
-                <ErrorBoundary level="app">
-                  <RouterProvider router={router} />
-                </ErrorBoundary>
-              </LiveRegionProvider>
+              <ErrorBoundary level="app">
+                <RouterProvider router={router} />
+              </ErrorBoundary>
             </ToastProvider>
           </TooltipProvider>
         </AuthProvider>

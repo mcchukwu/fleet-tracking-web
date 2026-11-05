@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AlertMessage } from "../api/schemas";
-import { alertBatchSummary, normalizeAlertFrame } from "./alertFrame";
+import { alertBatchSummary, alertWindowDelay, normalizeAlertFrame } from "./alertFrame";
 
 const handoffFrame: AlertMessage = {
   type: "alert",
@@ -98,5 +98,11 @@ describe("alert frame normalisation", () => {
   it("marks a critical alert for an assertive announcement", () => {
     const frame = normalizeAlertFrame({ ...openApiFrame, severity: "critical" });
     expect(alertBatchSummary([frame]).assertive).toBe(true);
+  });
+
+  it("waits out the five-second announcement window before the next alert", () => {
+    expect(alertWindowDelay(null, 1_000)).toBe(250);
+    expect(alertWindowDelay(1_000, 1_250)).toBe(4_750);
+    expect(alertWindowDelay(1_000, 6_000)).toBe(250);
   });
 });

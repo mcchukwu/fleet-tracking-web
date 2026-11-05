@@ -11,6 +11,7 @@ import { useLiveStore } from "../stores/live";
 import { useToast } from "../ui/Toast";
 import {
   alertBatchSummary,
+  alertWindowDelay,
   normalizeAlertFrame,
   type NormalizedAlertFrame,
 } from "./alertFrame";
@@ -18,7 +19,6 @@ import { createFrameBatcher } from "./batcher";
 
 const ALERT_DEDUPE_MS = 60_000;
 const ALERT_INVALIDATE_MS = 1_000;
-const ALERT_WINDOW_MS = 250;
 
 function isPosition(frame: LiveMessage): frame is PositionMessage {
   return frame.type === "position";
@@ -107,6 +107,7 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
 
     let alertWindowTimer: ReturnType<typeof setTimeout> | null = null;
     let invalidationTimer: ReturnType<typeof setTimeout> | null = null;
+    let lastAlertFlushAt: number | null = null;
     const pendingAlerts = new Map<string, NormalizedAlertFrame>();
 
     const invalidateAlertsSoon = () => {
@@ -123,6 +124,7 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
       pendingAlerts.clear();
       if (!activeRef.current || alerts.length === 0) return;
 
+      lastAlertFlushAt = Date.now();
       const summary = alertBatchSummary(alerts);
       const key =
         summary.count > 1
@@ -152,8 +154,8 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
 
       const positions = coalescePositions(frames);
       if (positions.length > 0) {
-        useLiveStore.getState().applyFrames(positions);
-        useConnectionStore.getState().markData(Date.now());
+        const newest = useLiveStore.getState().applyFrames(positions);
+        useConnectionStore.getState().markData(newest ?? Date.now());
       }
 
       const now = Date.now();
@@ -173,7 +175,10 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (queued && alertWindowTimer === null) {
-        alertWindowTimer = setTimeout(flushAlertWindow, ALERT_WINDOW_MS);
+        alertWindowTimer = setTimeout(
+          flushAlertWindow,
+          alertWindowDelay(lastAlertFlushAt, Date.now()),
+        );
       }
     };
 
