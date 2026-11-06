@@ -138,8 +138,8 @@
     bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   }
 
-  .map-attribution-area {
-    right: max(12px, var(--map-inset-right, 0px));
+  .map-footer {
+    right: max(12px, calc(var(--map-inset-right, 0px) + 12px));
     transition: right var(--motion-slow) var(--ease-slow);
   }
 

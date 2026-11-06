@@ -470,32 +470,33 @@ export function MapPage() {
 
       <div
         className={cn(
-          "map-bottom-anchor absolute z-20 flex justify-center",
+          "map-bottom-anchor pointer-events-none absolute z-20 flex flex-wrap items-end gap-3",
           isDesktop
-            ? cn(
-                "map-attribution-area",
-                preferences.panelOpen ? "lg:left-93" : "lg:left-3",
-              )
-            : "map-inset-bottom left-3",
+            ? cn("map-footer", preferences.panelOpen ? "lg:left-93" : "lg:left-3")
+            : "map-inset-bottom left-3 right-3",
         )}
       >
-        <MapAttribution styleId={mapStyle.effectiveStyle} satellite={satelliteConfig} />
-      </div>
-
-      <ErrorBoundary
-        level="panel"
-        resetKeys={[preferences.panelOpen, preferences.geofencesVisible]}
-      >
-        <MapControls
-          {...controlsProps}
-          variant={isDesktop ? "desktop" : "mobile"}
-          obscured={!isDesktop && (sheetSnap === "full" || sheetObscured)}
+        <div
           className={cn(
-            "map-bottom-anchor absolute right-3 z-10",
-            isDesktop ? "map-inset-right" : "map-inset-bottom",
+            "pointer-events-none flex min-w-0 flex-1 basis-auto",
+            isDesktop ? "justify-center" : "justify-start",
           )}
-        />
-      </ErrorBoundary>
+        >
+          <MapAttribution styleId={mapStyle.effectiveStyle} satellite={satelliteConfig} />
+        </div>
+
+        <ErrorBoundary
+          level="panel"
+          resetKeys={[preferences.panelOpen, preferences.geofencesVisible]}
+        >
+          <MapControls
+            {...controlsProps}
+            variant={isDesktop ? "desktop" : "mobile"}
+            obscured={!isDesktop && (sheetSnap === "full" || sheetObscured)}
+            className="pointer-events-auto ml-auto shrink-0"
+          />
+        </ErrorBoundary>
+      </div>
 
       {!isDesktop && sheetSnap === "full" ? (
         <button

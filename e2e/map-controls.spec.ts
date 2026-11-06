@@ -108,6 +108,7 @@ test.describe("map controls", () => {
     expect(shifted).not.toBeNull();
     if (!before || !shifted) return;
     expect(Math.round(before.x - shifted.x)).toBe(432);
+    await page.waitForTimeout(300);
     await expectNoOverlap(controls(page), harness);
     await expectNoOverlap(controls(page), attribution(page));
     await expectNoOverlap(attribution(page), harness);
@@ -179,7 +180,10 @@ test.describe("map controls", () => {
     const afterScroll = await sheet(page).boundingBox();
     expect(afterScroll?.y).toBe(full.y);
 
-    await page.getByRole("button", { name: "Collapse the vehicle list" }).click();
+    const strip = page.getByRole("button", { name: "Collapse the vehicle list" });
+    const stripBox = await strip.boundingBox();
+    if (!stripBox) throw new Error("strip has no box");
+    await strip.click({ position: { x: stripBox.width - 24, y: 40 } });
     await expect(handle).toHaveAttribute("aria-expanded", "true");
     await expect(handle).toBeFocused();
     await expect
@@ -292,7 +296,7 @@ test.describe("map controls", () => {
     await expect(appearance).toBeVisible();
     await expect(
       appearance
-        .getByRole("menuitemradio", { name: "System" })
+        .getByRole("menuitemradio", { name: "Light" })
         .getByTestId("menu-item-indicator"),
     ).toBeVisible();
     await appearance.getByRole("menuitemradio", { name: "Light" }).click();

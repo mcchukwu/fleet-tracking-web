@@ -15,7 +15,7 @@ export function MapAttribution({ styleId, satellite, className }: MapAttribution
       : mapConfig.attribution;
 
   const classes = cn(
-    "inline-flex min-h-touch items-center rounded-md border border-border bg-surface px-2 text-xs text-muted shadow-menu md:min-h-control-sm md:py-0",
+    "pointer-events-auto inline-flex min-h-touch items-center rounded-md border border-border bg-surface px-2 text-xs text-muted shadow-menu md:min-h-control-sm md:py-0",
     className,
   );
 
