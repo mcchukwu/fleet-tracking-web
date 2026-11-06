@@ -1,7 +1,8 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { Truck } from "lucide-react";
 import { safeRedirect } from "../../../app/redirect";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
+import { BrandBar } from "../../../ui/BrandBar";
+import { BrandLogo } from "../../../ui/BrandLogo";
 import { LoginForm } from "./LoginForm";
 
 export function LoginPage() {
@@ -20,25 +21,26 @@ export function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-bg px-4 py-8 text-text">
-      <div className="w-panel max-w-full space-y-4">
-        <div className="flex items-center justify-center gap-2">
-          <span className="flex size-control-lg items-center justify-center rounded-md bg-accent text-text-inverse">
-            <Truck aria-hidden="true" className="size-4" strokeWidth={1.5} />
-          </span>
-          <span className="text-md font-medium text-text">Fleet Console</span>
-        </div>
+    <div className="flex min-h-screen flex-col bg-bg text-text">
+      <header className="shrink-0 border-b border-border bg-surface">
+        <BrandBar>
+          <BrandLogo variant="lockup" className="text-text" />
+        </BrandBar>
+      </header>
 
-        <div className="rounded-lg border border-border bg-surface p-6">
-          <h1 className="text-lg font-semibold text-text">Sign in</h1>
-          <p className="mb-4 text-sm text-muted">Use your Fleet Console account.</p>
-          <LoginForm
-            onSuccess={() => {
-              void completeLogin();
-            }}
-          />
+      <main className="flex flex-1 items-center justify-center px-4 py-8">
+        <div className="w-panel max-w-full space-y-4">
+          <div className="rounded-lg border border-border bg-surface p-6">
+            <h1 className="text-lg font-semibold text-text">Sign in</h1>
+            <p className="mb-4 text-sm text-muted">Use your Fleet Console account.</p>
+            <LoginForm
+              onSuccess={() => {
+                void completeLogin();
+              }}
+            />
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

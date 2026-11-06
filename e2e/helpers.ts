@@ -103,6 +103,45 @@ export async function expectTouchTargets(page: Page, minimum = 44): Promise<void
   expect(tooSmall, `touch targets below ${minimum}px`).toEqual([]);
 }
 
+export async function expectMinimumContrast(locator: Locator, minimum: number): Promise<void> {
+  const ratio = await locator.evaluate((element) => {
+    const parse = (value: string): [number, number, number] => {
+      const match = value.match(/rgba?\(([^)]+)\)/);
+      if (!match) throw new Error(`Unsupported colour: ${value}`);
+      const channels = match[1].split(",").map((part) => Number.parseFloat(part.trim()));
+      return [channels[0], channels[1], channels[2]];
+    };
+    const luminance = ([red, green, blue]: [number, number, number]): number => {
+      const linear = (value: number): number => {
+        const normalized = value / 255;
+        return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+      };
+      return 0.2126 * linear(red) + 0.7152 * linear(green) + 0.0722 * linear(blue);
+    };
+
+    let node: Element | null = element;
+    let background = "rgba(0, 0, 0, 0)";
+    while (node) {
+      const value = window.getComputedStyle(node).backgroundColor;
+      if (value !== "rgba(0, 0, 0, 0)" && value !== "transparent") {
+        background = value;
+        break;
+      }
+      node = node.parentElement;
+    }
+
+    const foregroundLuminance = luminance(parse(window.getComputedStyle(element).color));
+    const backgroundLuminance = luminance(parse(background));
+    const lighter = Math.max(foregroundLuminance, backgroundLuminance);
+    const darker = Math.min(foregroundLuminance, backgroundLuminance);
+    return (lighter + 0.05) / (darker + 0.05);
+  });
+
+  expect(ratio, `contrast ${ratio.toFixed(2)}:1 is below ${minimum}:1`).toBeGreaterThanOrEqual(
+    minimum,
+  );
+}
+
 export async function captureForReview(page: Page, name: string): Promise<void> {
   if (process.env.REVIEW !== "1") return;
   const theme = await page.evaluate(() => (document.documentElement.classList.contains("dark") ? "dark" : "light"));
