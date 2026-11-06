@@ -18,9 +18,9 @@ Theme is `light`, `dark` or `system`. Accent is a separate persisted choice. The
 
 Trade-off: The UI needs two controls. Keeping them separate avoids a combinatorial theme matrix.
 
-## 2026-11-03: Three accent presets
+## 2026-11-03: A small accent preset set
 
-Blue, violet and teal. More presets increase contrast testing without adding product value.
+Three presets originally (blue, violet, teal); Slice 2b replaced teal with four tested presets (blue, violet, fuchsia, graphite) because teal collided with the customer geofence hue. More presets increase contrast testing without adding product value, so the set stays deliberately small.
 
 ## 2026-11-03: Self-hosted fonts
 
@@ -347,3 +347,15 @@ Verified through a dev server on `:5174`: login returned 200, the upgrade with a
 The reconnect banner now moves to a terminal state after 60 seconds: `Live updates are unavailable. Showing data from hh:mm.` with `Retry now`, while automatic attempts continue at the 30-second backoff cap. The banner sits at z-index 35, below sticky headers, menus, popovers, dialogs and toasts, so it cannot cover the user menu. In development, three failed handshakes after a successful `/me` log one console hint pointing at `WS_ALLOWED_ORIGINS` and the proxy `Origin` header.
 
 Trade-off: the terminal copy admits that live updates have stopped instead of pretending every retry will work; the data already on screen remains the source of truth until a retry succeeds.
+
+## 2026-11-06: App-level map controls, contained sheet, four accents and env-gated satellite
+
+The map's zoom, bearing, fit, geofence, style and panel controls are now an app overlay that calls the extended `MapAdapter` contract (`zoomIn`, `zoomOut`, `resetBearing`, `setBaseStyle`, `bearing` in every viewport). Native MapLibre controls are removed because they cannot follow the theme, avoid the sheet and KPI strip, or honour the `--map-inset-right` contract Slice 3 will publish. Attribution moved out of the control stack into its own token-styled chip: it is a licence requirement and must never fade with the controls.
+
+The mobile sheet now has a fixed 96px header (4px drag band, 44px title/filters row, 44px search/fit/geofences row), only the vehicle list scrolls, and the sheet is `min(100dvh - top bar - 80px, 100% - 80px)` translated by `100% - var(--sheet-visible)`. Dragging publishes `--sheet-visible` and `--map-inset-bottom` per animation frame; React state changes only on release. At full the compact KPI is not rendered so the remaining 80px strip is map plus attribution, and that strip is a button back to half. This resolves the conflict between the 80px map strip and the 128px compact KPI without hiding attribution.
+
+Appearance moved into the user menu so the top bar holds only the logo, connection indicator and user menu. Four accents (Blue, Violet, Fuchsia, Graphite) each define the full accent set per theme plus `--accent-contrast`; teal was removed because it collided with the customer geofence hue. `src/theme/accents.test.ts` parses `tokens.css` and enforces the contrast thresholds. Unknown stored values fall back to Blue, and the pre-paint bootstrap validates both preferences plus `viewport-fit=cover`.
+
+Satellite is a `MapStyleId` with an env-gated raster source. It is online-only: while offline the effective style is standard, `fleet.map.style` keeps the chosen satellite value, one info notice explains the fallback, and the menu disables the option with `Needs a connection`. Theme changes repaint only the data layers on imagery. The tile provider is not yet approved, so the build offers only the standard map until `VITE_SATELLITE_TILES_URL` and `VITE_SATELLITE_ATTRIBUTION` are supplied; the e2e suite uses a test-only URL to prove the UI and fallback.
+
+Trade-off: the sheet is transformed rather than resized during drag, so the header can never leave the viewport, but the list is briefly offscreen at peek and is therefore marked `inert` instead of being focusable. Satellite adds a glyph URL dependency for labels; without it MapLibre still renders markers and geometry but not text.

@@ -38,6 +38,13 @@ export default defineConfig({
     command: "npm run dev -- --host 127.0.0.1 --port 4173",
     url: "http://127.0.0.1:4173",
     reuseExistingServer: !process.env.CI,
-    env: { VITE_MOCK: "1" },
+    env: {
+      VITE_MOCK: "1",
+      // Test-only satellite configuration. The fake adapter never fetches these
+      // tiles; it proves the style UI, persistence and offline fallback.
+      VITE_SATELLITE_TILES_URL: "https://satellite.test/{z}/{x}/{y}.jpg",
+      VITE_SATELLITE_ATTRIBUTION: "© Test imagery",
+      VITE_SATELLITE_ATTRIBUTION_HREF: "https://example.com/imagery",
+    },
   },
 });

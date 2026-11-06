@@ -88,8 +88,9 @@ export function MapView({  vehicles,
       selectedKey,
       hoveredKey,
       geofenceCount: geofences.length,
+      baseStyle,
     });
-  }, [vehicles.length, selectedKey, hoveredKey, geofences.length]);
+  }, [vehicles.length, selectedKey, hoveredKey, geofences.length, baseStyle]);
 
   useEffect(() => {
     if (!adapter || !selectedKey) {
