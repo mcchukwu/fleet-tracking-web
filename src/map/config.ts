@@ -1,4 +1,4 @@
-import type { Bounds, MapProvider } from "./types";
+import type { Bounds, MapProvider, MapStyleId } from "./types";
 
 function readProvider(): MapProvider {
   if (
@@ -16,12 +16,64 @@ function readUrl(value: string | undefined, fallback: string): string {
   return typeof value === "string" && value.trim() !== "" ? value : fallback;
 }
 
+export interface SatelliteConfig {
+  tilesUrl: string;
+  attribution: string;
+  attributionHref?: string;
+}
+
+export interface SatelliteEnv {
+  VITE_SATELLITE_TILES_URL?: string;
+  VITE_SATELLITE_ATTRIBUTION?: string;
+  VITE_SATELLITE_ATTRIBUTION_HREF?: string;
+}
+
+function isHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Satellite is env-gated rather than API-gated: it exists only when both a raster
+ * template and its required attribution are configured. A partial configuration
+ * hides the option instead of shipping imagery we cannot credit.
+ */
+export function readSatelliteConfig(env: SatelliteEnv): SatelliteConfig | null {
+  const tilesUrl = env.VITE_SATELLITE_TILES_URL?.trim() ?? "";
+  const attribution = env.VITE_SATELLITE_ATTRIBUTION?.trim() ?? "";
+  if (!tilesUrl || !attribution) return null;
+  if (!isHttpUrl(tilesUrl) || !/\{z\}.*\{x\}.*\{y\}/.test(tilesUrl)) return null;
+
+  const href = env.VITE_SATELLITE_ATTRIBUTION_HREF?.trim();
+  if (href && !isHttpUrl(href)) return null;
+
+  return {
+    tilesUrl,
+    attribution,
+    ...(href ? { attributionHref: href } : {}),
+  };
+}
+
+export const satelliteConfig = readSatelliteConfig(import.meta.env as unknown as SatelliteEnv);
+
+export const availableMapStyles: readonly MapStyleId[] = satelliteConfig
+  ? ["standard", "satellite"]
+  : ["standard"];
+
 export const mapConfig = {
   provider: readProvider(),
   styleUrls: {
     light: readUrl(import.meta.env.VITE_MAP_STYLE_URL_LIGHT, "https://tiles.openfreemap.org/styles/positron"),
     dark: readUrl(import.meta.env.VITE_MAP_STYLE_URL_DARK, "https://tiles.openfreemap.org/styles/dark"),
   },
+  glyphsUrl: readUrl(
+    import.meta.env.VITE_MAP_GLYPHS_URL,
+    "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+  ),
   attribution: {
     label: "© OpenStreetMap · OpenFreeMap",
     href: "https://openfreemap.org",
@@ -35,7 +87,7 @@ export const mapConfig = {
   options: {
     minZoom: 2,
     maxZoom: 18,
-    dragRotate: false,
+    dragRotate: true,
     pitchWithRotate: false,
     touchPitch: false,
   },

@@ -1,9 +1,56 @@
 import type { StyleSpecification } from "maplibre-gl";
-import { mapConfig } from "../../config";
-import type { MapTokens } from "../../types";
+import { mapConfig, type SatelliteConfig } from "../../config";
+import type { MapStyleId, MapTokens } from "../../types";
 
 export function styleUrlFor(theme: "light" | "dark"): string {
   return mapConfig.styleUrls[theme];
+}
+
+/** Satellite is a raster source; vehicle, geofence and route layers stay on top. */
+export function buildSatelliteStyle(
+  theme: "light" | "dark",
+  tokens: MapTokens,
+  config: SatelliteConfig,
+): StyleSpecification {
+  return {
+    version: 8,
+    name: `fleet-satellite-${theme}`,
+    glyphs: mapConfig.glyphsUrl,
+    sources: {
+      "fleet-satellite": {
+        type: "raster",
+        tiles: [config.tilesUrl],
+        tileSize: 256,
+        attribution: config.attribution,
+      },
+    },
+    layers: [
+      {
+        id: "fleet-satellite-imagery",
+        type: "raster",
+        source: "fleet-satellite",
+        paint: { "raster-opacity": 1 },
+      },
+      {
+        id: "fleet-satellite-scrim",
+        type: "background",
+        paint: {
+          "background-color": tokens.colors.surface,
+          "background-opacity": theme === "dark" ? 0.12 : 0.04,
+        },
+      },
+    ],
+  };
+}
+
+export function styleFor(
+  id: MapStyleId,
+  theme: "light" | "dark",
+  tokens: MapTokens,
+  satellite: SatelliteConfig | null,
+): string | StyleSpecification {
+  if (id === "satellite" && satellite) return buildSatelliteStyle(theme, tokens, satellite);
+  return styleUrlFor(theme);
 }
 
 /**

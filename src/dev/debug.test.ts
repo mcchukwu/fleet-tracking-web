@@ -10,6 +10,8 @@ const snapshot: FleetDebugSnapshot = {
     targetVehicleCount: 0,
     viewport: null,
     bounds: null,
+    bearing: null,
+    baseStyle: null,
     selectedKey: null,
     hoveredKey: null,
     fitBounds: null,

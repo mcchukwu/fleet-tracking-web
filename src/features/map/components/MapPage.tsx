@@ -231,7 +231,10 @@ export function MapPage() {
     setMapDebug({ fitBounds: fleetBounds, fitCount: (readMapDebug().fitCount ?? 0) + 1 });
     adapter.fitBounds(fleetBounds, { padding, animate: true });
     const afterFit = adapter.getViewport();
-    setMapDebug({ viewport: { center: afterFit.center, zoom: afterFit.zoom } });
+    setMapDebug({
+      viewport: { center: afterFit.center, zoom: afterFit.zoom, bearing: afterFit.bearing },
+      bearing: afterFit.bearing,
+    });
   }, [data.rows, padding]);
 
   const handleAdapterReady = useCallback((adapter: MapAdapter | null) => {

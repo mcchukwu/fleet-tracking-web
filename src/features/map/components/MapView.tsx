@@ -61,7 +61,11 @@ export function MapView({  vehicles,
     const offHover = adapter.on("vehicleHover", (event) => onHover(event));
     const offViewport = adapter.on("viewportChange", (event) => {
       onViewport(event.bounds);
-      setMapDebug({ viewport: { center: event.center, zoom: event.zoom }, bounds: event.bounds });
+      setMapDebug({
+        viewport: { center: event.center, zoom: event.zoom, bearing: event.bearing },
+        bearing: event.bearing,
+        bounds: event.bounds,
+      });
     });
     return () => {
       offClick();
@@ -103,7 +107,8 @@ export function MapView({  vehicles,
       mapLoaded: true,
       provider: ready.id,
       targetVehicleCount: vehicles.length,
-      viewport: { center: viewport.center, zoom: viewport.zoom },
+      viewport: { center: viewport.center, zoom: viewport.zoom, bearing: viewport.bearing },
+      bearing: viewport.bearing,
       bounds: viewport.bounds,
     });
   }

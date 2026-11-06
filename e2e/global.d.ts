@@ -31,8 +31,10 @@ declare global {
         mapLoaded: boolean;
         provider: string | null;
         targetVehicleCount: number;
-        viewport: { center: [number, number]; zoom: number } | null;
+        viewport: { center: [number, number]; zoom: number; bearing: number } | null;
         bounds: { south: number; west: number; north: number; east: number } | null;
+        bearing: number | null;
+        baseStyle: string | null;
         selectedKey: string | null;
         hoveredKey: string | null;
         fitBounds: { south: number; west: number; north: number; east: number } | null;

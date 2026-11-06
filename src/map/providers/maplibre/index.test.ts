@@ -35,6 +35,7 @@ const holder = vi.hoisted(() => {
     readonly images = new Set<string>();
     features: unknown[] = [];
     zoom = 7;
+    bearing = 0;
     removed = 0;
     easedTo: unknown[] | null = null;
     fitted: unknown[] | null = null;
@@ -104,8 +105,8 @@ const holder = vi.hoisted(() => {
       return this;
     }
 
-    setStyle(style: string): this {
-      this.styles.push(style);
+    setStyle(style: unknown): this {
+      this.styles.push(style as string);
       this.sources.clear();
       this.layers.clear();
       return this;
@@ -123,6 +124,20 @@ const holder = vi.hoisted(() => {
       return this.zoom;
     }
 
+    zoomIn(): this {
+      this.zoom += 1;
+      return this;
+    }
+
+    zoomOut(): this {
+      this.zoom -= 1;
+      return this;
+    }
+
+    getBearing(): number {
+      return this.bearing;
+    }
+
     getBounds() {
       return {
         getSouth: () => 4,
@@ -138,6 +153,8 @@ const holder = vi.hoisted(() => {
 
     easeTo(options: unknown): this {
       this.easedTo = [options];
+      const bearing = (options as { bearing?: number }).bearing;
+      if (typeof bearing === "number") this.bearing = bearing;
       return this;
     }
 
@@ -167,7 +184,6 @@ vi.mock("./sdk", () => ({
     holder.map = map;
     return map;
   },
-  createNavigationControl: () => ({ id: "navigation" }),
 }));
 
 import { createMapLibreAdapter } from "./index";
@@ -231,7 +247,97 @@ describe("MapLibre adapter", () => {
     const adapter = createMapLibreAdapter();
     expect(adapter.capabilities.offline).toBe(false);
     expect(adapter.capabilities.drawing).toBe(false);
+    expect(adapter.capabilities.styles).toEqual(["standard"]);
     expect(adapter.draw).toBeUndefined();
+  });
+
+  it("does not install a native navigation control", async () => {
+    const adapter = createMapLibreAdapter();
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+    expect(map().controls).toHaveLength(0);
+    adapter.destroy();
+  });
+
+  it("mounts the satellite raster style when the env supplies one", async () => {
+    const adapter = createMapLibreAdapter({
+      styles: ["standard", "satellite"],
+      satellite: {
+        tilesUrl: "https://tiles.example.com/satellite/{z}/{x}/{y}.jpg",
+        attribution: "© Example imagery",
+        attributionHref: "https://example.com/licence",
+      },
+    });
+    await adapter.mount(document.createElement("div"), {
+      theme: "light",
+      tokens: contractTokens,
+      baseStyle: "satellite",
+    });
+
+    const style = map().options.style as {
+      sources: Record<string, { type: string; tiles: string[]; attribution: string }>;
+    };
+    expect(style.sources["fleet-satellite"]?.type).toBe("raster");
+    expect(style.sources["fleet-satellite"]?.attribution).toBe("© Example imagery");
+    expect(style.sources["fleet-satellite"]?.tiles).toEqual([
+      "https://tiles.example.com/satellite/{z}/{x}/{y}.jpg",
+    ]);
+    expect(map().layers.has(LAYER_IDS.vehicleHalo)).toBe(true);
+    adapter.destroy();
+  });
+
+  it("switches the base style without dropping the data layers", async () => {
+    const adapter = createMapLibreAdapter({
+      styles: ["standard", "satellite"],
+      satellite: {
+        tilesUrl: "https://tiles.example.com/satellite/{z}/{x}/{y}.jpg",
+        attribution: "© Example imagery",
+      },
+    });
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+    const instance = map();
+    expect(instance.layers.has(LAYER_IDS.vehicleHalo)).toBe(false);
+
+    adapter.setBaseStyle("satellite");
+    await vi.waitFor(() => expect(instance.layers.has(LAYER_IDS.vehicleCircle)).toBe(true));
+
+    expect(instance.styles).toHaveLength(1);
+    expect(instance.layers.has(LAYER_IDS.vehicleHalo)).toBe(true);
+    expect(instance.sources.size).toBe(3);
+    adapter.destroy();
+  });
+
+  it("ignores a base style this build does not offer", async () => {
+    const adapter = createMapLibreAdapter();
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+    adapter.setBaseStyle("satellite");
+    expect(map().styles).toHaveLength(0);
+    adapter.destroy();
+  });
+
+  it("keeps the imagery while a theme change refreshes the data layers", async () => {
+    const adapter = createMapLibreAdapter({
+      styles: ["standard", "satellite"],
+      satellite: {
+        tilesUrl: "https://tiles.example.com/satellite/{z}/{x}/{y}.jpg",
+        attribution: "© Example imagery",
+      },
+    });
+    await adapter.mount(document.createElement("div"), {
+      theme: "light",
+      tokens: contractTokens,
+      baseStyle: "satellite",
+    });
+    const instance = map();
+
+    adapter.setTheme("dark", contractTokens);
+
+    expect(instance.styles).toHaveLength(0);
+    expect(instance.layers.has(LAYER_IDS.vehicleHalo)).toBe(true);
+    const label = instance.layers.get(LAYER_IDS.vehicleLabel)?.paint as
+      | Record<string, unknown>
+      | undefined;
+    expect(label?.["text-halo-width"]).toBe(2);
+    adapter.destroy();
   });
 
   it("installs clustered vehicle, geofence and route layers from tokens", async () => {

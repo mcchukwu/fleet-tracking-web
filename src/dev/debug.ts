@@ -4,8 +4,10 @@ export interface FleetDebugMapState {
   mapLoaded: boolean;
   provider: string | null;
   targetVehicleCount: number;
-  viewport: { center: [number, number]; zoom: number } | null;
+  viewport: { center: [number, number]; zoom: number; bearing: number } | null;
   bounds: Bounds | null;
+  bearing: number | null;
+  baseStyle: string | null;
   selectedKey: string | null;
   hoveredKey: string | null;
   fitBounds: Bounds | null;
@@ -51,6 +53,8 @@ const emptyMapState: FleetDebugMapState = {
   targetVehicleCount: 0,
   viewport: null,
   bounds: null,
+  bearing: null,
+  baseStyle: null,
   selectedKey: null,
   hoveredKey: null,
   fitBounds: null,

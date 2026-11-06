@@ -1,3 +1,4 @@
+import { availableMapStyles } from "../config";
 import type {
   Bounds,
   LngLat,
@@ -6,6 +7,7 @@ import type {
   MapEvents,
   MapGeofence,
   MapRoute,
+  MapStyleId,
   MapTokens,
   MapVehicle,
   MountOptions,
@@ -13,6 +15,9 @@ import type {
   Viewport,
 } from "../types";
 import { MapError } from "../../errors/types";
+
+const MIN_ZOOM = 2;
+const MAX_ZOOM = 18;
 
 const WORLD: Bounds = { south: -85, west: -180, north: 85, east: 180 };
 
@@ -30,22 +35,33 @@ const statusRank: Record<MapVehicle["status"], number> = {
   offline: 3,
 };
 
-export class FakeAdapter implements MapAdapter {  readonly id = "fake";
-  readonly capabilities: MapCapabilities = {
-    offline: true,
-    drawing: false,
-    clustering: "emulated",
-    comfortableVehicleCount: 5_000,
-  };
+export interface FakeAdapterOptions {
+  styles?: readonly MapStyleId[];
+}
+
+export class FakeAdapter implements MapAdapter {
+  readonly id = "fake";
+  readonly capabilities: MapCapabilities;
+
+  constructor(options: FakeAdapterOptions = {}) {
+    this.capabilities = {
+      offline: true,
+      drawing: false,
+      clustering: "emulated",
+      comfortableVehicleCount: 5_000,
+      styles: options.styles ?? availableMapStyles,
+    };
+  }
 
   mounted = false;
   theme: "light" | "dark" = "light";
   tokens: MapTokens | null = null;
+  baseStyle: MapStyleId = "standard";
   vehicles: readonly MapVehicle[] = [];
   clusters: readonly FakeCluster[] = [];
   geofences: readonly MapGeofence[] = [];
   route: MapRoute | null = null;
-  viewport: Viewport = { center: [0, 0], zoom: 2, bounds: WORLD };
+  viewport: Viewport = { center: [0, 0], zoom: 2, bearing: 0, bounds: WORLD };
   mountCount = 0;
   destroyCount = 0;
   private clusterMaxZoom = 10;
@@ -58,6 +74,7 @@ export class FakeAdapter implements MapAdapter {  readonly id = "fake";
     this.mountCount += 1;
     this.theme = options.theme;
     this.tokens = options.tokens;
+    this.baseStyle = options.baseStyle ?? "standard";
     this.clusterMaxZoom = options.tokens.marker.clusterMaxZoom;
     this.clusterRadius = options.tokens.marker.clusterRadius;
     if (options.bounds) {
@@ -67,6 +84,7 @@ export class FakeAdapter implements MapAdapter {  readonly id = "fake";
           (options.bounds.south + options.bounds.north) / 2,
         ],
         zoom: 8,
+        bearing: this.viewport.bearing,
         bounds: options.bounds,
       };
     }
@@ -105,6 +123,7 @@ export class FakeAdapter implements MapAdapter {  readonly id = "fake";
     this.viewport = {
       center: [(bounds.west + bounds.east) / 2, (bounds.south + bounds.north) / 2],
       zoom: 10,
+      bearing: this.viewport.bearing,
       bounds,
     };
     this.recomputeClusters();
@@ -117,8 +136,35 @@ export class FakeAdapter implements MapAdapter {  readonly id = "fake";
     this.emit("viewportChange", this.viewport);
   }
 
+  zoomIn(): void {
+    this.setZoom(this.viewport.zoom + 1);
+  }
+
+  zoomOut(): void {
+    this.setZoom(this.viewport.zoom - 1);
+  }
+
+  resetBearing(): void {
+    this.viewport = { ...this.viewport, bearing: 0 };
+    this.emit("viewportChange", this.viewport);
+  }
+
+  setBaseStyle(id: MapStyleId): void {
+    if (!this.capabilities.styles.includes(id)) return;
+    this.baseStyle = id;
+  }
+
   getViewport(): Viewport {
     return this.viewport;
+  }
+
+  private setZoom(zoom: number): void {
+    this.viewport = {
+      ...this.viewport,
+      zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom)),
+    };
+    this.recomputeClusters();
+    this.emit("viewportChange", this.viewport);
   }
 
   private recomputeClusters(): void {

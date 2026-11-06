@@ -105,6 +105,25 @@ describe("FleetMap", () => {
     expect(adapter.tokens?.marker.radius).toBe(contractTokens.marker.radius);
   });
 
+  it("mounts with the requested base style and switches it later", async () => {
+    const adapter = new FakeAdapter({ styles: ["standard", "satellite"] });
+    const { rerender } = render(
+      <ThemeProvider>
+        <FleetMap adapter={adapter} baseStyle="standard" />
+      </ThemeProvider>,
+    );
+
+    await waitFor(() => expect(adapter.mounted).toBe(true));
+    expect(adapter.baseStyle).toBe("standard");
+
+    rerender(
+      <ThemeProvider>
+        <FleetMap adapter={adapter} baseStyle="satellite" />
+      </ThemeProvider>,
+    );
+    await waitFor(() => expect(adapter.baseStyle).toBe("satellite"));
+  });
+
   it("swaps the adapter theme when the theme changes", async () => {
     const adapter = new FakeAdapter();
 

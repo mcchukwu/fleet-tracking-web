@@ -1,6 +1,11 @@
 import { normalize } from "../../../errors/normalize";
 import { MapError } from "../../../errors/types";
-import { mapConfig } from "../../config";
+import {
+  availableMapStyles,
+  mapConfig,
+  satelliteConfig,
+  type SatelliteConfig,
+} from "../../config";
 import type {
   Bounds,
   LngLat,
@@ -9,6 +14,7 @@ import type {
   MapEvents,
   MapGeofence,
   MapRoute,
+  MapStyleId,
   MapTokens,
   MapVehicle,
   MountOptions,
@@ -31,12 +37,11 @@ import {
 } from "./layers";
 import {
   createMap,
-  createNavigationControl,
   type GeoJSONSource,
   type MapLibreMap,
   type MapMouseEvent,
 } from "./sdk";
-import { fallbackStyle, styleUrlFor } from "./style";
+import { fallbackStyle, styleFor } from "./style";
 
 const STYLE_TIMEOUT_MS = 3_000;
 const HIGH_VOLUME_UPDATE_MS = 50;
@@ -60,10 +65,18 @@ function boundsCorners(bounds: Bounds): [[number, number], [number, number]] {
   ];
 }
 
-export function createMapLibreAdapter(): MapAdapter {
+export interface MapLibreAdapterOptions {
+  styles?: readonly MapStyleId[];
+  satellite?: SatelliteConfig | null;
+}
+
+export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): MapAdapter {
+  const styles = options.styles ?? availableMapStyles;
+  const satellite = options.satellite === undefined ? satelliteConfig : options.satellite;
   let map: MapLibreMap | null = null;
   let theme: "light" | "dark" = "light";
   let tokens: MapTokens | null = null;
+  let baseStyle: MapStyleId = "standard";
   let styleGeneration = 0;
   let vehicleTargets: readonly MapVehicle[] = [];
   let geofences: readonly MapGeofence[] = [];
@@ -92,6 +105,7 @@ export function createMapLibreAdapter(): MapAdapter {
     // Measured 2026-11-05: a 5,000-vehicle target produced a 348 ms longest
     // pan task in Chromium, so the comfort budget stays well below that.
     comfortableVehicleCount: 1_000,
+    styles,
   };
 
   function emit<K extends keyof MapEvents>(event: K, payload: MapEvents[K]): void {
@@ -197,10 +211,11 @@ export function createMapLibreAdapter(): MapAdapter {
 
   function addLayers(): void {
     if (!map || !tokens) return;
+    const imagery = baseStyle === "satellite";
     for (const layer of [
-      ...geofenceLayers(tokens),
-      ...routeLayers(tokens),
-      ...vehicleLayers(tokens),
+      ...geofenceLayers(tokens, { imagery }),
+      ...routeLayers(tokens, { imagery }),
+      ...vehicleLayers(tokens, { imagery }),
     ]) {
       if (!map.getLayer(layer.id)) map.addLayer(layer);
     }
@@ -363,6 +378,7 @@ export function createMapLibreAdapter(): MapAdapter {
     return {
       center: [center.lng, center.lat],
       zoom: instance.getZoom(),
+      bearing: instance.getBearing(),
       bounds: {
         south: bounds.getSouth(),
         west: bounds.getWest(),
@@ -411,16 +427,17 @@ export function createMapLibreAdapter(): MapAdapter {
       theme = options.theme;
       tokens = options.tokens;
       const bounds = options.bounds ?? mapConfig.defaultBounds;
+      baseStyle =
+        options.baseStyle && styles.includes(options.baseStyle) ? options.baseStyle : "standard";
       const instance = createMap({
         container: element,
-        style: styleUrlFor(theme),
+        style: styleFor(baseStyle, theme, options.tokens, satellite),
         center: centerOf(bounds),
         zoom: 7,
         attributionControl: false,
         ...mapConfig.options,
       });
       map = instance;
-      instance.addControl(createNavigationControl(), "top-right");
       wireEvents(instance);
 
       contextCanvas = instance.getCanvas();
@@ -470,9 +487,14 @@ export function createMapLibreAdapter(): MapAdapter {
 
       if (nextTheme !== theme) {
         theme = nextTheme;
+        // Imagery has no light/dark variants; only the data layers need repainting.
+        if (baseStyle === "satellite") {
+          refreshTokens();
+          return;
+        }
         const instance = map;
         const generation = ++styleGeneration;
-        instance.setStyle(styleUrlFor(theme));
+        instance.setStyle(styleFor("standard", theme, nextTokens, satellite));
         waitForStyle(instance, 0, nextTokens)
           .then(() => {
             if (map !== instance || generation !== styleGeneration) return;
@@ -486,6 +508,37 @@ export function createMapLibreAdapter(): MapAdapter {
       }
 
       refreshTokens();
+    },
+
+    setBaseStyle(id: MapStyleId): void {
+      if (!styles.includes(id) || id === baseStyle) return;
+      baseStyle = id;
+      if (!map || !tokens) return;
+
+      const instance = map;
+      const generation = ++styleGeneration;
+      instance.setStyle(styleFor(id, theme, tokens, satellite));
+      waitForStyle(instance, 0, tokens)
+        .then(() => {
+          if (map !== instance || generation !== styleGeneration) return;
+          installLayers();
+        })
+        .catch((cause: unknown) => {
+          if (map !== instance || generation !== styleGeneration) return;
+          fail(cause, "The map style could not load");
+        });
+    },
+
+    zoomIn(): void {
+      map?.zoomIn();
+    },
+
+    zoomOut(): void {
+      map?.zoomOut();
+    },
+
+    resetBearing(): void {
+      map?.easeTo({ bearing: 0, animate: !prefersReducedMotion() });
     },
 
     setVehicles(vehicles: readonly MapVehicle[]): void {
@@ -566,6 +619,7 @@ export function createMapLibreAdapter(): MapAdapter {
         return {
           center: [0, 0],
           zoom: 0,
+          bearing: 0,
           bounds: { south: 0, west: 0, north: 0, east: 0 },
         };
       }

@@ -11,23 +11,32 @@ export const SOURCE_IDS = {
 export const LAYER_IDS = {
   geofenceFill: "fleet-geofence-fill",
   geofenceHatch: "fleet-geofence-hatch",
+  geofenceHalo: "fleet-geofence-halo",
   geofenceLineDepot: "fleet-geofence-line-depot",
   geofenceLineCustomer: "fleet-geofence-line-customer",
   geofenceLineRestricted: "fleet-geofence-line-restricted",
   geofenceLineOther: "fleet-geofence-line-other",
   geofenceLabel: "fleet-geofence-label",
+  routeHalo: "fleet-route-halo",
   routeGap: "fleet-route-gap",
   routeLine: "fleet-route-line",
   vehicleHit: "fleet-vehicle-hit",
+  vehicleHalo: "fleet-vehicle-halo",
+  vehicleSelectedHalo: "fleet-vehicle-selected-halo",
   vehicleSelected: "fleet-vehicle-selected",
   vehicleHover: "fleet-vehicle-hover",
   vehicleAlertRing: "fleet-vehicle-alert-ring",
   vehicleCircle: "fleet-vehicle-circle",
   vehicleGlyph: "fleet-vehicle-glyph",
   vehicleLabel: "fleet-vehicle-label",
+  clusterHalo: "fleet-cluster-halo",
   clusterCircle: "fleet-cluster-circle",
   clusterCount: "fleet-cluster-count",
 } as const;
+
+export interface LayerOptions {
+  imagery?: boolean;
+}
 
 const EMPTY: FeatureCollection = { type: "FeatureCollection", features: [] };
 
@@ -63,13 +72,35 @@ const statusColor = (tokens: MapTokens): unknown[] => [
 
 const staleOpacity = (active: number): unknown[] => ["case", ["get", "stale"], 0.6, active];
 
-export function vehicleLayers(tokens: MapTokens): LayerSpecification[] {
+export function vehicleLayers(tokens: MapTokens, options: LayerOptions = {}): LayerSpecification[] {
+  const imagery = options.imagery === true;
+  const halo = tokens.onImagery;
   return [
     circle(LAYER_IDS.vehicleHit, {
       "circle-radius": tokens.marker.hitRadius,
       "circle-color": tokens.colors.text,
       "circle-opacity": 0,
     }),
+    ...(imagery
+      ? [
+          circle(
+            LAYER_IDS.vehicleHalo,
+            {
+              "circle-radius": tokens.marker.radius + halo.haloWidth,
+              "circle-color": halo.haloColor,
+            },
+            { filter: ["!", ["has", "point_count"]] },
+          ),
+          circle(
+            LAYER_IDS.vehicleSelectedHalo,
+            {
+              "circle-radius": tokens.marker.selectedRadius + halo.haloWidth,
+              "circle-color": halo.haloColor,
+            },
+            { filter: ["all", ["!", ["has", "point_count"]], ["==", ["get", "selected"], true]] },
+          ),
+        ]
+      : []),
     circle(
       LAYER_IDS.vehicleSelected,
       {
@@ -168,10 +199,30 @@ export function vehicleLayers(tokens: MapTokens): LayerSpecification[] {
       },
       paint: {
         "text-color": tokens.colors.text,
-        "text-halo-color": tokens.colors.surface,
-        "text-halo-width": 1.5,
+        "text-halo-color": imagery ? halo.haloColor : tokens.colors.surface,
+        "text-halo-width": imagery ? halo.haloWidth : 1.5,
       },
     },
+    ...(imagery
+      ? [
+          circle(
+            LAYER_IDS.clusterHalo,
+            {
+              "circle-radius": [
+                "step",
+                ["get", "point_count"],
+                14 + halo.haloWidth,
+                10,
+                18 + halo.haloWidth,
+                100,
+                22 + halo.haloWidth,
+              ],
+              "circle-color": halo.haloColor,
+            },
+            { filter: ["has", "point_count"] },
+          ),
+        ]
+      : []),
     circle(
       LAYER_IDS.clusterCircle,
       {
@@ -204,6 +255,9 @@ export function vehicleLayers(tokens: MapTokens): LayerSpecification[] {
       },
       paint: {
         "text-color": tokens.colors.textInverse,
+        ...(imagery
+          ? { "text-halo-color": halo.haloColor, "text-halo-width": halo.haloWidth }
+          : {}),
       },
     },
   ];
@@ -228,7 +282,8 @@ const geofenceLine = (
   },
 });
 
-export function geofenceLayers(tokens: MapTokens): LayerSpecification[] {
+export function geofenceLayers(tokens: MapTokens, options: LayerOptions = {}): LayerSpecification[] {
+  const imagery = options.imagery === true;
   return [
     {
       id: LAYER_IDS.geofenceFill,
@@ -259,6 +314,20 @@ export function geofenceLayers(tokens: MapTokens): LayerSpecification[] {
         "fill-opacity": 0.55,
       },
     },
+    ...(imagery
+      ? [
+          {
+            id: LAYER_IDS.geofenceHalo,
+            type: "line" as const,
+            source: SOURCE_IDS.geofences,
+            layout: { "line-cap": "round" as const, "line-join": "round" as const },
+            paint: {
+              "line-color": tokens.onImagery.haloColor,
+              "line-width": tokens.geofence.strokeWidth + tokens.onImagery.haloWidth * 2,
+            },
+          },
+        ]
+      : []),
     geofenceLine(
       LAYER_IDS.geofenceLineDepot,
       "depot",
@@ -300,15 +369,30 @@ export function geofenceLayers(tokens: MapTokens): LayerSpecification[] {
       },
       paint: {
         "text-color": tokens.colors.text,
-        "text-halo-color": tokens.colors.surface,
-        "text-halo-width": 1.5,
+        "text-halo-color": imagery ? tokens.onImagery.haloColor : tokens.colors.surface,
+        "text-halo-width": imagery ? tokens.onImagery.haloWidth : 1.5,
       },
     },
   ];
 }
 
-export function routeLayers(tokens: MapTokens): LayerSpecification[] {
+export function routeLayers(tokens: MapTokens, options: LayerOptions = {}): LayerSpecification[] {
+  const imagery = options.imagery === true;
   return [
+    ...(imagery
+      ? [
+          {
+            id: LAYER_IDS.routeHalo,
+            type: "line" as const,
+            source: SOURCE_IDS.route,
+            layout: { "line-cap": "round" as const, "line-join": "round" as const },
+            paint: {
+              "line-color": tokens.onImagery.haloColor,
+              "line-width": 3 + tokens.onImagery.haloWidth * 2,
+            },
+          },
+        ]
+      : []),
     {
       id: LAYER_IDS.routeGap,
       type: "line",

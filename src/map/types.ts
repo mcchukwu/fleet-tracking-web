@@ -4,6 +4,8 @@ import type { AppError } from "../errors/types";
 
 export type LngLat = [number, number];
 
+export type MapStyleId = "standard" | "satellite";
+
 export interface Bounds {
   south: number;
   west: number;
@@ -21,6 +23,7 @@ export interface Padding {
 export interface Viewport {
   center: LngLat;
   zoom: number;
+  bearing: number;
   bounds: Bounds;
 }
 
@@ -55,6 +58,7 @@ export interface MapCapabilities {
   drawing: boolean;
   clustering: "native" | "emulated";
   comfortableVehicleCount: number;
+  styles: readonly MapStyleId[];
 }
 
 export interface MapTokens {
@@ -99,6 +103,10 @@ export interface MapTokens {
     labelZoom: number;
     labelSize: number;
   };
+  onImagery: {
+    haloWidth: number;
+    haloColor: string;
+  };
 }
 
 export interface DrawController {
@@ -123,6 +131,7 @@ export interface MountOptions {
   theme: "light" | "dark";
   tokens: MapTokens;
   bounds?: Bounds;
+  baseStyle?: MapStyleId;
 }
 
 export interface MapAdapter {
@@ -136,6 +145,10 @@ export interface MapAdapter {
   setRoute(route: MapRoute | null): void;
   fitBounds(bounds: Bounds, options?: { padding?: Padding; animate?: boolean }): void;
   flyTo(point: LngLat, zoom?: number): void;
+  zoomIn(): void;
+  zoomOut(): void;
+  resetBearing(): void;
+  setBaseStyle(id: MapStyleId): void;
   getViewport(): Viewport;
   on<K extends keyof MapEvents>(event: K, listener: (payload: MapEvents[K]) => void): () => void;
   readonly draw?: DrawController;
