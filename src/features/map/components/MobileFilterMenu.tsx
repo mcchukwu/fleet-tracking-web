@@ -60,7 +60,7 @@ export function MobileFilterMenu({
           icon={<SlidersHorizontal aria-hidden="true" className="size-4" strokeWidth={1.5} />}
         />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-64">
+      <DropdownMenuContent align="start" className="map-filter-menu w-64">
         <DropdownMenuLabel>Status</DropdownMenuLabel>
         {statuses.map((status) => {
           const active = filters.statuses.includes(status);
@@ -68,8 +68,10 @@ export function MobileFilterMenu({
             <DropdownMenuCheckboxItem
               key={status}
               checked={active}
-              onSelect={(event) => event.preventDefault()}
-              onCheckedChange={() => toggleStatus(status)}
+              onSelect={(event) => {
+                event.preventDefault();
+                toggleStatus(status);
+              }}
             >
               <span className="flex-1">
                 <StatusPill status={status} />
@@ -109,8 +111,10 @@ export function MobileFilterMenu({
         <DropdownMenuSeparator />
         <DropdownMenuCheckboxItem
           checked={filters.onlyInView}
-          onSelect={(event) => event.preventDefault()}
-          onCheckedChange={(checked) => onChange({ onlyInView: checked === true })}
+          onSelect={(event) => {
+            event.preventDefault();
+            onChange({ onlyInView: !filters.onlyInView });
+          }}
         >
           Only in view
         </DropdownMenuCheckboxItem>

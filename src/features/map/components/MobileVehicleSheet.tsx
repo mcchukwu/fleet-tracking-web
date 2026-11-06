@@ -127,6 +127,9 @@ export function MobileVehicleSheet({
 
   function onPointerDown(event: PointerEvent<HTMLDivElement>): void {
     const target = event.target as HTMLElement;
+    // Portals (menus, tooltips) bubble through the React tree, not the DOM tree.
+    // A pointer inside a portal must never start a sheet drag.
+    if (!event.currentTarget.contains(target)) return;
     if (target.closest("[data-sheet-action]")) return;
     dragRef.current = { startY: event.clientY, startVisible: visible };
     event.currentTarget.setPointerCapture?.(event.pointerId);

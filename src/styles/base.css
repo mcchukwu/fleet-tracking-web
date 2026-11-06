@@ -114,6 +114,12 @@
     --map-inset-bottom: 96px;
   }
 
+  .map-filter-menu {
+    max-height: min(320px, 55dvh);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
   .mobile-sheet {
     height: min(
       calc(100dvh - var(--spacing-topbar) - var(--spacing-sheet-strip)),
