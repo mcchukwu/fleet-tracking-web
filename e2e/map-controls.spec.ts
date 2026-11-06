@@ -276,6 +276,7 @@ test.describe("map controls", () => {
     await expect(appearance).toBeVisible();
     await appearance.getByRole("menuitemradio", { name: "Light" }).click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await captureForReview(page, "02b-appearance-menu");
     const light = await stack.evaluate((element) => getComputedStyle(element).backgroundColor);
 
     await appearance.getByRole("menuitemradio", { name: "Dark" }).click();
