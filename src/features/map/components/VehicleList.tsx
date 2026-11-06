@@ -65,7 +65,7 @@ export function VehicleList({
   }, [rows, selectedKey, virtualizer]);
 
   return (
-    <div ref={parentRef} className="min-h-0 flex-1 overflow-auto">
+    <div ref={parentRef} className="min-h-0 flex-1 overflow-auto overscroll-contain">
       <ul
         aria-label="Vehicles"
         className="relative w-full"

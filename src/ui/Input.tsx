@@ -4,6 +4,8 @@ import { cn } from "./cn";
 
 interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "id"> {
   label: string;
+  /** The compact map sheet keeps the accessible name but hides the visible label. */
+  hideLabel?: boolean;
   hint?: string;
   error?: string;
   leadingIcon?: ReactNode;
@@ -14,6 +16,7 @@ interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "id"> {
 export function Input({
   className,
   label,
+  hideLabel = false,
   hint,
   error,
   leadingIcon,
@@ -27,7 +30,10 @@ export function Input({
 
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-sm font-medium text-text">
+      <label
+        htmlFor={id}
+        className={hideLabel ? "sr-only" : "text-sm font-medium text-text"}
+      >
         {label}
       </label>
       <div className="relative">

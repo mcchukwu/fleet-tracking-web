@@ -113,6 +113,19 @@
     --map-inset-bottom: 96px;
   }
 
+  .mobile-sheet {
+    height: min(
+      calc(100dvh - var(--spacing-topbar) - var(--spacing-sheet-strip)),
+      calc(100% - var(--spacing-sheet-strip))
+    );
+    transform: translateY(calc(100% - var(--sheet-visible, 96px)));
+    transition: transform var(--motion-slow) var(--ease-slow);
+  }
+
+  [data-sheet-dragging="true"] .mobile-sheet {
+    transition: none;
+  }
+
   .map-inset-right {
     transform: translateX(calc(-1 * var(--map-inset-right, 0px)));
     transition: transform var(--motion-slow) var(--ease-slow);

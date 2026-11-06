@@ -28,6 +28,7 @@ export interface VehiclePanelProps {
   rowHeight: number;
   signature: string;
   showHeader?: boolean;
+  showFilters?: boolean;
   className?: string;
   onSelect: (key: string) => void;
   onHover: (key: string | null) => void;
@@ -54,6 +55,7 @@ export function VehiclePanel({
   rowHeight,
   signature,
   showHeader = true,
+  showFilters = true,
   className,
   onSelect,
   onHover,
@@ -138,12 +140,14 @@ export function VehiclePanel({
         </div>
       ) : null}
 
-      <VehicleFilters
-        values={filters}
-        depots={depots}
-        onChange={onFilterChange}
-        onReset={onReset}
-      />
+      {showFilters ? (
+        <VehicleFilters
+          values={filters}
+          depots={depots}
+          onChange={onFilterChange}
+          onReset={onReset}
+        />
+      ) : null}
 
       {loading || fetching ? (
         <SlowNotice

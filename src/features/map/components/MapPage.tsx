@@ -72,6 +72,7 @@ export function MapPage() {
   const [viewport, setViewport] = useState<Viewport | null>(null);
   const bounds = viewport?.bounds ?? null;
   const [sheetSnap, setSheetSnap] = useState<SheetSnap>("peek");
+  const [sheetObscured, setSheetObscured] = useState(false);
   const adapterRef = useRef<MapAdapter | null>(null);
   const panelToggleRef = useRef<HTMLButtonElement>(null);
   const mapRootRef = useRef<HTMLDivElement>(null);
@@ -442,13 +443,19 @@ export function MapPage() {
           onSnap={setSheetSnap}
           shown={rows.length}
           total={data.total}
+          filters={filters}
+          depots={depots}
           geofencesVisible={preferences.geofencesVisible}
           fitDisabled={data.positioned === 0}
+          insetTarget={mapRootRef}
           onFit={fitFleet}
           onToggleGeofences={preferences.toggleGeofences}
+          onFilterChange={changeFilters}
+          onResetFilters={resetFilters}
+          onObscuredChange={setSheetObscured}
         >
           <ErrorBoundary level="panel">
-            <VehiclePanel {...panelProps} showHeader={false} />
+            <VehiclePanel {...panelProps} showHeader={false} showFilters={false} />
           </ErrorBoundary>
         </MobileVehicleSheet>
       ) : null}
@@ -469,7 +476,7 @@ export function MapPage() {
         <MapControls
           {...controlsProps}
           variant={isDesktop ? "desktop" : "mobile"}
-          obscured={!isDesktop && sheetSnap === "full"}
+          obscured={!isDesktop && (sheetSnap === "full" || sheetObscured)}
           className={cn(
             "absolute bottom-3 right-3 z-10",
             isDesktop ? "map-inset-right" : "map-inset-bottom",

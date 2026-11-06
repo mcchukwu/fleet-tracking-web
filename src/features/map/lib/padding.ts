@@ -1,7 +1,8 @@
 import type { Padding } from "../../../map/types";
 import { PANEL_INSET, PANEL_WIDTH, SHEET_PEEK } from "./constants";
+import type { SheetSnap } from "./sheet";
 
-export type SheetSnap = "peek" | "half" | "full";
+export type { SheetSnap } from "./sheet";
 
 export interface FitPaddingInput {
   isDesktop: boolean;
