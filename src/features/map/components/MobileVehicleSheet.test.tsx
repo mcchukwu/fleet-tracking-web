@@ -111,6 +111,18 @@ describe("MobileVehicleSheet", () => {
     );
   });
 
+  it("reads the sheet geometry from the design tokens", async () => {
+    document.documentElement.style.setProperty("--spacing-sheet-peek", "120px");
+    try {
+      const { insetTarget } = renderSheet("peek");
+      await waitFor(() =>
+        expect(insetTarget.style.getPropertyValue("--map-inset-bottom")).toBe("120px"),
+      );
+    } finally {
+      document.documentElement.style.removeProperty("--spacing-sheet-peek");
+    }
+  });
+
   it("snaps after a drag that starts on the header", () => {
     const { onSnap } = renderSheet("peek");
     const header = screen.getByTestId("sheet-header");

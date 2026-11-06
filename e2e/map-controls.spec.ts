@@ -181,6 +181,7 @@ test.describe("map controls", () => {
 
     await page.getByRole("button", { name: "Collapse the vehicle list" }).click();
     await expect(handle).toHaveAttribute("aria-expanded", "true");
+    await expect(handle).toBeFocused();
     await expect
       .poll(async () => (await sheet(page).boundingBox())?.y ?? 0)
       .toBeGreaterThan(full.y + 100);
@@ -243,6 +244,9 @@ test.describe("map controls", () => {
   test("satellite persists, falls back offline and restores online", async ({ page }) => {
     await gotoMap(page);
     await page.getByRole("button", { name: "Map style" }).click();
+    await expect(
+      page.getByRole("menuitemradio", { name: "Map" }).getByTestId("menu-item-indicator"),
+    ).toBeVisible();
     await captureForReview(page, "02b-style-menu");
     await page.getByRole("menuitemradio", { name: "Satellite" }).click();
     await expect.poll(async () => (await debugMap(page))?.baseStyle).toBe("satellite");
@@ -286,8 +290,18 @@ test.describe("map controls", () => {
     await userMenu.click();
     const appearance = page.getByRole("group", { name: "Appearance" });
     await expect(appearance).toBeVisible();
+    await expect(
+      appearance
+        .getByRole("menuitemradio", { name: "System" })
+        .getByTestId("menu-item-indicator"),
+    ).toBeVisible();
     await appearance.getByRole("menuitemradio", { name: "Light" }).click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await expect(
+      appearance
+        .getByRole("menuitemradio", { name: "Light" })
+        .getByTestId("menu-item-indicator"),
+    ).toBeVisible();
     await captureForReview(page, "02b-appearance-menu");
     const light = await stack.evaluate((element) => getComputedStyle(element).backgroundColor);
 

@@ -7,25 +7,37 @@ import {
   type CSSProperties,
   type PointerEvent,
   type ReactNode,
+  type Ref,
   type RefObject,
 } from "react";
 import { SearchInput } from "../../../ui/SearchInput";
 import { IconButton } from "../../../ui/IconButton";
 import { cn } from "../../../ui/cn";
 import type { MapFilterValues } from "../lib/filter";
+import { SHEET_PEEK } from "../lib/constants";
 import {
   clampVisible,
   isObscured,
   nearestSnap,
   nextSheetSnap,
+  SHEET_STRIP,
   sheetMetrics,
   sheetVisible,
   toggleSheetSnap,
+  TOP_BAR_HEIGHT,
   type SheetSnap,
 } from "../lib/sheet";
 import { MobileFilterMenu } from "./MobileFilterMenu";
 
 export type { SheetSnap } from "../lib/sheet";
+
+function readToken(name: string, fallback: number): number {
+  if (typeof window === "undefined") return fallback;
+  const value = Number.parseFloat(
+    window.getComputedStyle(document.documentElement).getPropertyValue(name),
+  );
+  return Number.isFinite(value) ? value : fallback;
+}
 
 function sheetVisibleStyle(visible: number): CSSProperties {
   return { "--sheet-visible": `${visible}px` } as CSSProperties;
@@ -41,6 +53,7 @@ export interface MobileVehicleSheetProps {
   geofencesVisible: boolean;
   fitDisabled?: boolean;
   insetTarget?: RefObject<HTMLElement | null>;
+  handleRef?: Ref<HTMLButtonElement>;
   onFit: () => void;
   onToggleGeofences: () => void;
   onFilterChange: (patch: Partial<MapFilterValues>) => void;
@@ -59,6 +72,7 @@ export function MobileVehicleSheet({
   geofencesVisible,
   fitDisabled = false,
   insetTarget,
+  handleRef,
   onFit,
   onToggleGeofences,
   onFilterChange,
@@ -69,7 +83,16 @@ export function MobileVehicleSheet({
   const [viewportHeight, setViewportHeight] = useState(() =>
     typeof window === "undefined" ? 800 : window.innerHeight,
   );
-  const metrics = useMemo(() => sheetMetrics(viewportHeight), [viewportHeight]);
+  const metrics = useMemo(
+    () =>
+      sheetMetrics(
+        viewportHeight,
+        readToken("--spacing-topbar", TOP_BAR_HEIGHT),
+        readToken("--spacing-sheet-strip", SHEET_STRIP),
+        readToken("--spacing-sheet-peek", SHEET_PEEK),
+      ),
+    [viewportHeight],
+  );
   const visible = sheetVisible(snap, metrics);
 
   const sheetRef = useRef<HTMLElement>(null);
@@ -188,6 +211,7 @@ export function MobileVehicleSheet({
 
         <div className="flex h-touch min-w-0 items-center gap-2">
           <button
+            ref={handleRef}
             type="button"
             data-sheet-action
             aria-expanded={snap !== "peek"}

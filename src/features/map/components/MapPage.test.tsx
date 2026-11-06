@@ -363,6 +363,35 @@ describe("MapPage", () => {
     expect(screen.queryByText("Active trips")).not.toBeInTheDocument();
   });
 
+  it("returns focus to the sheet handle after collapsing the full sheet", async () => {
+    mocks.desktop = false;
+    renderPage();
+    const handle = screen.getByRole("button", { name: /Showing 3 of 3/ });
+    handle.focus();
+    await userEvent.keyboard("{End}");
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Collapse the vehicle list" }),
+    );
+
+    await waitFor(() => expect(document.activeElement).toBe(handle));
+  });
+
+  it("moves focus to the sheet handle when a drag obscures the controls", async () => {
+    mocks.desktop = false;
+    renderPage();
+    const zoomIn = screen.getByRole("button", { name: "Zoom in" });
+    zoomIn.focus();
+    const header = screen.getByTestId("sheet-header");
+
+    fireEvent.pointerDown(header, { clientY: 700, pointerId: 1 });
+    fireEvent.pointerMove(header, { clientY: 200, pointerId: 1 });
+
+    const handle = screen.getByRole("button", { name: /Showing 3 of 3/ });
+    await waitFor(() => expect(document.activeElement).toBe(handle));
+    fireEvent.pointerUp(header, { clientY: 200, pointerId: 1 });
+  });
+
   it("publishes the drawer inset through the dev harness", async () => {
     vi.stubEnv("VITE_MOCK", "1");
     window.history.replaceState({}, "", "/map?inset=1");

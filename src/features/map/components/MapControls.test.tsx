@@ -175,4 +175,40 @@ describe("MapControls", () => {
     expect(stack).toHaveClass("opacity-0");
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
+
+  it("hands focus back when it becomes obscured with focus inside", () => {
+    const onObscuredFocusLoss = vi.fn();
+    const props: MapControlsProps = {
+      variant: "mobile",
+      bearing: 0,
+      zoom: 7,
+      styles: ["standard"],
+      baseStyle: "standard",
+      offline: false,
+      panelOpen: true,
+      geofencesVisible: true,
+      onZoomIn: vi.fn(),
+      onZoomOut: vi.fn(),
+      onResetBearing: vi.fn(),
+      onFit: vi.fn(),
+      onTogglePanel: vi.fn(),
+      onToggleGeofences: vi.fn(),
+      onStyleChange: vi.fn(),
+      onObscuredFocusLoss,
+    };
+    const { rerender } = render(
+      <TooltipProvider>
+        <MapControls {...props} />
+      </TooltipProvider>,
+    );
+
+    screen.getByRole("button", { name: "Zoom in" }).focus();
+    rerender(
+      <TooltipProvider>
+        <MapControls {...props} obscured />
+      </TooltipProvider>,
+    );
+
+    expect(onObscuredFocusLoss).toHaveBeenCalledOnce();
+  });
 });

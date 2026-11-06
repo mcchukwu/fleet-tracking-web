@@ -1,5 +1,5 @@
 import type { CSSProperties, Ref } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Compass,
   Layers,
@@ -36,6 +36,7 @@ export interface MapControlsProps {
   onTogglePanel: () => void;
   onToggleGeofences: () => void;
   onStyleChange: (id: MapStyleId) => void;
+  onObscuredFocusLoss?: () => void;
   className?: string;
 }
 
@@ -62,9 +63,11 @@ export function MapControls({
   onTogglePanel,
   onToggleGeofences,
   onStyleChange,
+  onObscuredFocusLoss,
   className,
 }: MapControlsProps) {
   const [styleOpen, setStyleOpen] = useState(false);
+  const stackRef = useRef<HTMLFieldSetElement>(null);
   const maxZoom = mapConfig.options.maxZoom;
   const minZoom = mapConfig.options.minZoom;
   const atMax = zoom >= maxZoom;
@@ -74,10 +77,21 @@ export function MapControls({
   const bearingLabel = `Reset bearing to north (${bearingText})`;
   const fitLabel = fitDisabled ? "No vehicles are reporting a position" : "Fit the fleet";
 
-  if (obscured && styleOpen) setStyleOpen(false);
+  useEffect(() => {
+    if (!obscured) return;
+    // The opaque sheet cannot close a menu owned by an inert stack, so this is
+    // the one place that can dismiss it when the stack goes away.
+    // oxlint-disable-next-line react/set-state-in-effect
+    setStyleOpen(false);
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && stackRef.current?.contains(active)) {
+      onObscuredFocusLoss?.();
+    }
+  }, [obscured, onObscuredFocusLoss]);
 
   return (
     <fieldset
+      ref={stackRef}
       aria-label="Map controls"
       {...(obscured ? { inert: true, "aria-hidden": true } : {})}
       className={cn(

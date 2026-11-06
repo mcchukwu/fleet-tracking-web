@@ -76,6 +76,7 @@ export function MapPage() {
   const [sheetObscured, setSheetObscured] = useState(false);
   const adapterRef = useRef<MapAdapter | null>(null);
   const panelToggleRef = useRef<HTMLButtonElement>(null);
+  const sheetHandleRef = useRef<HTMLButtonElement>(null);
   const mapRootRef = useRef<HTMLDivElement>(null);
   const fittedOnce = useRef(false);
   const harnessOpen =
@@ -262,6 +263,10 @@ export function MapPage() {
     setTimeout(() => panelToggleRef.current?.focus(), 0);
   }, [preferences]);
 
+  const focusSheetHandle = useCallback(() => {
+    sheetHandleRef.current?.focus();
+  }, []);
+
   useEffect(() => {
     if (fittedOnce.current || !adapterRef.current || data.positioned === 0) return;
     fittedOnce.current = true;
@@ -382,6 +387,7 @@ export function MapPage() {
     onTogglePanel: () => preferences.setPanelOpen(!preferences.panelOpen),
     onToggleGeofences: preferences.toggleGeofences,
     onStyleChange: mapStyle.chooseStyle,
+    onObscuredFocusLoss: focusSheetHandle,
   };
 
   return (
@@ -449,6 +455,7 @@ export function MapPage() {
           geofencesVisible={preferences.geofencesVisible}
           fitDisabled={data.positioned === 0}
           insetTarget={mapRootRef}
+          handleRef={sheetHandleRef}
           onFit={fitFleet}
           onToggleGeofences={preferences.toggleGeofences}
           onFilterChange={changeFilters}
@@ -493,7 +500,10 @@ export function MapPage() {
       {!isDesktop && sheetSnap === "full" ? (
         <button
           type="button"
-          onClick={() => setSheetSnap("half")}
+          onClick={() => {
+            setSheetSnap("half");
+            focusSheetHandle();
+          }}
           className="absolute inset-x-0 top-0 z-10 h-sheet-strip w-full focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring"
         >
           <span className="sr-only">Collapse the vehicle list</span>
