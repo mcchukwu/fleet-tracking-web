@@ -13,7 +13,7 @@ describe("sheet geometry", () => {
   it("computes snap heights from the viewport minus the top bar and map strip", () => {
     const tall = sheetMetrics(844);
     expect(tall.available).toBe(716);
-    expect(tall.peek).toBe(96);
+    expect(tall.peek).toBe(113);
     expect(tall.half).toBe(358);
     expect(tall.full).toBe(716);
 
@@ -25,7 +25,7 @@ describe("sheet geometry", () => {
 
   it("clamps a dragged height between peek and full", () => {
     const metrics = sheetMetrics(844);
-    expect(clampVisible(20, metrics)).toBe(96);
+    expect(clampVisible(20, metrics)).toBe(113);
     expect(clampVisible(900, metrics)).toBe(716);
     expect(clampVisible(400, metrics)).toBe(400);
   });
@@ -39,7 +39,7 @@ describe("sheet geometry", () => {
 
   it("maps a snap to its visible height", () => {
     const metrics = sheetMetrics(844);
-    expect(sheetVisible("peek", metrics)).toBe(96);
+    expect(sheetVisible("peek", metrics)).toBe(113);
     expect(sheetVisible("half", metrics)).toBe(358);
     expect(sheetVisible("full", metrics)).toBe(716);
   });

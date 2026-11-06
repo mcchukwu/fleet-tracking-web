@@ -17,6 +17,10 @@
   "overrides": [
     { "files": ["src/errors/report.ts", "scripts/**"], "rules": { "no-console": "off" } },
     {
+      "files": ["e2e/measure/**"],
+      "rules": { "no-console": "off" }
+    },
+    {
       "files": ["**/*.test.*", "e2e/**"],
       "rules": { "typescript/no-non-null-assertion": "off" }
     },

@@ -174,11 +174,11 @@ export function MobileVehicleSheet({
       ref={sheetRef}
       aria-label="Vehicles"
       style={sheetVisibleStyle(visible)}
-      className="mobile-sheet absolute inset-x-0 bottom-0 z-20 flex flex-col rounded-t-lg border-x border-t border-border bg-surface shadow-float"
+      className="mobile-sheet absolute inset-x-0 bottom-0 z-20 flex flex-col rounded-t-lg bg-surface shadow-float ring-1 ring-border"
     >
       <div
         data-testid="sheet-header"
-        className="flex h-sheet-peek shrink-0 touch-none flex-col justify-between border-b border-border px-3"
+        className="relative z-10 flex h-sheet-peek shrink-0 touch-none flex-col border-b border-border bg-surface px-3"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -213,37 +213,19 @@ export function MobileVehicleSheet({
               }
             }}
           >
-            <span className="text-md font-medium text-text">Vehicles</span>
+            <span className="shrink-0 text-md font-medium text-text">Vehicles</span>
             <span className="truncate text-xs tabular-nums text-muted">
               Showing {shown} of {total}
             </span>
             <ChevronUp
               aria-hidden="true"
               className={cn(
-                "ml-auto size-4 text-muted",
+                "ml-auto size-4 shrink-0 text-muted",
                 snap === "peek" ? undefined : "rotate-180",
               )}
               strokeWidth={1.5}
             />
           </button>
-          <span data-sheet-action>
-            <MobileFilterMenu
-              filters={filters}
-              depots={depots}
-              onChange={onFilterChange}
-              onReset={onResetFilters}
-            />
-          </span>
-        </div>
-
-        <div className="flex h-touch min-w-0 items-center gap-2">
-          <div data-sheet-action className="min-w-0 flex-1">
-            <SearchInput
-              compact
-              value={filters.q}
-              onChange={(q) => onFilterChange({ q })}
-            />
-          </div>
           <span data-sheet-action>
             <IconButton
               size="sm"
@@ -263,6 +245,24 @@ export function MobileVehicleSheet({
               icon={<Layers aria-hidden="true" className="size-4" strokeWidth={1.5} />}
             />
           </span>
+          <span data-sheet-action>
+            <MobileFilterMenu
+              filters={filters}
+              depots={depots}
+              onChange={onFilterChange}
+              onReset={onResetFilters}
+            />
+          </span>
+        </div>
+
+        <div className="flex h-15 min-w-0 items-center">
+          <div data-sheet-action className="w-full min-w-0">
+            <SearchInput
+              compact
+              value={filters.q}
+              onChange={(q) => onFilterChange({ q })}
+            />
+          </div>
         </div>
       </div>
 

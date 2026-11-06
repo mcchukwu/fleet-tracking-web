@@ -6,4 +6,4 @@ export const MAP_ROW_HEIGHT_TOUCH = 56;
 export const FIT_MAX_ZOOM = 12;
 export const PANEL_INSET = 12;
 export const PANEL_WIDTH = 360;
-export const SHEET_PEEK = 96;
+export const SHEET_PEEK = 113;

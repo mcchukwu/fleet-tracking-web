@@ -85,7 +85,7 @@ describe("MobileVehicleSheet", () => {
   it("publishes the visible height as the map inset", async () => {
     const { insetTarget, view } = renderSheet("peek");
     await waitFor(() =>
-      expect(insetTarget.style.getPropertyValue("--map-inset-bottom")).toBe("96px"),
+      expect(insetTarget.style.getPropertyValue("--map-inset-bottom")).toBe("113px"),
     );
 
     view.rerender(

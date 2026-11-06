@@ -125,7 +125,8 @@
       calc(100dvh - var(--spacing-topbar) - var(--spacing-sheet-strip)),
       calc(100% - var(--spacing-sheet-strip))
     );
-    transform: translateY(calc(100% - var(--sheet-visible, 96px)));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    transform: translateY(calc(100% - var(--sheet-visible, 113px)));
     transition: transform var(--motion-slow) var(--ease-slow);
   }
 
