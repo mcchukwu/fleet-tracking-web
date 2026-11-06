@@ -32,7 +32,7 @@ export function BrandLogo({ variant, className }: BrandLogoProps) {
       focusable="false"
       fill="currentColor"
       data-brand-variant={variant}
-      className={cn("h-6 w-auto shrink-0 text-text", className)}
+      className={cn("h-brand w-auto shrink-0 text-text", className)}
     >
       <path d={SYMBOL_PATH} />
       {lockup ? WORDMARK_PATHS.map((path) => <path key={path} d={path} />) : null}
