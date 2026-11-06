@@ -54,6 +54,7 @@ interface Layout {
     divider: Box;
     contentTop: number;
     contentBottom: number;
+    inlineAction: { width: number; height: number };
   }>;
   controls: Box;
   attribution: Box;
@@ -155,6 +156,14 @@ async function readLayout(page: Page): Promise<Layout> {
         divider: box(divider),
         contentTop: lines[0]?.top ?? contentBox.y,
         contentBottom: lines[lines.length - 1]?.bottom ?? contentBox.bottom,
+        inlineAction: (() => {
+          const action = row.querySelector<HTMLElement>(
+            "[data-row-inline-action] button",
+          );
+          if (!action) throw new Error("A vehicle row is missing its inline action");
+          const rect = action.getBoundingClientRect();
+          return { width: rect.width, height: rect.height };
+        })(),
       };
     });
 
@@ -218,6 +227,18 @@ function assertRows(layout: Layout, scroll: Scroll): void {
       row.contentTop - row.box.y,
       `row ${index} line group top`,
     ).toBeCloseTo(row.box.bottom - row.contentBottom, 0);
+    expect(
+      row.divider.y - row.contentBottom,
+      `row ${index} space above the divider`,
+    ).toBeGreaterThanOrEqual(6 - TOLERANCE);
+    expect(
+      row.inlineAction.height,
+      `row ${index} inline action height`,
+    ).toBeGreaterThanOrEqual(24);
+    expect(
+      row.inlineAction.width,
+      `row ${index} inline action width`,
+    ).toBeGreaterThanOrEqual(44);
 
     // The divider is a 1px line on the row's bottom edge, spanning its width.
     expect(row.divider.height, `row ${index} divider height`).toBeCloseTo(1, 0);

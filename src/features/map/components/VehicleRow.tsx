@@ -54,11 +54,14 @@ export function VehicleRow({ row, height, selected, onSelect, onHover }: Vehicle
       <div className="pointer-events-none relative z-10 flex h-full flex-col justify-center gap-0.5 px-3">
         <div className="flex min-w-0 items-center gap-2">
           <StatusPill status={row.status} />
-          <CopyButton
-            value={row.plate}
-            label="Plate"
-            className="pointer-events-auto shrink-0 text-sm"
-          />
+          <span data-row-inline-action className="pointer-events-auto inline-flex shrink-0">
+            <CopyButton
+              inline
+              value={row.plate}
+              label="Plate"
+              className="text-sm"
+            />
+          </span>
           <span className={cn("ml-auto shrink-0 text-xs tabular-nums", ageTone)}>
             {row.recordedAt ? (
               <Timestamp iso={row.recordedAt} />

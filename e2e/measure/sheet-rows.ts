@@ -51,6 +51,8 @@ interface RowBox extends Box {
   secondLine: Box | null;
   contentJustify: string;
   contentAlign: string;
+  contentBottom: number;
+  inlineActionHeight: number;
 }
 
 interface Layout {
@@ -129,6 +131,9 @@ async function readLayout(page: Page): Promise<Layout> {
         ? [...content.children].map((child) => box(child))
         : [];
       const contentStyle = content ? window.getComputedStyle(content) : null;
+      const action = row.querySelector<HTMLElement>(
+        "[data-row-inline-action] button",
+      );
       return {
         ...box(row),
         content: box(content),
@@ -136,6 +141,8 @@ async function readLayout(page: Page): Promise<Layout> {
         secondLine: lines[1] ?? null,
         contentJustify: contentStyle?.justifyContent ?? "",
         contentAlign: contentStyle?.alignItems ?? "",
+        contentBottom: lines[lines.length - 1]?.bottom ?? 0,
+        inlineActionHeight: action?.getBoundingClientRect().height ?? 0,
       } as RowBox;
     });
     const controls = document.querySelector<HTMLElement>(
@@ -242,9 +249,9 @@ function table(label: string, layout: Layout): void {
   }
   const first = layout.rows[0];
   const last = layout.rows[layout.rows.length - 1];
-  if (first) {
+    if (first) {
     console.log(
-      `rows: ${layout.rows.length} rendered; first y=${num(first.y)} h=${num(first.height)} content h=${num(first.content?.height)} content top=${num(first.content?.y)} content bottom=${num(first.content?.bottom)} justify=${first.contentJustify} align=${first.contentAlign}`,
+      `rows: ${layout.rows.length} rendered; first y=${num(first.y)} h=${num(first.height)} content h=${num(first.content?.height)} content top=${num(first.content?.y)} content bottom=${num(first.content?.bottom)} justify=${first.contentJustify} align=${first.contentAlign} action h=${num(first.inlineActionHeight)} gap-to-divider=${num(first.bottom - 1 - first.contentBottom)}`,
     );
     if (last && layout.rows.length > 1) {
       console.log(
@@ -307,6 +314,15 @@ function check(layout: Layout, snap: Snap, scroll: Scroll): string[] {
     }
     if (row.contentJustify !== "center") {
       failures.push(`row ${index} content justify=${row.contentJustify}`);
+    }
+    const dividerGap = row.bottom - 1 - row.contentBottom;
+    if (dividerGap < 6 - eps) {
+      failures.push(`row ${index} driver line to divider ${num(dividerGap)}px`);
+    }
+    if (row.inlineActionHeight < 24 - eps) {
+      failures.push(
+        `row ${index} inline action height ${num(row.inlineActionHeight)}px`,
+      );
     }
   }
 

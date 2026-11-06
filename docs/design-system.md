@@ -250,6 +250,8 @@ Neutrals are the zinc scale. One accent. Status colours carry meaning and are us
 | Control heights | 28 (sm), 32 (md, default), 36 (lg) |
 | Minimum pointer target | 28px desktop, 44px on touch breakpoints |
 
+Nested actions inside a 56px vehicle row keep a 24px height: the row itself is the primary touch target and a 44px inline action cannot fit two lines inside a 12px rhythm. The copy action keeps its 44px width.
+
 Shell and dialog sizes are tokens: `--spacing-touch: 44px`, `--spacing-rail-expanded: 200px`, `--container-dialog: 480px`, `--container-content: 1440px`. Use `size-touch`/`h-touch` below `md`, `max-w-dialog` for dialogs and `max-w-content` for non-map page content.
 
 ### 5.2 App layout

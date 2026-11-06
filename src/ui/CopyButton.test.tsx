@@ -23,6 +23,13 @@ describe("CopyButton", () => {
     expect(await screen.findByText("Plate copied")).toBeInTheDocument();
   });
 
+  it("keeps a compact height when used inline in a vehicle row", () => {
+    withProviders(<CopyButton inline value="LSD-100-AA" label="Plate" />);
+    const button = screen.getByRole("button", { name: /copy plate/i });
+    expect(button).toHaveClass("h-6");
+    expect(button).not.toHaveClass("h-touch");
+  });
+
   it("shows the clipboard failure copy when the browser denies access", async () => {
     const writeText = vi.fn().mockRejectedValue(new Error("denied"));
     Object.defineProperty(navigator, "clipboard", {
