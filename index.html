@@ -7,17 +7,25 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fafafa" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#09090b" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <title>Fleet Console</title>
     <script>
       (() => {
+        const accents = ["blue", "violet", "fuchsia", "graphite"];
+        const modes = ["light", "dark", "system"];
         try {
-          const mode = localStorage.getItem("fleet.theme") || "system";
-          const accent = localStorage.getItem("fleet.accent") || "blue";
+          const storedMode = localStorage.getItem("fleet.theme");
+          const storedAccent = localStorage.getItem("fleet.accent");
+          const mode = modes.includes(storedMode) ? storedMode : "system";
+          const accent = accents.includes(storedAccent) ? storedAccent : "blue";
           const dark =
             mode === "dark" ||
             (mode === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
           document.documentElement.classList.toggle("dark", dark);
+          document.documentElement.dataset.theme = dark ? "dark" : "light";
           document.documentElement.dataset.accent = accent;
         } catch {
           document.documentElement.dataset.accent = "blue";

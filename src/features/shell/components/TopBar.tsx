@@ -2,7 +2,6 @@ import { Link } from "@tanstack/react-router";
 import { Menu, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useConnection } from "../../../stores/connection";
-import { ThemeToggle } from "../../../theme/ThemeToggle";
 import { ConnectionIndicator, type ConnectionState } from "../../../ui/Badge";
 import { BrandBar } from "../../../ui/BrandBar";
 import { BrandLogo } from "../../../ui/BrandLogo";
@@ -81,9 +80,6 @@ export function TopBar({ onOpenMenu, onOpenShortcuts }: TopBarProps) {
               )
             }
           />
-          <span className="hidden md:inline">
-            <ThemeToggle />
-          </span>
           <ConnectionIndicator state={connection} compact />
           <UserMenu onShortcuts={onOpenShortcuts} />
         </div>

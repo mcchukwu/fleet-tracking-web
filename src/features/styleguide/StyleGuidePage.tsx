@@ -9,6 +9,7 @@ import {
   Search,
   Settings,
   WifiOff,
+  ZoomIn,
 } from "lucide-react";
 import { AccentPicker } from "../../theme/AccentPicker";
 import { ThemeToggle } from "../../theme/ThemeToggle";
@@ -249,6 +250,7 @@ export function StyleGuidePage() {
             <Button disabled>Disabled</Button>
             <IconButton label="More actions" icon={<MoreHorizontal aria-hidden="true" className="size-4" strokeWidth={1.5} />} />
             <IconButton label="Filters" variant="secondary" icon={<Filter aria-hidden="true" className="size-4" strokeWidth={1.5} />} />
+            <IconButton size="lg" label="Zoom in" icon={<ZoomIn aria-hidden="true" className="size-4" strokeWidth={1.5} />} />
           </div>
         </Section>
 
@@ -259,6 +261,7 @@ export function StyleGuidePage() {
             <Input label="Plate" defaultValue="LSD-100-AA" error="This plate is already registered." name="plate" />
             <Input label="Disabled" defaultValue="Read only" disabled name="disabled" />
             <SearchInput value={search} onChange={setSearch} />
+            <SearchInput compact label="Compact vehicle search" value={search} onChange={setSearch} />
             <Select label="Status" defaultValue="all" name="status">
               <option value="all">All vehicles</option>
               <option value="moving">Moving</option>
@@ -690,7 +693,12 @@ export function StyleGuidePage() {
                 </kbd>
               </div>
               <ConnectionIndicator state="online" />
-              <ThemeToggle />
+              <span
+                aria-hidden="true"
+                className="flex size-control-sm items-center justify-center rounded-full bg-accent-soft text-accent-fg"
+              >
+                <Settings className="size-4" strokeWidth={1.5} />
+              </span>
             </div>
             <div className="flex min-h-24">
               <nav

@@ -1,28 +1,17 @@
-import { ChevronDown, Keyboard, LogOut, Monitor, Moon, Sun, UserRound } from "lucide-react";
+import { ChevronDown, Keyboard, LogOut, UserRound } from "lucide-react";
 import { useState } from "react";
 import { useAuthStore } from "../../../auth/store";
-import { useTheme, type ThemeMode } from "../../../theme/theme-context";
+import { AppearanceControls } from "../../../theme/AppearanceControls";
 import { Badge } from "../../../ui/Badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "../../../ui/DropdownMenu";
 import { useSignOut } from "../hooks/useSignOut";
-
-const themeOptions: Array<{ value: ThemeMode; label: string; icon: typeof Sun }> = [
-  { value: "light", label: "Light", icon: Sun },
-  { value: "dark", label: "Dark", icon: Moon },
-  { value: "system", label: "System", icon: Monitor },
-];
 
 export interface UserMenuProps {
   onShortcuts?: () => void;
@@ -31,7 +20,6 @@ export interface UserMenuProps {
 export function UserMenu({ onShortcuts }: UserMenuProps) {
   const user = useAuthStore((state) => state.user);
   const { signOut, pending } = useSignOut();
-  const { mode, setMode } = useTheme();
   const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(null);
 
   if (!user) return null;
@@ -58,7 +46,7 @@ export function UserMenu({ onShortcuts }: UserMenuProps) {
           </button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" container={portalContainer} className="w-64">
+        <DropdownMenuContent align="end" container={portalContainer} className="w-72">
           <DropdownMenuLabel>
             <span className="block truncate text-sm text-text" title={user.name}>
               {user.name}
@@ -72,28 +60,9 @@ export function UserMenu({ onShortcuts }: UserMenuProps) {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
 
-          <div className="md:hidden">
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                <Sun aria-hidden="true" className="size-4" strokeWidth={1.5} />
-                Theme
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent container={portalContainer}>
-                <DropdownMenuRadioGroup
-                  value={mode}
-                  onValueChange={(value) => setMode(value as ThemeMode)}
-                >
-                  {themeOptions.map((option) => (
-                    <DropdownMenuRadioItem key={option.value} value={option.value}>
-                      <option.icon aria-hidden="true" className="size-4" strokeWidth={1.5} />
-                      {option.label}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-          </div>
+          <AppearanceControls />
 
+          <DropdownMenuSeparator />
           {onShortcuts ? (
             <DropdownMenuItem onSelect={onShortcuts}>
               <Keyboard aria-hidden="true" className="size-4" strokeWidth={1.5} />

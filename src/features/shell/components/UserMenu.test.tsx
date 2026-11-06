@@ -40,6 +40,10 @@ function renderMenu(onShortcuts = vi.fn()) {
 
 beforeEach(() => {
   navigate.mockReset();
+  localStorage.clear();
+  document.documentElement.classList.remove("dark");
+  delete document.documentElement.dataset.theme;
+  delete document.documentElement.dataset.accent;
   useAuthStore.setState({ user, csrfToken: "token", status: "authenticated" });
 });
 
@@ -103,6 +107,27 @@ describe("UserMenu", () => {
       screen.getByText("The server didn't end the session, so it may still be active there."),
     ).toBeVisible();
     await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: "/login" }));
+  });
+
+  it("changes theme and accent from the appearance section without closing", async () => {
+    const userEventApi = userEvent.setup();
+    renderMenu();
+
+    await userEventApi.click(screen.getByRole("button", { name: `Account menu for ${user.name}` }));
+    const appearance = screen.getByRole("group", { name: "Appearance" });
+    expect(within(appearance).getByText("Theme")).toBeVisible();
+
+    await userEventApi.click(within(appearance).getByRole("menuitemradio", { name: "Dark" }));
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(screen.getByRole("menu")).toBeVisible();
+
+    await userEventApi.click(
+      within(screen.getByRole("group", { name: "Appearance" })).getByRole("menuitemradio", {
+        name: "Violet accent",
+      }),
+    );
+    expect(document.documentElement.dataset.accent).toBe("violet");
+    expect(screen.getByRole("menu")).toBeVisible();
   });
 
   it("returns focus to the trigger when the menu closes", async () => {

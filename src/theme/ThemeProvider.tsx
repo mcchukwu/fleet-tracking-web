@@ -1,25 +1,23 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
+import { guardedStorage } from "../lib/storage";
+import { isAccent } from "./accents";
 import { ThemeContext, type Accent, type ThemeMode } from "./theme-context";
 
 const THEME_KEY = "fleet.theme";
 const ACCENT_KEY = "fleet.accent";
 
+function isMode(value: string | null): value is ThemeMode {
+  return value === "light" || value === "dark" || value === "system";
+}
+
 function readMode(): ThemeMode {
-  try {
-    const value = localStorage.getItem(THEME_KEY); // guard-ignore: theme preference is the one allowed web-storage value.
-    return value === "light" || value === "dark" || value === "system" ? value : "system";
-  } catch {
-    return "system";
-  }
+  const value = guardedStorage.get(THEME_KEY);
+  return isMode(value) ? value : "system";
 }
 
 function readAccent(): Accent {
-  try {
-    const value = localStorage.getItem(ACCENT_KEY); // guard-ignore: accent preference lives beside the theme preference.
-    return value === "violet" || value === "teal" ? value : "blue";
-  } catch {
-    return "blue";
-  }
+  const value = guardedStorage.get(ACCENT_KEY);
+  return isAccent(value) ? value : "blue";
 }
 
 function prefersDark(): boolean {
@@ -54,20 +52,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setMode = useCallback((next: ThemeMode) => {
     setModeState(next);
-    try {
-      localStorage.setItem(THEME_KEY, next); // guard-ignore: theme preference only.
-    } catch {
-      // Private mode can reject storage; the session still works.
-    }
+    guardedStorage.set(THEME_KEY, next);
   }, []);
 
   const setAccent = useCallback((next: Accent) => {
     setAccentState(next);
-    try {
-      localStorage.setItem(ACCENT_KEY, next); // guard-ignore: accent preference only.
-    } catch {
-      // Private mode can reject storage; the session still works.
-    }
+    guardedStorage.set(ACCENT_KEY, next);
   }, []);
 
   const value = useMemo(

@@ -28,6 +28,7 @@ The user is an operator watching a live system, often for hours, often under pre
 | **Dense but legible** | More vehicles in view means fewer clicks. | 4px grid, compact rows, tabular numbers, no decorative padding. |
 | **Keyboard-first** | Dispatchers repeat the same actions hundreds of times. | Every action reachable by keyboard, visible focus, shortcuts for the frequent ones. |
 | **The map owns the page** | The map is the product. | Panels float over it, are opaque, are dismissible, and never shrink the map to a sliver. |
+| **Minimal chrome** | Every persistent control takes map space away from the operator. | Show only what the current task needs; secondary and rare controls live in menus, popovers or sub-menus. Extend an existing menu before adding a new on-screen element. |
 
 ---
 
@@ -77,6 +78,7 @@ Neutrals are the zinc scale. One accent. Status colours carry meaning and are us
   --accent-hover:  #1d4ed8;
   --accent-soft:   #eff6ff;  /* selected row, active nav background */
   --accent-fg:     #1d4ed8;  /* accent used as text */
+  --accent-contrast: #ffffff; /* text and glyphs on an accent fill */
   --focus-ring:    #2563eb;
 
   /* Status: fill colours (markers, dots, strokes) */
@@ -190,10 +192,19 @@ Neutrals are the zinc scale. One accent. Status colours carry meaning and are us
 
 ### 3.2 Rules
 
-- **One accent.** It never appears on the map and never encodes status.
+- **One accent.** It never appears on the map and never encodes status. The user chooses one of four accents in the user menu's Appearance section:
+
+  | Accent | Light `--accent` | Dark `--accent` | Why |
+  |---|---|---|---|
+  | Blue (default) | `#2563eb` | `#2563eb` | The existing default; white text passes on the deep fill. |
+  | Violet | `#7c3aed` | `#7c3aed` | A distinct hue family from status reds and ambers. |
+  | Fuchsia | `#c026d3` | `#c026d3` | Distinct from the indigo and teal geofence hues. |
+  | Graphite | `#475569` | `#64748b` | Desaturated chrome that cannot be mistaken for a status. |
+
+  Each accent defines the full set (`--accent`, `--accent-hover`, `--accent-soft`, `--accent-fg`, `--accent-contrast`, `--focus-ring`) for both themes. Teal was removed because it collided with `--gf-customer`; a stored unknown accent falls back to Blue. `src/theme/accents.test.ts` computes the WCAG ratios from this file for every accent and theme.
 - **Fill vs text.** `--moving`, `--idle` fail contrast as text on white. Use `*-fg` for any text or icon on a surface, `*` only for dots, strokes and marker fills.
 - **Never colour alone.** Every status has a colour, a shape or icon, and a text label (§9.1, §10.4).
-- **Dark mode** follows the system setting by default, with a manual toggle (light, dark, system) persisted locally. Control rooms run at night, so dark mode is a first-class theme and is tested for every screen.
+- **Dark mode** follows the system setting by default, with a manual segmented control (light, dark, system) in the user menu's Appearance section, persisted locally. Control rooms run at night, so dark mode is a first-class theme and is tested for every screen.
 - **No gradients, no glassmorphism, no coloured shadows.** Panels are opaque.
 - Contrast targets: body text 4.5:1 minimum, large text and UI boundaries 3:1 minimum ([WCAG 2.2](https://www.w3.org/WAI/WCAG22/quickref/)).
 
@@ -244,6 +255,7 @@ Shell and dialog sizes are tokens: `--spacing-touch: 44px`, `--spacing-rail-expa
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │ Top bar 48px: Zoro · global search (/) · connection · user  │
+│ (appearance lives inside the user menu, not the bar)        │
 ├────┬─────────────────────────────────────────────────────────┤
 │Nav │ Map (full-bleed, fills everything)                      │
 │56px│  ┌─ Left panel 360px (floating, 12px inset) ─┐          │
@@ -307,7 +319,7 @@ Motion communicates a change of information, never decoration.
 | `motion-base` | 150ms | ease-out | menus, tooltips, tab switch |
 | `motion-slow` | 220ms | cubic-bezier(0.2, 0, 0, 1) | drawer and panel slide, bottom sheet |
 
-- Animate only `opacity` and `transform`. Never animate `width`, `height` or `top` on layout.
+- Animate only `opacity` and `transform`. Never animate `width`, `height` or `top` on layout. The sheet, drawer inset and control fades use `--motion-slow` (`220ms`) with `--ease-slow` (`cubic-bezier(0.2, 0, 0, 1)`); hover and menus use `--motion-fast` / `--motion-base` with `--ease-out`. While a sheet drag is active, `data-sheet-dragging="true"` suppresses those transitions.
 - Marker movement: interpolate linearly between two position updates over the observed update interval, capped at 2s. No easing, no bounce. If an update is older than 10s, snap instead of gliding.
 - New alert: the alert badge pulses twice (a 600ms ring), then stays static.
 - Tables never animate layout. Skeletons use a gentle opacity pulse, never a shimmer; reduced motion disables it. Use the 2px indeterminate top bar for route or page loading, not a full-page spinner.
@@ -387,6 +399,8 @@ The KPI strip always shows `last data age`. The top-bar connection indicator has
 - **Basemap:** desaturated, low contrast, minimal labels, so markers carry the visual weight. The map is provider-neutral: colours, stroke patterns and marker anatomy reach every adapter through `MapTokens` (`src/map/tokens.ts`), and each adapter ships light and dark styles. Offline support is a declared adapter capability; the MapLibre adapter uses a self-hosted PMTiles file.
 - **Vehicle marker:** 24px circle, 2px ring in `--surface`, shadow-menu. Plate label appears at zoom ≥ 13 in a 12px chip. The label uses the basemap's Noto Sans glyphs until the self-hosted mono glyph pack ships; this is a recorded deviation, not a design change. Below zoom 11, vehicles cluster; the cluster shows its count and takes the colour of the worst status inside.
 - **Selected vehicle:** 2px `--accent` outer ring and the marker raised above the others.
+- **Map controls:** app-level, provider-neutral, 36px at `md` and up and 44px on touch. The vertical stack sits bottom-right, uses `--surface`, `--border`, `--shadow-float` and `--radius-md`, and shifts around panels with `--map-inset-right` and `--map-inset-bottom` (transform only). Native adapter controls are hidden. Attribution is a separate static chip that never fades with the controls and is never hidden; it is a licence requirement.
+- **Satellite:** online-only, env-gated, and clearly secondary to the data layers. On imagery every marker gets a 2px halo in `--imagery-halo`, geofence strokes and the playback route get a wider halo, and label halos grow to 2px. Vehicles, geofences and labels must stay legible on both basemaps.
 - **Geofence:** polygon fill at 12% opacity, 2px stroke. Kind is encoded by colour *and* stroke pattern:
 
   | Kind | Colour | Stroke |
@@ -475,7 +489,20 @@ Bottom-right, 4s, one line plus an optional action. Success and info auto-dismis
 
 ### 10.9 Tooltip, menu, tabs, select
 
-Standard Radix behaviour. Tooltip delay 400ms, content `text-xs`, never the only way to reach information. Menus 32px items, `--shadow-menu`. Tabs use an underline indicator in `--accent`, 36px height.
+- Standard Radix behaviour. Tooltip delay 400ms, content `text-xs`, never the only way to reach information. Menus 32px items, `--shadow-menu`. Tabs use an underline indicator in `--accent`, 36px height.
+
+### 10.10 Map controls
+
+- Anatomy: a top group of square icon buttons inside one bordered surface, then the style trigger. Desktop order: zoom in, zoom out, reset bearing, fit, geofences, panel. Mobile order: zoom in, zoom out, reset bearing, style; fit and geofences live in the sheet header.
+- The bearing control shows the current bearing by rotating the compass glyph and dims at north; its accessible name reports `Facing north` or `Facing 272° W`.
+- Zoom limits disable the relevant button with `Minimum zoom` / `Maximum zoom`; fit with no positioned vehicles disables with the reason `No vehicles are reporting a position`.
+- The style picker is a menu with radio semantics. Satellite is disabled with `Needs a connection` offline and omitted entirely when the build has no tile source.
+- When the mobile sheet is above 60% height the stack fades and becomes inert (and any open menu closes). It never covers the KPI strip, a panel, the drawer or the attribution.
+
+### 10.11 Appearance controls
+
+- Live inside the user menu as a labelled group: a segmented theme row (light, dark, system) and four accent swatches. They are menu radio items and do not close the menu on change.
+- The swatch is a small visual inside a full menu row; the row keeps the menu's touch target.
 
 ---
 
@@ -548,7 +575,7 @@ Global banner states (below the top bar, 32px, dismissible only when resolved):
 
 | Screen | Pattern |
 |---|---|
-| Map | Full-bleed map, left list panel, KPI strip, right drawer, geofence layer toggle in map controls. Below `lg` the panel becomes a bottom sheet with peek (96px), half and full snap points; the KPI strip becomes the compact 2×2 grid; fit and geofence controls move into the sheet header. Vehicle rows are 48px, two lines: status pill, mono plate and data age; driver and speed. The plate is a copy button layered above the row's selection button. The map tooltip shows plate, speed and data age, clamped to the map edge. Attribution is a static link rendered by the feature, never injected from a remote style. |
+| Map | Full-bleed map, left list panel, KPI strip, right drawer, app-level map controls. Below `lg` the panel becomes a bottom sheet with peek (96px), half and full snap points; the KPI strip becomes the compact 2×2 grid; fit and geofence controls move into the sheet header. The sheet header is 96px and always visible: 4px drag band, a 44px title/count/filters row, and a 44px search/fit/geofence row. Only the vehicle list scrolls, inside the sheet with contained overscroll; the header never moves and list scrolling never drags the sheet. At full the sheet ends 80px below the top bar, the KPI is hidden, and tapping that map strip returns to half. The controls stack sits bottom-right and shifts with `--map-inset-bottom` / `--map-inset-right`; above 60% sheet height it fades and goes inert. Vehicle rows are 48px, two lines: status pill, mono plate and data age; driver and speed. The plate is a copy button layered above the row's selection button. The map tooltip shows plate, speed and data age, clamped to the map edge. Attribution is a static link rendered by the feature, never injected from a remote style. |
 | Alerts, Trips, Drivers, Audit | Page title, filter row (selects and search, 32px), dense table, detail in a right drawer, never a separate page |
 | Geofences | Split view: list left (360px), map right with draw tools; unsaved polygon shown with dashed `--accent` stroke |
 | Playback | Map with route, bottom control bar: range selector, play, speed, scrubber, `Resolution: 30s` label from the API |
@@ -615,18 +642,13 @@ const pill = cva("inline-flex h-5 items-center gap-1 rounded-full px-2 text-xs f
 
 ## Theme Runtime
 
-`ThemeProvider` persists:
+`ThemeProvider` persists both preferences through `src/lib/storage.ts`:
 - Theme: `fleet.theme` (`light`, `dark`, `system`)
-- Accent: `fleet.accent`
+- Accent: `fleet.accent` (`blue`, `violet`, `fuchsia`, `graphite`)
 
-The inline script in `index.html` applies the saved theme before first paint.
+The inline script in `index.html` validates both values and applies the resolved theme class plus `data-theme` and `data-accent` on `<html>` before first paint, so there is no flash and React's first render agrees with the pixels already on screen. The Appearance section in the user menu uses the same store, so its segmented theme control and swatches stay in sync with `/styleguide`.
 
-The accent is exposed as `data-accent` on `<html>`:
-- blue
-- violet
-- teal
-
-Accents affect interface chrome only. They never replace semantic status colours.
+Accents affect interface chrome only. They never replace semantic status colours. Each accent provides its own `--accent-contrast` so white text on the accent fill, checkbox checks and selection backgrounds pass 4.5:1 in both themes.
 
 ---
 
@@ -640,4 +662,6 @@ Review components in:
 - Dark theme
 - Blue accent
 - Violet accent
-- Teal accent
+- Fuchsia accent
+- Graphite accent
+- Compact search and the `lg` icon button used by map controls

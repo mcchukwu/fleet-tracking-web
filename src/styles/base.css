@@ -27,7 +27,7 @@
 
   ::selection {
     background: var(--accent);
-    color: var(--text-inverse);
+    color: var(--accent-contrast);
   }
 
   select option {
@@ -39,7 +39,7 @@
   select option:hover,
   select option:focus {
     background-color: var(--accent);
-    color: var(--text-inverse);
+    color: var(--accent-contrast);
   }
 
   input[type="search"]::-webkit-search-cancel-button {
@@ -92,7 +92,8 @@
 
   .swatch-blue { background: var(--swatch-blue); }
   .swatch-violet { background: var(--swatch-violet); }
-  .swatch-teal { background: var(--swatch-teal); }
+  .swatch-fuchsia { background: var(--swatch-fuchsia); }
+  .swatch-graphite { background: var(--swatch-graphite); }
 
   .status-alert-mark {
     font-size: 8px;
