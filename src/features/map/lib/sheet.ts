@@ -12,19 +12,27 @@ export interface SheetMetrics {
   full: number;
 }
 
-export function sheetMetrics(
-  viewportHeight: number,
-  topBar = TOP_BAR_HEIGHT,
+export function sheetMetricsFromAvailable(
+  availableHeight: number,
   strip = SHEET_STRIP,
   peek = SHEET_PEEK,
 ): SheetMetrics {
-  const full = Math.max(peek, viewportHeight - topBar - strip);
+  const full = Math.max(peek, availableHeight - strip);
   return {
     available: full,
     peek,
     half: Math.max(peek, Math.round(full / 2)),
     full,
   };
+}
+
+export function sheetMetrics(
+  viewportHeight: number,
+  topBar = TOP_BAR_HEIGHT,
+  strip = SHEET_STRIP,
+  peek = SHEET_PEEK,
+): SheetMetrics {
+  return sheetMetricsFromAvailable(viewportHeight - topBar, strip, peek);
 }
 
 export function sheetVisible(snap: SheetSnap, metrics: SheetMetrics): number {
@@ -44,7 +52,9 @@ export function nearestSnap(visible: number, metrics: SheetMetrics): SheetSnap {
     ["full", metrics.full],
   ];
   return candidates.reduce((closest, current) =>
-    Math.abs(current[1] - visible) < Math.abs(closest[1] - visible) ? current : closest,
+    Math.abs(current[1] - visible) < Math.abs(closest[1] - visible)
+      ? current
+      : closest,
   )[0];
 }
 

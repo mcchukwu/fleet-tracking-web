@@ -199,7 +199,7 @@ function tableRow(name: string, box: Box | null): void {
 }
 
 /** Returns the failing invariants with their measured px delta. */
-function check(table: Table, scroll: string): string[] {
+function check(table: Table, scroll: string, snap: string): string[] {
   const failures: string[] = [];
   const get = (name: string): Box | null => {
     const value = table[name];
@@ -216,9 +216,11 @@ function check(table: Table, scroll: string): string[] {
   const lastRow = get("lastRow");
   const safeProbe = get("safeProbe");
   const viewportHeight = Number(table.viewportHeight ?? 0);
-  if (!sheet || !header || !search || !scroller || !list || !row) {
+  if (!sheet || !header || !search || !scroller || !list) {
     return ["missing measured element"];
   }
+  if (snap === "peek" && row) return ["peek rendered list rows"];
+  if (snap !== "peek" && !row) return ["missing measured element"];
 
   const eps = 0.5;
 
@@ -262,9 +264,9 @@ function check(table: Table, scroll: string): string[] {
     failures.push(
       `list starts inside header: ${num(header.bottom - scroller.y)}px`,
     );
-  if (scroll === "top" && row.y < scroller.y - 1)
+  if (scroll === "top" && row && row.y < scroller.y - 1)
     failures.push(`row not clipped at list top: ${num(scroller.y - row.y)}px`);
-  if (row.x < header.x - eps || row.right > header.right + eps)
+  if (row && (row.x < header.x - eps || row.right > header.right + eps))
     failures.push(
       `row outside header width: ${num(row.x - header.x)}/${num(row.right - header.right)}px`,
     );
@@ -371,7 +373,9 @@ async function main(): Promise<void> {
         await page.goto(`${BASE_URL}/map?map=fake`);
         await page.getByRole("region", { name: "Live map" }).waitFor();
         await page.getByText(/Showing \d+ of \d+/).waitFor();
-        await page.locator("[data-vehicle-key]").first().waitFor();
+        await page
+          .getByRole("button", { name: /Showing \d+ of \d+/ })
+          .waitFor();
 
         for (const snap of SNAPS) {
           await setSnap(page, snap);
@@ -401,7 +405,7 @@ async function main(): Promise<void> {
                 value !== null && typeof value === "object" ? value : null,
               );
             }
-            const failures = check(table, scroll);
+            const failures = check(table, scroll, snap);
             const header = table.header;
             const viewportHeight = Number(table.viewportHeight ?? 0);
             if (

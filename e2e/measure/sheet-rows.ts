@@ -249,7 +249,7 @@ function table(label: string, layout: Layout): void {
   }
   const first = layout.rows[0];
   const last = layout.rows[layout.rows.length - 1];
-    if (first) {
+  if (first) {
     console.log(
       `rows: ${layout.rows.length} rendered; first y=${num(first.y)} h=${num(first.height)} content h=${num(first.content?.height)} content top=${num(first.content?.y)} content bottom=${num(first.content?.bottom)} justify=${first.contentJustify} align=${first.contentAlign} action h=${num(first.inlineActionHeight)} gap-to-divider=${num(first.bottom - 1 - first.contentBottom)}`,
     );
@@ -270,6 +270,17 @@ function check(layout: Layout, snap: Snap, scroll: Scroll): string[] {
   const rows = layout.rows;
   const first = rows[0];
   const last = rows[rows.length - 1];
+
+  // A collapsed sheet has no list viewport, so no rows are rendered.
+  if (snap === "peek") {
+    if (rows.length !== 0) failures.push(`peek rendered ${rows.length} rows`);
+    if (Math.abs(layout.sheetBottom - layout.viewportHeight) > eps) {
+      failures.push(
+        `peek sheet bottom vs viewport ${num(layout.sheetBottom - layout.viewportHeight)}px`,
+      );
+    }
+    return failures;
+  }
 
   if (!first) return ["no rows rendered"];
 
@@ -440,7 +451,7 @@ async function setScroll(page: Page, scroll: Scroll): Promise<void> {
 
 async function waitForFleet(page: Page, count: number): Promise<void> {
   await page.getByText(new RegExp(`Showing ${count} of ${count}`)).waitFor();
-  await page.locator("[data-vehicle-key]").first().waitFor();
+  await page.getByRole("button", { name: /Showing \d+ of \d+/ }).waitFor();
   await page.waitForTimeout(250);
 }
 

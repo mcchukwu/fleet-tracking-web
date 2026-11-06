@@ -21,7 +21,7 @@ import {
   nearestSnap,
   nextSheetSnap,
   SHEET_STRIP,
-  sheetMetrics,
+  sheetMetricsFromAvailable,
   sheetVisible,
   toggleSheetSnap,
   TOP_BAR_HEIGHT,
@@ -83,15 +83,20 @@ export function MobileVehicleSheet({
   const [viewportHeight, setViewportHeight] = useState(() =>
     typeof window === "undefined" ? 800 : window.innerHeight,
   );
+  // The sheet is measured against the map surface it is anchored to, not the
+  // window: banners and the top bar live outside this page and shrink it.
+  const [containerHeight, setContainerHeight] = useState<number | null>(null);
+  const availableHeight =
+    containerHeight ??
+    Math.max(0, viewportHeight - readToken("--spacing-topbar", TOP_BAR_HEIGHT));
   const metrics = useMemo(
     () =>
-      sheetMetrics(
-        viewportHeight,
-        readToken("--spacing-topbar", TOP_BAR_HEIGHT),
+      sheetMetricsFromAvailable(
+        availableHeight,
         readToken("--spacing-sheet-strip", SHEET_STRIP),
         readToken("--spacing-sheet-peek", SHEET_PEEK),
       ),
-    [viewportHeight],
+    [availableHeight],
   );
   const visible = sheetVisible(snap, metrics);
 
@@ -100,7 +105,9 @@ export function MobileVehicleSheet({
   const pendingRef = useRef<number | null>(null);
   const frameRef = useRef<number | null>(null);
   const obscuredRef = useRef(false);
-  const fitLabel = fitDisabled ? "No vehicles are reporting a position" : "Fit the fleet";
+  const fitLabel = fitDisabled
+    ? "No vehicles are reporting a position"
+    : "Fit the fleet";
 
   function publish(candidate: number): number {
     const next = clampVisible(candidate, metrics);
@@ -138,6 +145,16 @@ export function MobileVehicleSheet({
   }, []);
 
   useEffect(() => {
+    const container = sheetRef.current?.parentElement;
+    if (!container || typeof ResizeObserver === "undefined") return;
+    const update = () => setContainerHeight(container.clientHeight);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     const next = clampVisible(visible, metrics);
     sheetRef.current?.style.setProperty("--sheet-visible", `${next}px`);
     insetTarget?.current?.style.setProperty("--map-inset-bottom", `${next}px`);
@@ -164,14 +181,18 @@ export function MobileVehicleSheet({
 
   function onPointerMove(event: PointerEvent<HTMLDivElement>): void {
     if (!dragRef.current) return;
-    pendingRef.current = dragRef.current.startVisible + (dragRef.current.startY - event.clientY);
+    pendingRef.current =
+      dragRef.current.startVisible + (dragRef.current.startY - event.clientY);
     schedule();
   }
 
   function endDrag(snapToNearest: boolean): void {
     if (!dragRef.current) return;
     dragRef.current = null;
-    if (frameRef.current !== null && typeof cancelAnimationFrame === "function") {
+    if (
+      frameRef.current !== null &&
+      typeof cancelAnimationFrame === "function"
+    ) {
       cancelAnimationFrame(frameRef.current);
       frameRef.current = null;
     }
@@ -199,27 +220,31 @@ export function MobileVehicleSheet({
     <section
       ref={sheetRef}
       aria-label="Vehicles"
+      data-snap={snap}
       style={sheetVisibleStyle(visible)}
-      className="mobile-sheet absolute inset-x-0 bottom-0 z-20 flex flex-col rounded-t-lg bg-surface shadow-float ring-1 ring-border"
+      className="mobile-sheet bg-surface shadow-float ring-border absolute inset-x-0 bottom-0 z-20 flex flex-col rounded-t-lg ring-1"
     >
       <div
         data-testid="sheet-header"
-        className="relative z-10 flex h-sheet-peek shrink-0 touch-none flex-col border-b border-border bg-surface px-3"
+        className="h-sheet-peek border-border bg-surface relative z-10 flex shrink-0 touch-none flex-col border-b px-3"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerCancel}
       >
-        <span aria-hidden="true" className="mx-auto mt-1 h-1 w-8 rounded-full bg-border-strong" />
+        <span
+          aria-hidden="true"
+          className="bg-border-strong mx-auto mt-1 h-1 w-8 rounded-full"
+        />
 
-        <div className="flex h-touch min-w-0 items-center gap-2">
+        <div className="h-touch flex min-w-0 items-center gap-2">
           <button
             ref={handleRef}
             type="button"
             data-sheet-action
             aria-expanded={snap !== "peek"}
             aria-controls="mobile-vehicle-panel"
-            className="flex h-touch min-w-0 flex-1 items-center gap-2 rounded-md text-left focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring"
+            className="h-touch focus-visible:outline-focus-ring flex min-w-0 flex-1 items-center gap-2 rounded-md text-left focus-visible:outline-2 focus-visible:outline-offset-0"
             onClick={() => onSnap(toggleSheetSnap(snap, "half"))}
             onKeyDown={(event) => {
               if (event.key === "ArrowUp") {
@@ -240,14 +265,16 @@ export function MobileVehicleSheet({
               }
             }}
           >
-            <span className="shrink-0 text-md font-medium text-text">Vehicles</span>
-            <span className="truncate text-xs tabular-nums text-muted">
+            <span className="text-md text-text shrink-0 font-medium">
+              Vehicles
+            </span>
+            <span className="text-muted truncate text-xs tabular-nums">
               Showing {shown} of {total}
             </span>
             <ChevronUp
               aria-hidden="true"
               className={cn(
-                "ml-auto size-4 shrink-0 text-muted",
+                "text-muted ml-auto size-4 shrink-0",
                 snap === "peek" ? undefined : "rotate-180",
               )}
               strokeWidth={1.5}
@@ -259,7 +286,13 @@ export function MobileVehicleSheet({
               label={fitLabel}
               disabled={fitDisabled}
               onClick={onFit}
-              icon={<Maximize2 aria-hidden="true" className="size-4" strokeWidth={1.5} />}
+              icon={
+                <Maximize2
+                  aria-hidden="true"
+                  className="size-4"
+                  strokeWidth={1.5}
+                />
+              }
             />
           </span>
           <span data-sheet-action>
@@ -268,8 +301,16 @@ export function MobileVehicleSheet({
               label={geofencesVisible ? "Hide geofences" : "Show geofences"}
               aria-pressed={geofencesVisible}
               onClick={onToggleGeofences}
-              className={geofencesVisible ? "bg-accent-soft text-accent-fg" : undefined}
-              icon={<Layers aria-hidden="true" className="size-4" strokeWidth={1.5} />}
+              className={
+                geofencesVisible ? "bg-accent-soft text-accent-fg" : undefined
+              }
+              icon={
+                <Layers
+                  aria-hidden="true"
+                  className="size-4"
+                  strokeWidth={1.5}
+                />
+              }
             />
           </span>
           <span data-sheet-action>

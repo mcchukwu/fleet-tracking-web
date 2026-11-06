@@ -160,7 +160,8 @@ async function readLayout(page: Page): Promise<Layout> {
           const action = row.querySelector<HTMLElement>(
             "[data-row-inline-action] button",
           );
-          if (!action) throw new Error("A vehicle row is missing its inline action");
+          if (!action)
+            throw new Error("A vehicle row is missing its inline action");
           const rect = action.getBoundingClientRect();
           return { width: rect.width, height: rect.height };
         })(),
@@ -197,7 +198,6 @@ function overlap(a: Box, b: Box): boolean {
 
 function assertRows(layout: Layout, scroll: Scroll, snap: Snap): void {
   const { rows } = layout;
-  expect(rows.length).toBeGreaterThan(0);
   expect(layout.vehicleCount).toBeGreaterThan(0);
 
   // The peek snap is exactly one header tall (113px), so the peek can never
@@ -208,7 +208,27 @@ function assertRows(layout: Layout, scroll: Scroll, snap: Snap): void {
       113,
       0,
     );
+
+    // A collapsed sheet has no list viewport, so the virtualiser renders no
+    // rows. The list region is exactly the header's height: zero.
+    expect(rows, "peek renders list rows").toHaveLength(0);
+    const peekInset = Math.max(layout.safeBottom, layout.sheetPaddingBottom);
+    expect(layout.scroller.y, "peek list top").toBeCloseTo(
+      layout.header.bottom,
+      0,
+    );
+    expect(layout.scroller.bottom, "peek list bottom").toBeCloseTo(
+      layout.sheetBottom - peekInset,
+      0,
+    );
+    expect(layout.listHeight, "peek virtual total").toBeCloseTo(
+      layout.vehicleCount * ROW_HEIGHT,
+      0,
+    );
+    return;
   }
+
+  expect(rows.length).toBeGreaterThan(0);
 
   // Every row is 56px, consecutive rows touch, and the virtual total is measured.
   for (const [index, row] of rows.entries()) {
@@ -384,7 +404,7 @@ async function gotoFleet(page: Page, fleet: number): Promise<void> {
   await expect(
     page.getByText(new RegExp(`Showing ${fleet} of ${fleet}`)),
   ).toBeVisible();
-  await expect(page.locator("[data-vehicle-key]").first()).toBeVisible();
+  await page.getByRole("button", { name: /Showing \d+ of \d+/ }).waitFor();
   await page.evaluate((count) => {
     const sheet = document.querySelector<HTMLElement>(
       'section[aria-label="Vehicles"]',

@@ -67,6 +67,7 @@ export function VehicleList({
   return (
     <div
       ref={parentRef}
+      data-vehicle-scroller
       className="min-h-0 flex-1 overflow-auto overscroll-contain pb-3"
     >
       <ul

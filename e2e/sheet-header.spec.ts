@@ -45,8 +45,8 @@ interface Layout {
   search: Box;
   searchRow: Box;
   scroller: Box;
-  firstRow: Box;
-  firstRowContent: Box;
+  firstRow: Box | null;
+  firstRowContent: Box | null;
   lastRow: Box | null;
   headerInsideScroller: boolean;
   safeAreaBottom: number;
@@ -121,15 +121,7 @@ async function readLayout(page: Page): Promise<Layout> {
     );
     probe.remove();
 
-    if (
-      !sheet ||
-      !header ||
-      !search ||
-      !searchRow ||
-      !scroller ||
-      !firstRow ||
-      !firstRowContent
-    ) {
+    if (!sheet || !header || !search || !searchRow || !scroller) {
       throw new Error("The mobile sheet did not render its header and list");
     }
 
@@ -140,8 +132,8 @@ async function readLayout(page: Page): Promise<Layout> {
       search: box(search),
       searchRow: box(searchRow),
       scroller: box(scroller),
-      firstRow: box(firstRow),
-      firstRowContent: box(firstRowContent),
+      firstRow: firstRow ? box(firstRow) : null,
+      firstRowContent: firstRowContent ? box(firstRowContent) : null,
       lastRow: lastRow ? box(lastRow) : null,
       headerInsideScroller: scroller.contains(header),
       safeAreaBottom,
@@ -219,7 +211,8 @@ function assertInvariants(layout: Layout, snap: Snap, scroll: Scroll): void {
   // The list starts exactly at the header's bottom edge and clips its rows.
   expect(Math.abs(scroller.y - header.bottom)).toBeLessThanOrEqual(TOLERANCE);
   expect(scroller.overflowY).not.toBe("visible");
-  if (scroll === "top") {
+  if (scroll === "top" && snap !== "peek") {
+    if (!firstRow) throw new Error("the open sheet rendered no rows");
     expect(firstRow.y).toBeGreaterThanOrEqual(scroller.y - 1);
   }
   expect(header.bottom).toBeLessThanOrEqual(layout.viewportHeight + TOLERANCE);
@@ -230,19 +223,27 @@ function assertInvariants(layout: Layout, snap: Snap, scroll: Scroll): void {
   }
 
   // Row dividers share the separator's x, and row content keeps 12px padding.
-  expect(Math.abs(firstRow.x - header.x)).toBeLessThanOrEqual(TOLERANCE);
-  expect(Math.abs(firstRow.right - header.right)).toBeLessThanOrEqual(
-    TOLERANCE,
-  );
-  expect(Number.parseFloat(firstRowContent.paddingLeft)).toBe(12);
-  expect(Number.parseFloat(firstRowContent.paddingRight)).toBe(12);
+  // A collapsed sheet renders no list viewport at all, so rows are absent.
+  if (snap === "peek") {
+    expect(firstRow, "peek renders list rows").toBeNull();
+  } else {
+    if (!firstRow || !firstRowContent) {
+      throw new Error("the open sheet rendered no rows");
+    }
+    expect(Math.abs(firstRow.x - header.x)).toBeLessThanOrEqual(TOLERANCE);
+    expect(Math.abs(firstRow.right - header.right)).toBeLessThanOrEqual(
+      TOLERANCE,
+    );
+    expect(Number.parseFloat(firstRowContent.paddingLeft)).toBe(12);
+    expect(Number.parseFloat(firstRowContent.paddingRight)).toBe(12);
+  }
 
   // No horizontal overflow in the header or the list.
   expect(header.scrollWidth).toBeLessThanOrEqual(header.clientWidth);
   expect(scroller.scrollWidth).toBeLessThanOrEqual(scroller.clientWidth);
 
   // The end of the list is reachable and clear of the safe-area inset.
-  if (scroll === "end") {
+  if (scroll === "end" && snap !== "peek") {
     if (!lastRow) throw new Error("the list rendered no rows");
     expect(lastRow.bottom).toBeLessThanOrEqual(scroller.bottom + 1);
     expect(lastRow.bottom).toBeLessThanOrEqual(
@@ -260,7 +261,7 @@ async function gotoMap(page: Page): Promise<void> {
       timeout: 15_000,
     })
     .toBe(true);
-  await page.locator("[data-vehicle-key]").first().waitFor();
+  await page.getByRole("button", { name: /Showing \d+ of \d+/ }).waitFor();
 }
 
 test.describe("mobile sheet header layout", () => {

@@ -5,6 +5,7 @@ import {
   nearestSnap,
   nextSheetSnap,
   sheetMetrics,
+  sheetMetricsFromAvailable,
   sheetVisible,
   toggleSheetSnap,
 } from "./sheet";
@@ -21,6 +22,14 @@ describe("sheet geometry", () => {
     expect(short.available).toBe(512);
     expect(short.half).toBe(256);
     expect(short.full).toBe(512);
+  });
+
+  it("computes the full snap from the map surface it is anchored to", () => {
+    // The map surface excludes the 49px top bar (48px plus its border), so the
+    // sheet must not be sized from the window and overlap the bar by a pixel.
+    expect(sheetMetricsFromAvailable(795).full).toBe(715);
+    expect(sheetMetricsFromAvailable(591).full).toBe(511);
+    expect(sheetMetricsFromAvailable(795).half).toBe(358);
   });
 
   it("clamps a dragged height between peek and full", () => {

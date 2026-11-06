@@ -90,10 +90,18 @@
     text-transform: uppercase;
   }
 
-  .swatch-blue { background: var(--swatch-blue); }
-  .swatch-violet { background: var(--swatch-violet); }
-  .swatch-fuchsia { background: var(--swatch-fuchsia); }
-  .swatch-graphite { background: var(--swatch-graphite); }
+  .swatch-blue {
+    background: var(--swatch-blue);
+  }
+  .swatch-violet {
+    background: var(--swatch-violet);
+  }
+  .swatch-fuchsia {
+    background: var(--swatch-fuchsia);
+  }
+  .swatch-graphite {
+    background: var(--swatch-graphite);
+  }
 
   .status-alert-mark {
     font-size: 8px;
@@ -112,6 +120,7 @@
   .map-root {
     --map-inset-right: 0px;
     --map-inset-bottom: var(--spacing-sheet-peek);
+    overflow: hidden;
   }
 
   .map-filter-menu {
@@ -121,17 +130,18 @@
   }
 
   .mobile-sheet {
-    height: min(
+    height: var(--sheet-visible, var(--spacing-sheet-peek));
+    max-height: min(
       calc(100dvh - var(--spacing-topbar) - var(--spacing-sheet-strip)),
       calc(100% - var(--spacing-sheet-strip))
     );
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    transform: translateY(calc(100% - var(--sheet-visible, 113px)));
-    transition: transform var(--motion-slow) var(--ease-slow);
   }
 
-  [data-sheet-dragging="true"] .mobile-sheet {
-    transition: none;
+  /* A collapsed sheet exposes no list at all: its own bottom padding must not
+     leak below the header and create overflow past the viewport. */
+  .mobile-sheet[data-snap="peek"] [data-vehicle-scroller] {
+    padding-bottom: 0;
   }
 
   .map-bottom-anchor {
@@ -154,7 +164,6 @@
 
   .map-inset-bottom {
     transform: translateY(calc(-1 * var(--map-inset-bottom, 0px)));
-    transition: transform var(--motion-slow) var(--ease-slow);
   }
 
   [data-sheet-dragging="true"] .map-inset-right,
