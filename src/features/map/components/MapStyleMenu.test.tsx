@@ -47,7 +47,7 @@ describe("MapStyleMenu", () => {
     await user.click(screen.getByRole("button", { name: "Map style" }));
     const satellite = screen.getByRole("menuitemradio", { name: /Satellite/ });
     expect(satellite).toHaveAttribute("data-disabled");
-    expect(within(satellite).getByText("Needs a connection")).toBeVisible();
+    expect(within(satellite).getByText("Satellite needs a connection")).toBeVisible();
   });
 
   it("shows only Map when the build does not offer satellite", async () => {

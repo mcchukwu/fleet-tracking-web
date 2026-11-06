@@ -63,7 +63,7 @@ export function MapStyleMenu({
               <DropdownMenuRadioItem key={id} value={id} disabled={disabled}>
                 <span className="flex-1">{LABELS[id]}</span>
                 {disabled ? (
-                  <span className="text-xs text-muted">Needs a connection</span>
+                  <span className="text-xs text-muted">Satellite needs a connection</span>
                 ) : null}
               </DropdownMenuRadioItem>
             );

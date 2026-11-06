@@ -273,7 +273,7 @@ test.describe("map controls", () => {
     await page.getByRole("button", { name: "Map style" }).click();
     const satellite = page.getByRole("menuitemradio", { name: /Satellite/ });
     await expect(satellite).toHaveAttribute("data-disabled", "");
-    await expect(page.getByRole("menu").getByText("Needs a connection")).toBeVisible();
+    await expect(page.getByRole("menu").getByText("Satellite needs a connection")).toBeVisible();
     await captureForReview(page, "02b-satellite-offline");
     await page.keyboard.press("Escape");
 

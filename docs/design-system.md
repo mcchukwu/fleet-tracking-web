@@ -502,7 +502,7 @@ Bottom-right, 4s, one line plus an optional action. Success and info auto-dismis
 - Anatomy: a top group of square icon buttons inside one bordered surface, then the style trigger. Desktop order: zoom in, zoom out, reset bearing, fit, geofences, panel. Mobile order: zoom in, zoom out, reset bearing, style; fit and geofences live in the sheet header.
 - The bearing control shows the current bearing by rotating the compass glyph and dims at north; its accessible name reports `Facing north` or `Facing 272° W`.
 - Zoom limits disable the relevant button with `Minimum zoom` / `Maximum zoom`; fit with no positioned vehicles disables with the reason `No vehicles are reporting a position`.
-- The style picker is a menu with radio semantics. Satellite is disabled with `Needs a connection` offline and omitted entirely when the build has no tile source.
+- The style picker is a menu with radio semantics. Satellite is disabled with `Satellite needs a connection` offline and omitted entirely when the build has no tile source.
 - When the mobile sheet is above 60% height the stack fades and becomes inert (and any open menu closes). It never covers the KPI strip, a panel, the drawer or the attribution.
 - Attribution is a single 11px line chip (`whitespace-nowrap`). Below `lg` it is the bottom item of the same bottom-right stack, right-aligned and 8px below the controls. It is a sibling of the controls, so it stays visible when they fade, and it rides the sheet inset to stay 12px above the sheet at every snap.
 
