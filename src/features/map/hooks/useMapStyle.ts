@@ -6,9 +6,16 @@ import { useConnection } from "../../../stores/connection";
 
 export const MAP_STYLE_KEY = "fleet.map.style";
 
+function isAvailableStyle(
+  value: string | null,
+  styles: readonly MapStyleId[],
+): value is MapStyleId {
+  return value !== null && styles.some((style) => style === value);
+}
+
 function readStyle(styles: readonly MapStyleId[]): MapStyleId {
   const stored = guardedStorage.get(MAP_STYLE_KEY);
-  return styles.includes(stored as MapStyleId) ? (stored as MapStyleId) : "standard";
+  return isAvailableStyle(stored, styles) ? stored : "standard";
 }
 
 export interface UseMapStyleOptions {

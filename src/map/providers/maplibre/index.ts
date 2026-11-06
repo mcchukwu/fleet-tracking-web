@@ -92,6 +92,7 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
   let clusterMaxZoom = 0;
   let lastDataAt = 0;
   let dataTimer: ReturnType<typeof setTimeout> | null = null;
+  const styleTimers = new Set<ReturnType<typeof setTimeout>>();
   let contextCanvas: HTMLCanvasElement | null = null;
   let contextLostHandler: ((event: Event) => void) | null = null;
   const featureCache: VehicleFeatureCache = { features: new Map() };
@@ -146,6 +147,11 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
       clearTimeout(dataTimer);
       dataTimer = null;
     }
+  }
+
+  function cancelStyleTimer(): void {
+    for (const timer of styleTimers) clearTimeout(timer);
+    styleTimers.clear();
   }
 
   /** Large fleets update the source at most 20 times per second. */
@@ -398,12 +404,15 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
       const finish = (action: () => void) => {
         if (settled) return;
         settled = true;
-        clearTimeout(timer);
+        if (timer !== null) {
+          clearTimeout(timer);
+          styleTimers.delete(timer);
+        }
         action();
       };
       const timer = setTimeout(() => {
         if (settled) return;
-        if (attempt > 0) {
+        if (attempt > 0 || map !== instance) {
           finish(() => reject(new MapError("The map style could not load")));
           return;
         }
@@ -413,6 +422,7 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
           () => finish(() => reject(new MapError("The map style could not load"))),
         );
       }, STYLE_TIMEOUT_MS);
+      styleTimers.add(timer);
 
       instance.once("style.load", () => finish(resolve));
     });
@@ -461,6 +471,7 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
     destroy(): void {
       cancelAnimation();
       cancelDataTimer();
+      cancelStyleTimer();
       if (contextCanvas && contextLostHandler) {
         contextCanvas.removeEventListener("webglcontextlost", contextLostHandler);
       }

@@ -131,10 +131,11 @@ Neutrals are the zinc scale. One accent. Status colours carry meaning and are us
   --text-subtle:   #8b8b94;
   --text-inverse:  #09090b;
 
-  --accent:        #3b82f6;
-  --accent-hover:  #60a5fa;
+  --accent:        #2563eb;
+  --accent-hover:  #1d4ed8;
   --accent-soft:   #172554;
   --accent-fg:     #93c5fd;
+  --accent-contrast: #ffffff;
   --focus-ring:    #60a5fa;
 
   --moving:        #4ade80;
@@ -445,6 +446,7 @@ Each component lists its anatomy and its rules. All come from shadcn primitives 
 - Textareas do not expose the native resize handle. Keep a fixed minimum height and let the layout own the height; auto-grow only when a flow genuinely needs it.
 - Native select popup hover/focus is browser-controlled. The selected option is styled with `option:checked`; a fully custom listbox is the only way to control every popup state.
 - Search input: leading search icon, `/` hint badge, clear button when non-empty, 150ms debounce.
+- Compact exception: the mobile sheet header may use a visually hidden label for the search field because the row has no space for a second label line. The magnifier and placeholder remain, and the accessible name is still `Search vehicles`.
 
 ### 10.3 Table
 

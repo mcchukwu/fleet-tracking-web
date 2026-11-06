@@ -314,6 +314,31 @@ describe("MapLibre adapter", () => {
     adapter.destroy();
   });
 
+  it("cancels a pending style wait when the adapter is destroyed", async () => {
+    const adapter = createMapLibreAdapter({
+      styles: ["standard", "satellite"],
+      satellite: {
+        tilesUrl: "https://tiles.example.com/satellite/{z}/{x}/{y}.jpg",
+        attribution: "© Example imagery",
+      },
+    });
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+    const instance = map();
+    const once = vi.spyOn(instance, "once").mockImplementation(() => instance);
+
+    vi.useFakeTimers();
+    try {
+      adapter.setBaseStyle("satellite");
+      const switched = instance.styles.length;
+      adapter.destroy();
+      vi.advanceTimersByTime(4_000);
+      expect(instance.styles).toHaveLength(switched);
+    } finally {
+      once.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
   it("keeps the imagery while a theme change refreshes the data layers", async () => {
     const adapter = createMapLibreAdapter({
       styles: ["standard", "satellite"],

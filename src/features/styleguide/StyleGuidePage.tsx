@@ -698,12 +698,6 @@ export function StyleGuidePage() {
                 </kbd>
               </div>
               <ConnectionIndicator state="online" />
-              <span
-                aria-hidden="true"
-                className="flex size-control-sm items-center justify-center rounded-full bg-accent-soft text-accent-fg"
-              >
-                <Settings className="size-4" strokeWidth={1.5} />
-              </span>
             </div>
             <div className="flex min-h-24">
               <nav
