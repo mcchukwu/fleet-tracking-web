@@ -175,8 +175,13 @@ export function StyleGuidePage() {
     <div className="min-h-screen bg-bg text-text">
       <header className="sticky top-0 z-40 border-b border-border bg-surface">
         <div className="mx-auto flex h-topbar max-w-screen-2xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <BrandLogo variant="lockup" />
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="hidden sm:inline-flex">
+              <BrandLogo variant="lockup" />
+            </span>
+            <span className="sm:hidden">
+              <BrandLogo variant="symbol" />
+            </span>
             <span className="hidden text-sm text-subtle sm:inline">Styleguide</span>
           </div>
           <div className="flex items-center gap-3">
