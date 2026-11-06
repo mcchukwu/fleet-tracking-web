@@ -35,10 +35,25 @@ describe("AppearanceControls", () => {
     const group = screen.getByRole("group", { name: "Appearance" });
     expect(within(group).getByText("Theme")).toBeVisible();
     expect(within(group).getByText("Accent")).toBeVisible();
+    expect(within(group).getByRole("group", { name: "Theme" })).toBeVisible();
+    expect(within(group).getByRole("group", { name: "Accent" })).toBeVisible();
     expect(within(group).getByRole("menuitemradio", { name: "Dark" })).toBeVisible();
     for (const name of ["Blue accent", "Violet accent", "Fuchsia accent", "Graphite accent"]) {
       expect(within(group).getByRole("menuitemradio", { name })).toBeVisible();
     }
+  });
+
+  it("marks the checked theme with a visible indicator", async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    const system = screen.getByRole("menuitemradio", { name: "System" });
+    expect(within(system).getByTestId("menu-item-indicator")).toBeVisible();
+
+    await user.click(screen.getByRole("menuitemradio", { name: "Dark" }));
+    const dark = screen.getByRole("menuitemradio", { name: "Dark" });
+    expect(within(dark).getByTestId("menu-item-indicator")).toBeVisible();
+    expect(within(system).queryByTestId("menu-item-indicator")).not.toBeInTheDocument();
   });
 
   it("applies the theme without closing the menu", async () => {

@@ -27,6 +27,8 @@ describe("MapStyleMenu", () => {
     const satellite = screen.getByRole("menuitemradio", { name: "Satellite" });
     expect(map).toHaveAttribute("aria-checked", "true");
     expect(satellite).toHaveAttribute("aria-checked", "false");
+    expect(within(map).getByTestId("menu-item-indicator")).toBeVisible();
+    expect(within(satellite).queryByTestId("menu-item-indicator")).not.toBeInTheDocument();
   });
 
   it("changes the style without closing the menu", async () => {

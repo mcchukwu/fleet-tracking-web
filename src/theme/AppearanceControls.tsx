@@ -27,7 +27,11 @@ export function AppearanceControls() {
         <span className="text-xs text-muted">Theme</span>
         <DropdownMenuRadioGroup
           value={mode}
-          onValueChange={(value) => setMode(value as ThemeMode)}
+          onValueChange={(value) => {
+            const next = themeOptions.find((option) => option.value === value);
+            if (next) setMode(next.value);
+          }}
+          aria-label="Theme"
           className="flex gap-1"
         >
           {themeOptions.map((option) => (
@@ -52,6 +56,7 @@ export function AppearanceControls() {
             const next = ACCENTS.find((option) => option.id === value);
             if (next) setAccent(next.id);
           }}
+          aria-label="Accent"
           className="flex gap-1"
         >
           {ACCENTS.map((option) => {
@@ -61,6 +66,7 @@ export function AppearanceControls() {
                 key={option.id}
                 value={option.id}
                 aria-label={option.label}
+                showIndicator={false}
                 onSelect={keepOpen}
                 className="flex-1 justify-center px-1"
               >

@@ -52,6 +52,7 @@ export function MapStyleMenu({
         <DropdownMenuLabel>Map style</DropdownMenuLabel>
         <DropdownMenuRadioGroup
           value={value}
+          aria-label="Map style"
           onValueChange={(next) => {
             if (next === "standard" || next === "satellite") onChange(next);
           }}

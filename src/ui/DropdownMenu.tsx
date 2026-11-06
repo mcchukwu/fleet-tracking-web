@@ -1,4 +1,5 @@
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
+import { Check } from "lucide-react";
 import type { ComponentPropsWithoutRef } from "react";
 import { cn } from "./cn";
 
@@ -9,7 +10,18 @@ export const DropdownMenuSub = DropdownMenuPrimitive.Sub;
 export const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
 
 const itemStyles =
-  "flex h-touch select-none items-center gap-2 rounded-sm px-2 text-sm text-text outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-surface-2 md:h-control-md";
+  "flex h-touch select-none items-center gap-2 rounded-sm px-2 text-sm text-text outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-surface-2 data-[state=checked]:bg-accent-soft md:h-control-md";
+
+function ItemIndicator() {
+  return (
+    <DropdownMenuPrimitive.ItemIndicator
+      data-testid="menu-item-indicator"
+      className="ml-auto flex size-4 shrink-0 items-center justify-center text-accent-fg"
+    >
+      <Check aria-hidden="true" className="size-4" strokeWidth={2} />
+    </DropdownMenuPrimitive.ItemIndicator>
+  );
+}
 
 export function DropdownMenuContent({
   className,
@@ -46,11 +58,15 @@ export function DropdownMenuItem({
 export function DropdownMenuRadioItem({
   className,
   children,
+  showIndicator = true,
   ...props
-}: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.RadioItem>) {
+}: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.RadioItem> & {
+  showIndicator?: boolean;
+}) {
   return (
     <DropdownMenuPrimitive.RadioItem className={cn(itemStyles, className)} {...props}>
       {children}
+      {showIndicator ? <ItemIndicator /> : null}
     </DropdownMenuPrimitive.RadioItem>
   );
 }
@@ -58,11 +74,15 @@ export function DropdownMenuRadioItem({
 export function DropdownMenuCheckboxItem({
   className,
   children,
+  showIndicator = true,
   ...props
-}: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.CheckboxItem>) {
+}: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.CheckboxItem> & {
+  showIndicator?: boolean;
+}) {
   return (
     <DropdownMenuPrimitive.CheckboxItem className={cn(itemStyles, className)} {...props}>
       {children}
+      {showIndicator ? <ItemIndicator /> : null}
     </DropdownMenuPrimitive.CheckboxItem>
   );
 }

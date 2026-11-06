@@ -1,4 +1,4 @@
-import { Check, SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 import type { VehicleDisplayStatus } from "../../../lib/status";
 import { StatusPill } from "../../../ui/Badge";
 import {
@@ -22,6 +22,10 @@ const sortLabels: Record<MapSort, string> = {
   lastSeen: "Last seen",
   status: "Status",
 };
+
+function isMapSort(value: string): value is MapSort {
+  return value in sortLabels;
+}
 
 export interface MobileFilterMenuProps {
   filters: MapFilterValues;
@@ -76,7 +80,6 @@ export function MobileFilterMenu({
               <span className="flex-1">
                 <StatusPill status={status} />
               </span>
-              {active ? <Check aria-hidden="true" className="size-4" strokeWidth={2} /> : null}
             </DropdownMenuCheckboxItem>
           );
         })}
@@ -85,6 +88,7 @@ export function MobileFilterMenu({
         <DropdownMenuLabel>Depot</DropdownMenuLabel>
         <DropdownMenuRadioGroup
           value={filters.depot ?? "all"}
+          aria-label="Depot"
           onValueChange={(value) => onChange({ depot: value === "all" ? null : value })}
         >
           <DropdownMenuRadioItem value="all">All depots</DropdownMenuRadioItem>
@@ -99,7 +103,10 @@ export function MobileFilterMenu({
         <DropdownMenuLabel>Sort</DropdownMenuLabel>
         <DropdownMenuRadioGroup
           value={filters.sort}
-          onValueChange={(value) => onChange({ sort: value as MapSort })}
+          aria-label="Sort"
+          onValueChange={(value) => {
+            if (isMapSort(value)) onChange({ sort: value });
+          }}
         >
           {Object.entries(sortLabels).map(([value, label]) => (
             <DropdownMenuRadioItem key={value} value={value}>
