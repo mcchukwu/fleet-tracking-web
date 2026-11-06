@@ -67,4 +67,54 @@ test.describe("brand", () => {
     await expectNoAxeViolations(page);
     await captureForReview(page, "brand-topbar");
   });
+
+  test("the document points at the brand icons and theme colours", async ({ page }) => {
+    await page.goto("/login");
+
+    const links = await page
+      .locator('link[rel="icon"], link[rel="apple-touch-icon"]')
+      .evaluateAll((elements) =>
+        elements.map((element) => ({
+          rel: element.getAttribute("rel"),
+          href: element.getAttribute("href"),
+          sizes: element.getAttribute("sizes"),
+        })),
+      );
+    expect(links).toContainEqual({ rel: "icon", href: "/favicon.svg", sizes: null });
+    expect(links).toContainEqual({ rel: "icon", href: "/favicon-32.png", sizes: "32x32" });
+    expect(links).toContainEqual({
+      rel: "apple-touch-icon",
+      href: "/apple-touch-icon.png",
+      sizes: "180x180",
+    });
+
+    const themeColours = await page
+      .locator('meta[name="theme-color"]')
+      .evaluateAll((elements) =>
+        elements.map((element) => ({
+          media: element.getAttribute("media"),
+          content: element.getAttribute("content"),
+        })),
+      );
+    expect(themeColours).toContainEqual({
+      media: "(prefers-color-scheme: light)",
+      content: "#fafafa",
+    });
+    expect(themeColours).toContainEqual({
+      media: "(prefers-color-scheme: dark)",
+      content: "#09090b",
+    });
+
+    for (const href of [
+      "/favicon.svg",
+      "/favicon-32.png",
+      "/apple-touch-icon.png",
+      "/icons/icon-192.png",
+      "/icons/icon-512.png",
+      "/icons/icon-maskable-512.png",
+    ]) {
+      const response = await page.request.get(href);
+      expect(response.status(), href).toBe(200);
+    }
+  });
 });

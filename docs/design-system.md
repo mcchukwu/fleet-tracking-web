@@ -243,7 +243,7 @@ Shell and dialog sizes are tokens: `--spacing-touch: 44px`, `--spacing-rail-expa
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ Top bar 48px: logo · global search (/) · connection · user  │
+│ Top bar 48px: Zoro · global search (/) · connection · user  │
 ├────┬─────────────────────────────────────────────────────────┤
 │Nav │ Map (full-bleed, fills everything)                      │
 │56px│  ┌─ Left panel 360px (floating, 12px inset) ─┐          │
@@ -325,6 +325,21 @@ Motion communicates a change of information, never decoration.
   - Empty states say why: `No vehicles match "KJA 123". Clear the filter to see all 20.`
   - Never blame the user. Never use "oops", "whoops" or exclamation marks.
 - Use the server's `error.message` as a secondary detail line, not as the headline.
+
+### 8.1 Brand
+
+The brand is **Zoro**. Both marks are single-colour SVGs rendered by `src/ui/BrandLogo.tsx` with `fill="currentColor"`, so the logo follows `--text` and stays legible in light and dark. It never uses the accent, status or severity colours.
+
+| Variant | Art | Where it is used |
+|---|---|---|
+| `lockup` | Symbol + Zoro wordmark | App top bar at `md` and up; the login header strip |
+| `symbol` | Symbol only | App top bar below `md`; favicons, app icons and the maskable icon |
+
+- **Size:** `24px` tall in the shell and login strip. The lockup is never smaller than `20px` tall; below `md` the symbol is used instead of shrinking the wordmark.
+- **Clear space:** at least `8px` on every side, measured from the mark's bounding box. The top bar keeps `16px` from the left edge and a `gap-2` (`8px`) to the next control.
+- **Position:** the login header strip and the app top bar share `src/ui/BrandBar.tsx` (`h-topbar`, `px-4`), so the mark cannot drift between the two screens. The top bar lockup links to the map; the login lockup is not a link.
+- **Master files:** `src/assets/brand/zoro-lockup.svg` and `zoro-symbol.svg`. Do not add fills to them; recolour through `currentColor`.
+- **Generated icons:** `npm run icons` renders the symbol with Playwright Chromium into `public/favicon-32.png`, `apple-touch-icon.png` and `public/icons/*.png`. The maskable icon keeps the symbol inside the central 80% safe zone on a solid dark background.
 
 ---
 

@@ -8,7 +8,6 @@ import {
   Plus,
   Search,
   Settings,
-  Truck,
   WifiOff,
 } from "lucide-react";
 import { AccentPicker } from "../../theme/AccentPicker";
@@ -25,6 +24,7 @@ import {
   type TripStatus,
 } from "../../ui/Badge";
 import { Banner } from "../../ui/Banner";
+import { BrandLogo } from "../../ui/BrandLogo";
 import { Button } from "../../ui/Button";
 import { Checkbox } from "../../ui/Checkbox";
 import { Dialog } from "../../ui/Dialog";
@@ -175,10 +175,7 @@ export function StyleGuidePage() {
       <header className="sticky top-0 z-40 border-b border-border bg-surface">
         <div className="mx-auto flex h-topbar max-w-screen-2xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <span className="flex size-control-sm items-center justify-center rounded-md bg-accent text-text-inverse">
-              <Truck aria-hidden="true" className="size-4" strokeWidth={1.5} />
-            </span>
-            <span className="hidden text-md font-medium text-text sm:inline">Fleet Console</span>
+            <BrandLogo variant="lockup" className="text-text" />
             <span className="hidden text-sm text-subtle sm:inline">Styleguide</span>
           </div>
           <div className="flex items-center gap-3">
@@ -683,11 +680,8 @@ export function StyleGuidePage() {
           description="Top bar 48px, icon rail 56px (200px expanded). The login form is a centred 360px panel with visible labels and inline errors."
         >
           <div className="overflow-hidden rounded-lg border border-border bg-surface">
-            <div className="flex h-topbar items-center gap-2 border-b border-border px-3">
-              <span className="flex size-control-sm items-center justify-center rounded-md bg-accent text-text-inverse">
-                <Truck aria-hidden="true" className="size-4" strokeWidth={1.5} />
-              </span>
-              <span className="text-sm font-medium text-text">Fleet Console</span>
+            <div className="flex h-topbar items-center gap-2 border-b border-border px-4">
+              <BrandLogo variant="lockup" className="text-text" />
               <div className="mx-auto flex h-control-md w-panel max-w-full items-center gap-2 rounded-md border border-border-strong bg-surface px-3 text-sm text-subtle">
                 <Search aria-hidden="true" className="size-4" strokeWidth={1.5} />
                 Search vehicles
