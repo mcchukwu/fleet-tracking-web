@@ -93,21 +93,43 @@ async function readLayout(page: Page): Promise<Layout> {
       };
     }
 
-    const sheet = document.querySelector<HTMLElement>('section[aria-label="Vehicles"]');
-    const header = document.querySelector<HTMLElement>('[data-testid="sheet-header"]');
-    const search = document.querySelector<HTMLElement>('[data-testid="sheet-header"] input[type="search"]');
+    const sheet = document.querySelector<HTMLElement>(
+      'section[aria-label="Vehicles"]',
+    );
+    const header = document.querySelector<HTMLElement>(
+      '[data-testid="sheet-header"]',
+    );
+    const search = document.querySelector<HTMLElement>(
+      '[data-testid="sheet-header"] input[type="search"]',
+    );
     const searchRow = header?.children[2];
-    const scroller = document.querySelector<HTMLElement>('ul[aria-label="Vehicles"]')?.parentElement;
+    const scroller = document.querySelector<HTMLElement>(
+      'ul[aria-label="Vehicles"]',
+    )?.parentElement;
     const firstRow = document.querySelector<HTMLElement>("[data-vehicle-key]");
-    const lastRow = [...document.querySelectorAll<HTMLElement>("[data-vehicle-key]")].at(-1) ?? null;
-    const firstRowContent = firstRow?.querySelector<HTMLElement>("div.pointer-events-none") ?? null;
+    const lastRow =
+      [...document.querySelectorAll<HTMLElement>("[data-vehicle-key]")].at(
+        -1,
+      ) ?? null;
+    const firstRowContent =
+      firstRow?.querySelector<HTMLElement>("div.pointer-events-none") ?? null;
     const probe = document.createElement("div");
     probe.style.paddingBottom = "env(safe-area-inset-bottom, 0px)";
     document.body.append(probe);
-    const safeAreaBottom = Number.parseFloat(window.getComputedStyle(probe).paddingBottom);
+    const safeAreaBottom = Number.parseFloat(
+      window.getComputedStyle(probe).paddingBottom,
+    );
     probe.remove();
 
-    if (!sheet || !header || !search || !searchRow || !scroller || !firstRow || !firstRowContent) {
+    if (
+      !sheet ||
+      !header ||
+      !search ||
+      !searchRow ||
+      !scroller ||
+      !firstRow ||
+      !firstRowContent
+    ) {
       throw new Error("The mobile sheet did not render its header and list");
     }
 
@@ -123,7 +145,9 @@ async function readLayout(page: Page): Promise<Layout> {
       lastRow: lastRow ? box(lastRow) : null,
       headerInsideScroller: scroller.contains(header),
       safeAreaBottom,
-      sheetPaddingBottom: Number.parseFloat(window.getComputedStyle(sheet).paddingBottom),
+      sheetPaddingBottom: Number.parseFloat(
+        window.getComputedStyle(sheet).paddingBottom,
+      ),
     };
   });
 }
@@ -137,23 +161,38 @@ async function setSnap(page: Page, snap: Snap): Promise<void> {
     await page.keyboard.press("ArrowUp");
   }
   if (snap === "full") await page.keyboard.press("End");
-  await expect(handle).toHaveAttribute("aria-expanded", snap === "peek" ? "false" : "true");
+  await expect(handle).toHaveAttribute(
+    "aria-expanded",
+    snap === "peek" ? "false" : "true",
+  );
   await page.waitForTimeout(350);
 }
 
 async function setScroll(page: Page, scroll: Scroll): Promise<void> {
   await page.evaluate((mode) => {
-    const element = document.querySelector('ul[aria-label="Vehicles"]')?.parentElement;
+    const element = document.querySelector(
+      'ul[aria-label="Vehicles"]',
+    )?.parentElement;
     if (!element) return;
     if (mode === "top") element.scrollTop = 0;
-    if (mode === "middle") element.scrollTop = (element.scrollHeight - element.clientHeight) / 2;
+    if (mode === "middle")
+      element.scrollTop = (element.scrollHeight - element.clientHeight) / 2;
     if (mode === "end") element.scrollTop = element.scrollHeight;
   }, scroll);
   await page.waitForTimeout(80);
 }
 
 function assertInvariants(layout: Layout, snap: Snap, scroll: Scroll): void {
-  const { sheet, header, search, searchRow, scroller, firstRow, firstRowContent, lastRow } = layout;
+  const {
+    sheet,
+    header,
+    search,
+    searchRow,
+    scroller,
+    firstRow,
+    firstRowContent,
+    lastRow,
+  } = layout;
 
   // One opaque header region, drawn above the list, outside the scroller.
   expect(header.backgroundColor).toBe(sheet.backgroundColor);
@@ -170,7 +209,9 @@ function assertInvariants(layout: Layout, snap: Snap, scroll: Scroll): void {
   // The search field is contained, border-box and inset 12px on both sides.
   expect(search.boxSizing).toBe("border-box");
   expect(Math.abs(search.x - header.x - 12)).toBeLessThanOrEqual(TOLERANCE);
-  expect(Math.abs(header.right - search.right - 12)).toBeLessThanOrEqual(TOLERANCE);
+  expect(Math.abs(header.right - search.right - 12)).toBeLessThanOrEqual(
+    TOLERANCE,
+  );
   expect(search.width).toBeLessThanOrEqual(header.width - 24 + TOLERANCE);
   expect(search.y - searchRow.y).toBeGreaterThanOrEqual(8);
   expect(searchRow.bottom - search.bottom).toBeGreaterThanOrEqual(8);
@@ -183,12 +224,16 @@ function assertInvariants(layout: Layout, snap: Snap, scroll: Scroll): void {
   }
   expect(header.bottom).toBeLessThanOrEqual(layout.viewportHeight + TOLERANCE);
   if (snap === "peek") {
-    expect(Math.abs(header.bottom - layout.viewportHeight)).toBeLessThanOrEqual(TOLERANCE);
+    expect(Math.abs(header.bottom - layout.viewportHeight)).toBeLessThanOrEqual(
+      TOLERANCE,
+    );
   }
 
   // Row dividers share the separator's x, and row content keeps 12px padding.
   expect(Math.abs(firstRow.x - header.x)).toBeLessThanOrEqual(TOLERANCE);
-  expect(Math.abs(firstRow.right - header.right)).toBeLessThanOrEqual(TOLERANCE);
+  expect(Math.abs(firstRow.right - header.right)).toBeLessThanOrEqual(
+    TOLERANCE,
+  );
   expect(Number.parseFloat(firstRowContent.paddingLeft)).toBe(12);
   expect(Number.parseFloat(firstRowContent.paddingRight)).toBe(12);
 
@@ -211,14 +256,18 @@ async function gotoMap(page: Page): Promise<void> {
   await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
   await expect(page.getByText(/Showing \d+ of \d+/)).toBeVisible();
   await expect
-    .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.mapLoaded), { timeout: 15_000 })
+    .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.mapLoaded), {
+      timeout: 15_000,
+    })
     .toBe(true);
   await page.locator("[data-vehicle-key]").first().waitFor();
 }
 
 test.describe("mobile sheet header layout", () => {
   for (const viewport of VIEWPORTS) {
-    test(`header and list align at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+    test(`header and list align at ${viewport.width}x${viewport.height}`, async ({
+      page,
+    }) => {
       test.skip(
         (page.viewportSize()?.width ?? 1440) >= 1024,
         "the bottom sheet only exists below lg",
@@ -233,26 +282,38 @@ test.describe("mobile sheet header layout", () => {
           assertInvariants(await readLayout(page), snap, scroll);
         }
         await setScroll(page, "top");
-        await captureForReview(page, `sheet-header-${viewport.width}x${viewport.height}-${snap}`);
+        await captureForReview(
+          page,
+          `sheet-header-${viewport.width}x${viewport.height}-${snap}`,
+        );
       }
     });
   }
 
   test("the last row clears a bottom safe-area inset", async ({ page }) => {
-    test.skip((page.viewportSize()?.width ?? 1440) >= 1024, "mobile-only layout");
+    test.skip(
+      (page.viewportSize()?.width ?? 1440) >= 1024,
+      "mobile-only layout",
+    );
     await page.setViewportSize({ width: 390, height: 844 });
     await gotoMap(page);
     await setSnap(page, "full");
 
     // Chromium reports env(safe-area-inset-bottom) as 0. Apply the inset the
     // way an iOS home indicator does and prove the sheet consumes it.
-    await page.addStyleTag({ content: ".mobile-sheet { padding-bottom: 34px !important; }" });
+    await page.addStyleTag({
+      content: ".mobile-sheet { padding-bottom: 34px !important; }",
+    });
     await setScroll(page, "end");
 
     const layout = await readLayout(page);
     expect(layout.sheetPaddingBottom).toBe(34);
-    expect(layout.scroller.bottom).toBeLessThanOrEqual(layout.viewportHeight - 34 + TOLERANCE);
+    expect(layout.scroller.bottom).toBeLessThanOrEqual(
+      layout.viewportHeight - 34 + TOLERANCE,
+    );
     if (!layout.lastRow) throw new Error("the list rendered no rows");
-    expect(layout.lastRow.bottom).toBeLessThanOrEqual(layout.scroller.bottom + 1);
+    expect(layout.lastRow.bottom).toBeLessThanOrEqual(
+      layout.scroller.bottom + 1,
+    );
   });
 });

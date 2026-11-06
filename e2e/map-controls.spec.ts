@@ -286,7 +286,7 @@ test.describe("map controls", () => {
     await expect.poll(async () => (await debugMap(page))?.baseStyle).toBe("satellite");
   });
 
-  test("appearance changes theme and accent without closing the menu", async ({ page }) => {
+  test("appearance changes theme and accent without closing the menu", async ({ page, theme }) => {
     await gotoMap(page);
     const stack = controls(page).locator("div").first();
     const userMenu = page.getByRole("button", { name: "Account menu for Demo Dispatcher" });
@@ -294,9 +294,10 @@ test.describe("map controls", () => {
     await userMenu.click();
     const appearance = page.getByRole("group", { name: "Appearance" });
     await expect(appearance).toBeVisible();
+    const initialMode = theme === "dark" ? "Dark" : "Light";
     await expect(
       appearance
-        .getByRole("menuitemradio", { name: "Light" })
+        .getByRole("menuitemradio", { name: initialMode })
         .getByTestId("menu-item-indicator"),
     ).toBeVisible();
     await appearance.getByRole("menuitemradio", { name: "Light" }).click();

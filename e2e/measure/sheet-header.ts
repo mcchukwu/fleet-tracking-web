@@ -56,22 +56,40 @@ function round(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-async function snapshot(page: Page): Promise<Record<string, Box | null | number>> {
+async function snapshot(
+  page: Page,
+): Promise<Record<string, Box | null | number>> {
   return page.evaluate(() => {
-    const scroller = document.querySelector('ul[aria-label="Vehicles"]')?.parentElement ?? null;
+    const scroller =
+      document.querySelector('ul[aria-label="Vehicles"]')?.parentElement ??
+      null;
     const selectors: Record<string, Element | null> = {
       sheet: document.querySelector('section[aria-label="Vehicles"]'),
       header: document.querySelector('[data-testid="sheet-header"]'),
-      handle: document.querySelector('[data-testid="sheet-header"] > span[aria-hidden="true"]'),
-      titleRow: document.querySelector('[data-testid="sheet-header"] > div:nth-of-type(1)'),
-      searchRow: document.querySelector('[data-testid="sheet-header"] > div:nth-of-type(2)'),
-      search: document.querySelector('[data-testid="sheet-header"] input[type="search"]'),
-      searchCell: document.querySelector('[data-testid="sheet-header"] input[type="search"]')?.parentElement?.parentElement ?? null,
+      handle: document.querySelector(
+        '[data-testid="sheet-header"] > span[aria-hidden="true"]',
+      ),
+      titleRow: document.querySelector(
+        '[data-testid="sheet-header"] > div:nth-of-type(1)',
+      ),
+      searchRow: document.querySelector(
+        '[data-testid="sheet-header"] > div:nth-of-type(2)',
+      ),
+      search: document.querySelector(
+        '[data-testid="sheet-header"] input[type="search"]',
+      ),
+      searchCell:
+        document.querySelector(
+          '[data-testid="sheet-header"] input[type="search"]',
+        )?.parentElement?.parentElement ?? null,
       scroller,
       list: document.querySelector('ul[aria-label="Vehicles"]'),
-      firstRow: document.querySelector('[data-vehicle-key]'),
-      firstRowContent: document.querySelector('[data-vehicle-key] div.pointer-events-none'),
-      lastRow: [...document.querySelectorAll('[data-vehicle-key]')].at(-1) ?? null,
+      firstRow: document.querySelector("[data-vehicle-key]"),
+      firstRowContent: document.querySelector(
+        "[data-vehicle-key] div.pointer-events-none",
+      ),
+      lastRow:
+        [...document.querySelectorAll("[data-vehicle-key]")].at(-1) ?? null,
       safeProbe: (() => {
         const probe = document.createElement("div");
         probe.style.paddingBottom = "env(safe-area-inset-bottom, 0px)";
@@ -172,7 +190,9 @@ function tableRow(name: string, box: Box | null): void {
       box.zIndex.padStart(4),
       box.backgroundColor.padEnd(22),
       box.borderBottom.padEnd(30),
-      `${box.paddingTop} ${box.paddingRight} ${box.paddingBottom} ${box.paddingLeft}`.padEnd(28),
+      `${box.paddingTop} ${box.paddingRight} ${box.paddingBottom} ${box.paddingLeft}`.padEnd(
+        28,
+      ),
       `${box.clientWidth}/${box.scrollWidth}`,
     ].join(" "),
   );
@@ -202,53 +222,108 @@ function check(table: Table, scroll: string): string[] {
 
   const eps = 0.5;
 
-  if (Math.abs(header.x - sheet.x) > eps) failures.push(`header left vs sheet left: ${num(header.x - sheet.x)}px`);
-  if (Math.abs(header.right - sheet.right) > eps) failures.push(`header right vs sheet right: ${num(header.right - sheet.right)}px`);
-  if (Math.abs(header.bottom - scroller.y) > eps) failures.push(`list top vs header bottom: ${num(scroller.y - header.bottom)}px`);
-  if (header.bottom > viewportHeight + eps) failures.push(`header below viewport: ${num(header.bottom - viewportHeight)}px`);
+  if (Math.abs(header.x - sheet.x) > eps)
+    failures.push(`header left vs sheet left: ${num(header.x - sheet.x)}px`);
+  if (Math.abs(header.right - sheet.right) > eps)
+    failures.push(
+      `header right vs sheet right: ${num(header.right - sheet.right)}px`,
+    );
+  if (Math.abs(header.bottom - scroller.y) > eps)
+    failures.push(
+      `list top vs header bottom: ${num(scroller.y - header.bottom)}px`,
+    );
+  if (header.bottom > viewportHeight + eps)
+    failures.push(
+      `header below viewport: ${num(header.bottom - viewportHeight)}px`,
+    );
 
-  if (search.boxSizing !== "border-box") failures.push(`search box-sizing: ${search.boxSizing}`);
+  if (search.boxSizing !== "border-box")
+    failures.push(`search box-sizing: ${search.boxSizing}`);
   const leftInset = search.x - header.x;
   const rightInset = header.right - search.right;
-  if (Math.abs(leftInset - 12) > eps) failures.push(`search left inset: ${num(leftInset)}px`);
-  if (Math.abs(rightInset - 12) > eps) failures.push(`search right inset: ${num(rightInset)}px`);
-  if (num(search.width) > num(header.width - 24)) failures.push(`search wider than header content: ${num(search.width - (header.width - 24))}px`);
-  if (searchRow && search.y - searchRow.y < 8) failures.push(`space above search in row: ${num(search.y - searchRow.y)}px`);
-  if (header.bottom - search.bottom < 8) failures.push(`space below search: ${num(header.bottom - search.bottom)}px`);
+  if (Math.abs(leftInset - 12) > eps)
+    failures.push(`search left inset: ${num(leftInset)}px`);
+  if (Math.abs(rightInset - 12) > eps)
+    failures.push(`search right inset: ${num(rightInset)}px`);
+  if (num(search.width) > num(header.width - 24))
+    failures.push(
+      `search wider than header content: ${num(search.width - (header.width - 24))}px`,
+    );
+  if (searchRow && search.y - searchRow.y < 8)
+    failures.push(
+      `space above search in row: ${num(search.y - searchRow.y)}px`,
+    );
+  if (header.bottom - search.bottom < 8)
+    failures.push(
+      `space below search: ${num(header.bottom - search.bottom)}px`,
+    );
 
-  if (scroller.y < header.bottom - eps) failures.push(`list starts inside header: ${num(header.bottom - scroller.y)}px`);
-  if (scroll === "top" && row.y < scroller.y - 1) failures.push(`row not clipped at list top: ${num(scroller.y - row.y)}px`);
-  if (row.x < header.x - eps || row.right > header.right + eps) failures.push(`row outside header width: ${num(row.x - header.x)}/${num(row.right - header.right)}px`);
+  if (scroller.y < header.bottom - eps)
+    failures.push(
+      `list starts inside header: ${num(header.bottom - scroller.y)}px`,
+    );
+  if (scroll === "top" && row.y < scroller.y - 1)
+    failures.push(`row not clipped at list top: ${num(scroller.y - row.y)}px`);
+  if (row.x < header.x - eps || row.right > header.right + eps)
+    failures.push(
+      `row outside header width: ${num(row.x - header.x)}/${num(row.right - header.right)}px`,
+    );
   if (rowContent) {
     const paddingLeft = Number.parseFloat(rowContent.paddingLeft);
     const paddingRight = Number.parseFloat(rowContent.paddingRight);
-    if (Math.abs(paddingLeft - 12) > eps) failures.push(`row content left padding: ${num(paddingLeft)}px`);
-    if (Math.abs(paddingRight - 12) > eps) failures.push(`row content right padding: ${num(paddingRight)}px`);
+    if (Math.abs(paddingLeft - 12) > eps)
+      failures.push(`row content left padding: ${num(paddingLeft)}px`);
+    if (Math.abs(paddingRight - 12) > eps)
+      failures.push(`row content right padding: ${num(paddingRight)}px`);
   }
 
-  if (header.scrollWidth > header.clientWidth) failures.push(`header h-overflow: ${header.scrollWidth - header.clientWidth}px`);
-  if (scroller.scrollWidth > scroller.clientWidth) failures.push(`list h-overflow: ${scroller.scrollWidth - scroller.clientWidth}px`);
+  if (header.scrollWidth > header.clientWidth)
+    failures.push(
+      `header h-overflow: ${header.scrollWidth - header.clientWidth}px`,
+    );
+  if (scroller.scrollWidth > scroller.clientWidth)
+    failures.push(
+      `list h-overflow: ${scroller.scrollWidth - scroller.clientWidth}px`,
+    );
 
-  if (header.sticky || header.insideScroller) failures.push("header is sticky or inside the scrolling list");
+  if (header.sticky || header.insideScroller)
+    failures.push("header is sticky or inside the scrolling list");
   if (header.position === "static" || Number.parseInt(header.zIndex, 10) < 1) {
     failures.push("header is not a positioned layer above the list");
   }
   if (header.backgroundColor !== sheet.backgroundColor) {
-    failures.push(`header bg ${header.backgroundColor} vs sheet ${sheet.backgroundColor}`);
+    failures.push(
+      `header bg ${header.backgroundColor} vs sheet ${sheet.backgroundColor}`,
+    );
   }
-  if (!header.backgroundColor.startsWith("rgb(")) failures.push(`header bg is not opaque: ${header.backgroundColor}`);
+  if (!header.backgroundColor.startsWith("rgb("))
+    failures.push(`header bg is not opaque: ${header.backgroundColor}`);
 
   if (scroll === "end") {
-    if (lastRow && lastRow.bottom > scroller.bottom + 1) failures.push(`last row below scroller: ${num(lastRow.bottom - scroller.bottom)}px`);
-    const safeBottom = safeProbe ? Number.parseFloat(safeProbe.paddingBottom) : 0;
-    if (safeBottom > 0 && lastRow && lastRow.bottom > scroller.bottom - safeBottom + 1) {
-      failures.push(`last row in safe area: ${num(lastRow.bottom - (scroller.bottom - safeBottom))}px`);
+    if (lastRow && lastRow.bottom > scroller.bottom + 1)
+      failures.push(
+        `last row below scroller: ${num(lastRow.bottom - scroller.bottom)}px`,
+      );
+    const safeBottom = safeProbe
+      ? Number.parseFloat(safeProbe.paddingBottom)
+      : 0;
+    if (
+      safeBottom > 0 &&
+      lastRow &&
+      lastRow.bottom > scroller.bottom - safeBottom + 1
+    ) {
+      failures.push(
+        `last row in safe area: ${num(lastRow.bottom - (scroller.bottom - safeBottom))}px`,
+      );
     }
   }
   return failures;
 }
 
-async function setSnap(page: Page, snap: (typeof SNAPS)[number]): Promise<void> {
+async function setSnap(
+  page: Page,
+  snap: (typeof SNAPS)[number],
+): Promise<void> {
   const handle = page.getByRole("button", { name: /Showing \d+ of \d+/ });
   await handle.focus();
   if (snap === "peek") await page.keyboard.press("Home");
@@ -260,12 +335,18 @@ async function setSnap(page: Page, snap: (typeof SNAPS)[number]): Promise<void> 
   await page.waitForTimeout(350);
 }
 
-async function setScroll(page: Page, scroll: (typeof SCROLLS)[number]): Promise<void> {
+async function setScroll(
+  page: Page,
+  scroll: (typeof SCROLLS)[number],
+): Promise<void> {
   await page.evaluate((mode) => {
-    const element = document.querySelector('ul[aria-label="Vehicles"]')?.parentElement;
+    const element = document.querySelector(
+      'ul[aria-label="Vehicles"]',
+    )?.parentElement;
     if (!element) return;
     if (mode === "top") element.scrollTop = 0;
-    if (mode === "middle") element.scrollTop = (element.scrollHeight - element.clientHeight) / 2;
+    if (mode === "middle")
+      element.scrollTop = (element.scrollHeight - element.clientHeight) / 2;
     if (mode === "end") element.scrollTop = element.scrollHeight;
   }, scroll);
   await page.waitForTimeout(120);
@@ -274,7 +355,9 @@ async function setScroll(page: Page, scroll: (typeof SCROLLS)[number]): Promise<
 async function main(): Promise<void> {
   const browser = await chromium.launch({
     executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH,
-    args: process.env.PLAYWRIGHT_CHROMIUM_PATH ? ["--no-sandbox", "--disable-dev-shm-usage"] : [],
+    args: process.env.PLAYWRIGHT_CHROMIUM_PATH
+      ? ["--no-sandbox", "--disable-dev-shm-usage"]
+      : [],
   });
   const allFailures: string[] = [];
   try {
@@ -313,7 +396,10 @@ async function main(): Promise<void> {
               "safeProbe",
             ]) {
               const value = table[name];
-              tableRow(name, value !== null && typeof value === "object" ? value : null);
+              tableRow(
+                name,
+                value !== null && typeof value === "object" ? value : null,
+              );
             }
             const failures = check(table, scroll);
             const header = table.header;
