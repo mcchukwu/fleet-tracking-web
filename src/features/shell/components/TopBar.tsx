@@ -47,10 +47,10 @@ export function TopBar({ onOpenMenu, onOpenShortcuts }: TopBarProps) {
           className="flex h-touch min-w-touch shrink-0 items-center rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
         >
           <span className="hidden md:inline-flex">
-            <BrandLogo variant="lockup" className="text-text" />
+            <BrandLogo variant="lockup" />
           </span>
           <span className="md:hidden">
-            <BrandLogo variant="symbol" className="text-text" />
+            <BrandLogo variant="symbol" />
           </span>
         </Link>
 

@@ -175,7 +175,7 @@ export function StyleGuidePage() {
       <header className="sticky top-0 z-40 border-b border-border bg-surface">
         <div className="mx-auto flex h-topbar max-w-screen-2xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <BrandLogo variant="lockup" className="text-text" />
+            <BrandLogo variant="lockup" />
             <span className="hidden text-sm text-subtle sm:inline">Styleguide</span>
           </div>
           <div className="flex items-center gap-3">
@@ -681,7 +681,7 @@ export function StyleGuidePage() {
         >
           <div className="overflow-hidden rounded-lg border border-border bg-surface">
             <div className="flex h-topbar items-center gap-2 border-b border-border px-4">
-              <BrandLogo variant="lockup" className="text-text" />
+              <BrandLogo variant="lockup" />
               <div className="mx-auto flex h-control-md w-panel max-w-full items-center gap-2 rounded-md border border-border-strong bg-surface px-3 text-sm text-subtle">
                 <Search aria-hidden="true" className="size-4" strokeWidth={1.5} />
                 Search vehicles

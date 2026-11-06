@@ -24,7 +24,7 @@ export function LoginPage() {
     <div className="flex min-h-screen flex-col bg-bg text-text">
       <header className="shrink-0 border-b border-border bg-surface">
         <BrandBar>
-          <BrandLogo variant="lockup" className="text-text" />
+          <BrandLogo variant="lockup" />
         </BrandBar>
       </header>
 

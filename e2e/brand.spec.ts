@@ -60,9 +60,16 @@ test.describe("brand", () => {
 
     await startSignedIn(page);
     await page.goto("/map");
-    await expect(page.locator('[data-brand-variant="symbol"]')).toBeVisible();
+    const symbol = page.locator('[data-brand-variant="symbol"]');
+    await expect(symbol).toBeVisible();
     await expect(page.locator('[data-brand-variant="lockup"]')).toBeHidden();
-    await expectMinimumContrast(page.locator('[data-brand-variant="symbol"]'), 4.5);
+    const symbolBox = await symbol.boundingBox();
+    expect(symbolBox, "mobile logo has no box").not.toBeNull();
+    if (symbolBox) {
+      expect(symbolBox.x).toBeCloseTo(16, 0);
+      expect(symbolBox.height).toBeCloseTo(24, 0);
+    }
+    await expectMinimumContrast(symbol, 4.5);
     await expectNoHorizontalScroll(page);
     await expectNoAxeViolations(page);
     await captureForReview(page, "brand-topbar");
