@@ -155,6 +155,9 @@ export function MobileVehicleSheet({
     if (!event.currentTarget.contains(target)) return;
     if (target.closest("[data-sheet-action]")) return;
     dragRef.current = { startY: event.clientY, startVisible: visible };
+    // Keep the keyboard focus where it is: a pointer drag must not blur the
+    // focused control before the control stack is obscured.
+    event.preventDefault();
     event.currentTarget.setPointerCapture?.(event.pointerId);
     insetTarget?.current?.setAttribute("data-sheet-dragging", "true");
   }

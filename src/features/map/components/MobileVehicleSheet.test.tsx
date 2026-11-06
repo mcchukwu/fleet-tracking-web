@@ -144,6 +144,17 @@ describe("MobileVehicleSheet", () => {
     expect(onSnap).not.toHaveBeenCalled();
   });
 
+  it("cancels the pointerdown default on a header drag to keep focus", () => {
+    renderSheet("peek");
+    const header = screen.getByTestId("sheet-header");
+    const search = screen.getByRole("searchbox", { name: "Search vehicles" });
+
+    expect(fireEvent.pointerDown(header, { clientY: 600, pointerId: 1 })).toBe(false);
+    expect(
+      fireEvent.pointerDown(search, { clientY: 600, pointerId: 2, bubbles: true }),
+    ).toBe(true);
+  });
+
   it("cycles with the keyboard and stops at the ends", async () => {
     const { onSnap } = renderSheet("peek");
     const handle = screen.getByRole("button", { name: /Showing 25 of 25/ });
