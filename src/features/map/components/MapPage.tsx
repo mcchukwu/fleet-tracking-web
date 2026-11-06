@@ -14,6 +14,7 @@ import { STALE_AFTER_MS } from "../../../lib/status";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useMediaQuery } from "../../../lib/useMediaQuery";
 import { readMapDebug, setMapDebug } from "../../../dev/debug";
+import { satelliteConfig } from "../../../map/config";
 import type { MapAdapter, Viewport } from "../../../map/types";
 import { useConnection } from "../../../stores/connection";
 import { useToast } from "../../../ui/Toast";
@@ -462,11 +463,16 @@ export function MapPage() {
 
       <div
         className={cn(
-          "map-bottom-anchor absolute z-10",
-          isDesktop ? "left-1/2 -translate-x-1/2" : "map-inset-bottom left-3",
+          "map-bottom-anchor absolute z-20 flex justify-center",
+          isDesktop
+            ? cn(
+                "map-attribution-area",
+                preferences.panelOpen ? "lg:left-93" : "lg:left-3",
+              )
+            : "map-inset-bottom left-3",
         )}
       >
-        <MapAttribution styleId={mapStyle.effectiveStyle} />
+        <MapAttribution styleId={mapStyle.effectiveStyle} satellite={satelliteConfig} />
       </div>
 
       <ErrorBoundary
@@ -488,7 +494,7 @@ export function MapPage() {
         <button
           type="button"
           onClick={() => setSheetSnap("half")}
-          className="absolute inset-x-0 top-0 z-10 h-20 w-full focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring"
+          className="absolute inset-x-0 top-0 z-10 h-sheet-strip w-full focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring"
         >
           <span className="sr-only">Collapse the vehicle list</span>
         </button>

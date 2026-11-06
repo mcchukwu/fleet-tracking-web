@@ -93,6 +93,18 @@ vi.mock("../hooks/useMapStyle", () => ({
   useMapStyle: () => mocks.mapStyle,
 }));
 
+vi.mock("../../../map/config", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../map/config")>();
+  return {
+    ...actual,
+    satelliteConfig: {
+      tilesUrl: "https://satellite.test/{z}/{x}/{y}.jpg",
+      attribution: "© Test imagery",
+      attributionHref: "https://example.com/imagery",
+    },
+  };
+});
+
 vi.mock("./MapView", () => ({
   MapView: (props: {
     vehicles: readonly unknown[];
@@ -326,6 +338,17 @@ describe("MapPage", () => {
     mocks.desktop = false;
     renderPage();
     expect(screen.getAllByRole("link", { name: /OpenStreetMap/ }).length).toBeGreaterThan(0);
+  });
+
+  it("shows the configured satellite credit when the satellite style is active", () => {
+    mocks.mapStyle.chosenStyle = "satellite";
+    mocks.mapStyle.effectiveStyle = "satellite";
+    renderPage();
+
+    expect(screen.getByRole("link", { name: "© Test imagery" })).toHaveAttribute(
+      "href",
+      "https://example.com/imagery",
+    );
   });
 
   it("hides the compact KPI when the sheet is full", async () => {

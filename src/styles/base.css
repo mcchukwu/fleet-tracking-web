@@ -111,7 +111,7 @@
 
   .map-root {
     --map-inset-right: 0px;
-    --map-inset-bottom: 96px;
+    --map-inset-bottom: var(--spacing-sheet-peek);
   }
 
   .map-filter-menu {
@@ -136,6 +136,11 @@
 
   .map-bottom-anchor {
     bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .map-attribution-area {
+    right: max(12px, var(--map-inset-right, 0px));
+    transition: right var(--motion-slow) var(--ease-slow);
   }
 
   .map-controls {

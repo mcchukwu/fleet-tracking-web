@@ -92,6 +92,7 @@ test.describe("map controls", () => {
 
   test("the inset harness shifts the controls by the drawer width", async ({ page }) => {
     test.skip(isMobile(page), "desktop-only harness");
+    await page.setViewportSize({ width: 1024, height: 900 });
     await gotoMap(page);
     const before = await controls(page).boundingBox();
 
@@ -109,6 +110,7 @@ test.describe("map controls", () => {
     expect(Math.round(before.x - shifted.x)).toBe(432);
     await expectNoOverlap(controls(page), harness);
     await expectNoOverlap(controls(page), attribution(page));
+    await expectNoOverlap(attribution(page), harness);
     await captureForReview(page, "02b-map-inset-harness");
   });
 
@@ -159,6 +161,12 @@ test.describe("map controls", () => {
     const credit = await attribution(page).boundingBox();
     if (!credit) throw new Error("attribution has no box");
     expect(credit.y + credit.height).toBeLessThanOrEqual(full.y + 1);
+    const attributionOnTop = await attribution(page).evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      const top = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+      return element === top || element.contains(top);
+    });
+    expect(attributionOnTop).toBe(true);
 
     const header = page.getByTestId("sheet-header");
     const before = await header.boundingBox();
@@ -238,6 +246,8 @@ test.describe("map controls", () => {
     await captureForReview(page, "02b-style-menu");
     await page.getByRole("menuitemradio", { name: "Satellite" }).click();
     await expect.poll(async () => (await debugMap(page))?.baseStyle).toBe("satellite");
+    await expect(page.getByRole("link", { name: "© Test imagery" })).toBeVisible();
+    await expect(page.getByRole("link", { name: /OpenStreetMap/ })).toHaveCount(0);
 
     await page.reload();
     await expect
@@ -251,6 +261,8 @@ test.describe("map controls", () => {
     });
     await expect(page.getByText("Showing the standard map.").first()).toBeVisible();
     await expect.poll(async () => (await debugMap(page))?.baseStyle).toBe("standard");
+    await expect(page.getByRole("link", { name: /OpenStreetMap/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: "© Test imagery" })).toHaveCount(0);
 
     await page.getByRole("button", { name: "Map style" }).click();
     const satellite = page.getByRole("menuitemradio", { name: /Satellite/ });
