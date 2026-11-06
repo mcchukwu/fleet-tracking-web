@@ -462,7 +462,7 @@ export function MapPage() {
 
       <div
         className={cn(
-          "absolute bottom-3 z-10",
+          "map-bottom-anchor absolute z-10",
           isDesktop ? "left-1/2 -translate-x-1/2" : "map-inset-bottom left-3",
         )}
       >
@@ -478,7 +478,7 @@ export function MapPage() {
           variant={isDesktop ? "desktop" : "mobile"}
           obscured={!isDesktop && (sheetSnap === "full" || sheetObscured)}
           className={cn(
-            "absolute bottom-3 right-3 z-10",
+            "map-bottom-anchor absolute right-3 z-10",
             isDesktop ? "map-inset-right" : "map-inset-bottom",
           )}
         />

@@ -81,7 +81,7 @@ export function MapControls({
       aria-label="Map controls"
       {...(obscured ? { inert: true, "aria-hidden": true } : {})}
       className={cn(
-        "m-0 flex min-w-0 flex-col gap-2 border-0 p-0",
+        "map-controls m-0 flex min-w-0 flex-col gap-2 border-0 p-0",
         obscured && "pointer-events-none opacity-0",
         className,
       )}

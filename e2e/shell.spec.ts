@@ -156,25 +156,38 @@ test.describe("app shell", () => {
     await captureForReview(page, "01-shell-banner-menu");
   });
 
-  test("the theme control switches the resolved theme", async ({ page }) => {
+  test("the appearance section switches the resolved theme", async ({ page }) => {
     await page.goto("/map");
 
-    if (isMobile(page)) {
-      await page.getByRole("button", { name: "Account menu for Demo Dispatcher" }).click();
-      await page.getByRole("menuitem", { name: "Theme" }).hover();
-      const dark = page.getByRole("menuitemradio", { name: "Dark" });
-      await dark.waitFor();
-      await dark.focus();
-      await expectNoAxeViolations(page);
-      await expectTouchTargets(page);
-      await page.keyboard.press("Enter");
-    } else {
-      await page.getByRole("button", { name: "Dark theme" }).click();
-    }
+    await page.getByRole("button", { name: "Account menu for Demo Dispatcher" }).click();
+    const appearance = page.getByRole("group", { name: "Appearance" });
+    const dark = appearance.getByRole("menuitemradio", { name: "Dark" });
+    await dark.focus();
+    await expectNoAxeViolations(page);
+    if (isMobile(page)) await expectTouchTargets(page);
+    await page.keyboard.press("Enter");
 
     await expect
       .poll(() => page.evaluate(() => document.documentElement.dataset.theme))
       .toBe("dark");
+    await expect(page.getByRole("menu")).toBeVisible();
+    await captureForReview(page, "01-shell-appearance");
+  });
+
+  test("the accent persists and the top bar has no theme control", async ({ page }) => {
+    await page.goto("/map");
+    const header = page.locator("header").first();
+    await expect(header.getByRole("group", { name: "Colour theme" })).toHaveCount(0);
+
+    await page.getByRole("button", { name: "Account menu for Demo Dispatcher" }).click();
+    await page
+      .getByRole("group", { name: "Appearance" })
+      .getByRole("menuitemradio", { name: "Graphite accent" })
+      .click();
+    await expect(page.locator("html")).toHaveAttribute("data-accent", "graphite");
+
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("data-accent", "graphite");
   });
 
   test("mobile navigation opens as a menu and changes route", async ({ page }) => {

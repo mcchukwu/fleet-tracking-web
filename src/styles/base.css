@@ -133,6 +133,14 @@
     transition: none;
   }
 
+  .map-bottom-anchor {
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .map-controls {
+    transition: opacity var(--motion-slow) var(--ease-slow);
+  }
+
   .map-inset-right {
     transform: translateX(calc(-1 * var(--map-inset-right, 0px)));
     transition: transform var(--motion-slow) var(--ease-slow);

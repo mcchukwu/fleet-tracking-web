@@ -256,6 +256,7 @@ Shell and dialog sizes are tokens: `--spacing-touch: 44px`, `--spacing-rail-expa
 ┌──────────────────────────────────────────────────────────────┐
 │ Top bar 48px: Zoro · global search (/) · connection · user  │
 │ (appearance lives inside the user menu, not the bar)        │
+│ (mobile: Zoro · menu · search icon · connection · user)     │
 ├────┬─────────────────────────────────────────────────────────┤
 │Nav │ Map (full-bleed, fills everything)                      │
 │56px│  ┌─ Left panel 360px (floating, 12px inset) ─┐          │
@@ -622,7 +623,9 @@ const pill = cva("inline-flex h-5 items-center gap-1 rounded-full px-2 text-xs f
 - [ ] All numbers tabular; missing values are `—`.
 - [ ] Keyboard path works end to end; focus visible; `Esc` behaves.
 - [ ] Contrast meets §3.2; `axe` reports no violations.
-- [ ] Works at 1440px and 390px; no horizontal page scroll.
+- [ ] Works at 1440px, 390px and 360px; no horizontal page scroll.
+- [ ] Map controls, attribution, KPI, panels and the sheet never overlap at any snap point.
+- [ ] The top bar contains no standalone theme or accent control; appearance lives in the user menu.
 - [ ] Reduced-motion respected.
 - [ ] Offline behaviour verified (service worker on, network off).
 - [ ] No gradients, no nested cards, no decorative elements, no more than one primary button per view.

@@ -27,7 +27,7 @@ test.describe("foundation smoke", () => {
     expect(errors).toEqual([]);
   });
 
-  test("the styleguide captures the shell primitives in both accents", async ({ page }) => {
+  test("the styleguide captures the shell primitives and every accent", async ({ page }) => {
     await page.goto("/styleguide");
 
     for (const [id, name] of [
@@ -42,9 +42,12 @@ test.describe("foundation smoke", () => {
       await captureForReview(page, name);
     }
 
-    await page.getByRole("button", { name: "Violet accent" }).click();
-    await page.locator("#shell").scrollIntoViewIfNeeded();
-    await captureForReview(page, "01-styleguide-shell-violet");
+    for (const accent of ["Blue", "Violet", "Fuchsia", "Graphite"] as const) {
+      await page.getByRole("button", { name: `${accent} accent` }).click();
+      await expect(page.locator("html")).toHaveAttribute("data-accent", accent.toLowerCase());
+      await page.locator("#shell").scrollIntoViewIfNeeded();
+      await captureForReview(page, `02b-styleguide-accent-${accent.toLowerCase()}`);
+    }
   });
 
   test("the index route opens the map inside the shell", async ({ page }) => {
