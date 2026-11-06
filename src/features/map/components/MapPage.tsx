@@ -14,14 +14,14 @@ import { STALE_AFTER_MS } from "../../../lib/status";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useMediaQuery } from "../../../lib/useMediaQuery";
 import { readMapDebug, setMapDebug } from "../../../dev/debug";
-import { mapConfig } from "../../../map/config";
-import type { Bounds, MapAdapter } from "../../../map/types";
+import type { MapAdapter, Viewport } from "../../../map/types";
 import { useConnection } from "../../../stores/connection";
 import { useToast } from "../../../ui/Toast";
 import { cn } from "../../../ui/cn";
 import { useMapData } from "../hooks/useMapData";
 import { useMapPreferences } from "../hooks/useMapPreferences";
 import { useMapShortcuts } from "../hooks/useMapShortcuts";
+import { useMapStyle } from "../hooks/useMapStyle";
 import { openAlertCountLabel } from "../lib/alerts";
 import {
   MAP_ROW_HEIGHT,
@@ -40,7 +40,9 @@ import { mapFreshness } from "../lib/freshness";
 import { toMapGeofences } from "../lib/geofences";
 import { fitPadding, type SheetSnap } from "../lib/padding";
 import { KpiStrip, type KpiCell } from "./KpiStrip";
+import { MapAttribution } from "./MapAttribution";
 import { MapControls } from "./MapControls";
+import { MapInsetHarness } from "./MapInsetHarness";
 import { MapView } from "./MapView";
 import { MobileVehicleSheet } from "./MobileVehicleSheet";
 import { VehiclePanel, type VehiclePanelProps } from "./VehiclePanel";
@@ -60,17 +62,25 @@ export function MapPage() {
   } = useGeofences(authenticated);
   const alertsQuery = useOpenAlerts(authenticated);
   const preferences = useMapPreferences();
+  const mapStyle = useMapStyle();
   const { network, socket, socketDownAt, lastDataAt } = useConnection();
   const { toast } = useToast();
 
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
   const [hoverPoint, setHoverPoint] = useState<{ x: number; y: number } | null>(null);
   const [loadingCancelled, setLoadingCancelled] = useState(false);
-  const [bounds, setBounds] = useState<Bounds | null>(null);
+  const [viewport, setViewport] = useState<Viewport | null>(null);
+  const bounds = viewport?.bounds ?? null;
   const [sheetSnap, setSheetSnap] = useState<SheetSnap>("peek");
   const adapterRef = useRef<MapAdapter | null>(null);
   const panelToggleRef = useRef<HTMLButtonElement>(null);
+  const mapRootRef = useRef<HTMLDivElement>(null);
   const fittedOnce = useRef(false);
+  const harnessOpen =
+    import.meta.env.DEV &&
+    import.meta.env.VITE_MOCK === "1" &&
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("inset") === "1";
 
   const filters: MapFilterValues = useMemo(
     () => ({
@@ -241,6 +251,10 @@ export function MapPage() {
     adapterRef.current = adapter;
   }, []);
 
+  const zoomIn = useCallback(() => adapterRef.current?.zoomIn(), []);
+  const zoomOut = useCallback(() => adapterRef.current?.zoomOut(), []);
+  const resetBearing = useCallback(() => adapterRef.current?.resetBearing(), []);
+
   const closePanel = useCallback(() => {
     preferences.setPanelOpen(false);
     setTimeout(() => panelToggleRef.current?.focus(), 0);
@@ -251,6 +265,17 @@ export function MapPage() {
     fittedOnce.current = true;
     fitFleet();
   }, [data.positioned, fitFleet]);
+
+  useEffect(() => {
+    if (!mapStyle.fallbackNotice) return;
+    toast({
+      tone: "info",
+      title: "Showing the standard map.",
+      description: "Satellite needs a connection.",
+      key: "map-style-offline",
+    });
+    mapStyle.dismissFallbackNotice();
+  }, [mapStyle, toast]);
 
   useEffect(() => {
     if (!geofenceError) return;
@@ -337,8 +362,28 @@ export function MapPage() {
     onCancelLoading: cancelSnapshot,
   };
 
+  const kpiHidden = !isDesktop && sheetSnap === "full";
+  const controlsProps = {
+    bearing: viewport?.bearing ?? 0,
+    zoom: viewport?.zoom ?? 7,
+    styles: mapStyle.styles,
+    baseStyle: mapStyle.effectiveStyle,
+    offline: mapStyle.offline,
+    panelOpen: preferences.panelOpen,
+    geofencesVisible: preferences.geofencesVisible,
+    fitDisabled: data.positioned === 0,
+    panelToggleRef,
+    onZoomIn: zoomIn,
+    onZoomOut: zoomOut,
+    onResetBearing: resetBearing,
+    onFit: fitFleet,
+    onTogglePanel: () => preferences.setPanelOpen(!preferences.panelOpen),
+    onToggleGeofences: preferences.toggleGeofences,
+    onStyleChange: mapStyle.chooseStyle,
+  };
+
   return (
-    <div className="relative h-full min-h-0">
+    <div ref={mapRootRef} data-testid="map-root" className="map-root relative h-full min-h-0">
       <h1 className="sr-only">Map</h1>
 
       <ErrorBoundary level="panel" resetKeys={[selectedKey]}>
@@ -350,6 +395,7 @@ export function MapPage() {
           hoveredRow={hoveredRow}
           hoverPoint={hoverPoint}
           dimmed={offline}
+          baseStyle={mapStyle.effectiveStyle}
           loading={snapshotPending}
           error={snapshotPending ? null : snapshotError}
           hasData={hasData}
@@ -357,23 +403,25 @@ export function MapPage() {
           onRetry={retrySnapshot}
           onSelect={selectKey}
           onHover={handleHover}
-          onViewport={setBounds}
+          onViewport={setViewport}
           onAdapterReady={handleAdapterReady}
         />
       </ErrorBoundary>
 
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center pl-3 pr-14 lg:right-3 lg:px-3",
-          preferences.panelOpen ? "lg:left-93" : "lg:left-3",
-        )}
-      >
-        <div className="pointer-events-auto w-full max-w-md">
-          <ErrorBoundary level="panel">
-            <KpiStrip cells={kpiCells} compact={!isDesktop} loading={snapshotPending} />
-          </ErrorBoundary>
+      {kpiHidden ? null : (
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center pl-3 pr-14 lg:right-3 lg:px-3",
+            preferences.panelOpen ? "lg:left-93" : "lg:left-3",
+          )}
+        >
+          <div className="pointer-events-auto w-full max-w-md">
+            <ErrorBoundary level="panel">
+              <KpiStrip cells={kpiCells} compact={!isDesktop} loading={snapshotPending} />
+            </ErrorBoundary>
+          </div>
         </div>
-      </div>
+      )}
 
       {isDesktop && preferences.panelOpen ? (
         <aside className="absolute bottom-3 left-3 top-3 z-20 w-panel">
@@ -405,31 +453,41 @@ export function MapPage() {
         </MobileVehicleSheet>
       ) : null}
 
-      {!isDesktop ? (
-        <a
-          href={mapConfig.attribution.href}
-          target="_blank"
-          rel="noreferrer"
-          className="absolute bottom-28 left-3 z-10 flex h-touch items-center rounded-md bg-surface px-2 text-xs text-muted shadow-menu focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring"
+      <div
+        className={cn(
+          "absolute bottom-3 z-10",
+          isDesktop ? "left-1/2 -translate-x-1/2" : "map-inset-bottom left-3",
+        )}
+      >
+        <MapAttribution styleId={mapStyle.effectiveStyle} />
+      </div>
+
+      <ErrorBoundary
+        level="panel"
+        resetKeys={[preferences.panelOpen, preferences.geofencesVisible]}
+      >
+        <MapControls
+          {...controlsProps}
+          variant={isDesktop ? "desktop" : "mobile"}
+          obscured={!isDesktop && sheetSnap === "full"}
+          className={cn(
+            "absolute bottom-3 right-3 z-10",
+            isDesktop ? "map-inset-right" : "map-inset-bottom",
+          )}
+        />
+      </ErrorBoundary>
+
+      {!isDesktop && sheetSnap === "full" ? (
+        <button
+          type="button"
+          onClick={() => setSheetSnap("half")}
+          className="absolute inset-x-0 top-0 z-10 h-20 w-full focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring"
         >
-          {mapConfig.attribution.label}
-        </a>
+          <span className="sr-only">Collapse the vehicle list</span>
+        </button>
       ) : null}
 
-      {isDesktop ? (
-        <ErrorBoundary level="panel" resetKeys={[preferences.panelOpen, preferences.geofencesVisible]}>
-          <MapControls
-            className="absolute bottom-3 right-3 z-10"
-            panelToggleRef={panelToggleRef}
-            panelOpen={preferences.panelOpen}
-            geofencesVisible={preferences.geofencesVisible}
-            fitDisabled={data.positioned === 0}
-            onFit={fitFleet}
-            onTogglePanel={() => preferences.setPanelOpen(!preferences.panelOpen)}
-            onToggleGeofences={preferences.toggleGeofences}
-          />
-        </ErrorBoundary>
-      ) : null}
+      <MapInsetHarness open={harnessOpen} target={mapRootRef} />
     </div>
   );
 }

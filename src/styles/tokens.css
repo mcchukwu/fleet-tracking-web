@@ -58,6 +58,14 @@
   --shadow-float: 0 1px 2px rgb(0 0 0 / 0.06), 0 8px 24px rgb(0 0 0 / 0.1);
   --shadow-menu: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 12px rgb(0 0 0 / 0.1);
   --overlay: rgb(0 0 0 / 0.4);
+
+  --imagery-halo: #ffffff;
+
+  --motion-fast: 100ms;
+  --motion-base: 150ms;
+  --motion-slow: 220ms;
+  --ease-out: ease-out;
+  --ease-slow: cubic-bezier(0.2, 0, 0, 1);
 }
 
 .dark {
@@ -112,6 +120,8 @@
   --shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.5);
   --shadow-menu: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 12px rgb(0 0 0 / 0.5);
   --overlay: rgb(0 0 0 / 0.6);
+
+  --imagery-halo: #09090b;
 }
 
 :root[data-accent="violet"] {
@@ -234,6 +244,7 @@
   --spacing-drawer: 420px;
   --spacing-touch: 44px;
   --spacing-sheet-peek: 96px;
+  --spacing-sheet-strip: 80px;
 
   --container-dialog: 480px;
   --container-content: 1440px;

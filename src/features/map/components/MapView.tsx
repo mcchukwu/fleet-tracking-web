@@ -4,7 +4,13 @@ import type { AppError } from "../../../errors/types";
 import { setMapDebug } from "../../../dev/debug";
 import { FleetMap } from "../../../map/FleetMap";
 import { mapConfig } from "../../../map/config";
-import type { Bounds, MapAdapter, MapGeofence, MapVehicle } from "../../../map/types";
+import type {
+  MapAdapter,
+  MapGeofence,
+  MapStyleId,
+  MapVehicle,
+  Viewport,
+} from "../../../map/types";
 import { LoadingBar } from "../../../ui/StatePanel";
 import type { VehicleRow } from "../lib/filter";
 import { MapTooltip } from "./MapTooltip";
@@ -17,6 +23,7 @@ export interface MapViewProps {
   hoveredRow: VehicleRow | null;
   hoverPoint: { x: number; y: number } | null;
   dimmed: boolean;
+  baseStyle: MapStyleId;
   loading: boolean;
   error: AppError | null;
   hasData: boolean;
@@ -24,7 +31,7 @@ export interface MapViewProps {
   onRetry: () => void;
   onSelect: (key: string) => void;
   onHover: (hover: { key: string; point: { x: number; y: number } } | null) => void;
-  onViewport: (bounds: Bounds) => void;
+  onViewport: (viewport: Viewport) => void;
   onAdapterReady: (adapter: MapAdapter | null) => void;
 }
 
@@ -42,6 +49,7 @@ export function MapView({  vehicles,
   hoveredRow,
   hoverPoint,
   dimmed,
+  baseStyle,
   loading,
   error,
   hasData,
@@ -60,7 +68,7 @@ export function MapView({  vehicles,
     const offClick = adapter.on("vehicleClick", (event) => onSelect(event.key));
     const offHover = adapter.on("vehicleHover", (event) => onHover(event));
     const offViewport = adapter.on("viewportChange", (event) => {
-      onViewport(event.bounds);
+      onViewport(event);
       setMapDebug({
         viewport: { center: event.center, zoom: event.zoom, bearing: event.bearing },
         bearing: event.bearing,
@@ -106,6 +114,7 @@ export function MapView({  vehicles,
     setMapDebug({
       mapLoaded: true,
       provider: ready.id,
+      baseStyle,
       targetVehicleCount: vehicles.length,
       viewport: { center: viewport.center, zoom: viewport.zoom, bearing: viewport.bearing },
       bearing: viewport.bearing,
@@ -126,6 +135,7 @@ export function MapView({  vehicles,
         vehicles={vehicles}
         geofences={geofences}
         bounds={mapConfig.defaultBounds}
+        baseStyle={baseStyle}
         dimmed={dimmed}
         onReady={handleReady}
         onError={handleError}

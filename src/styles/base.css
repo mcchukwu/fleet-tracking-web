@@ -108,6 +108,26 @@
     box-shadow: var(--shadow-menu);
   }
 
+  .map-root {
+    --map-inset-right: 0px;
+    --map-inset-bottom: 96px;
+  }
+
+  .map-inset-right {
+    transform: translateX(calc(-1 * var(--map-inset-right, 0px)));
+    transition: transform var(--motion-slow) var(--ease-slow);
+  }
+
+  .map-inset-bottom {
+    transform: translateY(calc(-1 * var(--map-inset-bottom, 0px)));
+    transition: transform var(--motion-slow) var(--ease-slow);
+  }
+
+  [data-sheet-dragging="true"] .map-inset-right,
+  [data-sheet-dragging="true"] .map-inset-bottom {
+    transition: none;
+  }
+
   .z-menu {
     z-index: 50;
   }
