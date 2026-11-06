@@ -92,17 +92,13 @@ export async function expectTouchTargets(page: Page, minimum = 44): Promise<void
       })
       .map((element) => {
         const rect = element.getBoundingClientRect();
-        // A nested vehicle-row action keeps a 24px AA target; the 56px row is
-        // the primary target and a 44px inline action cannot fit two lines.
-        const minimum = element.closest("[data-row-inline-action]") ? 24 : size;
         return {
           label: element.getAttribute("aria-label") ?? element.textContent?.trim() ?? element.tagName,
           width: Math.round(rect.width),
           height: Math.round(rect.height),
-          minimum,
         };
       })
-      .filter((target) => target.width < target.minimum || target.height < target.minimum);
+      .filter((target) => target.width < size || target.height < size);
   }, minimum);
   expect(tooSmall, `touch targets below ${minimum}px`).toEqual([]);
 }

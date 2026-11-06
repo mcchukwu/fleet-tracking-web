@@ -63,7 +63,10 @@ export function CopyButton({
       data-copy-status={status}
       className={cn(
         "inline-flex min-w-touch items-center justify-start rounded-sm font-mono text-sm text-text underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:min-w-0",
-        inline ? "h-6 md:h-control-sm" : "h-touch md:h-control-sm",
+        // The inline variant keeps a 24px visual line inside a 56px row but must
+        // still offer a 44px touch target, so it grows symmetrically and the
+        // negative margins keep its layout contribution at one text line.
+        inline ? "-my-3 h-touch md:my-0 md:h-control-sm" : "h-touch md:h-control-sm",
         className,
       )}
     >

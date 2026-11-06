@@ -23,11 +23,11 @@ describe("CopyButton", () => {
     expect(await screen.findByText("Plate copied")).toBeInTheDocument();
   });
 
-  it("keeps a compact height when used inline in a vehicle row", () => {
+  it("keeps a 44px touch target that lays out as one text line inline", () => {
     withProviders(<CopyButton inline value="LSD-100-AA" label="Plate" />);
     const button = screen.getByRole("button", { name: /copy plate/i });
-    expect(button).toHaveClass("h-6");
-    expect(button).not.toHaveClass("h-touch");
+    expect(button).toHaveClass("h-touch", "-my-3");
+    expect(button).not.toHaveClass("h-6");
   });
 
   it("shows the clipboard failure copy when the browser denies access", async () => {

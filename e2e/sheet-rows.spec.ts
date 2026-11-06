@@ -195,10 +195,20 @@ function overlap(a: Box, b: Box): boolean {
   return a.x < b.right && a.right > b.x && a.y < b.bottom && a.bottom > b.y;
 }
 
-function assertRows(layout: Layout, scroll: Scroll): void {
+function assertRows(layout: Layout, scroll: Scroll, snap: Snap): void {
   const { rows } = layout;
   expect(rows.length).toBeGreaterThan(0);
   expect(layout.vehicleCount).toBeGreaterThan(0);
+
+  // The peek snap is exactly one header tall (113px), so the peek can never
+  // expose list rows or push the search field off screen.
+  if (snap === "peek") {
+    expect(layout.header.height, "peek header height").toBeCloseTo(113, 0);
+    expect(layout.viewportHeight - layout.sheet.y, "peek height").toBeCloseTo(
+      113,
+      0,
+    );
+  }
 
   // Every row is 56px, consecutive rows touch, and the virtual total is measured.
   for (const [index, row] of rows.entries()) {
@@ -234,7 +244,7 @@ function assertRows(layout: Layout, scroll: Scroll): void {
     expect(
       row.inlineAction.height,
       `row ${index} inline action height`,
-    ).toBeGreaterThanOrEqual(24);
+    ).toBeGreaterThanOrEqual(44);
     expect(
       row.inlineAction.width,
       `row ${index} inline action width`,
@@ -402,7 +412,7 @@ test.describe("mobile sheet rows and attribution", () => {
           for (const scroll of SCROLLS) {
             await setScroll(page, scroll);
             const layout = await readLayout(page);
-            assertRows(layout, scroll);
+            assertRows(layout, scroll, snap);
             assertAttribution(layout, snap);
           }
         }
@@ -440,7 +450,7 @@ test.describe("mobile sheet rows and attribution", () => {
     });
     await setScroll(page, "end");
     const layout = await readLayout(page);
-    assertRows(layout, "end");
+    assertRows(layout, "end", "full");
     assertAttribution(layout, "full");
   });
 });
