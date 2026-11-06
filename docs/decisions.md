@@ -337,3 +337,13 @@ Trade-off: the declared budget is conservative because the measurement only cove
 - The map's open-alert query now parses `/alerts` through a tolerant entity schema and salvages valid rows instead of casting the response. Malformed rows are dropped and counted, while unknown alert types, severities and statuses are kept as strings so the UI can render the neutral fallback rather than blanking the screen.
 
 Trade-off: the 20 fps cap and earlier clustering trade animation smoothness for main-thread headroom above the comfort budget; the timestamp trigger is now a 44px button on touch so keyboard and touch users can reach the local/UTC detail.
+
+## 2026-11-05: The dev proxy rewrites the WebSocket Origin, and the banner has an honest end state
+
+Staging rejected the live WebSocket through the Vite dev proxy with a 403 because `WS_ALLOWED_ORIGINS` compares the request `Origin`. Vite's `changeOrigin` rewrites only the `Host` header, so the proxy forwarded `Origin: http://localhost:5173`. `vite.config.ts` now sets `Origin` to the proxy target's origin on `proxyReqWs`; production is same-origin and does not use this proxy.
+
+Verified through a dev server on `:5174`: login returned 200, the upgrade with a localhost origin returned 101, and 334 real position frames arrived in 20 seconds with exactly `type, tenant_id, vehicle_id, lat, lon, recorded_at`; no alert frame arrived. The committed 31-second capture was already real evidence with the same field set, so no fixture was recaptured. The proxy must target the staging site (or an origin listed in `WS_ALLOWED_ORIGINS`).
+
+The reconnect banner now moves to a terminal state after 60 seconds: `Live updates are unavailable. Showing data from hh:mm.` with `Retry now`, while automatic attempts continue at the 30-second backoff cap. The banner sits at z-index 35, below sticky headers, menus, popovers, dialogs and toasts, so it cannot cover the user menu. In development, three failed handshakes after a successful `/me` log one console hint pointing at `WS_ALLOWED_ORIGINS` and the proxy `Origin` header.
+
+Trade-off: the terminal copy admits that live updates have stopped instead of pretending every retry will work; the data already on screen remains the source of truth until a retry succeeds.

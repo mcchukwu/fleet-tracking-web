@@ -7,7 +7,7 @@ import {
   type AppError,
 } from "../errors/types";
 import { normalize } from "../errors/normalize";
-import { recordError } from "../errors/report";
+import { recordError, recordSessionCheckSuccess } from "../errors/report";
 import { endpointTimeouts } from "./timeouts";
 import {
   auditResponseSchema,
@@ -290,6 +290,7 @@ export class FleetApiClient {
       this.request<unknown>("GET", "/me", undefined, options),
       loginResponseSchema,
     );
+    recordSessionCheckSuccess();
     this.csrfToken = result.csrf_token;
     return result;
   }

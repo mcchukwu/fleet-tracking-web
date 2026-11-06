@@ -6,6 +6,7 @@ import { api } from "../api/instance";
 import { LiveSocketManager, type SocketState } from "../api/live";
 import { liveMessageSchema, type LiveMessage, type PositionMessage } from "../api/schemas";
 import { useAuthStore } from "../auth/store";
+import { recordLiveHandshakeFailure, recordLiveHandshakeSuccess } from "../errors/report";
 import { useConnectionStore } from "../stores/connection";
 import { useLiveStore } from "../stores/live";
 import { useToast } from "../ui/Toast";
@@ -196,12 +197,16 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
         useLiveStore.getState().applySnapshot(data);
       },
       onState: (state: SocketState) => useConnectionStore.getState().setSocket(state),
+      onHandshakeFailure: recordLiveHandshakeFailure,
+      onHandshakeSuccess: recordLiveHandshakeSuccess,
       isOnline: () => navigator.onLine,
     });
+    useConnectionStore.getState().setRetryLive(() => manager.retryNow());
     manager.start();
 
     return () => {
       activeRef.current = false;
+      useConnectionStore.getState().setRetryLive(null);
       manager.stop();
       if (invalidationTimer) {
         clearTimeout(invalidationTimer);

@@ -3,6 +3,7 @@ import type { AppError, AppErrorKind } from "./types";
 const MAX_ENTRIES = 50;
 const MAX_DIAGNOSTICS = 50;
 const DEDUPE_WINDOW_MS = 10_000;
+const LIVE_HANDSHAKE_HINT_AFTER = 3;
 
 export interface DiagnosticEntry {
   kind: AppErrorKind;
@@ -18,6 +19,9 @@ export interface DiagnosticEntry {
 
 let entries: DiagnosticEntry[] = [];
 const lastAnnounced = new Map<string, number>();
+let sessionCheckSucceeded = false;
+let liveHandshakeFailures = 0;
+let liveHandshakeHintLogged = false;
 
 function endpointOf(resource: string | undefined): string | undefined {
   if (!resource) return undefined;
@@ -62,6 +66,33 @@ export function diagnosticsJson(): string {
 export function clearDiagnostics(): void {
   entries = [];
   lastAnnounced.clear();
+  sessionCheckSucceeded = false;
+  liveHandshakeFailures = 0;
+  liveHandshakeHintLogged = false;
+}
+
+export function recordSessionCheckSuccess(): void {
+  sessionCheckSucceeded = true;
+}
+
+export function recordLiveHandshakeSuccess(): void {
+  liveHandshakeFailures = 0;
+}
+
+export function recordLiveHandshakeFailure(): void {
+  liveHandshakeFailures += 1;
+  if (
+    liveHandshakeHintLogged ||
+    liveHandshakeFailures < LIVE_HANDSHAKE_HINT_AFTER ||
+    !sessionCheckSucceeded
+  ) {
+    return;
+  }
+  if (!import.meta.env.DEV || import.meta.env.MODE === "test") return;
+  liveHandshakeHintLogged = true;
+  console.warn(
+    "[fleet] WebSocket handshake rejected. Check WS_ALLOWED_ORIGINS and the dev proxy Origin header.",
+  );
 }
 
 export function shouldDedupe(kind: AppErrorKind, key: string, now = Date.now()): boolean {

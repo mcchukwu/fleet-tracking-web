@@ -293,7 +293,7 @@ Below `lg`, the left panel and drawer become a **bottom sheet** with three snap 
 
 ### Z-index scale
 
-`map 0` · `map controls 10` · `floating panels 20` · `drawer 30` · `sticky headers 40` · `menus and popovers 50` · `dialogs 60` · `toasts 70` · `connection banner 80`.
+`map 0` · `map controls 10` · `floating panels 20` · `drawer 30` · `connection banner 35` · `sticky headers 40` · `menus and popovers 50` · `dialogs 60` · `toasts 70`. Menus, popovers, dialogs and toasts always render above the connection banner.
 
 ---
 
@@ -496,6 +496,7 @@ Global banner states (below the top bar, 32px, dismissible only when resolved):
 
 - **Offline:** `You're offline. Showing data from 14:02. Changes are disabled.` Neutral background, wifi-off icon.
 - **Reconnecting:** `Reconnecting to live updates…` amber.
+- **Live updates unavailable (after 60s):** `Live updates are unavailable. Showing data from 14:02.` with a `Retry now` button; warning tone. Automatic attempts continue at the 30s backoff cap, and the data on screen stays usable.
 - **Session expired:** `Your session expired. Sign in again.` with a `Sign in` button; this is the only blocking banner. Slice 1 implements it as a blocking dialog instead of a banner so the unsaved route and form state stay visible behind it.
 - **Error storm:** `We're having trouble reaching the server. Retrying…` with an `Open System` link, warning tone. One banner only; regions switch to the compact error state while it is up.
 - **Update available:** `A new version is available.` with a `Reload` button, info tone. Never reload mid-view without the click.

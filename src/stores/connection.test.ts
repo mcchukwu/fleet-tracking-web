@@ -9,6 +9,7 @@ import { resetTicker } from "../lib/ticker";
 
 afterEach(() => {
   resetTicker();
+  useConnectionStore.getState().setRetryLive(null);
   useConnectionStore.setState({ network: "online", socket: "down", lastDataAt: null, socketDownAt: null });
   vi.useRealTimers();
 });
@@ -55,6 +56,20 @@ describe("connection store", () => {
 
     store.setSocket("live");
     expect(useConnectionStore.getState().socketDownAt).toBeNull();
+  });
+
+  it("forwards a manual retry and restarts the down clock", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(10_000);
+    const retry = vi.fn();
+    useConnectionStore.getState().setRetryLive(retry);
+    useConnectionStore.getState().setSocket("reconnecting");
+
+    vi.setSystemTime(70_000);
+    useConnectionStore.getState().retryLive();
+
+    expect(retry).toHaveBeenCalledTimes(1);
+    expect(useConnectionStore.getState().socketDownAt).toBe(70_000);
   });
 
   it("resets connection state on sign-out", () => {

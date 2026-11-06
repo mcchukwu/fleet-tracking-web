@@ -1,5 +1,13 @@
-import { describe, expect, it } from "vitest";
-import { clearDiagnostics, diagnostics, recordError, shouldDedupe } from "./report";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  clearDiagnostics,
+  diagnostics,
+  recordError,
+  recordLiveHandshakeFailure,
+  recordLiveHandshakeSuccess,
+  recordSessionCheckSuccess,
+  shouldDedupe,
+} from "./report";
 import type { AppError } from "./types";
 
 function error(overrides: Partial<AppError> = {}): AppError {
@@ -39,5 +47,63 @@ describe("diagnostics", () => {
     expect(shouldDedupe("network", "vehicles", 5_000)).toBe(true);
     expect(shouldDedupe("network", "vehicles", 12_000)).toBe(false);
     expect(shouldDedupe("server", "vehicles", 12_001)).toBe(false);
+  });
+});
+
+describe("live handshake hint", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+    clearDiagnostics();
+  });
+
+  it("logs one hint after three rejected handshakes when /me succeeded", () => {
+    vi.stubEnv("DEV", true);
+    vi.stubEnv("MODE", "development");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    clearDiagnostics();
+    recordSessionCheckSuccess();
+
+    recordLiveHandshakeFailure();
+    recordLiveHandshakeFailure();
+    expect(warn).not.toHaveBeenCalled();
+
+    recordLiveHandshakeFailure();
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(
+      "[fleet] WebSocket handshake rejected. Check WS_ALLOWED_ORIGINS and the dev proxy Origin header.",
+    );
+
+    recordLiveHandshakeFailure();
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it("stays silent while the session check has not succeeded", () => {
+    vi.stubEnv("DEV", true);
+    vi.stubEnv("MODE", "development");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    clearDiagnostics();
+
+    recordLiveHandshakeFailure();
+    recordLiveHandshakeFailure();
+    recordLiveHandshakeFailure();
+
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("resets the failure count after a handshake succeeds", () => {
+    vi.stubEnv("DEV", true);
+    vi.stubEnv("MODE", "development");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    clearDiagnostics();
+    recordSessionCheckSuccess();
+
+    recordLiveHandshakeFailure();
+    recordLiveHandshakeFailure();
+    recordLiveHandshakeSuccess();
+    recordLiveHandshakeFailure();
+    recordLiveHandshakeFailure();
+
+    expect(warn).not.toHaveBeenCalled();
   });
 });

@@ -106,6 +106,35 @@ describe("live socket manager", () => {
     manager.stop();
   });
 
+  it("retries immediately when asked and keeps the current backoff", () => {
+    vi.useFakeTimers();
+    const sockets: FakeSocket[] = [];
+    const manager = new LiveSocketManager({
+      createSocket: () => {
+        const socket = new FakeSocket();
+        sockets.push(socket);
+        return socket;
+      },
+      onFrame: vi.fn(),
+      resync: () => Promise.resolve(),
+      random: () => 0,
+    });
+    manager.start();
+    sockets[0]?.emit("close");
+    expect(sockets).toHaveLength(1);
+
+    manager.retryNow();
+    expect(sockets).toHaveLength(2);
+
+    sockets[1]?.emit("close");
+    expect(manager.getState()).toBe("reconnecting");
+    vi.advanceTimersByTime(1_999);
+    expect(sockets).toHaveLength(2);
+    vi.advanceTimersByTime(1);
+    expect(sockets).toHaveLength(3);
+    manager.stop();
+  });
+
   it("stays down while offline and reconnects when online returns", () => {
     vi.useFakeTimers();
     let online = true;

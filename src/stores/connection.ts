@@ -10,16 +10,28 @@ export interface ConnectionState {
   socket: SocketState;
   lastDataAt: number | null;
   socketDownAt: number | null;
+  retryLive: () => void;
+  setRetryLive: (retry: (() => void) | null) => void;
   setNetwork: (network: NetworkState) => void;
   setSocket: (socket: SocketState) => void;
   markData: (at: number) => void;
 }
+
+const noRetry = () => undefined;
+let retryTarget: () => void = noRetry;
 
 export const useConnectionStore = create<ConnectionState>((set) => ({
   network: typeof navigator === "undefined" || navigator.onLine ? "online" : "offline",
   socket: "down",
   lastDataAt: null,
   socketDownAt: null,
+  retryLive: () => {
+    retryTarget();
+    set({ socketDownAt: Date.now() });
+  },
+  setRetryLive: (retry) => {
+    retryTarget = retry ?? noRetry;
+  },
   setNetwork: (network) => set({ network }),
   setSocket: (socket) =>
     set((state) => {
@@ -31,6 +43,7 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
 }));
 
 export function resetConnection(): void {
+  retryTarget = noRetry;
   useConnectionStore.setState({
     network: typeof navigator === "undefined" || navigator.onLine ? "online" : "offline",
     socket: "down",

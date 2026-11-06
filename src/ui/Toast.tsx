@@ -54,6 +54,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
   const nextId = useRef(0);
   const seen = useRef(new Map<string, number>());
+  const viewportRef = useRef<HTMLOListElement>(null);
 
   const dismiss = useCallback((id?: number) => {
     setItems((current) =>
@@ -81,8 +82,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   return (
     <ToastContext.Provider value={value}>
-      <ToastPrimitive.Provider swipeDirection="right">
-        {children}
+      {children}
+      {/*
+        Radix stores the viewport pause flag on its provider and never clears it
+        when the queue empties, so a manual close can pause every later toast.
+        Remount that provider whenever the queue drains, without remounting the app.
+      */}
+      <ToastPrimitive.Provider
+        key={items.length === 0 ? "idle" : "active"}
+        swipeDirection="right"
+      >
         {items.map((item) => {
           const Icon = toneIcon[item.tone];
           return (
@@ -92,7 +101,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               duration={item.tone === "error" ? Infinity : 4_000}
               type={item.tone === "error" || item.assertive ? "foreground" : "background"}
               onOpenChange={(open) => {
-                if (!open) dismiss(item.id);
+                if (!open) {
+                  // Radix parks focus on the viewport when a toast closes and then
+                  // never resumes its pause, so every later toast would stay open.
+                  const active = document.activeElement;
+                  if (active instanceof HTMLElement && viewportRef.current?.contains(active)) {
+                    active.blur();
+                  }
+                  dismiss(item.id);
+                }
               }}
               className="flex w-11/12 max-w-panel items-start gap-2 rounded-lg border border-border bg-surface p-3 shadow-float data-[state=open]:animate-fade-in"
             >
@@ -135,7 +152,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             </ToastPrimitive.Root>
           );
         })}
-        <ToastPrimitive.Viewport className="fixed bottom-4 right-4 z-toast flex w-11/12 max-w-panel flex-col gap-2 outline-none" />
+        <ToastPrimitive.Viewport
+          ref={viewportRef}
+          className="fixed bottom-4 right-4 z-toast flex w-11/12 max-w-panel flex-col gap-2 outline-none"
+        />
       </ToastPrimitive.Provider>
     </ToastContext.Provider>
   );

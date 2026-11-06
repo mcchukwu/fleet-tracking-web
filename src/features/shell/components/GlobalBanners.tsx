@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useErrorStorm } from "../../../errors/global";
 import { formatClockTime } from "../../../lib/format";
-import { useConnection, type SocketState } from "../../../stores/connection";
+import { useConnection, useConnectionStore, type SocketState } from "../../../stores/connection";
 import { Banner } from "../../../ui/Banner";
 
 function useUpdateAvailable(): boolean {
@@ -16,23 +16,67 @@ function useUpdateAvailable(): boolean {
 }
 
 export const RECONNECT_BANNER_DELAY_MS = 10_000;
+export const RECONNECT_TERMINAL_MS = 60_000;
 
-function useReconnectVisible(socket: SocketState, socketDownAt: number | null): boolean {
-  const [dueAt, setDueAt] = useState<number | null>(null);
+type ReconnectPhase = "hidden" | "reconnecting" | "unavailable";
+
+function reconnectPhase(
+  socket: SocketState,
+  socketDownAt: number | null,
+  now: number,
+): ReconnectPhase {
+  if (socket !== "reconnecting" || socketDownAt === null) return "hidden";
+  const elapsed = now - socketDownAt;
+  if (elapsed >= RECONNECT_TERMINAL_MS) return "unavailable";
+  if (elapsed >= RECONNECT_BANNER_DELAY_MS) return "reconnecting";
+  return "hidden";
+}
+
+function useReconnectPhase(
+  socket: SocketState,
+  socketDownAt: number | null,
+): { phase: ReconnectPhase; hide: () => void } {
+  const [phase, setPhase] = useState<ReconnectPhase>("hidden");
 
   useEffect(() => {
-    if (socket !== "reconnecting" || socketDownAt === null) return;
-    const remaining = RECONNECT_BANNER_DELAY_MS - (Date.now() - socketDownAt);
-    const timer = setTimeout(() => setDueAt(socketDownAt), Math.max(0, remaining));
-    return () => clearTimeout(timer);
+    const refresh = () =>
+      setPhase(reconnectPhase(socket, socketDownAt, Date.now()));
+    const timers: Array<ReturnType<typeof setTimeout>> = [
+      setTimeout(refresh, 0),
+    ];
+
+    if (socket === "reconnecting" && socketDownAt !== null) {
+      const elapsed = Date.now() - socketDownAt;
+      if (elapsed < RECONNECT_BANNER_DELAY_MS) {
+        timers.push(
+          setTimeout(
+            () => setPhase("reconnecting"),
+            RECONNECT_BANNER_DELAY_MS - elapsed,
+          ),
+        );
+      }
+      if (elapsed < RECONNECT_TERMINAL_MS) {
+        timers.push(
+          setTimeout(
+            () => setPhase("unavailable"),
+            RECONNECT_TERMINAL_MS - elapsed,
+          ),
+        );
+      }
+    }
+
+    return () => {
+      for (const timer of timers) clearTimeout(timer);
+    };
   }, [socket, socketDownAt]);
 
-  return socket === "reconnecting" && socketDownAt !== null && dueAt === socketDownAt;
+  return { phase, hide: () => setPhase("hidden") };
 }
 
 export function GlobalBanners() {
   const { network, socket, socketDownAt, lastDataAt } = useConnection();
-  const reconnecting = useReconnectVisible(socket, socketDownAt);
+  const { phase, hide: hideReconnect } = useReconnectPhase(socket, socketDownAt);
+  const retryLive = useConnectionStore((state) => state.retryLive);
   const storm = useErrorStorm();
   const update = useUpdateAvailable();
   const navigate = useNavigate();
@@ -51,7 +95,27 @@ export function GlobalBanners() {
     );
   }
 
-  if (socket === "reconnecting" && reconnecting) {
+  if (socket === "reconnecting" && phase === "unavailable") {
+    return (
+      <Banner
+        tone="warning"
+        message={
+          lastDataAt === null
+            ? "Live updates are unavailable."
+            : `Live updates are unavailable. Showing data from ${formatClockTime(lastDataAt)}.`
+        }
+        action={{
+          label: "Retry now",
+          onClick: () => {
+            hideReconnect();
+            retryLive();
+          },
+        }}
+      />
+    );
+  }
+
+  if (socket === "reconnecting" && phase === "reconnecting") {
     return <Banner tone="warning" message="Reconnecting to live updates…" />;
   }
 

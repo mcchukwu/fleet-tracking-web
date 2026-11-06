@@ -26,6 +26,7 @@ beforeEach(() => {
 
 afterEach(() => {
   useConnectionStore.setState({ network: "online", socket: "down", lastDataAt: null, socketDownAt: null });
+  useConnectionStore.getState().setRetryLive(null);
   vi.useRealTimers();
   resetErrorStorm();
 });
@@ -76,6 +77,56 @@ describe("GlobalBanners", () => {
     });
 
     expect(screen.getByRole("status")).toHaveTextContent("Reconnecting to live updates…");
+  });
+
+  it("reaches an honest terminal state after a minute of failed attempts", () => {
+    vi.useFakeTimers();
+    useConnectionStore.setState({
+      socket: "reconnecting",
+      socketDownAt: Date.now(),
+      lastDataAt: new Date(2026, 10, 4, 14, 2).getTime(),
+    });
+    render(<GlobalBanners />);
+
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Live updates are unavailable. Showing data from 14:02.",
+    );
+    expect(screen.getByRole("button", { name: "Retry now" })).toBeVisible();
+  });
+
+  it("omits the data time when the terminal banner has never received data", () => {
+    vi.useFakeTimers();
+    useConnectionStore.setState({ socket: "reconnecting", socketDownAt: Date.now(), lastDataAt: null });
+    render(<GlobalBanners />);
+
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+
+    expect(screen.getByRole("status")).toHaveTextContent("Live updates are unavailable.");
+  });
+
+  it("retries immediately and restarts the reconnect clock", () => {
+    vi.useFakeTimers();
+    const retry = vi.fn();
+    useConnectionStore.getState().setRetryLive(retry);
+    useConnectionStore.setState({ socket: "reconnecting", socketDownAt: Date.now() });
+    render(<GlobalBanners />);
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+
+    act(() => {
+      screen.getByRole("button", { name: "Retry now" }).click();
+    });
+
+    expect(retry).toHaveBeenCalledTimes(1);
+    expect(useConnectionStore.getState().socketDownAt).toBe(Date.now());
+    expect(screen.queryByText(/Live updates are unavailable/)).not.toBeInTheDocument();
   });
 
   it("shows reconnecting on the next tick when it has already been down ten seconds", () => {

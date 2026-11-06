@@ -11,6 +11,8 @@ export interface LiveSocketOptions {
   onFrame: (raw: string) => void;
   resync: () => Promise<void>;
   onState?: (state: SocketState) => void;
+  onHandshakeFailure?: () => void;
+  onHandshakeSuccess?: () => void;
   isOnline?: () => boolean;
   random?: () => number;
   now?: () => number;
@@ -76,6 +78,12 @@ export class LiveSocketManager {
     this.connect();
   }
 
+  retryNow(): void {
+    if (this.stopped || this.socket) return;
+    this.clearTimer();
+    this.connect();
+  }
+
   private readonly handleOnline = () => {
     this.connect();
   };
@@ -100,14 +108,18 @@ export class LiveSocketManager {
     this.clearTimer();
     const socket = this.options.createSocket();
     this.socket = socket;
+    let opened = false;
 
     socket.addEventListener("open", () => {
+      opened = true;
+      this.options.onHandshakeSuccess?.();
       void this.handleOpen(socket);
     });
     socket.addEventListener("message", (event) => {
       this.handleMessage(socket, event);
     });
     socket.addEventListener("close", () => {
+      if (!opened) this.options.onHandshakeFailure?.();
       this.handleClose(socket);
     });
   }

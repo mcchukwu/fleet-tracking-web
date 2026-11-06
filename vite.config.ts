@@ -1,7 +1,26 @@
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import babel from '@rolldown/plugin-babel'
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig, loadEnv, type ProxyOptions } from 'vite'
+
+export function createApiProxy(target: string): ProxyOptions {
+  // changeOrigin rewrites Host, not Origin. Staging enforces WS_ALLOWED_ORIGINS,
+  // so the upgrade must carry the staging origin even though the browser is local.
+  const origin = new URL(target).origin
+
+  return {
+    target,
+    changeOrigin: true,
+    secure: true,
+    ws: true,
+    cookieDomainRewrite: { '*': '' },
+    configure: (proxy) => {
+      proxy.on('proxyReqWs', (proxyReq) => {
+        proxyReq.setHeader('Origin', origin)
+      })
+    },
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -19,13 +38,7 @@ export default defineConfig(({ mode }) => {
     ],
     server: {
       proxy: {
-        '/api': {
-          target: proxyTarget,
-          changeOrigin: true,
-          secure: true,
-          ws: true,
-          cookieDomainRewrite: { '*': '' },
-        },
+        '/api': createApiProxy(proxyTarget),
       },
     },
   }
