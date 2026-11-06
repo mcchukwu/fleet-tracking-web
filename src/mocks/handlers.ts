@@ -334,8 +334,9 @@ export const handlers = [
       const pageParams =
         typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
       const fromPage = pageParams?.get("perf");
-      if ((fromRequest ?? fromPage) === "5000") {
-        return HttpResponse.json({ data: perfVehicles(5_000) });
+      const perfCount = Number.parseInt(fromRequest ?? fromPage ?? "", 10);
+      if (Number.isFinite(perfCount) && perfCount > 0) {
+        return HttpResponse.json({ data: perfVehicles(perfCount) });
       }
       if (pageParams?.get("positions") === "none") {
         return HttpResponse.json({

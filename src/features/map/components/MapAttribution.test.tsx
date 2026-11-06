@@ -15,6 +15,12 @@ describe("MapAttribution", () => {
     expect(link).toHaveAttribute("target", "_blank");
   });
 
+  it("keeps the licence chip on one 11px line", () => {
+    render(<MapAttribution styleId="standard" />);
+    const link = screen.getByRole("link", { name: /OpenStreetMap/ });
+    expect(link).toHaveClass("whitespace-nowrap", "text-2xs");
+  });
+
   it("renders the satellite credit as text when no link is configured", () => {
     render(<MapAttribution styleId="satellite" satellite={satellite} />);
     expect(screen.getByText("© Example imagery")).toBeInTheDocument();

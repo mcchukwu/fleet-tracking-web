@@ -181,9 +181,7 @@ test.describe("map controls", () => {
     expect(afterScroll?.y).toBe(full.y);
 
     const strip = page.getByRole("button", { name: "Collapse the vehicle list" });
-    const stripBox = await strip.boundingBox();
-    if (!stripBox) throw new Error("strip has no box");
-    await strip.click({ position: { x: stripBox.width - 24, y: 40 } });
+    await strip.click({ position: { x: 24, y: 40 } });
     await expect(handle).toHaveAttribute("aria-expanded", "true");
     await expect(handle).toBeFocused();
     await expect

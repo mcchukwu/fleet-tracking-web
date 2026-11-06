@@ -30,11 +30,16 @@ export function VehicleRow({ row, height, selected, onSelect, onHover }: Vehicle
       data-vehicle-key={row.key}
       style={rowBoxStyle(height)}
       className={cn(
-        "group relative border-b border-border",
+        "group relative",
         selected ? "bg-accent-soft" : "hover:bg-surface-2 focus-within:bg-surface-2",
       )}
     >
       {selected ? <span aria-hidden="true" className="absolute inset-y-0 left-0 w-0.5 bg-accent" /> : null}
+      <span
+        aria-hidden="true"
+        data-testid="row-divider"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-border"
+      />
       <button
         type="button"
         aria-pressed={selected}

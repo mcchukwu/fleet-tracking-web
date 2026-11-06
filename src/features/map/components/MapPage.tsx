@@ -463,23 +463,33 @@ export function MapPage() {
           onObscuredChange={setSheetObscured}
         >
           <ErrorBoundary level="panel">
-            <VehiclePanel {...panelProps} showHeader={false} showFilters={false} />
+            <VehiclePanel
+              {...panelProps}
+              className="min-h-0 flex-1"
+              showHeader={false}
+              showFilters={false}
+            />
           </ErrorBoundary>
         </MobileVehicleSheet>
       ) : null}
 
       <div
         className={cn(
-          "map-bottom-anchor pointer-events-none absolute z-20 flex flex-wrap items-end gap-3",
+          "map-bottom-anchor pointer-events-none absolute z-20 flex",
           isDesktop
-            ? cn("map-footer", preferences.panelOpen ? "lg:left-93" : "lg:left-3")
-            : "map-inset-bottom left-3 right-3",
+            ? cn(
+                "map-footer flex-wrap items-end gap-3",
+                preferences.panelOpen ? "lg:left-93" : "lg:left-3",
+              )
+            : "map-inset-bottom left-3 right-3 flex-col items-end gap-2",
         )}
       >
         <div
           className={cn(
-            "pointer-events-none flex min-w-0 flex-1 basis-auto",
-            isDesktop ? "justify-center" : "justify-start",
+            "pointer-events-none flex min-w-0",
+            isDesktop
+              ? "order-1 flex-1 basis-auto justify-center"
+              : "order-2 justify-end",
           )}
         >
           <MapAttribution styleId={mapStyle.effectiveStyle} satellite={satelliteConfig} />
@@ -493,7 +503,10 @@ export function MapPage() {
             {...controlsProps}
             variant={isDesktop ? "desktop" : "mobile"}
             obscured={!isDesktop && (sheetSnap === "full" || sheetObscured)}
-            className="pointer-events-auto ml-auto shrink-0"
+            className={cn(
+              "pointer-events-auto shrink-0",
+              isDesktop ? "order-2 ml-auto" : "order-1",
+            )}
           />
         </ErrorBoundary>
       </div>

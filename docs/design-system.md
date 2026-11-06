@@ -220,6 +220,7 @@ Neutrals are the zinc scale. One accent. Status colours carry meaning and are us
 | Token | Size / line height | Weight | Use |
 |---|---|---|---|
 | `text-xs` | 12 / 16 | 400 | captions, timestamps, helper text |
+| `text-2xs` | 11 / 16 | 400 | map attribution chip only |
 | `label-caps` | 11 / 16, tracking +0.04em | 600 | column headers, KPI labels |
 | `text-sm` | 13 / 20 | 400 | dense table cells, list rows, secondary UI |
 | `text-base` | 14 / 20 | 400 | default body and form controls |
@@ -227,7 +228,7 @@ Neutrals are the zinc scale. One accent. Status colours carry meaning and are us
 | `text-lg` | 20 / 28 | 600 | page titles |
 | `stat` | 28 / 32 | 600 | KPI numbers (tabular) |
 
-- Body text is never below 13px; captions never below 12px.
+- Body text is never below 13px; captions never below 12px. The one exception is the map attribution chip, which is 11px licence text.
 - Weights allowed: 400, 500, 600. No 700 or 300.
 - Line length for prose (error text, help text) is capped at 60 characters (`max-w-prose` equivalent).
 - Truncate with an ellipsis and a tooltip, never wrap inside table cells. Plates and IDs never truncate.
@@ -349,7 +350,7 @@ The brand is **Zoro**. Both marks are single-colour SVGs rendered by `src/ui/Bra
 | `lockup` | Symbol + Zoro wordmark | App top bar at `md` and up; the login header strip |
 | `symbol` | Symbol only | App top bar below `md`; favicons, app icons and the maskable icon |
 
-- **Size:** `24px` tall in the shell and login strip. The lockup is never smaller than `20px` tall; below `md` the symbol is used instead of shrinking the wordmark.
+- **Size:** `22px` tall in the shell and login strip. The lockup is never smaller than `20px` tall; below `md` the symbol is used instead of shrinking the wordmark.
 - **Clear space:** at least `8px` on every side, measured from the mark's bounding box. The top bar keeps `16px` from the left edge and a `gap-2` (`8px`) to the next control.
 - **Position:** the login header strip and the app top bar share `src/ui/BrandBar.tsx` (`h-topbar`, `px-4`), so the mark cannot drift between the two screens. The top bar lockup links to the map; the login lockup is not a link.
 - **Master files:** `src/assets/brand/zoro-lockup.svg` and `zoro-symbol.svg`. Do not add fills to them; recolour through `currentColor`.
@@ -501,6 +502,7 @@ Bottom-right, 4s, one line plus an optional action. Success and info auto-dismis
 - Zoom limits disable the relevant button with `Minimum zoom` / `Maximum zoom`; fit with no positioned vehicles disables with the reason `No vehicles are reporting a position`.
 - The style picker is a menu with radio semantics. Satellite is disabled with `Needs a connection` offline and omitted entirely when the build has no tile source.
 - When the mobile sheet is above 60% height the stack fades and becomes inert (and any open menu closes). It never covers the KPI strip, a panel, the drawer or the attribution.
+- Attribution is a single 11px line chip (`whitespace-nowrap`). Below `lg` it is the bottom item of the same bottom-right stack, right-aligned and 8px below the controls. It is a sibling of the controls, so it stays visible when they fade, and it rides the sheet inset to stay 12px above the sheet at every snap.
 
 ### 10.11 Appearance controls
 
