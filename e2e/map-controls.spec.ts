@@ -115,6 +115,7 @@ test.describe("map controls", () => {
   test("mobile controls and attribution sit above the sheet", async ({ page }) => {
     test.skip(!isMobile(page), "mobile-only layout");
     await gotoMap(page);
+    await captureForReview(page, "02b-sheet-peek");
 
     const peekSheet = await sheet(page).boundingBox();
     const peekControls = await controls(page).boundingBox();
@@ -234,6 +235,7 @@ test.describe("map controls", () => {
   test("satellite persists, falls back offline and restores online", async ({ page }) => {
     await gotoMap(page);
     await page.getByRole("button", { name: "Map style" }).click();
+    await captureForReview(page, "02b-style-menu");
     await page.getByRole("menuitemradio", { name: "Satellite" }).click();
     await expect.poll(async () => (await debugMap(page))?.baseStyle).toBe("satellite");
 
