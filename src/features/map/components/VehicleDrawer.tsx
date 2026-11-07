@@ -6,6 +6,7 @@ import { queryKeys } from "../../../api/keys";
 import { ErrorState } from "../../../errors/ErrorState";
 import { SlowNotice } from "../../../errors/SlowNotice";
 import { normalize } from "../../../errors/normalize";
+import { useDelayedFlag } from "../../../lib/useDelayedFlag";
 import { ForbiddenState } from "../../../ui/StatePanel";
 import { Badge, StatusPill } from "../../../ui/Badge";
 import { Button } from "../../../ui/Button";
@@ -28,7 +29,7 @@ export interface VehicleDrawerProps {
   canMutate: boolean;
   offline: boolean;
   onClose: () => void;
-  onCentre: () => void;
+  onCentre: (position?: { lat: number; lon: number }) => void;
   onPlayback: () => void;
   onEdit?: (vehicle: Vehicle) => void;
   onAssign?: (vehicle: Vehicle) => void;
@@ -70,6 +71,8 @@ export function VehicleDrawer({
   const lat = row?.lat ?? vehicle?.lat ?? null;
   const lon = row?.lon ?? vehicle?.lon ?? null;
   const hasPosition = lat !== null && lon !== null;
+  const hasDetail = vehicle !== undefined && !notFound;
+  const showDetailSkeleton = useDelayedFlag(vehicleQuery.isPending);
 
   function retryDetail(): void {
     void vehicleQuery.refetch();
@@ -90,7 +93,9 @@ export function VehicleDrawer({
       }
       actions={
         <VehicleActions
-          onCentre={onCentre}
+          onCentre={() => {
+            onCentre(hasPosition && lat !== null && lon !== null ? { lat, lon } : undefined);
+          }}
           onPlayback={onPlayback}
           onEdit={() => {
             if (vehicle) onEdit?.(vehicle);
@@ -103,6 +108,7 @@ export function VehicleDrawer({
           canMutate={canMutate}
           offline={offline}
           hasVehicle={!notFound}
+          canEdit={hasDetail}
         />
       }
       onClose={onClose}
@@ -134,10 +140,22 @@ export function VehicleDrawer({
                   void queryClient.cancelQueries({ queryKey: queryKeys.vehicle(vehicleId) })
                 }
               />
-              <VehicleDrawerSkeleton />
+              {showDetailSkeleton ? <VehicleDrawerSkeleton /> : null}
             </>
           ) : (
             <>
+              {detailError && vehicle ? (
+                <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2 text-xs text-muted">
+                  <span>Couldn't refresh vehicle details.</span>
+                  <button
+                    type="button"
+                    onClick={retryDetail}
+                    className="h-touch rounded-sm px-2 font-medium text-accent-fg hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus-ring md:h-control-sm"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : null}
               {detailError && !vehicle ? (
                 <div className="border-b border-border p-4">
                   <ErrorState compact error={detailError} onRetry={retryDetail} />

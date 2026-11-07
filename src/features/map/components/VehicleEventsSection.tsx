@@ -4,7 +4,8 @@ import type { VehicleEvent } from "../../../api/types";
 import { useVehicleEvents } from "../../../api/hooks/vehicles";
 import { ErrorState } from "../../../errors/ErrorState";
 import { normalize } from "../../../errors/normalize";
-import { AlertStatusBadge, SeverityBadge } from "../../../ui/Badge";
+import { AlertStatusBadge, Badge, SeverityBadge } from "../../../ui/Badge";
+import { useDelayedFlag } from "../../../lib/useDelayedFlag";
 import { Skeleton } from "../../../ui/StatePanel";
 import { Timestamp } from "../../../ui/Timestamp";
 import { cn } from "../../../ui/cn";
@@ -41,16 +42,18 @@ function EventIcon({ event }: { event: VehicleEvent }) {
 }
 
 function EventRow({
+  id,
   event,
   expanded,
   onToggle,
 }: {
+  id: string;
   event: VehicleEvent;
   expanded: boolean;
   onToggle: () => void;
 }) {
   const hasEvidence = event.evidence !== undefined && Object.keys(event.evidence).length > 0;
-  const evidenceId = `event-evidence-${event.at}`;
+  const evidenceId = `${id}-evidence`;
 
   return (
     <li className="border-b border-border py-2 last:border-b-0">
@@ -61,12 +64,16 @@ function EventRow({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="min-w-0 text-sm font-medium text-text">{eventLabel(event)}</p>
-            {isKnownSeverity(event.severity) ? (
+            {event.severity === undefined ? null : isKnownSeverity(event.severity) ? (
               <SeverityBadge level={event.severity} />
-            ) : null}
-            {isKnownAlertStatus(event.status) ? (
+            ) : (
+              <Badge tone="neutral">Unknown severity: {event.severity}</Badge>
+            )}
+            {event.status === undefined ? null : isKnownAlertStatus(event.status) ? (
               <AlertStatusBadge status={event.status} />
-            ) : null}
+            ) : (
+              <Badge tone="neutral">Unknown status: {event.status}</Badge>
+            )}
           </div>
           {event.name ? <p className="truncate text-xs text-muted">{event.name}</p> : null}
           <div className="mt-0.5 flex items-center gap-2">
@@ -100,6 +107,7 @@ export function VehicleEventsSection({ vehicleId, offline = false }: VehicleEven
   const query = useVehicleEvents(vehicleId, { from }, { refetchInterval: 60_000 });
   const events = query.data ? recentEvents(query.data) : [];
   const capLabel = query.data ? eventsCapLabel(query.data.length) : null;
+  const showSkeleton = useDelayedFlag(query.isPending);
 
   function toggle(id: string): void {
     setExpanded((current) => {
@@ -113,11 +121,13 @@ export function VehicleEventsSection({ vehicleId, offline = false }: VehicleEven
   return (
     <VehicleSection title="Recent events">
       {query.isPending ? (
-        <div className="space-y-3" aria-busy="true">
-          <Skeleton className="w-1/2" />
-          <Skeleton className="w-2/3" />
-          <Skeleton className="w-1/3" />
-        </div>
+        showSkeleton ? (
+          <div className="space-y-3" aria-busy="true">
+            <Skeleton className="w-1/2" />
+            <Skeleton className="w-2/3" />
+            <Skeleton className="w-1/3" />
+          </div>
+        ) : null
       ) : query.isError && !query.data ? (
         offline ? (
           <p className="text-sm text-muted">Events need a connection.</p>
@@ -130,7 +140,7 @@ export function VehicleEventsSection({ vehicleId, offline = false }: VehicleEven
         )
       ) : (
         <>
-          {query.isError && query.data ? (
+          {query.isError && query.data && !offline ? (
             <div className={cn("mb-2 flex items-center justify-between gap-2 text-xs text-muted")}>
               <span>Couldn't refresh events.</span>
               <button
@@ -146,11 +156,12 @@ export function VehicleEventsSection({ vehicleId, offline = false }: VehicleEven
             <p className="text-sm text-muted">No events in the last 24 hours.</p>
           ) : (
             <ul>
-              {events.map((event) => {
-                const id = `${event.kind}:${event.type}:${event.at}`;
+              {events.map((event, index) => {
+                const id = `${event.kind}:${event.type}:${event.at}:${index}`;
                 return (
                   <EventRow
                     key={id}
+                    id={id}
                     event={event}
                     expanded={expanded.has(id)}
                     onToggle={() => toggle(id)}

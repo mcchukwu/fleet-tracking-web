@@ -177,10 +177,23 @@ describe("VehicleDrawer", () => {
     expect(screen.getByText(/Live fields stay visible/)).toBeVisible();
   });
 
-  it("shows a skeleton while the detail is loading", () => {
+  it("delays the detail skeleton by 200ms", async () => {
     mocks.vehicle = { ...mocks.vehicle, data: undefined, isPending: true };
     renderDrawer();
-    expect(screen.getByLabelText("Loading vehicle details")).toBeVisible();
+    expect(screen.queryByLabelText("Loading vehicle details")).not.toBeInTheDocument();
+    expect(await screen.findByLabelText("Loading vehicle details")).toBeVisible();
+  });
+
+  it("keeps the cached detail and offers a refresh when a refetch fails", () => {
+    mocks.vehicle = {
+      ...mocks.vehicle,
+      isError: true,
+      error: new ApiError(500, "internal", "down"),
+    };
+    renderDrawer();
+    expect(screen.getByText("Couldn't refresh vehicle details.")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeVisible();
+    expect(screen.getByText("MAN")).toBeVisible();
   });
 
   it("marks a stale row and disables mutations offline", () => {

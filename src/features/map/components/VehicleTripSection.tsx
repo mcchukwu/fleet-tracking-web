@@ -3,6 +3,7 @@ import { normalize } from "../../../errors/normalize";
 import { ErrorState } from "../../../errors/ErrorState";
 import { formatDistance, MISSING } from "../../../lib/format";
 import { tripStatusLabels } from "../../../lib/status";
+import { useDelayedFlag } from "../../../lib/useDelayedFlag";
 import { Skeleton } from "../../../ui/StatePanel";
 import { Timestamp } from "../../../ui/Timestamp";
 import { TripStatusBadge } from "../../../ui/Badge";
@@ -34,6 +35,7 @@ export function VehicleTripSection({
   tripQuery,
   offline = false,
 }: VehicleTripSectionProps) {
+  const showSkeleton = useDelayedFlag(tripQuery.isPending);
   const fallbackDestination = snapshotVehicle?.destination;
   const fallbackStatus = snapshotVehicle?.trip_status;
 
@@ -63,19 +65,23 @@ export function VehicleTripSection({
     );
   }
 
+  const trip = trips?.find((item) => item.id === tripId);
+
   if (tripQuery.isPending) {
     return (
       <VehicleSection title="Trip">
-        <div className="space-y-2">
-          <Skeleton className="w-1/3" />
-          <Skeleton className="w-2/3" />
-          <Skeleton className="w-1/2" />
-        </div>
+        {showSkeleton ? (
+          <div className="space-y-2">
+            <Skeleton className="w-1/3" />
+            <Skeleton className="w-2/3" />
+            <Skeleton className="w-1/2" />
+          </div>
+        ) : null}
       </VehicleSection>
     );
   }
 
-  if (tripQuery.isError) {
+  if (!trip && tripQuery.isError && !trips) {
     if (offline) {
       return (
         <VehicleSection title="Trip">
@@ -94,8 +100,6 @@ export function VehicleTripSection({
     );
   }
 
-  const trip = trips?.find((item) => item.id === tripId);
-
   if (!trip) {
     return (
       <VehicleSection title="Trip">
@@ -112,13 +116,15 @@ export function VehicleTripSection({
         </dl>
         <p className="mt-2 flex items-center justify-between gap-2 text-xs text-muted">
           Trip details unavailable.
-          <button
-            type="button"
-            onClick={() => void tripQuery.refetch()}
-            className="h-touch rounded-sm px-2 font-medium text-accent-fg hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus-ring md:h-control-sm"
-          >
-            Retry
-          </button>
+          {offline ? null : (
+            <button
+              type="button"
+              onClick={() => void tripQuery.refetch()}
+              className="h-touch rounded-sm px-2 font-medium text-accent-fg hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus-ring md:h-control-sm"
+            >
+              Retry
+            </button>
+          )}
         </p>
       </VehicleSection>
     );
@@ -137,6 +143,18 @@ export function VehicleTripSection({
         </VehicleField>
         <VehicleField label="Distance">{formatDistance(trip.distance_km)}</VehicleField>
       </dl>
+      {tripQuery.isError && !offline ? (
+        <p className="mt-2 flex items-center justify-between gap-2 text-xs text-muted">
+          Couldn't refresh the trip.
+          <button
+            type="button"
+            onClick={() => void tripQuery.refetch()}
+            className="h-touch rounded-sm px-2 font-medium text-accent-fg hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus-ring md:h-control-sm"
+          >
+            Retry
+          </button>
+        </p>
+      ) : null}
     </VehicleSection>
   );
 }

@@ -66,7 +66,7 @@ describe("VehicleEventsSection", () => {
     expect(screen.getByRole("button", { name: "Hide evidence" })).toBeVisible();
   });
 
-  it("keeps an unknown kind with a neutral fallback", () => {
+  it("keeps an unknown kind, severity and status with neutral fallbacks", () => {
     mocks.result.data = [
       {
         kind: "solar_flare",
@@ -78,7 +78,44 @@ describe("VehicleEventsSection", () => {
     ];
     renderSection();
     expect(screen.getByText("Unknown event: solar_flare")).toBeVisible();
+    expect(screen.getByText("Unknown severity: extreme")).toBeVisible();
+    expect(screen.getByText("Unknown status: pending")).toBeVisible();
     expect(screen.queryByText("Extreme")).not.toBeInTheDocument();
+  });
+
+  it("gives events in the same second unique keys and evidence ids", async () => {
+    const user = userEvent.setup();
+    const event = {
+      kind: "alert",
+      type: "speeding",
+      severity: "high",
+      status: "open",
+      at: "2026-11-02T20:07:43Z",
+      evidence: { speed_kph: 90 },
+    };
+    mocks.result.data = [event, { ...event }];
+    const { container } = renderSection();
+
+    const buttons = screen.getAllByRole("button", { name: "Show evidence" });
+    expect(buttons).toHaveLength(2);
+    await user.click(buttons[0]!);
+    await user.click(screen.getByRole("button", { name: "Show evidence" }));
+
+    const ids = [...container.querySelectorAll("[id]")].map((node) => node.id);
+    expect(ids).toHaveLength(2);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("keeps cached events and hides the refresh error while offline", () => {
+    mocks.result.data = [
+      { kind: "geofence", type: "enter", name: "Refinery Gate", at: "2026-11-02T14:31:00Z" },
+    ];
+    mocks.result.isError = true;
+    mocks.result.error = new ApiError(500, "internal", "down");
+    renderSection(true);
+
+    expect(screen.getByText("Geofence entry")).toBeVisible();
+    expect(screen.queryByText("Couldn't refresh events.")).not.toBeInTheDocument();
   });
 
   it("shows the empty state for a quiet day", () => {

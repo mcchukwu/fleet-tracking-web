@@ -83,6 +83,33 @@ describe("VehicleTripSection", () => {
     expect(screen.getByRole("button", { name: "Retry" })).toBeVisible();
   });
 
+  it("keeps cached trip data and adds a refresh line when the refetch fails", () => {
+    renderSection(
+      <VehicleTripSection
+        tripId="trip-1"
+        trips={[trip]}
+        tripQuery={{ ...query, isError: true, error: new ApiError(500, "internal", "down") }}
+      />,
+    );
+    expect(screen.getByText("Refinery Gate")).toBeVisible();
+    expect(screen.getByText("Couldn't refresh the trip.")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeVisible();
+  });
+
+  it("keeps cached trip data without a region error while offline", () => {
+    renderSection(
+      <VehicleTripSection
+        tripId="trip-1"
+        trips={[trip]}
+        tripQuery={{ ...query, isError: true, error: new ApiError(500, "internal", "down") }}
+        offline
+      />,
+    );
+    expect(screen.getByText("Refinery Gate")).toBeVisible();
+    expect(screen.queryByText("Couldn't refresh the trip.")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+  });
+
   it("uses a neutral offline message instead of an error", () => {
     renderSection(
       <VehicleTripSection
