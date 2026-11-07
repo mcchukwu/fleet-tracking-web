@@ -217,7 +217,13 @@ export function MapPage() {
   );
 
   const resetFilters = useCallback(() => {
-    updateSearch({ q: undefined, status: undefined, depot: undefined, view: undefined });
+    updateSearch({
+      q: undefined,
+      status: undefined,
+      depot: undefined,
+      sort: undefined,
+      view: undefined,
+    });
   }, [updateSearch]);
 
   const selectKey = useCallback(
@@ -474,27 +480,14 @@ export function MapPage() {
       ) : null}
 
       <div
+        data-testid="map-footer"
         className={cn(
-          "map-bottom-anchor pointer-events-none absolute z-20 flex",
+          "map-bottom-anchor pointer-events-none absolute left-3 right-3 z-20 flex flex-col items-end gap-2",
           isDesktop
-            ? cn(
-                "map-footer flex-wrap items-end gap-3",
-                preferences.panelOpen ? "lg:left-93" : "lg:left-3",
-              )
-            : "map-inset-bottom left-3 right-3 flex-col items-end gap-2",
+            ? cn("map-inset-right", preferences.panelOpen ? "lg:left-93" : "lg:left-3")
+            : "map-inset-bottom",
         )}
       >
-        <div
-          className={cn(
-            "pointer-events-none flex min-w-0",
-            isDesktop
-              ? "order-1 flex-1 basis-auto justify-center"
-              : "order-2 justify-end",
-          )}
-        >
-          <MapAttribution styleId={mapStyle.effectiveStyle} satellite={satelliteConfig} />
-        </div>
-
         <ErrorBoundary
           level="panel"
           resetKeys={[preferences.panelOpen, preferences.geofencesVisible]}
@@ -503,12 +496,13 @@ export function MapPage() {
             {...controlsProps}
             variant={isDesktop ? "desktop" : "mobile"}
             obscured={!isDesktop && (sheetSnap === "full" || sheetObscured)}
-            className={cn(
-              "pointer-events-auto shrink-0",
-              isDesktop ? "order-2 ml-auto" : "order-1",
-            )}
+            className="pointer-events-auto shrink-0"
           />
         </ErrorBoundary>
+
+        <div className="pointer-events-none flex min-w-0 justify-end">
+          <MapAttribution styleId={mapStyle.effectiveStyle} satellite={satelliteConfig} />
+        </div>
       </div>
 
       {!isDesktop && sheetSnap === "full" ? (
