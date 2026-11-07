@@ -150,6 +150,18 @@ export function runAdapterContract(name: string, options: AdapterContractOptions
       adapter.destroy();
     });
 
+    it("accepts camera padding when flying to a point", async () => {
+      const adapter = options.create();
+      await adapter.mount(document.createElement("div"), {
+        theme: "light",
+        tokens: contractTokens,
+      });
+      const padding = { top: 96, right: 444, bottom: 12, left: 12 };
+      adapter.flyTo([3.5, 6.6], 12, { padding });
+      expect(adapter.getViewport().zoom).toBe(12);
+      adapter.destroy();
+    });
+
     it("unsubscribes listeners and tolerates a second destroy", async () => {
       const adapter = options.create();
       const listener = vi.fn();

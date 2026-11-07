@@ -824,11 +824,12 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
       });
     },
 
-    flyTo(point: LngLat, zoom?: number): void {
+    flyTo(point: LngLat, zoom?: number, options?: { padding?: Padding }): void {
       if (!map) return;
       map.flyTo({
         center: point,
         ...(zoom !== undefined ? { zoom } : {}),
+        ...(options?.padding ? { padding: options.padding } : {}),
         animate: !prefersReducedMotion(),
       });
     },

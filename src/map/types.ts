@@ -156,7 +156,7 @@ export interface MapAdapter {
   setGeofences(geofences: readonly MapGeofence[]): void;
   setRoute(route: MapRoute | null): void;
   fitBounds(bounds: Bounds, options?: { padding?: Padding; animate?: boolean }): void;
-  flyTo(point: LngLat, zoom?: number): void;
+  flyTo(point: LngLat, zoom?: number, options?: { padding?: Padding }): void;
   zoomIn(): void;
   zoomOut(): void;
   resetBearing(): void;

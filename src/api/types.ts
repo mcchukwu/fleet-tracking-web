@@ -36,7 +36,9 @@ export interface Vehicle {
   model: string;
   year?: number;
   colour: string;
-  status: VehicleAdministrativeStatus;
+  // The server may add administrative statuses; the drawer shows the raw value
+  // while the edit form only accepts the known enum.
+  status: string;
   depot: string;
   department: string;
   driver_id?: string;
@@ -52,6 +54,10 @@ export interface Vehicle {
   recorded_at?: string;
   online: boolean;
   last_seen_at?: string | null;
+  // Accepted by VehicleUpdate but never returned by GET /vehicles/{id}.
+  sim_number?: string;
+  device_model?: string;
+  protocol?: string;
 }
 
 export interface Point {
@@ -129,11 +135,11 @@ export interface AlertRule {
 }
 
 export interface VehicleEvent {
-  kind: "geofence" | "alert";
+  kind: string;
   type: string;
   name?: string;
-  severity?: AlertSeverity;
-  status?: AlertStatus;
+  severity?: string;
+  status?: string;
   at: string;
   evidence?: Record<string, unknown>;
 }

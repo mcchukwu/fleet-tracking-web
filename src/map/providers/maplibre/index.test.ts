@@ -301,6 +301,17 @@ describe("MapLibre adapter", () => {
     adapter.destroy();
   });
 
+  it("forwards fly padding to the SDK and records the camera target", async () => {
+    const adapter = createAdapter();
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+    const padding = { top: 96, right: 444, bottom: 12, left: 12 };
+
+    adapter.flyTo([3.5, 6.6], 14, { padding });
+
+    expect(map().flown?.[0]).toMatchObject({ center: [3.5, 6.6], zoom: 14, padding });
+    adapter.destroy();
+  });
+
   it("mounts the hosted style for the requested theme", async () => {
     const adapter = createAdapter({ styles: ["standard", "streets", "satellite"] });
     await adapter.mount(document.createElement("div"), {

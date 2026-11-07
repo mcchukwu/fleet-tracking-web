@@ -1,46 +1,82 @@
 import { X } from "lucide-react";
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { IconButton } from "./IconButton";
+import { cn } from "./cn";
 
-interface DrawerProps {
+export interface DrawerProps {
   open: boolean;
-  onClose: () => void;
+  /** Accessible name, e.g. "Vehicle details for LSD-100-AA". */
+  label: string;
   title: string;
   headerAside?: ReactNode;
+  actions?: ReactNode;
+  onClose: () => void;
+  /** Called when the panel leaves the screen so focus can return to its origin. */
+  returnFocus?: () => void;
   children: ReactNode;
+  className?: string;
 }
 
-export function Drawer({ open, onClose, title, headerAside, children }: DrawerProps) {
-  const ref = useRef<HTMLDialogElement>(null);
+/**
+ * Non-modal right panel. The map stays interactive, so focus is not trapped;
+ * Escape and focus return are handled explicitly. Modals stay in Dialog.
+ */
+export function Drawer({
+  open,
+  label,
+  title,
+  headerAside,
+  actions,
+  onClose,
+  returnFocus,
+  children,
+  className,
+}: DrawerProps) {
   const titleId = useId();
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
+  const returnRef = useRef(returnFocus);
 
   useEffect(() => {
-    const dialog = ref.current;
-    if (!dialog) {
-      return;
-    }
-    if (open && !dialog.open) {
-      dialog.showModal();
-    } else if (!open && dialog.open) {
-      dialog.close();
-    }
+    returnRef.current = returnFocus;
+  }, [returnFocus]);
+
+  useEffect(() => {
+    if (!open) return;
+    closeRef.current?.focus();
+    return () => {
+      returnRef.current?.();
+    };
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      const active = document.activeElement;
+      // A modal opened from the drawer owns Escape; it must not close the panel.
+      if (active instanceof HTMLElement && active.closest('[role="dialog"]')) return;
+      if (!(active instanceof Node) || !panelRef.current?.contains(active)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      onClose();
+    };
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => document.removeEventListener("keydown", onKeyDown, true);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
   return (
-    /* oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- backdrop click closes the modal dialog; Escape is handled by onCancel. */
-    <dialog
-      ref={ref}
-      aria-labelledby={titleId}
-      onCancel={(event) => {
-        event.preventDefault();
-        onClose();
-      }}
-      onClick={(event) => {
-        if (event.target === ref.current) {
-          onClose();
-        }
-      }}
-      className="m-0 ml-auto h-full max-h-none w-drawer max-w-full animate-slide-in border-l border-border bg-surface p-0 text-text shadow-float open:flex open:flex-col"
+    <aside
+      ref={panelRef}
+      aria-label={label}
+      aria-labelledby={label ? undefined : titleId}
+      data-testid="drawer"
+      className={cn(
+        "absolute bottom-3 right-3 top-3 z-30 flex w-drawer max-w-full flex-col overflow-hidden rounded-lg border border-border bg-surface text-text shadow-float",
+        className,
+      )}
     >
       <div className="flex h-topbar shrink-0 items-center justify-between gap-2 border-b border-border px-4">
         <div className="flex min-w-0 items-center gap-2">
@@ -49,9 +85,19 @@ export function Drawer({ open, onClose, title, headerAside, children }: DrawerPr
           </h2>
           {headerAside}
         </div>
-        <IconButton label="Close drawer" icon={<X aria-hidden="true" className="size-4" strokeWidth={1.5} />} onClick={onClose} />
+        <IconButton
+          ref={closeRef}
+          label="Close vehicle details"
+          icon={<X aria-hidden="true" className="size-4" strokeWidth={1.5} />}
+          onClick={onClose}
+        />
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
-    </dialog>
+      {actions ? (
+        <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-border px-3 py-2">
+          {actions}
+        </div>
+      ) : null}
+      <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+    </aside>
   );
 }

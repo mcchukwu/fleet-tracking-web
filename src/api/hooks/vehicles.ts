@@ -34,10 +34,10 @@ export function useVehicles(filters: VehicleFilters = {}) {
   });
 }
 
-export function useVehicle(id: string | undefined) {
-  return useQuery({
+export function vehicleQueryOptions(id: string | undefined) {
+  return queryOptions({
     queryKey: queryKeys.vehicle(id ?? ""),
-    queryFn: ({ signal }) => {
+    queryFn: ({ signal }: { signal: AbortSignal }) => {
       if (!id) throw new Error("useVehicle requires an id");
       return api.vehicle(id, { signal }).then((response) => response.data);
     },
@@ -46,16 +46,35 @@ export function useVehicle(id: string | undefined) {
   });
 }
 
-export function useVehicleEvents(id: string | undefined, range: VehicleEventRange = {}) {
-  return useQuery({
+export function useVehicle(id: string | undefined) {
+  return useQuery(vehicleQueryOptions(id));
+}
+
+export function vehicleEventsQueryOptions(
+  id: string | undefined,
+  range: VehicleEventRange = {},
+  options: { refetchInterval?: number; enabled?: boolean } = {},
+) {
+  return queryOptions({
     queryKey: queryKeys.vehicleEvents(id ?? "", range),
-    queryFn: ({ signal }) => {
+    queryFn: ({ signal }: { signal: AbortSignal }) => {
       if (!id) throw new Error("useVehicleEvents requires an id");
       return api.vehicleEvents(id, range, { signal }).then((response) => response.data);
     },
-    enabled: Boolean(id),
+    enabled: Boolean(id) && (options.enabled ?? true),
     meta: { scope: "panel", resource: "vehicle-events" },
+    ...(options.refetchInterval !== undefined
+      ? { refetchInterval: options.refetchInterval }
+      : {}),
   });
+}
+
+export function useVehicleEvents(
+  id: string | undefined,
+  range: VehicleEventRange = {},
+  options: { refetchInterval?: number; enabled?: boolean } = {},
+) {
+  return useQuery(vehicleEventsQueryOptions(id, range, options));
 }
 
 export function useVehicleHistory(id: string | undefined, range: HistoryRange) {
@@ -74,12 +93,16 @@ export function useUpdateVehicle(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (update: VehicleUpdate) => api.updateVehicle(id, update),
-    onSuccess: async () => {
-      await Promise.all([
+    onSuccess: async (_data, update) => {
+      const invalidations = [
         queryClient.invalidateQueries({ queryKey: queryKeys.vehicle(id) }),
         queryClient.invalidateQueries({ queryKey: ["vehicles"] }),
         queryClient.invalidateQueries({ queryKey: queryKeys.liveSnapshot }),
-      ]);
+      ];
+      if (update.driver_id !== undefined) {
+        invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.drivers }));
+      }
+      await Promise.all(invalidations);
     },
     meta: { scope: "panel", resource: "vehicle" },
   });

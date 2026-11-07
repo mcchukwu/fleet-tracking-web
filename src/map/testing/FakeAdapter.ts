@@ -72,6 +72,7 @@ export class FakeAdapter implements MapAdapter {
   clusters: readonly FakeCluster[] = [];
   geofences: readonly MapGeofence[] = [];
   route: MapRoute | null = null;
+  flyPadding: Padding | null = null;
   viewport: Viewport = { center: [0, 0], zoom: 2, bearing: 0, bounds: WORLD };
   mountCount = 0;
   destroyCount = 0;
@@ -141,7 +142,8 @@ export class FakeAdapter implements MapAdapter {
     this.emit("viewportChange", this.viewport);
   }
 
-  flyTo(point: LngLat, zoom?: number): void {
+  flyTo(point: LngLat, zoom?: number, options?: { padding?: Padding }): void {
+    this.flyPadding = options?.padding ?? null;
     this.viewport = { ...this.viewport, center: point, zoom: zoom ?? this.viewport.zoom };
     this.recomputeClusters();
     this.emit("viewportChange", this.viewport);

@@ -1,0 +1,141 @@
+<Context>
+You receive a selection in neovim that you need to replace with new code.
+The selection's contents may contain notes, incorporate the notes every time if there are some.
+consider the context of the selection and what you are suppose to be implementing
+<SELECTION_LOCATION>
+range(point(55,1),point(57,21))
+</SELECTION_LOCATION>
+<SELECTION_CONTENT>
+          <!-- <span className="flex size-control-sm items-center justify-center rounded-md bg-accent text-text-inverse">
+            <Truck aria-hidden="true" className="size-4" strokeWidth={1.5} />
+          </span> !>
+</SELECTION_CONTENT>
+<SURROUNDING_CONTEXT>
+import { Link } from "@tanstack/react-router";
+import { Menu, Search, Truck, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useConnection } from "../../../stores/connection";
+import { ThemeToggle } from "../../../theme/ThemeToggle";
+import { ConnectionIndicator, type ConnectionState } from "../../../ui/Badge";
+import { IconButton } from "../../../ui/IconButton";
+import { GlobalSearch } from "./GlobalSearch";
+import { UserMenu } from "./UserMenu";
+
+export interface TopBarProps {
+  onOpenMenu: () => void;
+  onOpenShortcuts?: () => void;
+}
+
+export function TopBar({ onOpenMenu, onOpenShortcuts }: TopBarProps) {
+  const [searchOpen, setSearchOpen] = useState(false);
+  const { network, socket } = useConnection();
+
+  useEffect(() => {
+    const focusSearch = () => {
+      if (window.matchMedia("(min-width: 768px)").matches) {
+        document.getElementById("vehicle-search")?.focus();
+        return;
+      }
+      setSearchOpen(true);
+    };
+    window.addEventListener("fleet:focus-search", focusSearch);
+    return () => window.removeEventListener("fleet:focus-search", focusSearch);
+  }, []);
+  const connection: ConnectionState =
+    network === "offline"
+      ? "offline"
+      : socket === "live"
+        ? "live"
+        : socket === "reconnecting"
+          ? "reconnecting"
+          : "online";
+
+  return (
+    <header className="z-40 shrink-0 border-b border-border bg-surface">
+      <div className="flex h-topbar items-center gap-2 px-3">
+        <IconButton
+          className="md:hidden"
+          label="Open navigation"
+          onClick={onOpenMenu}
+          icon={<Menu aria-hidden="true" className="size-4" strokeWidth={1.5} />}
+        />
+
+        <Link
+          to="/map"
+          aria-label="Fleet Console home"
+          className="flex h-touch w-touch shrink-0 items-center justify-center gap-2 rounded-md focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring sm:w-auto sm:justify-start md:h-auto"
+        >
+          <!-- <span className="flex size-control-sm items-center justify-center rounded-md bg-accent text-text-inverse">
+            <Truck aria-hidden="true" className="size-4" strokeWidth={1.5} />
+          </span> !>
+          <span className="hidden text-sm font-medium text-text sm:inline">zoronoa</span>
+        </Link>
+
+        <div className="hidden min-w-0 flex-1 justify-center px-2 md:flex">
+          <div className="w-full max-w-panel">
+            <GlobalSearch />
+          </div>
+        </div>
+
+        <div className="ml-auto flex items-center gap-2 md:ml-0">
+          <IconButton
+            className="md:hidden"
+            label={searchOpen ? "Close search" : "Search vehicles"}
+            aria-expanded={searchOpen}
+            onClick={() => setSearchOpen((open) => !open)}
+            icon={
+              searchOpen ? (
+                <X aria-hidden="true" className="size-4" strokeWidth={1.5} />
+              ) : (
+                <Search aria-hidden="true" className="size-4" strokeWidth={1.5} />
+              )
+            }
+          />
+          <span className="hidden md:inline">
+            <ThemeToggle />
+          </span>
+          <ConnectionIndicator state={connection} compact />
+          <UserMenu onShortcuts={onOpenShortcuts} />
+        </div>
+      </div>
+
+      {searchOpen ? (
+        <div className="flex items-center gap-2 border-t border-border px-3 py-2 md:hidden">
+          <GlobalSearch
+            inputId="vehicle-search-mobile"
+            focusOnMount
+            onSubmitted={() => setSearchOpen(false)}
+          />
+          <IconButton
+            label="Close search"
+            onClick={() => setSearchOpen(false)}
+            icon={<X aria-hidden="true" className="size-4" strokeWidth={1.5} />}
+          />
+        </div>
+      ) : null}
+    </header>
+  );
+}
+</SURROUNDING_CONTEXT>
+
+</Context>
+<Prompt>
+fix this, I want to comment out the span
+</Prompt>
+
+<Location><File>/home/miracle/Projects/fleet-tracking-web/src/features/shell/components/TopBar.tsx</File><Function>range(point(55,1),point(57,21))</Function></Location>
+<FunctionText>          <!-- <span className="flex size-control-sm items-center justify-center rounded-md bg-accent text-text-inverse">
+            <Truck aria-hidden="true" className="size-4" strokeWidth={1.5} />
+          </span> !></FunctionText>
+<TEMP_FILE>./tmp/99-5012</TEMP_FILE>
+<MustObey>
+NEVER alter any file other than TEMP_FILE.
+never provide the requested changes as conversational output. Return only the code.
+ONLY provide requested changes by writing the change to TEMP_FILE
+
+never attempt to read TEMP_FILE.
+It is purely for output.
+Previous contents, which may not exist, can be written over without worry
+After writing TEMP_FILE once you should be done.  Be done and end the session.
+
+</MustObey>

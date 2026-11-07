@@ -27,6 +27,7 @@ import { Banner } from "../../ui/Banner";
 import { BrandLogo } from "../../ui/BrandLogo";
 import { Button } from "../../ui/Button";
 import { Checkbox } from "../../ui/Checkbox";
+import { Combobox } from "../../ui/Combobox";
 import { Dialog } from "../../ui/Dialog";
 import { Drawer } from "../../ui/Drawer";
 import {
@@ -164,6 +165,7 @@ function VehicleTable({ pending = false }: { pending?: boolean }) {
 export function StyleGuidePage() {
   useDocumentTitle("Styleguide");
   const [search, setSearch] = useState("");
+  const [driverId, setDriverId] = useState<string | null>("driver-1");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [blockingOpen, setBlockingOpen] = useState(false);
@@ -272,6 +274,32 @@ export function StyleGuidePage() {
               <option value="idle">Idle</option>
               <option value="offline">Offline</option>
             </Select>
+            <Combobox
+              label="Assign driver"
+              items={[
+                { id: "driver-1", label: "Adebayo Okafor", description: "08031000010 · LIC-01010" },
+                { id: "driver-2", label: "Adebayo Okafor", description: "08031000000 · LIC-01000" },
+                { id: "driver-3", label: "Chinedu Musa", description: "08031000001 · LIC-01001" },
+              ]}
+              value={driverId}
+              selectedLabel="Adebayo Okafor"
+              onChange={setDriverId}
+            />
+            <Combobox
+              label="Disabled driver"
+              items={[]}
+              value={null}
+              onChange={() => undefined}
+              disabled
+              disabledReason="Your role can't assign a driver."
+            />
+            <Combobox
+              label="Loading drivers"
+              items={[]}
+              value={null}
+              onChange={() => undefined}
+              loading
+            />
             <Textarea label="Note" placeholder="Add a note for the next shift." hint="Visible to dispatchers." />
             <div className="flex flex-col gap-3">
               <Checkbox label="Notify the security desk" defaultChecked />
@@ -443,6 +471,7 @@ export function StyleGuidePage() {
           </Button>
           <Drawer
             open={drawerOpen}
+            label="Vehicle details for LSD-103-AA"
             onClose={() => setDrawerOpen(false)}
             title="LSD-103-AA"
             headerAside={
@@ -451,8 +480,24 @@ export function StyleGuidePage() {
                 <span className="text-xs text-muted">Updated 4s ago</span>
               </div>
             }
+            actions={
+              <>
+                <Button size="sm" variant="secondary">
+                  Centre on map
+                </Button>
+                <Button size="sm" variant="secondary">
+                  Play back
+                </Button>
+                <Button size="sm" variant="ghost">
+                  Edit
+                </Button>
+                <Button size="sm" variant="ghost">
+                  Assign driver
+                </Button>
+              </>
+            }
           >
-            <div className="space-y-4">
+            <div className="space-y-4 p-4">
               <dl className="grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <dt className="label-caps text-muted">Speed</dt>
@@ -475,20 +520,6 @@ export function StyleGuidePage() {
                   <dd className="text-text">Tunde Bello</dd>
                 </div>
               </dl>
-              <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="secondary">
-                  Centre on map
-                </Button>
-                <Button size="sm" variant="secondary">
-                  Play back
-                </Button>
-                <Button size="sm" variant="ghost">
-                  Edit
-                </Button>
-                <Button size="sm" variant="ghost">
-                  Assign driver
-                </Button>
-              </div>
               <div className="border-t border-border pt-4">
                 <p className="label-caps text-muted">Recent events</p>
                 <div className="mt-2 space-y-2 text-sm">

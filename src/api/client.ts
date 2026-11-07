@@ -17,6 +17,8 @@ import {
   parseAlerts,
   parseGeofences,
   parseSnapshot,
+  parseVehicleEventsResponse,
+  parseVehicleResponse,
   systemHealthSchema,
   type AuditResponse,
   type SystemHealth,
@@ -39,7 +41,6 @@ import type {
   TripInput,
   TripUpdate,
   Vehicle,
-  VehicleEvent,
   VehicleEventRange,
   VehicleFilters,
   VehicleUpdate,
@@ -299,21 +300,25 @@ export class FleetApiClient {
     return this.request<{ data: Vehicle[] }>("GET", `/vehicles${queryString(filters)}`, undefined, options);
   }
 
-  vehicle(id: string, options: RequestOptions = {}) {
-    return this.request<{ data: Vehicle }>("GET", `/vehicles/${id}`, undefined, options);
+  async vehicle(id: string, options: RequestOptions = {}) {
+    const payload = await this.request<unknown>("GET", `/vehicles/${id}`, undefined, options);
+    return { data: this.parse(payload, "/vehicles", parseVehicleResponse) };
   }
 
   updateVehicle(id: string, update: VehicleUpdate, options: RequestOptions = {}) {
     return this.request<void>("PATCH", `/vehicles/${id}`, update, options);
   }
 
-  vehicleEvents(id: string, range: VehicleEventRange = {}, options: RequestOptions = {}) {
-    return this.request<{ data: VehicleEvent[] }>(
+  async vehicleEvents(id: string, range: VehicleEventRange = {}, options: RequestOptions = {}) {
+    const payload = await this.request<unknown>(
       "GET",
       `/vehicles/${id}/events${queryString(range)}`,
       undefined,
       options,
     );
+    const result = this.parse(payload, "/vehicles/:id/events", parseVehicleEventsResponse);
+    this.noteRejectedRows("/vehicles/:id/events", result.rejected);
+    return { data: result.events };
   }
 
   history(id: string, range: HistoryRange = {}, options: RequestOptions = {}) {

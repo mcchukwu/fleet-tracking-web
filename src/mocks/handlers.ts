@@ -1,5 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { z } from "zod";
+import { can } from "../auth/roles";
 import type {
   Alert,
   AlertRule,
@@ -168,7 +169,23 @@ function clearOverride(key: string): void {
 }
 
 const loginSchema = z.object({ email: z.string(), password: z.string() });
-const updateSchema = z.record(z.string(), z.unknown());
+const vehiclePatchSchema = z
+  .object({
+    plate: z.string().optional(),
+    driver_id: z.string().optional(),
+    status: z.string().optional(),
+    vehicle_type: z.string().optional(),
+    make: z.string().optional(),
+    model: z.string().optional(),
+    year: z.number().optional(),
+    colour: z.string().optional(),
+    depot: z.string().optional(),
+    department: z.string().optional(),
+    sim_number: z.string().optional(),
+    device_model: z.string().optional(),
+    protocol: z.string().optional(),
+  })
+  .strict();
 const tripInputSchema = z.object({
   vehicle_id: z.string(),
   driver_id: z.string().optional(),
@@ -300,20 +317,97 @@ export const handlers = [
 
   http.patch(`${API}/vehicles/:id`, async ({ params, request }) => {
     return withFault("vehicle", request, async () => {
+      const user = resolveUser();
+      if (!user || !can(user.role, "mutate")) {
+        return HttpResponse.json(
+          { error: { code: "forbidden", message: "your role cannot perform this action" } },
+          { status: 403 },
+        );
+      }
       const vehicle = state.vehicles.find(
         (item) => item.id === params.id || item.external_id === params.id,
       );
       if (!vehicle) {
-        return HttpResponse.json({ error: { code: "not_found", message: "not found" } }, { status: 404 });
+        return HttpResponse.json({ error: { code: "not_found", message: "vehicle not found" } }, { status: 404 });
       }
-      const parsed = updateSchema.safeParse(await readJson(request));
-      if (!parsed.success) return badRequest();
-      Object.assign(vehicle, parsed.data);
+
+      const raw = await readJson(request);
+      if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+        return HttpResponse.json(
+          { error: { code: "invalid_request", message: "invalid body" } },
+          { status: 400 },
+        );
+      }
+      // The real API treats null as absent, so {"driver_id": null} is an empty patch.
+      const body = Object.fromEntries(
+        Object.entries(raw).filter(([, value]) => value !== null && value !== undefined),
+      );
+      if (Object.keys(body).length === 0) {
+        return HttpResponse.json(
+          { error: { code: "invalid_request", message: "no fields to update" } },
+          { status: 400 },
+        );
+      }
+      const parsed = vehiclePatchSchema.safeParse(body);
+      if (!parsed.success) {
+        return HttpResponse.json(
+          { error: { code: "invalid_request", message: "invalid body" } },
+          { status: 400 },
+        );
+      }
+      const update = parsed.data;
+      if (
+        update.status !== undefined &&
+        !["active", "maintenance", "inactive"].includes(update.status)
+      ) {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "invalid_status",
+              message: "status must be active, maintenance or inactive",
+            },
+          },
+          { status: 400 },
+        );
+      }
+
+      if (update.driver_id !== undefined) {
+        const driver = state.drivers.find((item) => item.id === update.driver_id);
+        if (!driver) {
+          return HttpResponse.json(
+            { error: { code: "not_found", message: "driver not found" } },
+            { status: 404 },
+          );
+        }
+        Object.assign(vehicle, {
+          driver_id: driver.id,
+          driver_name: driver.name,
+          driver_phone: driver.phone,
+        });
+      }
+      const { driver_id: _driverId, ...fields } = update;
+      Object.assign(vehicle, fields);
       return new HttpResponse(null, { status: 204 });
     });
   }),
 
   http.get(`${API}/vehicles/:id/events`, ({ params, request }) => {
+    const fault = new URL(request.url).searchParams.get("fault");
+    if (fault === "vehicle-events:unknown_enum") {
+      return HttpResponse.json({
+        data: [
+          ...vehicleEventsFixture,
+          {
+            kind: "solar_flare",
+            type: "unmapped_event",
+            severity: "extreme",
+            status: "pending",
+            at: "2026-11-02T21:00:00Z",
+            evidence: { source: "future" },
+          },
+        ],
+      });
+    }
     return withFault("vehicle-events", request, () =>
       params.id
         ? HttpResponse.json({ data: vehicleEventsFixture })

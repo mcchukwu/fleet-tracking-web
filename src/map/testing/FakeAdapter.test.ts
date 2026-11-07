@@ -61,7 +61,8 @@ describe("FakeAdapter determinism", () => {
     expect(adapter.clusters[0]?.count).toBe(2);
     expect(adapter.clusters[0]?.worstStatus).toBe("alert");
 
-    adapter.flyTo([3.4, 6.5], 14);
+    adapter.flyTo([3.4, 6.5], 14, { padding: { top: 96, right: 444, bottom: 12, left: 12 } });
+    expect(adapter.flyPadding).toEqual({ top: 96, right: 444, bottom: 12, left: 12 });
     expect(adapter.clusters).toEqual([]);
   });
 });

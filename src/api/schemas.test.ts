@@ -5,6 +5,8 @@ import {
   parseAlerts,
   parseGeofences,
   parseSnapshot,
+  parseVehicleEventsResponse,
+  parseVehicleResponse,
   systemHealthSchema,
   importResultSchema,
   toGeofenceKind,
@@ -146,5 +148,117 @@ describe("contract schemas", () => {
   it("rejects an alert envelope that is not a data array", () => {
     expect(() => parseAlerts({ rows: [] })).toThrow();
     expect(() => parseAlerts({ data: [{ nope: true }] })).toThrow();
+  });
+});
+
+describe("vehicle detail parser", () => {
+  const full = vehiclesFixture.find((vehicle) => vehicle.trip_id);
+  const noTrip = vehiclesFixture.find((vehicle) => !vehicle.trip_id);
+  const offline = vehiclesFixture.find((vehicle) => !vehicle.online);
+
+  it("parses a full record with a trip", () => {
+    const vehicle = parseVehicleResponse({ data: full });
+    expect(vehicle.id).toBe(full?.id);
+    expect(vehicle.trip_id).toBe(full?.trip_id);
+    expect(vehicle.trip_status).toBe("active");
+  });
+
+  it("keeps a vehicle with no trip fields", () => {
+    const vehicle = parseVehicleResponse({ data: noTrip });
+    expect(vehicle.trip_id).toBeUndefined();
+    expect(vehicle.trip_status).toBeUndefined();
+  });
+
+  it("keeps an offline vehicle with no position keys", () => {
+    const vehicle = parseVehicleResponse({ data: offline });
+    expect(vehicle.lat).toBeUndefined();
+    expect(vehicle.online).toBe(false);
+    expect(vehicle.plate).toBe(offline?.plate);
+  });
+
+  it("keeps an unknown administrative status and trip status instead of failing", () => {
+    const vehicle = parseVehicleResponse({
+      data: { ...full, status: "reserved", trip_status: "teleporting" },
+    });
+    expect(vehicle.status).toBe("reserved");
+    expect(vehicle.trip_status).toBeUndefined();
+  });
+
+  it("keeps device fields when a write-only record includes them", () => {
+    const vehicle = parseVehicleResponse({
+      data: { ...full, sim_number: "892340000000001", device_model: "GT06", protocol: "gt06" },
+    });
+    expect(vehicle).toMatchObject({
+      sim_number: "892340000000001",
+      device_model: "GT06",
+      protocol: "gt06",
+    });
+  });
+
+  it("rejects a record without the required identity", () => {
+    expect(() => parseVehicleResponse({ data: { plate: "X" } })).toThrow();
+    expect(() => parseVehicleResponse({ rows: [] })).toThrow();
+  });
+});
+
+describe("vehicle events parser", () => {
+  const events = [
+    { kind: "geofence", type: "enter", name: "Refinery Gate", at: "2026-11-02T14:00:00Z" },
+    { kind: "geofence", type: "exit", name: "Lekki Depot", at: "2026-11-02T16:00:00Z" },
+    {
+      kind: "alert",
+      type: "route_deviation",
+      severity: "high",
+      status: "open",
+      at: "2026-11-02T15:00:00Z",
+      evidence: { distance_m: 2091.58 },
+    },
+  ];
+
+  it("keeps both event shapes and sorts newest first", () => {
+    const result = parseVehicleEventsResponse({ data: events });
+    expect(result.events.map((event) => event.type)).toEqual([
+      "exit",
+      "route_deviation",
+      "enter",
+    ]);
+    expect(result.rejected).toBe(0);
+  });
+
+  it("keeps unknown kinds, types, severities and statuses", () => {
+    const result = parseVehicleEventsResponse({
+      data: [
+        {
+          kind: "solar_flare",
+          type: "unmapped_event",
+          severity: "extreme",
+          status: "pending",
+          at: "2026-11-02T21:00:00Z",
+        },
+      ],
+    });
+    expect(result.events[0]).toMatchObject({
+      kind: "solar_flare",
+      type: "unmapped_event",
+      severity: "extreme",
+      status: "pending",
+    });
+  });
+
+  it("drops rows without at, kind or type", () => {
+    const result = parseVehicleEventsResponse({
+      data: [...events, { kind: "alert", type: "speeding" }, { nope: true }],
+    });
+    expect(result.events).toHaveLength(3);
+    expect(result.rejected).toBe(2);
+  });
+
+  it("rejects an envelope that is not a data array and one where nothing parses", () => {
+    expect(() => parseVehicleEventsResponse({ rows: [] })).toThrow();
+    expect(() => parseVehicleEventsResponse({ data: [{ nope: true }] })).toThrow();
+  });
+
+  it("accepts an empty event list", () => {
+    expect(parseVehicleEventsResponse({ data: [] }).events).toEqual([]);
   });
 });

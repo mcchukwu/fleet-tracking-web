@@ -3,11 +3,12 @@ import { api } from "../instance";
 import { queryKeys } from "../keys";
 import type { TripFilters, TripInput, TripUpdate } from "../types";
 
-export function useTrips(filters: TripFilters = {}) {
+export function useTrips(filters: TripFilters = {}, options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: queryKeys.trips(filters),
     queryFn: ({ signal }) => api.trips(filters, { signal }).then((response) => response.data),
     placeholderData: keepPreviousData,
+    enabled: options.enabled ?? true,
     meta: { scope: "screen", resource: "trips" },
   });
 }

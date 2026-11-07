@@ -6,6 +6,8 @@ import type {
   GeofenceKind,
   SnapshotVehicle,
   TripStatus,
+  Vehicle,
+  VehicleEvent,
 } from "./types";
 
 const timestamp = z
@@ -121,6 +123,84 @@ const tripStatuses = new Set<TripStatus>([
 
 function toTripStatus(value: string | undefined): TripStatus | undefined {
   return value && tripStatuses.has(value as TripStatus) ? (value as TripStatus) : undefined;
+}
+
+const vehicleRowSchema = z.object({
+  id: z.string().min(1),
+  external_id: z.string().min(1),
+  plate: z.string(),
+  vehicle_type: z.string().optional().default(""),
+  make: z.string().optional().default(""),
+  model: z.string().optional().default(""),
+  year: z.number().optional(),
+  colour: z.string().optional().default(""),
+  status: z.string().optional().default(""),
+  depot: z.string().optional().default(""),
+  department: z.string().optional().default(""),
+  driver_id: z.string().optional(),
+  driver_name: z.string().optional(),
+  driver_phone: z.string().optional(),
+  trip_id: z.string().optional(),
+  destination: z.string().optional(),
+  trip_status: z.string().optional(),
+  lat: z.number().optional(),
+  lon: z.number().optional(),
+  speed_kph: z.number().optional(),
+  heading_deg: z.number().optional(),
+  recorded_at: timestamp.optional(),
+  online: z.boolean().optional().default(false),
+  last_seen_at: timestamp.nullable().optional(),
+  sim_number: z.string().optional(),
+  device_model: z.string().optional(),
+  protocol: z.string().optional(),
+});
+
+/** `GET /vehicles/{id}` omits absent position, trip and device keys rather than nulling them. */
+export function parseVehicleResponse(payload: unknown): Vehicle {
+  const envelope = z.object({ data: z.unknown() }).safeParse(payload);
+  if (!envelope.success) throw new ContractError("Vehicle envelope is not { data: {} }");
+
+  const parsed = vehicleRowSchema.safeParse(envelope.data.data);
+  if (!parsed.success) throw new ContractError("Vehicle did not match the expected shape");
+  return { ...parsed.data, trip_status: toTripStatus(parsed.data.trip_status) };
+}
+
+const vehicleEventRowSchema = z.object({
+  kind: z.string().min(1),
+  type: z.string().min(1),
+  name: z.string().optional(),
+  severity: z.string().optional(),
+  status: z.string().optional(),
+  at: timestamp,
+  evidence: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type VehicleEventsParseResult = { events: VehicleEvent[]; rejected: number };
+
+/**
+ * Events have two shapes: geofence events carry `kind: "geofence"` with
+ * `type: "enter" | "exit"`, alert events carry an alert type. Branch on
+ * `kind` downstream; keep unknown kinds, types and enums instead of dropping
+ * the row. Newest first, because the server order is not contractual.
+ */
+export function parseVehicleEventsResponse(payload: unknown): VehicleEventsParseResult {
+  const envelope = z.object({ data: z.array(z.unknown()) }).safeParse(payload);
+  if (!envelope.success) throw new ContractError("Events envelope is not { data: [] }");
+
+  const events: VehicleEvent[] = [];
+  let rejected = 0;
+  for (const row of envelope.data.data) {
+    const parsed = vehicleEventRowSchema.safeParse(row);
+    if (parsed.success) events.push(parsed.data);
+    else rejected += 1;
+  }
+
+  if (envelope.data.data.length > 0 && events.length === 0) {
+    throw new ContractError("No event row matched the expected shape");
+  }
+
+  events.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+  return { events, rejected };
 }
 
 export function parseSnapshot(payload: unknown): SnapshotParseResult {
@@ -263,8 +343,7 @@ export const importResultSchema = z.object({
   errors: z.array(importErrorSchema).nullable(),
 });
 
-export type LiveMessage = z.infer<typeof liveMessageSchema>;
-export type PositionMessage = z.infer<typeof positionMessageSchema>;
+export type LiveMessage = z.infer<typeof liveMessageSchema>;export type PositionMessage = z.infer<typeof positionMessageSchema>;
 export type AlertMessage = z.infer<typeof alertMessageSchema>;
 export type SystemHealth = z.infer<typeof systemHealthSchema>;
 export type AuditResponse = z.infer<typeof auditResponseSchema>;

@@ -6,6 +6,7 @@ import { api } from "../instance";
 import { queryKeys } from "../keys";
 import { useAckAlert } from "./alerts";
 import { useCreateTrip, useUpdateTrip } from "./trips";
+import { useUpdateVehicle } from "./vehicles";
 
 function wrapperFor(queryClient: QueryClient) {
   return function Wrapper({ children }: { children: ReactNode }) {
@@ -62,5 +63,40 @@ describe("mutation invalidation", () => {
     const keys = invalidate.mock.calls.map(([filters]) => filters?.queryKey);
     expect(keys).toContainEqual(["alerts"]);
     expect(keys).toContainEqual(queryKeys.systemHealth);
+  });
+
+  it("refreshes the vehicle, snapshot and vehicles root after an edit", async () => {
+    vi.spyOn(api, "updateVehicle").mockResolvedValue(undefined);
+    const queryClient = new QueryClient();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+
+    const { result } = renderHook(() => useUpdateVehicle("vehicle-1"), {
+      wrapper: wrapperFor(queryClient),
+    });
+    await act(async () => {
+      await result.current.mutateAsync({ plate: "LSD-100-AB" });
+    });
+
+    const keys = invalidate.mock.calls.map(([filters]) => filters?.queryKey);
+    expect(keys).toContainEqual(queryKeys.vehicle("vehicle-1"));
+    expect(keys).toContainEqual(["vehicles"]);
+    expect(keys).toContainEqual(queryKeys.liveSnapshot);
+    expect(keys).not.toContainEqual(queryKeys.drivers);
+  });
+
+  it("also refreshes drivers when the edit changes the driver", async () => {
+    vi.spyOn(api, "updateVehicle").mockResolvedValue(undefined);
+    const queryClient = new QueryClient();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+
+    const { result } = renderHook(() => useUpdateVehicle("vehicle-1"), {
+      wrapper: wrapperFor(queryClient),
+    });
+    await act(async () => {
+      await result.current.mutateAsync({ driver_id: "driver-2" });
+    });
+
+    const keys = invalidate.mock.calls.map(([filters]) => filters?.queryKey);
+    expect(keys).toContainEqual(queryKeys.drivers);
   });
 });

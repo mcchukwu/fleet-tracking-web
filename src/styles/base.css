@@ -123,6 +123,22 @@
     overflow: hidden;
   }
 
+  .map-root[data-drawer-open="true"] {
+    --map-inset-right: calc(var(--spacing-drawer) + 12px);
+  }
+
+  .map-root[data-drawer-open="true"] .map-kpi {
+    right: calc(var(--spacing-drawer) + 24px);
+  }
+
+  .value-flash {
+    animation: var(--animate-flash);
+  }
+
+  .map-kpi {
+    transition: none;
+  }
+
   .map-filter-menu {
     max-height: min(320px, 55dvh);
     overflow-y: auto;
