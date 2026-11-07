@@ -77,12 +77,18 @@ export function MapControls({
   const bearingLabel = `Reset bearing to north (${bearingText})`;
   const fitLabel = fitDisabled ? "No vehicles are reporting a position" : "Fit the fleet";
 
+  const returnedFocusRef = useRef(false);
+
   useEffect(() => {
-    if (!obscured) return;
+    if (!obscured) {
+      returnedFocusRef.current = false;
+      return;
+    }
     // The opaque sheet cannot close a menu owned by an inert stack, so this is
     // the one place that can dismiss it when the stack goes away.
     // oxlint-disable-next-line react/set-state-in-effect
     setStyleOpen(false);
+    if (returnedFocusRef.current) return;
     const active = document.activeElement;
     // An open menu renders in a portal, so its focused item is outside the
     // fieldset. Closing it would return focus to the now-inert trigger.
@@ -93,6 +99,7 @@ export function MapControls({
       styleOpen ||
       (active instanceof HTMLElement && stackRef.current?.contains(active))
     ) {
+      returnedFocusRef.current = true;
       onObscuredFocusLoss?.();
     }
   }, [obscured, onObscuredFocusLoss, styleOpen]);
