@@ -15,6 +15,7 @@ import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useMediaQuery } from "../../../lib/useMediaQuery";
 import { readMapDebug, setMapDebug } from "../../../dev/debug";
 import type { MapAdapter, MapStyleState, Viewport } from "../../../map/types";
+import type { Vehicle } from "../../../api/types";
 import { useConnection } from "../../../stores/connection";
 import { useToast } from "../../../ui/Toast";
 import { cn } from "../../../ui/cn";
@@ -47,7 +48,9 @@ import { MapControls } from "./MapControls";
 import { MapTilerLogo } from "./MapTilerLogo";
 import { MapView } from "./MapView";
 import { MobileVehicleSheet } from "./MobileVehicleSheet";
+import { AssignDriverDialog } from "./AssignDriverDialog";
 import { VehicleDrawer } from "./VehicleDrawer";
+import { VehicleEditDialog } from "./VehicleEditDialog";
 import { VehiclePanel, type VehiclePanelProps } from "./VehiclePanel";
 
 export function MapPage() {
@@ -85,6 +88,8 @@ export function MapPage() {
   const [sheetObscured, setSheetObscured] = useState(false);
   const [mapStyleState, setMapStyleState] = useState<MapStyleState | null>(null);
   const [styleAttribution, setStyleAttribution] = useState<readonly string[] | null>(null);
+  const [writeVehicle, setWriteVehicle] = useState<Vehicle | null>(null);
+  const [writeMode, setWriteMode] = useState<"edit" | "assign" | null>(null);
   const adapterRef = useRef<MapAdapter | null>(null);
   const panelToggleRef = useRef<HTMLButtonElement>(null);
   const sheetHandleRef = useRef<HTMLButtonElement>(null);
@@ -293,6 +298,26 @@ export function MapPage() {
       },
     });
   }, [navigate, selectedId]);
+
+  const openEdit = useCallback((vehicle: Vehicle) => {
+    setWriteVehicle(vehicle);
+    setWriteMode("edit");
+  }, []);
+
+  const openAssign = useCallback((vehicle: Vehicle) => {
+    setWriteVehicle(vehicle);
+    setWriteMode("assign");
+  }, []);
+
+  const closeWrite = useCallback(() => {
+    setWriteMode(null);
+    setWriteVehicle(null);
+  }, []);
+
+  const refreshWriteVehicle = useCallback(() => {
+    if (!writeVehicle) return;
+    void queryClient.invalidateQueries({ queryKey: queryKeys.vehicle(writeVehicle.id) });
+  }, [queryClient, writeVehicle]);
 
   const selectKey = useCallback(
     (key: string) => {
@@ -584,6 +609,8 @@ export function MapPage() {
             onClose={closeDrawer}
             onCentre={centreSelected}
             onPlayback={openPlayback}
+            onEdit={openEdit}
+            onAssign={openAssign}
             returnFocus={() => focusOrigin(selectedKey)}
           />
         </ErrorBoundary>
@@ -672,6 +699,40 @@ export function MapPage() {
         >
           <span className="sr-only">Collapse the vehicle list</span>
         </button>
+      ) : null}
+
+      {writeVehicle && writeMode === "edit" && selectedId ? (
+        <VehicleEditDialog
+          open
+          vehicle={writeVehicle}
+          onClose={closeWrite}
+          onSaved={() =>
+            toast({
+              tone: "success",
+              title: "Vehicle updated.",
+              key: `vehicle-updated:${writeVehicle.id}`,
+            })
+          }
+          onRefresh={refreshWriteVehicle}
+          readOnly={!canMutate || offline}
+        />
+      ) : null}
+
+      {writeVehicle && writeMode === "assign" && selectedId ? (
+        <AssignDriverDialog
+          open
+          vehicle={writeVehicle}
+          onClose={closeWrite}
+          onSaved={() =>
+            toast({
+              tone: "success",
+              title: "Driver assigned.",
+              key: `driver-assigned:${writeVehicle.id}`,
+            })
+          }
+          onRefresh={refreshWriteVehicle}
+          readOnly={!canMutate || offline}
+        />
       ) : null}
     </div>
   );
