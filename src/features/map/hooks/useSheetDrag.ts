@@ -83,6 +83,20 @@ export function useSheetDrag({
   const pendingRef = useRef<number | null>(null);
   const frameRef = useRef<number | null>(null);
   const obscuredRef = useRef(false);
+  const onObscuredChangeRef = useRef(onObscuredChange);
+
+  useEffect(() => {
+    onObscuredChangeRef.current = onObscuredChange;
+  }, [onObscuredChange]);
+
+  useEffect(
+    () => () => {
+      if (!obscuredRef.current) return;
+      obscuredRef.current = false;
+      onObscuredChangeRef.current?.(false);
+    },
+    [],
+  );
 
   function publish(candidate: number): number {
     const next = clampVisible(candidate, metrics);

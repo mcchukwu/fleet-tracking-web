@@ -71,6 +71,22 @@ describe("useSheetDrag", () => {
     expect(onObscuredChange).toHaveBeenCalledWith(true);
   });
 
+  it("clears the obscured state when the sheet unmounts", () => {
+    const onObscuredChange = vi.fn();
+    const { unmount } = render(
+      <Harness snap="half" onSnap={vi.fn()} onObscuredChange={onObscuredChange} />,
+    );
+    const header = screen.getByTestId("header");
+
+    fireEvent.pointerDown(header, { clientY: 700, pointerId: 1 });
+    fireEvent.pointerMove(header, { clientY: 200, pointerId: 1 });
+    fireEvent.pointerUp(header, { clientY: 200, pointerId: 1 });
+    expect(onObscuredChange).toHaveBeenLastCalledWith(true);
+
+    unmount();
+    expect(onObscuredChange).toHaveBeenLastCalledWith(false);
+  });
+
   it("does not drag from a sheet action", () => {
     render(<Harness snap="half" onSnap={vi.fn()} />);
     const sheet = screen.getByTestId("sheet");

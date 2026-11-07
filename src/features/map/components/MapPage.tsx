@@ -258,14 +258,13 @@ export function MapPage() {
             : document.querySelector<HTMLElement>(
                 `[data-vehicle-key="${CSS.escape(key)}"] button`,
               );
-        if (!isDesktop) {
-          // The list sheet is back at peek, so its header is the reachable origin.
-          sheetHandleRef.current?.focus();
-          if (!sheetHandleRef.current) rowButton?.focus();
-          return;
-        }
         if (rowButton) {
           rowButton.focus();
+          return;
+        }
+        if (!isDesktop) {
+          // A row outside the rendered list window falls back to the sheet handle.
+          sheetHandleRef.current?.focus();
           return;
         }
         const search = document.querySelector<HTMLElement>('input[name="vehicle-search"]');
@@ -284,16 +283,22 @@ export function MapPage() {
     focusOrigin(selectedKey);
   }, [closeDrawer, focusOrigin, selectedKey]);
 
-  const centreSelected = useCallback(() => {
-    const adapter = adapterRef.current;
-    if (!adapter || !selectedRow || selectedRow.lat === null || selectedRow.lon === null) return;
-    adapter.flyTo(
-      [selectedRow.lon, selectedRow.lat],
-      Math.max(adapter.getViewport().zoom, 13),
-      { padding },
-    );
-    if (!isDesktop) setDetailSnap("peek");
-  }, [isDesktop, padding, selectedRow]);
+  const centreSelected = useCallback(
+    (position?: { lat: number; lon: number }) => {
+      const adapter = adapterRef.current;
+      const target =
+        position ??
+        (selectedRow && selectedRow.lat !== null && selectedRow.lon !== null
+          ? { lat: selectedRow.lat, lon: selectedRow.lon }
+          : null);
+      if (!adapter || !target) return;
+      adapter.flyTo([target.lon, target.lat], Math.max(adapter.getViewport().zoom, 13), {
+        padding,
+      });
+      if (!isDesktop) setDetailSnap("peek");
+    },
+    [isDesktop, padding, selectedRow],
+  );
 
   const openPlayback = useCallback(() => {
     if (!selectedId) return;
@@ -337,7 +342,15 @@ export function MapPage() {
 
   const refreshWriteVehicle = useCallback(() => {
     if (!writeVehicle) return;
-    void queryClient.invalidateQueries({ queryKey: queryKeys.vehicle(writeVehicle.id) });
+    const id = writeVehicle.id;
+    void (async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.vehicle(id) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.drivers }),
+      ]);
+      const fresh = queryClient.getQueryData<Vehicle>(queryKeys.vehicle(id));
+      if (fresh) setWriteVehicle(fresh);
+    })();
   }, [queryClient, writeVehicle]);
 
   const selectKey = useCallback(
@@ -403,6 +416,18 @@ export function MapPage() {
     setTimeout(() => panelToggleRef.current?.focus(), 0);
   }, [preferences]);
 
+  const togglePanel = useCallback(() => {
+    if (drawerOpen && !isXl) {
+      toast({
+        tone: "info",
+        title: "Close the vehicle drawer to show the list.",
+        key: "panel-blocked-by-drawer",
+      });
+      return;
+    }
+    preferences.setPanelOpen(!preferences.panelOpen);
+  }, [drawerOpen, isXl, preferences, toast]);
+
   const focusSheetHandle = useCallback(() => {
     sheetHandleRef.current?.focus();
   }, []);
@@ -451,7 +476,7 @@ export function MapPage() {
     rows,
     selectedKey,
     onSelect: selectKey,
-    onTogglePanel: () => preferences.setPanelOpen(!preferences.panelOpen),
+    onTogglePanel: togglePanel,
   });
 
   const kpiCells: KpiCell[] = [
@@ -542,17 +567,7 @@ export function MapPage() {
     onZoomOut: zoomOut,
     onResetBearing: resetBearing,
     onFit: fitFleet,
-    onTogglePanel: () => {
-      if (drawerOpen && !isXl) {
-        toast({
-          tone: "info",
-          title: "Close the vehicle drawer to show the list.",
-          key: "panel-blocked-by-drawer",
-        });
-        return;
-      }
-      preferences.setPanelOpen(!preferences.panelOpen);
-    },
+    onTogglePanel: togglePanel,
     onToggleGeofences: preferences.toggleGeofences,
     onStyleChange: mapStyle.chooseStyle,
     onObscuredFocusLoss: focusSheetHandle,

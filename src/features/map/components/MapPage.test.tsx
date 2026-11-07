@@ -448,6 +448,21 @@ describe("MapPage", () => {
     ).toHaveAttribute("aria-disabled", "true");
   });
 
+  it("reports why the panel shortcut is blocked while the drawer hides the list", async () => {
+    mocks.desktop = true;
+    mocks.xl = false;
+    mocks.search = { v: "uuid-1" };
+    renderPage();
+
+    fireEvent.keyDown(window, { key: "[" });
+
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith(
+        expect.objectContaining({ key: "panel-blocked-by-drawer" }),
+      ),
+    );
+  });
+
   it("keeps the geofence target stable across list ticks", async () => {
     renderPage();
 
