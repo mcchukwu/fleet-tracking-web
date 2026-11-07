@@ -14,9 +14,6 @@ export default defineConfig({
   workers: 1,
   reporter: [["list"], ["html", { open: "never" }]],
   outputDir: "test-results/artifacts",
-  // The first test in each project boots the whole console and the MSW worker;
-  // a 5s default assertion timeout made cold starts look like product failures.
-  expect: { timeout: 15_000 },
   use: {
     baseURL: "http://127.0.0.1:4173",
     trace: "retain-on-failure",
