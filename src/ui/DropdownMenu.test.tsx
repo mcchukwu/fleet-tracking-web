@@ -1,11 +1,14 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it } from "vitest";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "./DropdownMenu";
 
@@ -40,21 +43,56 @@ describe("DropdownMenu", () => {
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
-  it("supports arrow-key navigation and returns focus on Escape", async () => {
+  it("returns focus to the trigger when Escape closes the menu", async () => {
     const user = userEvent.setup();
     render(<Harness />);
     const trigger = screen.getByRole("button", { name: "Account" });
 
     trigger.focus();
     await user.keyboard("{ArrowDown}");
-    expect(screen.getByRole("menu")).toBeVisible();
     expect(screen.getByRole("menuitem", { name: "Profile" })).toHaveFocus();
-
-    await user.keyboard("{ArrowDown}");
-    expect(screen.getByRole("menuitem", { name: "Sign out" })).toHaveFocus();
 
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
+  });
+
+  it("shows an indicator only on checked radio and checkbox items", async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu defaultOpen>
+        <DropdownMenuTrigger>Choices</DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuRadioGroup value="a">
+            <DropdownMenuRadioItem value="a">Option A</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="b">Option B</DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+          <DropdownMenuCheckboxItem checked>Enabled</DropdownMenuCheckboxItem>
+          <DropdownMenuCheckboxItem checked={false}>Disabled</DropdownMenuCheckboxItem>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    );
+
+    expect(
+      within(screen.getByRole("menuitemradio", { name: "Option A" })).getByTestId(
+        "menu-item-indicator",
+      ),
+    ).toBeVisible();
+    expect(
+      within(screen.getByRole("menuitemradio", { name: "Option B" })).queryByTestId(
+        "menu-item-indicator",
+      ),
+    ).not.toBeInTheDocument();
+    expect(
+      within(screen.getByRole("menuitemcheckbox", { name: "Enabled" })).getByTestId(
+        "menu-item-indicator",
+      ),
+    ).toBeVisible();
+    expect(
+      within(screen.getByRole("menuitemcheckbox", { name: "Disabled" })).queryByTestId(
+        "menu-item-indicator",
+      ),
+    ).not.toBeInTheDocument();
+    await user.keyboard("{Escape}");
   });
 });

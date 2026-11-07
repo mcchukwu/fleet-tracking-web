@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react";
 
 export type ThemeMode = "light" | "dark" | "system";
-export type Accent = "blue" | "violet" | "teal";
+export type Accent = "blue" | "violet" | "fuchsia" | "graphite";
 
 export interface ThemeContextValue {
   mode: ThemeMode;

@@ -14,6 +14,7 @@ import type {
   MapGeofence,
   MapProvider,
   MapRoute,
+  MapStyleId,
   MapVehicle,
 } from "./types";
 
@@ -28,6 +29,7 @@ export interface FleetMapProps {
   geofences?: readonly MapGeofence[];
   route?: MapRoute | null;
   bounds?: Bounds;
+  baseStyle?: MapStyleId;
   dimmed?: boolean;
   className?: string;
   onReady?: (adapter: MapAdapter) => void;
@@ -42,6 +44,7 @@ export function FleetMap({
   geofences = EMPTY_GEOFENCES,
   route = null,
   bounds,
+  baseStyle,
   dimmed = false,
   className,
   onReady,
@@ -52,12 +55,14 @@ export function FleetMap({
   const canvasRef = useRef<HTMLDivElement>(null);
   const themeRef = useRef(theme.resolved);
   const boundsRef = useRef(bounds);
+  const baseStyleRef = useRef(baseStyle);
   const onReadyRef = useRef(onReady);
   const onErrorRef = useRef(onError);
 
   useEffect(() => {
     themeRef.current = theme.resolved;
     boundsRef.current = bounds;
+    baseStyleRef.current = baseStyle;
     onReadyRef.current = onReady;
     onErrorRef.current = onError;
   });
@@ -105,6 +110,7 @@ export function FleetMap({
           theme: themeRef.current,
           tokens: readMapTokens(target),
           ...(boundsRef.current ? { bounds: boundsRef.current } : {}),
+          ...(baseStyleRef.current ? { baseStyle: baseStyleRef.current } : {}),
         });
         if (cancelled) return;
 
@@ -154,6 +160,10 @@ export function FleetMap({
   useEffect(() => {
     if (loaded && activeAdapter) activeAdapter.setRoute(route);
   }, [route, loaded, activeAdapter]);
+
+  useEffect(() => {
+    if (loaded && activeAdapter && baseStyle) activeAdapter.setBaseStyle(baseStyle);
+  }, [baseStyle, loaded, activeAdapter]);
 
   const error = resolveError ?? mountError;
 

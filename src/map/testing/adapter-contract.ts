@@ -35,6 +35,7 @@ export const contractTokens: MapTokens = {
     clusterTextSize: 12,
   },
   geofence: { fillOpacity: 0.12, strokeWidth: 2, labelZoom: 12, labelSize: 12 },
+  onImagery: { haloWidth: 2, haloColor: "halo-token" },
 };
 
 export interface AdapterContractOptions {
@@ -50,6 +51,8 @@ export function runAdapterContract(name: string, options: AdapterContractOptions
       expect(typeof adapter.capabilities.drawing).toBe("boolean");
       expect(["native", "emulated"]).toContain(adapter.capabilities.clustering);
       expect(adapter.capabilities.comfortableVehicleCount).toBeGreaterThan(0);
+      expect(adapter.capabilities.styles).toContain("standard");
+      expect(adapter.getStyleState().style).toBe("standard");
       expect(Boolean(adapter.draw)).toBe(adapter.capabilities.drawing);
       adapter.destroy();
     });
@@ -70,6 +73,45 @@ export function runAdapterContract(name: string, options: AdapterContractOptions
       expect(Number.isFinite(viewport.center[0])).toBe(true);
       expect(Number.isFinite(viewport.center[1])).toBe(true);
       expect(viewport.zoom).toBeGreaterThan(0);
+      expect(Number.isFinite(viewport.bearing)).toBe(true);
+      adapter.destroy();
+    });
+
+    it("zooms through the contract and resets the bearing", async () => {
+      const adapter = options.create();
+      await adapter.mount(document.createElement("div"), {
+        theme: "light",
+        tokens: contractTokens,
+        bounds: { south: 6, west: 3, north: 7, east: 4 },
+        baseStyle: "standard",
+      });
+      const zoom = adapter.getViewport().zoom;
+
+      adapter.zoomIn();
+      expect(adapter.getViewport().zoom).toBeGreaterThan(zoom);
+      adapter.zoomOut();
+      adapter.zoomOut();
+      expect(adapter.getViewport().zoom).toBeLessThan(zoom);
+
+      adapter.resetBearing();
+      expect(adapter.getViewport().bearing).toBe(0);
+      adapter.destroy();
+    });
+
+    it("accepts a supported base style and ignores an unavailable one", async () => {
+      const adapter = options.create();
+      await adapter.mount(document.createElement("div"), {
+        theme: "light",
+        tokens: contractTokens,
+        baseStyle: "standard",
+      });
+
+      expect(() => adapter.setBaseStyle("standard")).not.toThrow();
+      if (adapter.capabilities.styles.includes("satellite")) {
+        adapter.setBaseStyle("satellite");
+      } else {
+        expect(() => adapter.setBaseStyle("satellite")).not.toThrow();
+      }
       adapter.destroy();
     });
 

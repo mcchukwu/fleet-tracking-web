@@ -22,7 +22,7 @@ export function Checkbox({ className, label, ...props }: CheckboxProps) {
         />
         <Check
           aria-hidden="true"
-          className="pointer-events-none absolute size-3 text-text-inverse opacity-0 transition-opacity duration-100 peer-checked:opacity-100"
+          className="pointer-events-none absolute size-3 text-accent-contrast opacity-0 transition-opacity duration-100 peer-checked:opacity-100"
           strokeWidth={3}
         />
       </span>

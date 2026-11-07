@@ -14,6 +14,7 @@ const TOKEN_VARIABLES = {
   geofenceCustomer: "--gf-customer",
   geofenceRestricted: "--gf-restricted",
   geofenceOther: "--gf-other",
+  imagery: "--imagery-halo",
 } as const;
 
 function readVariable(styles: CSSStyleDeclaration, name: string): string {
@@ -65,6 +66,10 @@ export function readMapTokens(element: HTMLElement = document.documentElement): 
       strokeWidth: 2,
       labelZoom: 12,
       labelSize: 12,
+    },
+    onImagery: {
+      haloWidth: 2,
+      haloColor: readVariable(styles, TOKEN_VARIABLES.imagery) || colors.surface,
     },
   };
 }

@@ -1,19 +1,14 @@
 import { Check } from "lucide-react";
 import { cn } from "../ui/cn";
-import { useTheme, type Accent } from "./theme-context";
-
-const accents: Array<{ id: Accent; label: string; swatch: string }> = [
-  { id: "blue", label: "Blue accent", swatch: "swatch-blue" },
-  { id: "violet", label: "Violet accent", swatch: "swatch-violet" },
-  { id: "teal", label: "Teal accent", swatch: "swatch-teal" },
-];
+import { ACCENTS } from "./accents";
+import { useTheme } from "./theme-context";
 
 export function AccentPicker() {
   const { accent, setAccent } = useTheme();
 
   return (
     <fieldset aria-label="Accent colour" className="m-0 inline-flex items-center gap-1 border-0 p-0">
-      {accents.map((option) => {
+      {ACCENTS.map((option) => {
         const active = accent === option.id;
         return (
           <button
@@ -29,7 +24,9 @@ export function AccentPicker() {
             )}
           >
             <span className={cn("inline-flex size-4 items-center justify-center rounded-full", option.swatch)}>
-              {active ? <Check aria-hidden="true" className="size-3 text-text-inverse" strokeWidth={2} /> : null}
+              {active ? (
+                <Check aria-hidden="true" className="size-3 text-accent-contrast" strokeWidth={3} />
+              ) : null}
             </span>
           </button>
         );

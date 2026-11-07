@@ -9,9 +9,17 @@ interface SearchInputProps {
   onChange: (value: string) => void;
   label?: string;
   placeholder?: string;
+  /** The map sheet header uses a visually hidden label and no shortcut hint. */
+  compact?: boolean;
 }
 
-export function SearchInput({ value, onChange, label = "Search vehicles", placeholder = "Plate or IMEI" }: SearchInputProps) {
+export function SearchInput({
+  value,
+  onChange,
+  label = "Search vehicles",
+  placeholder = "Plate or IMEI",
+  compact = false,
+}: SearchInputProps) {
   const [draft, setDraft] = useState(value);
   const [lastValue, setLastValue] = useState(value);
   const emit = useDebouncedCallback(onChange, 150);
@@ -31,6 +39,7 @@ export function SearchInput({ value, onChange, label = "Search vehicles", placeh
       type="search"
       name="vehicle-search"
       label={label}
+      hideLabel={compact}
       placeholder={placeholder}
       value={draft}
       onChange={(event) => update(event.target.value)}
@@ -44,7 +53,7 @@ export function SearchInput({ value, onChange, label = "Search vehicles", placeh
               icon={<X aria-hidden="true" className="size-icon-sm" strokeWidth={1.5} />}
               onClick={() => update("")}
             />
-          ) : (
+          ) : compact ? null : (
             <kbd className="rounded-sm border border-border bg-surface-2 px-1 font-mono text-xs text-muted">/</kbd>
           )}
         </>

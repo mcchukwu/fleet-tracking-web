@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Alert, SnapshotVehicle } from "../../../api/types";
 import { useAuthStore } from "../../../auth/store";
 import { useConnectionStore } from "../../../stores/connection";
@@ -33,13 +33,31 @@ const mocks = vi.hoisted(() => ({
     refetch: vi.fn(),
   },
   toast: vi.fn(),
+  mapStyle: {
+    chosenStyle: "standard" as string,
+    effectiveStyle: "standard" as string,
+    styles: ["standard", "streets", "satellite"] as readonly string[],
+    offline: false,
+    fallback: null as null | { style: string; reason: string },
+    dismissFallback: vi.fn(),
+    chooseStyle: vi.fn(),
+    failStyle: vi.fn(),
+  },
   mapProps: [] as Array<{
     vehicles: readonly unknown[];
     geofences: readonly unknown[];
     dimmed: boolean;
     error: unknown;
+    baseStyle?: string;
     showErrorOverlay?: boolean;
     onSelect: (key: string) => void;
+    onStyleChange?: (state: unknown) => void;
+    onViewport: (viewport: {
+      center: [number, number];
+      zoom: number;
+      bearing: number;
+      bounds: { south: number; west: number; north: number; east: number };
+    }) => void;
   }>,
 }));
 
@@ -73,16 +91,23 @@ vi.mock("../../../api/hooks/geofences", () => ({
   useGeofences: () => mocks.geofences,
 }));
 
+vi.mock("../hooks/useMapStyle", () => ({
+  useMapStyle: () => mocks.mapStyle,
+}));
+
 vi.mock("./MapView", () => ({
   MapView: (props: {
     vehicles: readonly unknown[];
     geofences: readonly unknown[];
     dimmed: boolean;
     error: unknown;
+    baseStyle?: string;
     showErrorOverlay?: boolean;
     onSelect: (key: string) => void;
+    onStyleChange?: (state: unknown) => void;
+    onViewport: (viewport: unknown) => void;
   }) => {
-    mocks.mapProps.push(props);
+    mocks.mapProps.push(props as never);
     return <div data-testid="fleet-map" />;
   },
 }));
@@ -136,6 +161,11 @@ beforeEach(() => {
   mocks.search = {};
   mocks.desktop = true;
   mocks.mapProps = [];
+  mocks.mapStyle.effectiveStyle = "standard";
+  mocks.mapStyle.chosenStyle = "standard";
+  mocks.mapStyle.styles = ["standard", "streets", "satellite"];
+  mocks.mapStyle.fallback = null;
+  window.history.replaceState({}, "", "/map");
   mocks.navigate.mockReset();
   mocks.toast.mockReset();
   mocks.alerts.data = [];
@@ -150,6 +180,10 @@ beforeEach(() => {
     vehicle("uuid-3", "demo-imei-0003", "CCC-300", { online: false }),
   ];
   useAuthStore.getState().setSession(user, "csrf");
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 describe("MapPage", () => {
@@ -261,6 +295,117 @@ describe("MapPage", () => {
     const first = mocks.mapProps.at(-1)?.onSelect;
     await new Promise((resolve) => setTimeout(resolve, 1_200));
     expect(mocks.mapProps.at(-1)?.onSelect).toBe(first);
+  });
+
+  it("passes the effective base style to the map", async () => {
+    mocks.mapStyle.effectiveStyle = "streets";
+    renderPage();
+    await waitFor(() => expect(mocks.mapProps.at(-1)?.baseStyle).toBe("streets"));
+  });
+
+  it("reflects the map bearing in the controls", async () => {
+    renderPage();
+    const onViewport = mocks.mapProps.at(-1)?.onViewport;
+    expect(onViewport).toBeDefined();
+
+    act(() =>
+      onViewport?.({
+        center: [3.4, 6.5],
+        zoom: 8,
+        bearing: 90,
+        bounds: { south: 4, west: 2, north: 8, east: 5 },
+      }),
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Reset bearing to north (Facing 90° E)" }),
+    ).toBeVisible();
+  });
+
+  it("renders the attribution in both layouts", () => {
+    renderPage();
+    expect(screen.getByRole("link", { name: /OpenStreetMap/ })).toBeVisible();
+
+    mocks.desktop = false;
+    renderPage();
+    expect(screen.getAllByRole("link", { name: /OpenStreetMap/ }).length).toBeGreaterThan(0);
+  });
+
+  it("shows the style's MapTiler credit and logo when a hosted style is active", () => {
+    mocks.mapStyle.chosenStyle = "satellite";
+    mocks.mapStyle.effectiveStyle = "satellite";
+    renderPage();
+
+    act(() => {
+      mocks.mapProps.at(-1)?.onStyleChange?.({
+        style: "satellite",
+        status: "ready",
+        attribution: ["© MapTiler © OpenStreetMap contributors"],
+      });
+    });
+
+    expect(screen.getByTestId("map-attribution")).toHaveTextContent(
+      "© MapTiler © OpenStreetMap contributors",
+    );
+    expect(screen.getByRole("link", { name: "MapTiler" })).toHaveAttribute(
+      "href",
+      "https://www.maptiler.com",
+    );
+    expect(screen.queryByRole("link", { name: /OpenStreetMap · OpenFreeMap/ })).not.toBeInTheDocument();
+  });
+
+  it("hides the compact KPI when the sheet is full", async () => {
+    mocks.desktop = false;
+    renderPage();
+
+    expect(screen.getByText("Active trips")).toBeVisible();
+    const handle = screen.getByRole("button", { name: /Showing 3 of 3/ });
+    handle.focus();
+    await userEvent.keyboard("{End}");
+
+    expect(screen.queryByText("Active trips")).not.toBeInTheDocument();
+  });
+
+  it("returns focus to the sheet handle after collapsing the full sheet", async () => {
+    mocks.desktop = false;
+    renderPage();
+    const handle = screen.getByRole("button", { name: /Showing 3 of 3/ });
+    handle.focus();
+    await userEvent.keyboard("{End}");
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Collapse the vehicle list" }),
+    );
+
+    await waitFor(() => expect(document.activeElement).toBe(handle));
+  });
+
+  it("moves focus to the sheet handle when a drag obscures the controls", async () => {
+    mocks.desktop = false;
+    renderPage();
+    const zoomIn = screen.getByRole("button", { name: "Zoom in" });
+    zoomIn.focus();
+    const header = screen.getByTestId("sheet-header");
+
+    fireEvent.pointerDown(header, { clientY: 700, pointerId: 1 });
+    fireEvent.pointerMove(header, { clientY: 200, pointerId: 1 });
+
+    const handle = screen.getByRole("button", { name: /Showing 3 of 3/ });
+    await waitFor(() => expect(document.activeElement).toBe(handle));
+    fireEvent.pointerUp(header, { clientY: 200, pointerId: 1 });
+  });
+
+  it("publishes the drawer inset through the dev harness", async () => {
+    vi.stubEnv("VITE_MOCK", "1");
+    window.history.replaceState({}, "", "/map?inset=1");
+    const { container } = renderPage();
+
+    const root = container.querySelector<HTMLElement>('[data-testid="map-root"]');
+    expect(root).not.toBeNull();
+    await waitFor(() =>
+      expect(root?.style.getPropertyValue("--map-inset-right")).toBe("432px"),
+    );
+    expect(screen.getByTestId("map-inset-harness")).toBeVisible();
   });
 
   it("keeps the geofence target stable across list ticks", async () => {

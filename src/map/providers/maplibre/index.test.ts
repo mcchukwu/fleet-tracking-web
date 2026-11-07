@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { StyleSpecification } from "maplibre-gl";
 import { contractTokens, runAdapterContract } from "../../testing/adapter-contract";
-import type { MapVehicle } from "../../types";
+import type { MapStyleId, MapVehicle } from "../../types";
 
 const holder = vi.hoisted(() => {
   type Listener = (event: unknown) => void;
@@ -29,12 +30,14 @@ const holder = vi.hoisted(() => {
     readonly options: Record<string, unknown>;
     readonly sources = new Map<string, FakeSource>();
     readonly layers = new Map<string, Record<string, unknown>>();
-    readonly styles: string[] = [];
+    readonly styles: unknown[] = [];
+    readonly glyphs: string[] = [];
     readonly controls: unknown[] = [];
     readonly canvas = document.createElement("canvas");
     readonly images = new Set<string>();
     features: unknown[] = [];
     zoom = 7;
+    bearing = 0;
     removed = 0;
     easedTo: unknown[] | null = null;
     fitted: unknown[] | null = null;
@@ -104,10 +107,15 @@ const holder = vi.hoisted(() => {
       return this;
     }
 
-    setStyle(style: string): this {
+    setStyle(style: unknown): this {
       this.styles.push(style);
       this.sources.clear();
       this.layers.clear();
+      return this;
+    }
+
+    setGlyphs(url: string): this {
+      this.glyphs.push(url);
       return this;
     }
 
@@ -121,6 +129,20 @@ const holder = vi.hoisted(() => {
 
     getZoom(): number {
       return this.zoom;
+    }
+
+    zoomIn(): this {
+      this.zoom += 1;
+      return this;
+    }
+
+    zoomOut(): this {
+      this.zoom -= 1;
+      return this;
+    }
+
+    getBearing(): number {
+      return this.bearing;
     }
 
     getBounds() {
@@ -138,6 +160,8 @@ const holder = vi.hoisted(() => {
 
     easeTo(options: unknown): this {
       this.easedTo = [options];
+      const bearing = (options as { bearing?: number }).bearing;
+      if (typeof bearing === "number") this.bearing = bearing;
       return this;
     }
 
@@ -167,11 +191,11 @@ vi.mock("./sdk", () => ({
     holder.map = map;
     return map;
   },
-  createNavigationControl: () => ({ id: "navigation" }),
 }));
 
 import { createMapLibreAdapter } from "./index";
 import { LAYER_IDS, SOURCE_IDS } from "./layers";
+import { StyleLoadError, type LoadedBaseStyle } from "./style";
 
 function map(): InstanceType<typeof holder.FakeMap> {
   if (!holder.map) throw new Error("map was not created");
@@ -182,6 +206,38 @@ function reduceMotion(): void {
   vi.spyOn(window, "matchMedia").mockImplementation(
     (query: string) => ({ matches: query.includes("reduce") }) as unknown as MediaQueryList,
   );
+}
+
+const HOSTED_ATTRIBUTION = "© MapTiler © OpenStreetMap contributors";
+
+function fakeStyle(id: string, theme: string): LoadedBaseStyle {
+  const style: StyleSpecification = {
+    version: 8,
+    name: `${id}-${theme}`,
+    sources: {},
+    layers: [],
+  };
+  return {
+    style,
+    attribution: id === "standard" ? [] : [HOSTED_ATTRIBUTION],
+  };
+}
+
+function defaultLoader(
+  id: MapStyleId,
+  theme: "light" | "dark",
+): Promise<LoadedBaseStyle> {
+  return Promise.resolve(fakeStyle(id, theme));
+}
+
+function createAdapter(
+  options: Parameters<typeof createMapLibreAdapter>[0] = {},
+) {
+  return createMapLibreAdapter({
+    mapTiler: { apiKey: "test-key" },
+    loadStyle: defaultLoader,
+    ...options,
+  });
 }
 
 const vehicle: MapVehicle = {
@@ -224,18 +280,183 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-runAdapterContract("MapLibre", { create: () => createMapLibreAdapter() });
+runAdapterContract("MapLibre", {
+  create: () => createMapLibreAdapter({ mapTiler: null, styles: ["standard"], loadStyle: defaultLoader }),
+});
 
 describe("MapLibre adapter", () => {
   it("declares honest capabilities for this slice", () => {
-    const adapter = createMapLibreAdapter();
+    const adapter = createMapLibreAdapter({ mapTiler: null, styles: ["standard"], loadStyle: defaultLoader });
     expect(adapter.capabilities.offline).toBe(false);
     expect(adapter.capabilities.drawing).toBe(false);
+    expect(adapter.capabilities.styles).toEqual(["standard"]);
+    expect(adapter.getStyleState()).toMatchObject({ style: "standard", status: "ready" });
     expect(adapter.draw).toBeUndefined();
   });
 
+  it("does not install a native navigation control", async () => {
+    const adapter = createAdapter();
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+    expect(map().controls).toHaveLength(0);
+    adapter.destroy();
+  });
+
+  it("mounts the hosted style for the requested theme", async () => {
+    const adapter = createAdapter({ styles: ["standard", "streets", "satellite"] });
+    await adapter.mount(document.createElement("div"), {
+      theme: "light",
+      tokens: contractTokens,
+      baseStyle: "streets",
+    });
+
+    const style = map().options.style as { name: string };
+    expect(style.name).toBe("streets-light");
+    expect(map().layers.has(LAYER_IDS.vehicleCircle)).toBe(true);
+    expect(adapter.getStyleState()).toMatchObject({
+      style: "streets",
+      status: "ready",
+      attribution: [HOSTED_ATTRIBUTION],
+    });
+    adapter.destroy();
+  });
+
+  it("switches the base style without dropping the camera or data layers", async () => {
+    const adapter = createAdapter({ styles: ["standard", "satellite"] });
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+    const instance = map();
+    instance.zoom = 12;
+    instance.bearing = 45;
+    instance.emit("moveend");
+    adapter.setVehicles([{ ...vehicle, selected: true }]);
+    expect(instance.layers.has(LAYER_IDS.vehicleHalo)).toBe(false);
+
+    const events: Array<{ status: string; style: string; targetStyle?: string }> = [];
+    adapter.on("styleChange", (state) => events.push(state));
+    adapter.setBaseStyle("satellite");
+    await vi.waitFor(() => expect(adapter.getStyleState().status).toBe("ready"));
+
+    expect(instance.styles).toHaveLength(1);
+    expect((instance.styles[0] as { name: string }).name).toBe("satellite-light");
+    const swapped = instance.styles[0] as StyleSpecification;
+    expect(swapped.sources?.[SOURCE_IDS.vehicles]).toBeDefined();
+    expect(swapped.layers?.some((layer) => layer.id === LAYER_IDS.vehicleCircle)).toBe(true);
+    expect(instance.layers.has(LAYER_IDS.vehicleHalo)).toBe(true);
+    expect(instance.sources.size).toBe(3);
+    expect(instance.zoom).toBe(12);
+    expect(instance.bearing).toBe(45);
+    const data = instance.sources.get(SOURCE_IDS.vehicles)?.data as {
+      features: Array<{ properties?: { selected?: boolean } }>;
+    };
+    expect(data.features.some((feature) => feature.properties?.selected === true)).toBe(true);
+    expect(events[0]).toMatchObject({
+      style: "standard",
+      status: "loading",
+      targetStyle: "satellite",
+    });
+    expect(events.at(-1)).toMatchObject({
+      style: "satellite",
+      status: "ready",
+      attribution: [HOSTED_ATTRIBUTION],
+    });
+    adapter.destroy();
+  });
+
+  it("uses the dark streets style when the theme changes", async () => {
+    const adapter = createAdapter({ styles: ["standard", "streets"] });
+    await adapter.mount(document.createElement("div"), {
+      theme: "light",
+      tokens: contractTokens,
+      baseStyle: "streets",
+    });
+    const instance = map();
+
+    adapter.setTheme("dark", contractTokens);
+    await vi.waitFor(() => expect(adapter.getStyleState().status).toBe("ready"));
+
+    expect((instance.styles.at(-1) as { name: string }).name).toBe("streets-dark");
+    expect(adapter.getStyleState().style).toBe("streets");
+    adapter.destroy();
+  });
+
+  it("ignores a base style this build does not offer", async () => {
+    const adapter = createMapLibreAdapter({ mapTiler: null, styles: ["standard"], loadStyle: defaultLoader });
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+    adapter.setBaseStyle("satellite");
+    expect(map().styles).toHaveLength(0);
+    adapter.destroy();
+  });
+
+  it("falls back to Map once when the hosted style is refused", async () => {
+    const loadStyle = vi.fn(async (id: MapStyleId, theme: "light" | "dark") => {
+      if (id === "streets") throw new StyleLoadError(403);
+      return fakeStyle(id, theme);
+    });
+    const adapter = createAdapter({ styles: ["standard", "streets"], loadStyle });
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+
+    const events: Array<{ status: string; style: string; failedStyle?: string; reason?: string }> = [];
+    adapter.on("styleChange", (state) => events.push(state));
+    adapter.setBaseStyle("streets");
+    await vi.waitFor(() => expect(adapter.getStyleState().status).toBe("ready"));
+
+    expect(adapter.getStyleState()).toMatchObject({
+      style: "standard",
+      failedStyle: "streets",
+      reason: "quota",
+    });
+    expect(events.some((event) => event.status === "error" && event.failedStyle === "streets")).toBe(
+      true,
+    );
+    expect(loadStyle.mock.calls.filter(([id]) => id === "streets")).toHaveLength(1);
+    expect(events.at(-1)).toMatchObject({ style: "standard", status: "ready" });
+    adapter.destroy();
+  });
+
+  it("falls back to Map on a 429 tile response without looping", async () => {
+    const adapter = createAdapter({ styles: ["standard", "satellite"] });
+    await adapter.mount(document.createElement("div"), {
+      theme: "light",
+      tokens: contractTokens,
+      baseStyle: "satellite",
+    });
+    const instance = map();
+    const events: Array<{ status: string; style: string; reason?: string }> = [];
+    adapter.on("styleChange", (state) => events.push(state));
+
+    instance.emit("error", { error: { status: 429, message: "Tile request failed" } });
+    await vi.waitFor(() => expect(adapter.getStyleState().style).toBe("standard"));
+    await vi.waitFor(() => expect(adapter.getStyleState().status).toBe("ready"));
+
+    const stylesAfter = instance.styles.length;
+    instance.emit("error", { error: { status: 429, message: "Tile request failed" } });
+    await Promise.resolve();
+    expect(instance.styles).toHaveLength(stylesAfter);
+    expect(events.some((event) => event.reason === "quota")).toBe(true);
+    adapter.destroy();
+  });
+
+  it("keeps the imagery while a theme change refreshes the data layers", async () => {
+    const adapter = createAdapter({ styles: ["standard", "satellite"] });
+    await adapter.mount(document.createElement("div"), {
+      theme: "light",
+      tokens: contractTokens,
+      baseStyle: "satellite",
+    });
+    const instance = map();
+
+    adapter.setTheme("dark", contractTokens);
+
+    expect(instance.styles).toHaveLength(0);
+    expect(instance.layers.has(LAYER_IDS.vehicleHalo)).toBe(true);
+    const label = instance.layers.get(LAYER_IDS.vehicleLabel)?.paint as
+      | Record<string, unknown>
+      | undefined;
+    expect(label?.["text-halo-width"]).toBe(2);
+    adapter.destroy();
+  });
+
   it("installs clustered vehicle, geofence and route layers from tokens", async () => {
-    const adapter = createMapLibreAdapter();
+    const adapter = createAdapter();
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
 
     const instance = map();
@@ -252,7 +473,7 @@ describe("MapLibre adapter", () => {
   });
 
   it("writes vehicle data once per update", async () => {
-    const adapter = createMapLibreAdapter();
+    const adapter = createAdapter();
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
     const source = map().sources.get(SOURCE_IDS.vehicles);
     const setData = vi.spyOn(source!, "setData");
@@ -266,7 +487,7 @@ describe("MapLibre adapter", () => {
   });
 
   it("keeps an unchanged vehicle's glide running when another target changes", async () => {
-    const adapter = createMapLibreAdapter();
+    const adapter = createAdapter();
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
     const source = map().sources.get(SOURCE_IDS.vehicles);
     if (!source) throw new Error("vehicle source is missing");
@@ -324,21 +545,21 @@ describe("MapLibre adapter", () => {
 
 
   it("swaps the style on a theme change without duplicating layers", async () => {
-    const adapter = createMapLibreAdapter();
+    const adapter = createAdapter();
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
     const instance = map();
 
     adapter.setTheme("dark", contractTokens);
-    await vi.waitFor(() => expect(instance.layers.has(LAYER_IDS.vehicleCircle)).toBe(true));
+    await vi.waitFor(() => expect(adapter.getStyleState().status).toBe("ready"));
 
     expect(instance.styles).toHaveLength(1);
-    expect(instance.styles[0]).toContain("dark");
+    expect((instance.styles[0] as { name: string }).name).toBe("standard-dark");
     expect(instance.sources.size).toBe(3);
     adapter.destroy();
   });
 
   it("refreshes paints on an accent change without touching the style", async () => {
-    const adapter = createMapLibreAdapter();
+    const adapter = createAdapter();
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
     const instance = map();
 
@@ -356,7 +577,7 @@ describe("MapLibre adapter", () => {
   });
 
   it("emits vehicle clicks, hover positions and viewport changes", async () => {
-    const adapter = createMapLibreAdapter();
+    const adapter = createAdapter();
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
     const instance = map();
 
@@ -381,7 +602,7 @@ describe("MapLibre adapter", () => {
   });
 
   it("emits cluster clicks and zooms to the cluster expansion", async () => {
-    const adapter = createMapLibreAdapter();
+    const adapter = createAdapter();
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
     const instance = map();
     const clicked = vi.fn();
@@ -403,7 +624,7 @@ describe("MapLibre adapter", () => {
   });
 
   it("reuses unchanged vehicle features between updates", async () => {
-    const adapter = createMapLibreAdapter();
+    const adapter = createAdapter();
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
     const source = map().sources.get(SOURCE_IDS.vehicles);
     if (!source) throw new Error("vehicle source is missing");
@@ -420,7 +641,7 @@ describe("MapLibre adapter", () => {
   });
 
   it("clusters earlier once the fleet exceeds its comfort budget", async () => {
-    const adapter = createMapLibreAdapter();
+    const adapter = createAdapter();
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
     const source = map().sources.get(SOURCE_IDS.vehicles);
     if (!source) throw new Error("vehicle source is missing");
@@ -441,7 +662,7 @@ describe("MapLibre adapter", () => {
   });
 
   it("keeps the alert glyph upright while the chevron follows the heading", async () => {
-    const adapter = createMapLibreAdapter();
+    const adapter = createAdapter();
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
     const layout = map().layers.get(LAYER_IDS.vehicleGlyph)?.layout as
       | Record<string, unknown>
@@ -454,7 +675,7 @@ describe("MapLibre adapter", () => {
   });
 
   it("emits a map error when the renderer fails after mount", async () => {
-    const adapter = createMapLibreAdapter();
+    const adapter = createAdapter();
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
     const onError = vi.fn();
     adapter.on("error", onError);
@@ -467,7 +688,7 @@ describe("MapLibre adapter", () => {
   });
 
   it("emits a map error when the WebGL context is lost", async () => {
-    const adapter = createMapLibreAdapter();
+    const adapter = createAdapter();
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
     const onError = vi.fn();
     adapter.on("error", onError);
@@ -480,7 +701,7 @@ describe("MapLibre adapter", () => {
   });
 
   it("rejects a second mount and tolerates a second destroy", async () => {
-    const adapter = createMapLibreAdapter();
+    const adapter = createAdapter();
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
     await expect(
       adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens }),

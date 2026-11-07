@@ -32,6 +32,50 @@ async function panel(page: Page) {
   return page.getByRole("region", { name: "Vehicles" });
 }
 
+async function openFilters(page: Page): Promise<void> {
+  await (await panel(page)).getByRole("button", { name: /^Filters/ }).click();
+}
+
+async function chooseStatus(page: Page, label: string): Promise<void> {
+  if (!isMobile(page)) {
+    await (await panel(page)).getByRole("button", { name: label }).click();
+    return;
+  }
+  await openFilters(page);
+  await page.getByRole("menuitemcheckbox", { name: new RegExp(`^${label}`) }).click();
+  await page.keyboard.press("Escape");
+}
+
+async function chooseDepot(page: Page, depot: string): Promise<void> {
+  if (!isMobile(page)) {
+    await (await panel(page)).getByLabel("Depot").selectOption(depot);
+    return;
+  }
+  await openFilters(page);
+  await page.getByRole("menuitemradio", { name: depot }).click();
+  await page.keyboard.press("Escape");
+}
+
+async function chooseSort(page: Page, label: string): Promise<void> {
+  if (!isMobile(page)) {
+    await (await panel(page)).getByLabel("Sort").selectOption("lastSeen");
+    return;
+  }
+  await openFilters(page);
+  await page.getByRole("menuitemradio", { name: label }).click();
+  await page.keyboard.press("Escape");
+}
+
+async function toggleInView(page: Page): Promise<void> {
+  if (!isMobile(page)) {
+    await (await panel(page)).getByLabel("Only in view").check();
+    return;
+  }
+  await openFilters(page);
+  await page.getByRole("menuitemcheckbox", { name: "Only in view" }).click();
+  await page.keyboard.press("Escape");
+}
+
 test.describe("map", () => {
   test("renders the fleet, KPIs and geofences", async ({ page }) => {
     await gotoMap(page);
@@ -74,24 +118,20 @@ test.describe("map", () => {
 
     await gotoMap(page);
     await openPanel(page);
-    await (await panel(page)).getByRole("button", { name: "Offline" }).click();
+    await chooseStatus(page, "Offline");
     await expect(page).toHaveURL(/status=offline/);
     await expect((await panel(page)).getByText("Showing 5 of 25")).toBeVisible();
-    await expect((await panel(page)).getByRole("button", { name: "Offline" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
     await expect
       .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.targetVehicleCount))
       .toBe(0);
 
-    await (await panel(page)).getByLabel("Depot").selectOption("Lekki Depot");
+    await chooseDepot(page, "Lekki Depot");
     await expect(page).toHaveURL(/depot=Lekki/);
 
-    await (await panel(page)).getByLabel("Sort").selectOption("lastSeen");
+    await chooseSort(page, "Last seen");
     await expect(page).toHaveURL(/sort=lastSeen/);
 
-    await (await panel(page)).getByLabel("Only in view").check();
+    await toggleInView(page);
     await expect(page).toHaveURL(/view=1/);
     await expect((await panel(page)).getByText("Showing 0 of 25")).toBeVisible();
 
@@ -104,14 +144,42 @@ test.describe("map", () => {
     await expect(page).toHaveURL(/sort=lastSeen/);
     await expect(page).toHaveURL(/view=1/);
     await expect(restored.getByRole("searchbox", { name: "Search vehicles" })).toHaveValue("");
-    await expect(restored.getByRole("button", { name: "Offline" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    await expect(restored.getByLabel("Depot")).toHaveValue("Lekki Depot");
-    await expect(restored.getByLabel("Sort")).toHaveValue("lastSeen");
-    await expect(restored.getByLabel("Only in view")).toBeChecked();
+    if (isMobile(page)) {
+      await openFilters(page);
+      await expect(page.getByRole("menuitemcheckbox", { name: /^Offline/ })).toHaveAttribute(
+        "aria-checked",
+        "true",
+      );
+      await expect(page.getByRole("menuitemradio", { name: "Lekki Depot" })).toHaveAttribute(
+        "aria-checked",
+        "true",
+      );
+      await expect(page.getByRole("menuitemradio", { name: "Last seen" })).toHaveAttribute(
+        "aria-checked",
+        "true",
+      );
+      await expect(page.getByRole("menuitemcheckbox", { name: "Only in view" })).toHaveAttribute(
+        "aria-checked",
+        "true",
+      );
+      await page.keyboard.press("Escape");
+    } else {
+      await expect(restored.getByRole("button", { name: "Offline" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      await expect(restored.getByLabel("Depot")).toHaveValue("Lekki Depot");
+      await expect(restored.getByLabel("Sort")).toHaveValue("lastSeen");
+      await expect(restored.getByLabel("Only in view")).toBeChecked();
+    }
     await expect(restored.getByText("Showing 0 of 25")).toBeVisible();
+
+    if (isMobile(page)) {
+      await openFilters(page);
+      await page.getByRole("menuitem", { name: "Reset filters" }).click();
+      await expect(page).not.toHaveURL(/status=|depot=|sort=|view=1/);
+      await expect((await panel(page)).getByText("Showing 25 of 25")).toBeVisible();
+    }
   });
 
   test("a row selects the vehicle, highlights the marker and Back clears it", async ({ page }) => {

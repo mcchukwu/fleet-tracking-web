@@ -31,8 +31,12 @@ declare global {
         mapLoaded: boolean;
         provider: string | null;
         targetVehicleCount: number;
-        viewport: { center: [number, number]; zoom: number } | null;
+        viewport: { center: [number, number]; zoom: number; bearing: number } | null;
         bounds: { south: number; west: number; north: number; east: number } | null;
+        bearing: number | null;
+        baseStyle: string | null;
+        styleState: "loading" | "ready" | "error" | null;
+        activeStyle: string | null;
         selectedKey: string | null;
         hoveredKey: string | null;
         fitBounds: { south: number; west: number; north: number; east: number } | null;
@@ -41,5 +45,15 @@ declare global {
         stale: boolean;
       };
     } | null;
+    __FLEET_TEST_MAP__?: {
+      flyTo: (point: [number, number], zoom?: number) => void;
+      getViewport: () => {
+        center: [number, number];
+        zoom: number;
+        bearing: number;
+        bounds: { south: number; west: number; north: number; east: number };
+      };
+    } | null;
+    __STYLE_TEST__?: { streets: number; satellite: number };
   }
 }

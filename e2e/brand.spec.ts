@@ -41,7 +41,7 @@ test.describe("brand", () => {
     expect(Math.abs(loginBox.width - shellBox.width), "width differs").toBeLessThanOrEqual(1);
     expect(Math.abs(loginBox.height - shellBox.height), "height differs").toBeLessThanOrEqual(1);
     expect(shellBox.x).toBeCloseTo(16, 0);
-    expect(shellBox.height).toBeCloseTo(24, 0);
+    expect(shellBox.height).toBeCloseTo(22, 0);
 
     await expectMinimumContrast(loginLogo, 4.5);
     await expectMinimumContrast(shellLogo, 4.5);
@@ -67,7 +67,7 @@ test.describe("brand", () => {
     expect(symbolBox, "mobile logo has no box").not.toBeNull();
     if (symbolBox) {
       expect(symbolBox.x).toBeCloseTo(16, 0);
-      expect(symbolBox.height).toBeCloseTo(24, 0);
+      expect(symbolBox.height).toBeCloseTo(22, 0);
     }
     await expectMinimumContrast(symbol, 4.5);
     await expectNoHorizontalScroll(page);

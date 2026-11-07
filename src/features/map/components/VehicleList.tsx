@@ -65,7 +65,11 @@ export function VehicleList({
   }, [rows, selectedKey, virtualizer]);
 
   return (
-    <div ref={parentRef} className="min-h-0 flex-1 overflow-auto">
+    <div
+      ref={parentRef}
+      data-vehicle-scroller
+      className="min-h-0 flex-1 overflow-auto overscroll-contain pb-3"
+    >
       <ul
         aria-label="Vehicles"
         className="relative w-full"
@@ -75,7 +79,12 @@ export function VehicleList({
           const row = rows[virtualRow.index];
           if (!row) return null;
           return (
-            <li key={row.key} style={virtualRowStyle(virtualRow.start, rowHeight)}>
+            <li
+              key={row.key}
+              data-index={virtualRow.index}
+              ref={virtualizer.measureElement}
+              style={virtualRowStyle(virtualRow.start, rowHeight)}
+            >
               <VehicleRow
                 row={row}
                 height={rowHeight}

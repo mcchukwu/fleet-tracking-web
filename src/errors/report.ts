@@ -23,9 +23,17 @@ let sessionCheckSucceeded = false;
 let liveHandshakeFailures = 0;
 let liveHandshakeHintLogged = false;
 
+export function diagnosticPath(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  try {
+    return new URL(value).pathname;
+  } catch {
+    return value.split(/[?#]/)[0];
+  }
+}
+
 function endpointOf(resource: string | undefined): string | undefined {
-  if (!resource) return undefined;
-  return resource.split("?")[0];
+  return diagnosticPath(resource);
 }
 
 function isOnline(): boolean {

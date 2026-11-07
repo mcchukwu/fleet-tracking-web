@@ -10,6 +10,7 @@ export interface CopyButtonProps {
   value: string;
   label: string;
   className?: string;
+  inline?: boolean;
   children?: React.ReactNode;
 }
 
@@ -24,7 +25,13 @@ async function writeToClipboard(value: string): Promise<void> {
   }
 }
 
-export function CopyButton({ value, label, className, children }: CopyButtonProps) {
+export function CopyButton({
+  value,
+  label,
+  className,
+  inline = false,
+  children,
+}: CopyButtonProps) {
   const { toast } = useToast();
   const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
 
@@ -55,7 +62,11 @@ export function CopyButton({ value, label, className, children }: CopyButtonProp
       title={`Copy ${label.toLowerCase()}`}
       data-copy-status={status}
       className={cn(
-        "inline-flex h-touch min-w-touch items-center justify-start rounded-sm font-mono text-sm text-text underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:h-control-sm md:min-w-0",
+        "inline-flex min-w-touch items-center justify-start rounded-sm font-mono text-sm text-text underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:min-w-0",
+        // The inline variant keeps a 24px visual line inside a 56px row but must
+        // still offer a 44px touch target, so it grows symmetrically and the
+        // negative margins keep its layout contribution at one text line.
+        inline ? "-my-3 h-touch md:my-0 md:h-control-sm" : "h-touch md:h-control-sm",
         className,
       )}
     >

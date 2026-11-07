@@ -27,7 +27,7 @@
 
   ::selection {
     background: var(--accent);
-    color: var(--text-inverse);
+    color: var(--accent-contrast);
   }
 
   select option {
@@ -39,7 +39,7 @@
   select option:hover,
   select option:focus {
     background-color: var(--accent);
-    color: var(--text-inverse);
+    color: var(--accent-contrast);
   }
 
   input[type="search"]::-webkit-search-cancel-button {
@@ -90,9 +90,18 @@
     text-transform: uppercase;
   }
 
-  .swatch-blue { background: var(--swatch-blue); }
-  .swatch-violet { background: var(--swatch-violet); }
-  .swatch-teal { background: var(--swatch-teal); }
+  .swatch-blue {
+    background: var(--swatch-blue);
+  }
+  .swatch-violet {
+    background: var(--swatch-violet);
+  }
+  .swatch-fuchsia {
+    background: var(--swatch-fuchsia);
+  }
+  .swatch-graphite {
+    background: var(--swatch-graphite);
+  }
 
   .status-alert-mark {
     font-size: 8px;
@@ -106,6 +115,55 @@
 
   .shadow-menu {
     box-shadow: var(--shadow-menu);
+  }
+
+  .map-root {
+    --map-inset-right: 0px;
+    --map-inset-bottom: var(--spacing-sheet-peek);
+    overflow: hidden;
+  }
+
+  .map-filter-menu {
+    max-height: min(320px, 55dvh);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .mobile-sheet {
+    height: var(--sheet-visible, var(--spacing-sheet-peek));
+    max-height: min(
+      calc(100dvh - var(--spacing-topbar) - var(--spacing-sheet-strip)),
+      calc(100% - var(--spacing-sheet-strip))
+    );
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* A collapsed sheet exposes no list at all: its own bottom padding must not
+     leak below the header and create overflow past the viewport. */
+  .mobile-sheet[data-snap="peek"] [data-vehicle-scroller] {
+    padding-bottom: 0;
+  }
+
+  .map-bottom-anchor {
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .map-controls {
+    transition: opacity var(--motion-slow) var(--ease-slow);
+  }
+
+  .map-inset-right {
+    transform: translateX(calc(-1 * var(--map-inset-right, 0px)));
+    transition: transform var(--motion-slow) var(--ease-slow);
+  }
+
+  .map-inset-bottom {
+    transform: translateY(calc(-1 * var(--map-inset-bottom, 0px)));
+  }
+
+  [data-sheet-dragging="true"] .map-inset-right,
+  [data-sheet-dragging="true"] .map-inset-bottom {
+    transition: none;
   }
 
   .z-menu {

@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_PATH;
+const review = process.env.REVIEW === "1";
 const launchOptions = executablePath
   ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
   : {};
@@ -38,6 +39,18 @@ export default defineConfig({
     command: "npm run dev -- --host 127.0.0.1 --port 4173",
     url: "http://127.0.0.1:4173",
     reuseExistingServer: !process.env.CI,
-    env: { VITE_MOCK: "1" },
+    env: {
+      VITE_MOCK: "1",
+      // Ordinary e2e routes every style and tile request, so no real key or
+      // quota is used. `e2e:review` deliberately uses the local key instead so
+      // the human sees real MapTiler cartography.
+      ...(review
+        ? {}
+        : {
+            VITE_MAPTILER_API_KEY: "test-key",
+            VITE_MAP_STYLE_URL_LIGHT: "https://styles.test/standard-light.json",
+            VITE_MAP_STYLE_URL_DARK: "https://styles.test/standard-dark.json",
+          }),
+    },
   },
 });

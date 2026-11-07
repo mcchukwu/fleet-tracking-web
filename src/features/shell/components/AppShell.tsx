@@ -34,7 +34,7 @@ export function AppShell() {
 
   return (
     <LiveProvider>
-      <div className="flex h-screen flex-col overflow-hidden bg-bg text-text">
+      <div className="flex h-dvh flex-col overflow-hidden bg-bg text-text">
       <TopBar onOpenMenu={() => setMenuOpen(true)} onOpenShortcuts={openShortcuts} />
       <GlobalBanners />
 

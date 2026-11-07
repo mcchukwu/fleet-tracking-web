@@ -7,8 +7,8 @@ import {
   MoreHorizontal,
   Plus,
   Search,
-  Settings,
   WifiOff,
+  ZoomIn,
 } from "lucide-react";
 import { AccentPicker } from "../../theme/AccentPicker";
 import { ThemeToggle } from "../../theme/ThemeToggle";
@@ -174,8 +174,13 @@ export function StyleGuidePage() {
     <div className="min-h-screen bg-bg text-text">
       <header className="sticky top-0 z-40 border-b border-border bg-surface">
         <div className="mx-auto flex h-topbar max-w-screen-2xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <BrandLogo variant="lockup" />
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="hidden sm:inline-flex">
+              <BrandLogo variant="lockup" />
+            </span>
+            <span className="sm:hidden">
+              <BrandLogo variant="symbol" />
+            </span>
             <span className="hidden text-sm text-subtle sm:inline">Styleguide</span>
           </div>
           <div className="flex items-center gap-3">
@@ -249,6 +254,7 @@ export function StyleGuidePage() {
             <Button disabled>Disabled</Button>
             <IconButton label="More actions" icon={<MoreHorizontal aria-hidden="true" className="size-4" strokeWidth={1.5} />} />
             <IconButton label="Filters" variant="secondary" icon={<Filter aria-hidden="true" className="size-4" strokeWidth={1.5} />} />
+            <IconButton size="lg" label="Zoom in" icon={<ZoomIn aria-hidden="true" className="size-4" strokeWidth={1.5} />} />
           </div>
         </Section>
 
@@ -259,6 +265,7 @@ export function StyleGuidePage() {
             <Input label="Plate" defaultValue="LSD-100-AA" error="This plate is already registered." name="plate" />
             <Input label="Disabled" defaultValue="Read only" disabled name="disabled" />
             <SearchInput value={search} onChange={setSearch} />
+            <SearchInput compact label="Compact vehicle search" value={search} onChange={setSearch} />
             <Select label="Status" defaultValue="all" name="status">
               <option value="all">All vehicles</option>
               <option value="moving">Moving</option>
@@ -690,7 +697,6 @@ export function StyleGuidePage() {
                 </kbd>
               </div>
               <ConnectionIndicator state="online" />
-              <ThemeToggle />
             </div>
             <div className="flex min-h-24">
               <nav
@@ -702,9 +708,6 @@ export function StyleGuidePage() {
                 </span>
                 <span className="flex size-control-lg items-center justify-center rounded-md text-muted">
                   <Bell aria-hidden="true" className="size-5" strokeWidth={1.5} />
-                </span>
-                <span className="flex size-control-lg items-center justify-center rounded-md text-muted">
-                  <Settings aria-hidden="true" className="size-5" strokeWidth={1.5} />
                 </span>
               </nav>
               <div className="flex flex-1 items-center justify-center bg-bg text-sm text-muted">

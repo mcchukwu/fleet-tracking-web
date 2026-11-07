@@ -41,6 +41,20 @@ describe("diagnostics", () => {
     expect(diagnostics()[0]?.endpoint).toBe("/api/v1/alerts");
   });
 
+  it("reduces a third-party URL to its path, dropping the key", () => {
+    clearDiagnostics();
+    recordError(
+      error({
+        context: {
+          route: "/map",
+          resource: "https://api.maptiler.com/maps/streets-v4/style.json?key=super-secret",
+        },
+      }),
+    );
+    expect(diagnostics()[0]?.endpoint).toBe("/maps/streets-v4/style.json");
+    expect(JSON.stringify(diagnostics())).not.toContain("super-secret");
+  });
+
   it("dedupes the same kind and key within ten seconds", () => {
     clearDiagnostics();
     expect(shouldDedupe("network", "vehicles", 1_000)).toBe(false);

@@ -1,11 +1,15 @@
-import type { Bounds } from "../map/types";
+import type { Bounds, MapAdapter } from "../map/types";
 
 export interface FleetDebugMapState {
   mapLoaded: boolean;
   provider: string | null;
   targetVehicleCount: number;
-  viewport: { center: [number, number]; zoom: number } | null;
+  viewport: { center: [number, number]; zoom: number; bearing: number } | null;
   bounds: Bounds | null;
+  bearing: number | null;
+  baseStyle: string | null;
+  styleState: "loading" | "ready" | "error" | null;
+  activeStyle: string | null;
   selectedKey: string | null;
   hoveredKey: string | null;
   fitBounds: Bounds | null;
@@ -51,6 +55,10 @@ const emptyMapState: FleetDebugMapState = {
   targetVehicleCount: 0,
   viewport: null,
   bounds: null,
+  bearing: null,
+  baseStyle: null,
+  styleState: null,
+  activeStyle: null,
   selectedKey: null,
   hoveredKey: null,
   fitBounds: null,
@@ -96,5 +104,7 @@ export function readDebugSnapshot(): FleetDebugSnapshot | null {
 declare global {
   interface Window {
     __FLEET_DEBUG__?: FleetDebugSnapshot | null;
+    /** Dev-and-mock only: camera access for review screenshots. */
+    __FLEET_TEST_MAP__?: MapAdapter | null;
   }
 }

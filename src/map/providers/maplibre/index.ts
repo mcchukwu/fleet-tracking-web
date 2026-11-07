@@ -1,6 +1,12 @@
 import { normalize } from "../../../errors/normalize";
 import { MapError } from "../../../errors/types";
-import { mapConfig } from "../../config";
+import type { StyleSpecification } from "maplibre-gl";
+import {
+  availableMapStyles,
+  mapConfig,
+  mapTilerConfig,
+  type MapTilerConfig,
+} from "../../config";
 import type {
   Bounds,
   LngLat,
@@ -9,6 +15,9 @@ import type {
   MapEvents,
   MapGeofence,
   MapRoute,
+  MapStyleFailureReason,
+  MapStyleId,
+  MapStyleState,
   MapTokens,
   MapVehicle,
   MountOptions,
@@ -31,15 +40,27 @@ import {
 } from "./layers";
 import {
   createMap,
-  createNavigationControl,
   type GeoJSONSource,
   type MapLibreMap,
   type MapMouseEvent,
 } from "./sdk";
-import { fallbackStyle, styleUrlFor } from "./style";
+import {
+  fallbackStyle,
+  isMapTilerStyleId,
+  loadBaseStyle,
+  StyleLoadError,
+  type LoadedBaseStyle,
+} from "./style";
 
 const STYLE_TIMEOUT_MS = 3_000;
 const HIGH_VOLUME_UPDATE_MS = 50;
+
+type StyleLoader = (
+  id: MapStyleId,
+  theme: "light" | "dark",
+  mapTiler: MapTilerConfig | null,
+  signal?: AbortSignal,
+) => Promise<LoadedBaseStyle>;
 
 function prefersReducedMotion(): boolean {
   return (
@@ -60,11 +81,39 @@ function boundsCorners(bounds: Bounds): [[number, number], [number, number]] {
   ];
 }
 
-export function createMapLibreAdapter(): MapAdapter {
+function httpStatusOf(event: unknown): number | null {
+  const error = (event as { error?: { status?: unknown } } | null)?.error;
+  return typeof error?.status === "number" ? error.status : null;
+}
+
+function quotaReason(status: number | null): MapStyleFailureReason | null {
+  return status === 403 || status === 429 ? "quota" : null;
+}
+
+export interface MapLibreAdapterOptions {
+  styles?: readonly MapStyleId[];
+  mapTiler?: MapTilerConfig | null;
+  /** Test seam: lets unit tests avoid the network. */
+  loadStyle?: StyleLoader;
+}
+
+export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): MapAdapter {
+  const styles = options.styles ?? availableMapStyles;
+  const mapTiler = options.mapTiler === undefined ? mapTilerConfig : options.mapTiler;
+  const loadStyle = options.loadStyle ?? loadBaseStyle;
   let map: MapLibreMap | null = null;
   let theme: "light" | "dark" = "light";
   let tokens: MapTokens | null = null;
+  let baseStyle: MapStyleId = "standard";
   let styleGeneration = 0;
+  let styleAbort: AbortController | null = null;
+  let fallbackInFlight = false;
+  let currentAttribution: readonly string[] = [];
+  let styleState: MapStyleState = {
+    style: "standard",
+    status: "ready",
+    attribution: null,
+  };
   let vehicleTargets: readonly MapVehicle[] = [];
   let geofences: readonly MapGeofence[] = [];
   let route: MapRoute | null = null;
@@ -79,6 +128,7 @@ export function createMapLibreAdapter(): MapAdapter {
   let clusterMaxZoom = 0;
   let lastDataAt = 0;
   let dataTimer: ReturnType<typeof setTimeout> | null = null;
+  const styleTimers = new Set<ReturnType<typeof setTimeout>>();
   let contextCanvas: HTMLCanvasElement | null = null;
   let contextLostHandler: ((event: Event) => void) | null = null;
   const featureCache: VehicleFeatureCache = { features: new Map() };
@@ -92,12 +142,18 @@ export function createMapLibreAdapter(): MapAdapter {
     // Measured 2026-11-05: a 5,000-vehicle target produced a 348 ms longest
     // pan task in Chromium, so the comfort budget stays well below that.
     comfortableVehicleCount: 1_000,
+    styles,
   };
 
   function emit<K extends keyof MapEvents>(event: K, payload: MapEvents[K]): void {
     for (const listener of listeners.get(event) ?? []) {
       (listener as (value: MapEvents[K]) => void)(payload);
     }
+  }
+
+  function emitStyle(next: MapStyleState): void {
+    styleState = next;
+    emit("styleChange", next);
   }
 
   function source(id: string): GeoJSONSource | null {
@@ -111,7 +167,13 @@ export function createMapLibreAdapter(): MapAdapter {
     emit("error", normalize(error, { action: "load the map" }));
   }
 
-  function applyData(id: string, data: ReturnType<typeof geofenceCollection> | ReturnType<typeof vehicleCollection> | ReturnType<typeof routeCollection>): void {
+  function applyData(
+    id: string,
+    data:
+      | ReturnType<typeof geofenceCollection>
+      | ReturnType<typeof vehicleCollection>
+      | ReturnType<typeof routeCollection>,
+  ): void {
     const target = source(id);
     if (target) {
       void target
@@ -121,10 +183,7 @@ export function createMapLibreAdapter(): MapAdapter {
   }
 
   function setVehicleData(): void {
-    applyData(
-      SOURCE_IDS.vehicles,
-      vehicleCollection(vehicleTargets, displayed, featureCache),
-    );
+    applyData(SOURCE_IDS.vehicles, vehicleCollection(vehicleTargets, displayed, featureCache));
   }
 
   function cancelDataTimer(): void {
@@ -132,6 +191,11 @@ export function createMapLibreAdapter(): MapAdapter {
       clearTimeout(dataTimer);
       dataTimer = null;
     }
+  }
+
+  function cancelStyleTimer(): void {
+    for (const timer of styleTimers) clearTimeout(timer);
+    styleTimers.clear();
   }
 
   /** Large fleets update the source at most 20 times per second. */
@@ -197,13 +261,39 @@ export function createMapLibreAdapter(): MapAdapter {
 
   function addLayers(): void {
     if (!map || !tokens) return;
+    const imagery = baseStyle === "satellite";
     for (const layer of [
-      ...geofenceLayers(tokens),
-      ...routeLayers(tokens),
-      ...vehicleLayers(tokens),
+      ...geofenceLayers(tokens, { imagery }),
+      ...routeLayers(tokens, { imagery }),
+      ...vehicleLayers(tokens, { imagery }),
     ]) {
       if (!map.getLayer(layer.id)) map.addLayer(layer);
     }
+  }
+
+  function vehicleSourceSpec(styleTokens: MapTokens) {
+    return {
+      type: "geojson" as const,
+      data: emptyCollection(),
+      cluster: true,
+      clusterRadius: styleTokens.marker.clusterRadius * 2,
+      clusterMaxZoom: styleTokens.marker.clusterMaxZoom,
+      clusterProperties: {
+        worstStatus: [
+          "max",
+          [
+            "case",
+            ["==", ["get", "status"], "alert"],
+            3,
+            ["==", ["get", "status"], "moving"],
+            2,
+            ["==", ["get", "status"], "idle"],
+            1,
+            0,
+          ],
+        ],
+      },
+    };
   }
 
   function installLayers(): void {
@@ -216,32 +306,45 @@ export function createMapLibreAdapter(): MapAdapter {
       map.addSource(SOURCE_IDS.route, { type: "geojson", data: emptyCollection() });
     }
     if (!map.getSource(SOURCE_IDS.vehicles)) {
-      map.addSource(SOURCE_IDS.vehicles, {
-        type: "geojson",
-        data: emptyCollection(),
-        cluster: true,
-        clusterRadius: tokens.marker.clusterRadius * 2,
-        clusterMaxZoom: tokens.marker.clusterMaxZoom,
-        clusterProperties: {
-          worstStatus: [
-            "max",
-            [
-              "case",
-              ["==", ["get", "status"], "alert"],
-              3,
-              ["==", ["get", "status"], "moving"],
-              2,
-              ["==", ["get", "status"], "idle"],
-              1,
-              0,
-            ],
-          ],
-        },
-      });
+      map.addSource(SOURCE_IDS.vehicles, vehicleSourceSpec(tokens));
       clusterMaxZoom = tokens.marker.clusterMaxZoom;
     }
     addLayers();
     applyAllData();
+  }
+
+  /**
+   * Add our sources and layers to the new style before the swap. MapLibre then
+   * applies the basemap and the operational layers together, so a style change
+   * never shows an empty operational map while tiles arrive.
+   */
+  function composeStyle(base: StyleSpecification, id: MapStyleId): StyleSpecification {
+    if (!tokens) return base;
+    const imagery = id === "satellite";
+    return {
+      ...base,
+      sources: {
+        ...base.sources,
+        [SOURCE_IDS.vehicles]: {
+          ...vehicleSourceSpec(tokens),
+          data: vehicleCollection(vehicleTargets, displayed, featureCache),
+        },
+        [SOURCE_IDS.geofences]: { type: "geojson", data: geofenceCollection(geofences) },
+        [SOURCE_IDS.route]: { type: "geojson", data: routeCollection(route) },
+      },
+      layers: [
+        ...base.layers,
+        ...geofenceLayers(tokens, { imagery }),
+        ...routeLayers(tokens, { imagery }),
+        ...vehicleLayers(tokens, { imagery }),
+      ],
+    };
+  }
+
+  /** Only the standard style accepts the glyph override; hosted styles own theirs. */
+  function applyGlyphs(instance: MapLibreMap, id: MapStyleId): void {
+    if (id !== "standard" || mapConfig.glyphsUrl === "") return;
+    instance.setGlyphs(mapConfig.glyphsUrl);
   }
 
   /** A fleet above the comfort budget clusters up to two zoom levels earlier. */
@@ -276,6 +379,16 @@ export function createMapLibreAdapter(): MapAdapter {
   function wireEvents(instance: MapLibreMap): void {
     instance.on("error", (event) => {
       if (instance !== map) return;
+      const status = httpStatusOf(event);
+      // The free plan pauses at its quota. One fallback, never a retry loop.
+      if (
+        (status === 403 || status === 429) &&
+        isMapTilerStyleId(baseStyle) &&
+        !fallbackInFlight
+      ) {
+        void fallBackToStandard(baseStyle, "quota");
+        return;
+      }
       const message = event.error?.message ?? "";
       // Glyph, sprite, tile and style failures degrade to a plainer basemap.
       // A style that cannot load at all is reported by waitForStyle instead.
@@ -363,6 +476,7 @@ export function createMapLibreAdapter(): MapAdapter {
     return {
       center: [center.lng, center.lat],
       zoom: instance.getZoom(),
+      bearing: instance.getBearing(),
       bounds: {
         south: bounds.getSouth(),
         west: bounds.getWest(),
@@ -376,30 +490,126 @@ export function createMapLibreAdapter(): MapAdapter {
     instance: MapLibreMap,
     attempt: number,
     styleTokens: MapTokens,
+    allowFallback: boolean,
   ): Promise<void> {
     await new Promise<void>((resolve, reject) => {
       let settled = false;
       const finish = (action: () => void) => {
         if (settled) return;
         settled = true;
-        clearTimeout(timer);
+        if (timer !== null) {
+          clearTimeout(timer);
+          styleTimers.delete(timer);
+        }
         action();
       };
       const timer = setTimeout(() => {
         if (settled) return;
-        if (attempt > 0) {
+        if (!allowFallback || attempt > 0 || map !== instance) {
           finish(() => reject(new MapError("The map style could not load")));
           return;
         }
         instance.setStyle(fallbackStyle(theme, styleTokens));
-        waitForStyle(instance, 1, styleTokens).then(
+        waitForStyle(instance, 1, styleTokens, false).then(
           () => finish(resolve),
           () => finish(() => reject(new MapError("The map style could not load"))),
         );
       }, STYLE_TIMEOUT_MS);
+      styleTimers.add(timer);
 
       instance.once("style.load", () => finish(resolve));
     });
+  }
+
+  async function fallBackToStandard(
+    failedStyle: MapStyleId,
+    reason: MapStyleFailureReason,
+  ): Promise<void> {
+    if (!map || !tokens || fallbackInFlight) return;
+    fallbackInFlight = true;
+    const instance = map;
+    const generation = ++styleGeneration;
+    styleAbort?.abort();
+    const abort = new AbortController();
+    styleAbort = abort;
+    baseStyle = "standard";
+    currentAttribution = [];
+    emitStyle({
+      style: "standard",
+      status: "error",
+      attribution: null,
+      failedStyle,
+      reason,
+    });
+
+    try {
+      const loaded = await loadStyle("standard", theme, mapTiler, abort.signal);
+      if (map !== instance || generation !== styleGeneration) return;
+      instance.setStyle(composeStyle(loaded.style, "standard"), { diff: false });
+      await waitForStyle(instance, 0, tokens, true);
+      if (map !== instance || generation !== styleGeneration) return;
+      applyGlyphs(instance, "standard");
+      installLayers();
+      emitStyle({
+        style: "standard",
+        status: "ready",
+        attribution: null,
+        failedStyle,
+        reason,
+      });
+    } catch (cause) {
+      if (map !== instance || generation !== styleGeneration) return;
+      emitStyle({ style: "standard", status: "error", attribution: null, failedStyle, reason });
+      fail(cause, "The map style could not load");
+    } finally {
+      if (styleAbort === abort) styleAbort = null;
+      fallbackInFlight = false;
+    }
+  }
+
+  async function transitionTo(id: MapStyleId, nextTheme: "light" | "dark"): Promise<void> {
+    if (!map || !tokens) return;
+    const instance = map;
+    const generation = ++styleGeneration;
+    styleAbort?.abort();
+    const abort = new AbortController();
+    styleAbort = abort;
+    emitStyle({
+      style: baseStyle,
+      status: "loading",
+      attribution: currentAttribution.length > 0 ? currentAttribution : null,
+      targetStyle: id,
+    });
+
+    try {
+      const loaded = await loadStyle(id, nextTheme, mapTiler, abort.signal);
+      if (map !== instance || generation !== styleGeneration) return;
+      // The object is ready before the swap, so the old map stays visible while
+      // the network portion of the change completes.
+      instance.setStyle(composeStyle(loaded.style, id), { diff: false });
+      await waitForStyle(instance, 0, tokens, id === "standard");
+      if (map !== instance || generation !== styleGeneration) return;
+      baseStyle = id;
+      currentAttribution = isMapTilerStyleId(id) ? loaded.attribution : [];
+      applyGlyphs(instance, id);
+      installLayers();
+      emitStyle({
+        style: id,
+        status: "ready",
+        attribution: isMapTilerStyleId(id) ? loaded.attribution : null,
+      });
+    } catch (cause) {
+      if (map !== instance || generation !== styleGeneration) return;
+      if (id === "standard") {
+        emitStyle({ style: "standard", status: "error", attribution: null });
+        fail(cause, "The map style could not load");
+        return;
+      }
+      const status = cause instanceof StyleLoadError ? cause.status : null;
+      await fallBackToStandard(id, quotaReason(status) ?? "failed");
+    } finally {
+      if (styleAbort === abort) styleAbort = null;
+    }
   }
 
   return {
@@ -411,16 +621,42 @@ export function createMapLibreAdapter(): MapAdapter {
       theme = options.theme;
       tokens = options.tokens;
       const bounds = options.bounds ?? mapConfig.defaultBounds;
+      const requested =
+        options.baseStyle && styles.includes(options.baseStyle) ? options.baseStyle : "standard";
+      baseStyle = requested;
+
+      const abort = new AbortController();
+      styleAbort = abort;
+      let loaded: LoadedBaseStyle | null = null;
+      let failedStyle: MapStyleId | undefined;
+      let failureReason: MapStyleFailureReason = "failed";
+      try {
+        loaded = await loadStyle(requested, theme, mapTiler, abort.signal);
+      } catch (cause) {
+        if (requested === "standard") {
+          loaded = null;
+        } else {
+          failedStyle = requested;
+          failureReason =
+            quotaReason(cause instanceof StyleLoadError ? cause.status : null) ?? "failed";
+          baseStyle = "standard";
+          try {
+            loaded = await loadStyle("standard", theme, mapTiler, abort.signal);
+          } catch {
+            loaded = null;
+          }
+        }
+      }
+
       const instance = createMap({
         container: element,
-        style: styleUrlFor(theme),
+        style: composeStyle(loaded?.style ?? fallbackStyle(theme, options.tokens), baseStyle),
         center: centerOf(bounds),
         zoom: 7,
         attributionControl: false,
         ...mapConfig.options,
       });
       map = instance;
-      instance.addControl(createNavigationControl(), "top-right");
       wireEvents(instance);
 
       contextCanvas = instance.getCanvas();
@@ -435,15 +671,37 @@ export function createMapLibreAdapter(): MapAdapter {
       contextCanvas.addEventListener("webglcontextlost", onContextLost);
       contextLostHandler = onContextLost;
 
-      await waitForStyle(instance, 0, options.tokens);
+      try {
+        await waitForStyle(instance, 0, options.tokens, baseStyle === "standard");
+      } catch (cause) {
+        if (map !== instance || !tokens) return;
+        if (requested === "standard") throw cause;
+        failedStyle = requested;
+        failureReason = "failed";
+        baseStyle = "standard";
+        await fallBackToStandard(requested, failureReason);
+      }
       if (map !== instance || !tokens) return;
+      applyGlyphs(instance, baseStyle);
       installLayers();
+
+      styleState = {
+        style: baseStyle,
+        status: "ready",
+        attribution:
+          isMapTilerStyleId(baseStyle) && loaded ? loaded.attribution : null,
+        ...(failedStyle ? { failedStyle, reason: failureReason } : {}),
+      };
+      styleAbort = null;
       emit("ready", undefined);
     },
 
     destroy(): void {
       cancelAnimation();
       cancelDataTimer();
+      cancelStyleTimer();
+      styleAbort?.abort();
+      styleAbort = null;
       if (contextCanvas && contextLostHandler) {
         contextCanvas.removeEventListener("webglcontextlost", contextLostHandler);
       }
@@ -456,6 +714,8 @@ export function createMapLibreAdapter(): MapAdapter {
       clusterMaxZoom = 0;
       lastDataAt = 0;
       hoveredKey = null;
+      currentAttribution = [];
+      fallbackInFlight = false;
       contextCanvas = null;
       contextLostHandler = null;
       if (instance) instance.remove();
@@ -468,24 +728,36 @@ export function createMapLibreAdapter(): MapAdapter {
         return;
       }
 
-      if (nextTheme !== theme) {
-        theme = nextTheme;
-        const instance = map;
-        const generation = ++styleGeneration;
-        instance.setStyle(styleUrlFor(theme));
-        waitForStyle(instance, 0, nextTokens)
-          .then(() => {
-            if (map !== instance || generation !== styleGeneration) return;
-            installLayers();
-          })
-          .catch((cause: unknown) => {
-            if (map !== instance || generation !== styleGeneration) return;
-            fail(cause, "The map style could not load");
-          });
+      if (nextTheme === theme) {
+        refreshTokens();
         return;
       }
+      theme = nextTheme;
+      // Hybrid has no light/dark variants; the data layers carry the contrast.
+      if (baseStyle === "satellite") {
+        refreshTokens();
+        return;
+      }
+      void transitionTo(baseStyle, nextTheme);
+    },
 
-      refreshTokens();
+    setBaseStyle(id: MapStyleId): void {
+      if (!styles.includes(id)) return;
+      if (id === baseStyle && styleState.status !== "loading") return;
+      if (styleState.status === "loading" && styleState.style === id) return;
+      void transitionTo(id, theme);
+    },
+
+    zoomIn(): void {
+      map?.zoomIn();
+    },
+
+    zoomOut(): void {
+      map?.zoomOut();
+    },
+
+    resetBearing(): void {
+      map?.easeTo({ bearing: 0, animate: !prefersReducedMotion() });
     },
 
     setVehicles(vehicles: readonly MapVehicle[]): void {
@@ -561,11 +833,16 @@ export function createMapLibreAdapter(): MapAdapter {
       });
     },
 
+    getStyleState(): MapStyleState {
+      return { ...styleState };
+    },
+
     getViewport(): Viewport {
       if (!map) {
         return {
           center: [0, 0],
           zoom: 0,
+          bearing: 0,
           bounds: { south: 0, west: 0, north: 0, east: 0 },
         };
       }

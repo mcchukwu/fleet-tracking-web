@@ -1,4 +1,4 @@
-import type { Bounds, MapProvider } from "./types";
+import type { Bounds, MapProvider, MapStyleId } from "./types";
 
 function readProvider(): MapProvider {
   if (
@@ -16,12 +16,67 @@ function readUrl(value: string | undefined, fallback: string): string {
   return typeof value === "string" && value.trim() !== "" ? value : fallback;
 }
 
+export interface MapTilerConfig {
+  apiKey: string;
+}
+
+export interface MapTilerEnv {
+  VITE_MAPTILER_API_KEY?: string;
+}
+
+export type MapTilerStyleId = "streets" | "satellite";
+
+/**
+ * MapTiler is opt-in through the build environment. A missing key hides the
+ * hosted styles rather than shipping a map that cannot load.
+ */
+export function readMapTilerConfig(env: MapTilerEnv): MapTilerConfig | null {
+  const apiKey = env.VITE_MAPTILER_API_KEY?.trim() ?? "";
+  return apiKey === "" ? null : { apiKey };
+}
+
+export function availableStyles(config: MapTilerConfig | null): readonly MapStyleId[] {
+  return config ? ["standard", "streets", "satellite"] : ["standard"];
+}
+
+export function mapTilerMapId(
+  style: MapTilerStyleId,
+  theme: "light" | "dark",
+): "streets-v4" | "streets-v4-dark" | "hybrid-v4" {
+  if (style === "satellite") return "hybrid-v4";
+  return theme === "dark" ? "streets-v4-dark" : "streets-v4";
+}
+
+/** The API key is query data; never log this URL or its query string. */
+export function mapTilerStyleUrl(
+  style: MapTilerStyleId,
+  theme: "light" | "dark",
+  config: MapTilerConfig,
+): string {
+  return `https://api.maptiler.com/maps/${mapTilerMapId(style, theme)}/style.json?key=${encodeURIComponent(config.apiKey)}`;
+}
+
+export const MAPTILER_HOME = "https://www.maptiler.com";
+
+function readMapTilerEnv(): MapTilerEnv {
+  return {
+    VITE_MAPTILER_API_KEY: import.meta.env.VITE_MAPTILER_API_KEY,
+  };
+}
+
+export const mapTilerConfig = readMapTilerConfig(readMapTilerEnv());
+
+export const availableMapStyles = availableStyles(mapTilerConfig);
+
 export const mapConfig = {
   provider: readProvider(),
   styleUrls: {
     light: readUrl(import.meta.env.VITE_MAP_STYLE_URL_LIGHT, "https://tiles.openfreemap.org/styles/positron"),
     dark: readUrl(import.meta.env.VITE_MAP_STYLE_URL_DARK, "https://tiles.openfreemap.org/styles/dark"),
   },
+  // Only the standard base style uses this override; hosted styles bring their
+  // own glyphs and sprites.
+  glyphsUrl: import.meta.env.VITE_MAP_GLYPHS_URL?.trim() ?? "",
   attribution: {
     label: "© OpenStreetMap · OpenFreeMap",
     href: "https://openfreemap.org",
@@ -35,7 +90,7 @@ export const mapConfig = {
   options: {
     minZoom: 2,
     maxZoom: 18,
-    dragRotate: false,
+    dragRotate: true,
     pitchWithRotate: false,
     touchPitch: false,
   },

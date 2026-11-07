@@ -4,7 +4,14 @@ import type { AppError } from "../../../errors/types";
 import { setMapDebug } from "../../../dev/debug";
 import { FleetMap } from "../../../map/FleetMap";
 import { mapConfig } from "../../../map/config";
-import type { Bounds, MapAdapter, MapGeofence, MapVehicle } from "../../../map/types";
+import type {
+  MapAdapter,
+  MapGeofence,
+  MapStyleId,
+  MapStyleState,
+  MapVehicle,
+  Viewport,
+} from "../../../map/types";
 import { LoadingBar } from "../../../ui/StatePanel";
 import type { VehicleRow } from "../lib/filter";
 import { MapTooltip } from "./MapTooltip";
@@ -17,6 +24,7 @@ export interface MapViewProps {
   hoveredRow: VehicleRow | null;
   hoverPoint: { x: number; y: number } | null;
   dimmed: boolean;
+  baseStyle: MapStyleId;
   loading: boolean;
   error: AppError | null;
   hasData: boolean;
@@ -24,7 +32,8 @@ export interface MapViewProps {
   onRetry: () => void;
   onSelect: (key: string) => void;
   onHover: (hover: { key: string; point: { x: number; y: number } } | null) => void;
-  onViewport: (bounds: Bounds) => void;
+  onViewport: (viewport: Viewport) => void;
+  onStyleChange: (state: MapStyleState) => void;
   onAdapterReady: (adapter: MapAdapter | null) => void;
 }
 
@@ -42,6 +51,7 @@ export function MapView({  vehicles,
   hoveredRow,
   hoverPoint,
   dimmed,
+  baseStyle,
   loading,
   error,
   hasData,
@@ -50,6 +60,7 @@ export function MapView({  vehicles,
   onSelect,
   onHover,
   onViewport,
+  onStyleChange,
   onAdapterReady,
 }: MapViewProps) {
   const [adapter, setAdapter] = useState<MapAdapter | null>(null);
@@ -60,15 +71,21 @@ export function MapView({  vehicles,
     const offClick = adapter.on("vehicleClick", (event) => onSelect(event.key));
     const offHover = adapter.on("vehicleHover", (event) => onHover(event));
     const offViewport = adapter.on("viewportChange", (event) => {
-      onViewport(event.bounds);
-      setMapDebug({ viewport: { center: event.center, zoom: event.zoom }, bounds: event.bounds });
+      onViewport(event);
+      setMapDebug({
+        viewport: { center: event.center, zoom: event.zoom, bearing: event.bearing },
+        bearing: event.bearing,
+        bounds: event.bounds,
+      });
     });
+    const offStyle = adapter.on("styleChange", onStyleChange);
     return () => {
       offClick();
       offHover();
       offViewport();
+      offStyle();
     };
-  }, [adapter, onHover, onSelect, onViewport]);
+  }, [adapter, onHover, onSelect, onStyleChange, onViewport]);
 
   useEffect(() => {
     setMapDebug({
@@ -76,8 +93,9 @@ export function MapView({  vehicles,
       selectedKey,
       hoveredKey,
       geofenceCount: geofences.length,
+      baseStyle,
     });
-  }, [vehicles.length, selectedKey, hoveredKey, geofences.length]);
+  }, [vehicles.length, selectedKey, hoveredKey, geofences.length, baseStyle]);
 
   useEffect(() => {
     if (!adapter || !selectedKey) {
@@ -98,12 +116,15 @@ export function MapView({  vehicles,
   function handleReady(ready: MapAdapter): void {
     setAdapter(ready);
     onAdapterReady(ready);
+    onStyleChange(ready.getStyleState());
     const viewport = ready.getViewport();
     setMapDebug({
       mapLoaded: true,
       provider: ready.id,
+      baseStyle,
       targetVehicleCount: vehicles.length,
-      viewport: { center: viewport.center, zoom: viewport.zoom },
+      viewport: { center: viewport.center, zoom: viewport.zoom, bearing: viewport.bearing },
+      bearing: viewport.bearing,
       bounds: viewport.bounds,
     });
   }
@@ -121,6 +142,7 @@ export function MapView({  vehicles,
         vehicles={vehicles}
         geofences={geofences}
         bounds={mapConfig.defaultBounds}
+        baseStyle={baseStyle}
         dimmed={dimmed}
         onReady={handleReady}
         onError={handleError}
