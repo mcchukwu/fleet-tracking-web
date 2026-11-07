@@ -7,7 +7,6 @@ import {
   MoreHorizontal,
   Plus,
   Search,
-  Settings,
   WifiOff,
   ZoomIn,
 } from "lucide-react";
@@ -709,9 +708,6 @@ export function StyleGuidePage() {
                 </span>
                 <span className="flex size-control-lg items-center justify-center rounded-md text-muted">
                   <Bell aria-hidden="true" className="size-5" strokeWidth={1.5} />
-                </span>
-                <span className="flex size-control-lg items-center justify-center rounded-md text-muted">
-                  <Settings aria-hidden="true" className="size-5" strokeWidth={1.5} />
                 </span>
               </nav>
               <div className="flex flex-1 items-center justify-center bg-bg text-sm text-muted">

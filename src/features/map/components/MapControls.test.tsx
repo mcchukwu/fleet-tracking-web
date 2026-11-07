@@ -176,6 +176,46 @@ describe("MapControls", () => {
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
+  it("hands focus back when the style menu is open as it becomes obscured", async () => {
+    const user = userEvent.setup();
+    const onObscuredFocusLoss = vi.fn();
+    const props: MapControlsProps = {
+      variant: "mobile",
+      bearing: 0,
+      zoom: 7,
+      styles: ["standard"],
+      baseStyle: "standard",
+      offline: false,
+      panelOpen: true,
+      geofencesVisible: true,
+      onZoomIn: vi.fn(),
+      onZoomOut: vi.fn(),
+      onResetBearing: vi.fn(),
+      onFit: vi.fn(),
+      onTogglePanel: vi.fn(),
+      onToggleGeofences: vi.fn(),
+      onStyleChange: vi.fn(),
+      onObscuredFocusLoss,
+    };
+    const { rerender } = render(
+      <TooltipProvider>
+        <MapControls {...props} />
+      </TooltipProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Map style" }));
+    expect(screen.getByRole("menu")).toBeVisible();
+
+    rerender(
+      <TooltipProvider>
+        <MapControls {...props} obscured />
+      </TooltipProvider>,
+    );
+
+    expect(onObscuredFocusLoss).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
   it("hands focus back when it becomes obscured with focus inside", () => {
     const onObscuredFocusLoss = vi.fn();
     const props: MapControlsProps = {

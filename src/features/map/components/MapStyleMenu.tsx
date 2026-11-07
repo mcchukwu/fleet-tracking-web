@@ -39,7 +39,11 @@ export function MapStyleMenu({
   const isOpen = open ?? uncontrolledOpen;
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={onOpenChange ?? setUncontrolledOpen}>
+    <DropdownMenu
+      open={isOpen}
+      modal={false}
+      onOpenChange={onOpenChange ?? setUncontrolledOpen}
+    >
       <DropdownMenuTrigger asChild>
         <IconButton
           size="lg"

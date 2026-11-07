@@ -84,10 +84,18 @@ export function MapControls({
     // oxlint-disable-next-line react/set-state-in-effect
     setStyleOpen(false);
     const active = document.activeElement;
-    if (active instanceof HTMLElement && stackRef.current?.contains(active)) {
+    // An open menu renders in a portal, so its focused item is outside the
+    // fieldset. Closing it would return focus to the now-inert trigger.
+    const focusInMenu =
+      active instanceof HTMLElement && active.closest('[role="menu"]') !== null;
+    if (
+      focusInMenu ||
+      styleOpen ||
+      (active instanceof HTMLElement && stackRef.current?.contains(active))
+    ) {
       onObscuredFocusLoss?.();
     }
-  }, [obscured, onObscuredFocusLoss]);
+  }, [obscured, onObscuredFocusLoss, styleOpen]);
 
   return (
     <fieldset

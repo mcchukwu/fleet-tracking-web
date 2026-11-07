@@ -58,7 +58,15 @@ export function readSatelliteConfig(env: SatelliteEnv): SatelliteConfig | null {
   };
 }
 
-export const satelliteConfig = readSatelliteConfig(import.meta.env as unknown as SatelliteEnv);
+function readSatelliteEnv(): SatelliteEnv {
+  return {
+    VITE_SATELLITE_TILES_URL: import.meta.env.VITE_SATELLITE_TILES_URL,
+    VITE_SATELLITE_ATTRIBUTION: import.meta.env.VITE_SATELLITE_ATTRIBUTION,
+    VITE_SATELLITE_ATTRIBUTION_HREF: import.meta.env.VITE_SATELLITE_ATTRIBUTION_HREF,
+  };
+}
+
+export const satelliteConfig = readSatelliteConfig(readSatelliteEnv());
 
 export const availableMapStyles: readonly MapStyleId[] = satelliteConfig
   ? ["standard", "satellite"]

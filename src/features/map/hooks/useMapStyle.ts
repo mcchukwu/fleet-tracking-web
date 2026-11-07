@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { availableMapStyles } from "../../../map/config";
 import type { MapStyleId } from "../../../map/types";
 import { guardedStorage } from "../../../lib/storage";
@@ -40,14 +40,15 @@ export function useMapStyle(options: UseMapStyleOptions = {}): MapStyleControlle
   const [fallbackNotice, setFallbackNotice] = useState(
     () => offline && chosenStyle === "satellite",
   );
-  const [wasOffline, setWasOffline] = useState(offline);
+  const wasOfflineRef = useRef(offline);
 
-  // Network changes are the only event that raises or clears the notice, so the
-  // transition is derived during render instead of synchronised in an effect.
-  if (wasOffline !== offline) {
-    setWasOffline(offline);
+  // The notice is raised on a network transition, not on every render. Keeping
+  // the previous value in a ref makes the effect the only writer.
+  useEffect(() => {
+    if (wasOfflineRef.current === offline) return;
+    wasOfflineRef.current = offline;
     setFallbackNotice(offline && chosenStyle === "satellite");
-  }
+  }, [offline, chosenStyle]);
 
   const effectiveStyle: MapStyleId =
     offline && chosenStyle === "satellite" ? "standard" : chosenStyle;
