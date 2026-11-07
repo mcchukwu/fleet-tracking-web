@@ -133,6 +133,49 @@ describe("MobileVehicleSheet", () => {
     expect(onSnap).toHaveBeenCalledWith("half");
   });
 
+  it("returns to the current snap when a small drag resolves to the same snap", async () => {
+    const { insetTarget, onSnap } = renderSheet("peek");
+    const header = screen.getByTestId("sheet-header");
+    const region = screen.getByRole("region", { name: "Vehicles" });
+
+    fireEvent.pointerDown(header, { clientY: 600, pointerId: 1 });
+    fireEvent.pointerUp(header, { clientY: 580, pointerId: 1 });
+
+    expect(onSnap).toHaveBeenCalledWith("peek");
+    expect(region.style.getPropertyValue("--sheet-visible")).toBe("113px");
+    await waitFor(() =>
+      expect(insetTarget.style.getPropertyValue("--map-inset-bottom")).toBe("113px"),
+    );
+  });
+
+  it("returns to full when a small drag from full resolves to full", () => {
+    const { insetTarget, onSnap } = renderSheet("full");
+    const header = screen.getByTestId("sheet-header");
+
+    fireEvent.pointerDown(header, { clientY: 200, pointerId: 1 });
+    fireEvent.pointerUp(header, { clientY: 220, pointerId: 1 });
+
+    expect(onSnap).toHaveBeenCalledWith("full");
+    expect(insetTarget.style.getPropertyValue("--map-inset-bottom")).toBe("716px");
+  });
+
+  it("cancels a pending frame and clears the drag flag on unmount", () => {
+    const frame = vi.spyOn(window, "requestAnimationFrame").mockImplementation(() => 1);
+    const cancel = vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => undefined);
+    const { view, insetTarget } = renderSheet("peek");
+    const header = screen.getByTestId("sheet-header");
+
+    fireEvent.pointerDown(header, { clientY: 600, pointerId: 1 });
+    fireEvent.pointerMove(header, { clientY: 500, pointerId: 1 });
+    expect(insetTarget.getAttribute("data-sheet-dragging")).toBe("true");
+
+    view.unmount();
+    expect(cancel).toHaveBeenCalledWith(1);
+    expect(insetTarget.hasAttribute("data-sheet-dragging")).toBe(false);
+    frame.mockRestore();
+    cancel.mockRestore();
+  });
+
   it("does not drag when the gesture starts on a sheet action", () => {
     const { onSnap } = renderSheet("peek");
     const search = screen.getByRole("searchbox", { name: "Search vehicles" });

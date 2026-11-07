@@ -145,6 +145,17 @@ export function MobileVehicleSheet({
   }, []);
 
   useEffect(() => {
+    const target = insetTarget?.current;
+    return () => {
+      if (frameRef.current !== null && typeof cancelAnimationFrame === "function") {
+        cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
+      target?.removeAttribute("data-sheet-dragging");
+    };
+  }, [insetTarget]);
+
+  useEffect(() => {
     const container = sheetRef.current?.parentElement;
     if (!container || typeof ResizeObserver === "undefined") return;
     const update = () => setContainerHeight(container.clientHeight);
@@ -197,10 +208,16 @@ export function MobileVehicleSheet({
       frameRef.current = null;
     }
 
-    const dragged = publish(pendingRef.current ?? visible);
+    const target = snapToNearest
+      ? nearestSnap(pendingRef.current ?? visible, metrics)
+      : snap;
     pendingRef.current = null;
+    // Resolve the snap before publishing: when the nearest snap is the snap the
+    // sheet already reports, React does not re-render, so this imperative write
+    // is the only thing that returns the sheet to its resting height.
+    publish(sheetVisible(target, metrics));
     insetTarget?.current?.removeAttribute("data-sheet-dragging");
-    if (snapToNearest) onSnap(nearestSnap(dragged, metrics));
+    if (snapToNearest) onSnap(target);
   }
 
   function onPointerUp(event: PointerEvent<HTMLDivElement>): void {
