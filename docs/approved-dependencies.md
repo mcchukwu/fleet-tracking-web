@@ -53,6 +53,7 @@ oxlint-tsgolint
 prettier
 prettier-plugin-tailwindcss
 ripgrep (development tool)
+wrangler (deployment tool)
 
 Anything not listed requires approval before installation.
 Do not install alternative packages without approval.

@@ -77,6 +77,7 @@ Each slice ends with a working screen, its states, and a Playwright check.
 | `npm run e2e` | Playwright |
 | `npm run e2e:review` | Generate visual review screenshots |
 | `npm run build` | Production build |
+| `npm run deploy` | Deploy `dist` to Cloudflare Workers (run `npm run build` first) |
 
 Use npm and `package-lock.json`.
 

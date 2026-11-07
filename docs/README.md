@@ -14,6 +14,7 @@ Project context for the control console. Read only the file you need.
 | Working agreement and quality gates | `workflow.md` |
 | Settled choices | `decisions.md` |
 | Error policy and recovery | `error-handling.md` |
+| Production hosting and release | `deployment.md` |
 
 The Bruno collection is in `~/Projects/fleet-tracking-handoff/bruno`, outside this repo.
 
@@ -56,4 +57,4 @@ Use the provided API types or generate from `api/openapi.yaml`; do not hand-writ
 - No pagination totals or report CSV export.
 - No WebSocket sequence number; resync with `/live/snapshot` on reconnect.
 - `GET /live/snapshot` has no bbox filter.
-- No CORS; use a same-origin SPA or the development proxy.
+- No CORS; production is served from a Cloudflare Worker that proxies `/api` same-origin.
