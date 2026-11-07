@@ -2,11 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { MapAttribution } from "./MapAttribution";
 
-const satellite = {
-  tilesUrl: "https://tiles.example.com/{z}/{x}/{y}.jpg",
-  attribution: "© Example imagery",
-};
-
 describe("MapAttribution", () => {
   it("links the standard basemap credit", () => {
     render(<MapAttribution styleId="standard" />);
@@ -21,22 +16,30 @@ describe("MapAttribution", () => {
     expect(link).toHaveClass("whitespace-nowrap", "text-2xs");
   });
 
-  it("renders the satellite credit as text when no link is configured", () => {
-    render(<MapAttribution styleId="satellite" satellite={satellite} />);
-    expect(screen.getByText("© Example imagery")).toBeInTheDocument();
-    expect(screen.queryByRole("link")).not.toBeInTheDocument();
-  });
-
-  it("links the satellite credit when its licence URL is known", () => {
+  it("renders the style's own MapTiler credit", () => {
     render(
       <MapAttribution
         styleId="satellite"
-        satellite={{ ...satellite, attributionHref: "https://example.com/licence" }}
+        attribution={["© MapTiler © OpenStreetMap contributors"]}
       />,
     );
-    expect(screen.getByRole("link", { name: "© Example imagery" })).toHaveAttribute(
-      "href",
-      "https://example.com/licence",
+    expect(screen.getByTestId("map-attribution")).toHaveTextContent(
+      "© MapTiler © OpenStreetMap contributors",
     );
+    expect(screen.queryByRole("link", { name: /OpenStreetMap/ })).not.toBeInTheDocument();
+  });
+
+  it("joins credits from more than one style source", () => {
+    render(
+      <MapAttribution styleId="streets" attribution={["© MapTiler", "© OpenStreetMap contributors"]} />,
+    );
+    expect(screen.getByTestId("map-attribution")).toHaveTextContent(
+      "© MapTiler · © OpenStreetMap contributors",
+    );
+  });
+
+  it("renders no chip for a hosted style until its credit arrives", () => {
+    render(<MapAttribution styleId="satellite" attribution={null} />);
+    expect(screen.queryByTestId("map-attribution")).not.toBeInTheDocument();
   });
 });

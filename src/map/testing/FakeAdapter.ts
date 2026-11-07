@@ -8,6 +8,7 @@ import type {
   MapGeofence,
   MapRoute,
   MapStyleId,
+  MapStyleState,
   MapTokens,
   MapVehicle,
   MountOptions,
@@ -15,6 +16,16 @@ import type {
   Viewport,
 } from "../types";
 import { MapError } from "../../errors/types";
+
+export const FAKE_MAPTILER_ATTRIBUTION = "© MapTiler © OpenStreetMap contributors";
+
+function isHostedStyle(id: MapStyleId): boolean {
+  return id === "streets" || id === "satellite";
+}
+
+function attributionFor(id: MapStyleId): readonly string[] | null {
+  return isHostedStyle(id) ? [FAKE_MAPTILER_ATTRIBUTION] : null;
+}
 
 const MIN_ZOOM = 2;
 const MAX_ZOOM = 18;
@@ -151,7 +162,26 @@ export class FakeAdapter implements MapAdapter {
 
   setBaseStyle(id: MapStyleId): void {
     if (!this.capabilities.styles.includes(id)) return;
+    this.emit("styleChange", {
+      style: this.baseStyle,
+      status: "loading",
+      attribution: attributionFor(this.baseStyle),
+      targetStyle: id,
+    });
     this.baseStyle = id;
+    this.emit("styleChange", {
+      style: id,
+      status: "ready",
+      attribution: attributionFor(id),
+    });
+  }
+
+  getStyleState(): MapStyleState {
+    return {
+      style: this.baseStyle,
+      status: "ready",
+      attribution: attributionFor(this.baseStyle),
+    };
   }
 
   getViewport(): Viewport {

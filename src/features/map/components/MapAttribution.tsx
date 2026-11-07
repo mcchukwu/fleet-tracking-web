@@ -1,32 +1,32 @@
-import { mapConfig, type SatelliteConfig } from "../../../map/config";
+import { mapConfig } from "../../../map/config";
 import type { MapStyleId } from "../../../map/types";
 import { cn } from "../../../ui/cn";
 
 export interface MapAttributionProps {
   styleId: MapStyleId;
-  satellite?: SatelliteConfig | null;
+  attribution?: readonly string[] | null;
   className?: string;
 }
 
-export function MapAttribution({ styleId, satellite, className }: MapAttributionProps) {
-  const credit =
-    styleId === "satellite" && satellite
-      ? { label: satellite.attribution, href: satellite.attributionHref }
-      : mapConfig.attribution;
+export function MapAttribution({ styleId, attribution, className }: MapAttributionProps) {
+  const hosted = styleId === "streets" || styleId === "satellite";
+  const hostedLabel = attribution?.join(" · ") ?? "";
+  if (hosted && hostedLabel === "") return null;
 
   const classes = cn(
     "pointer-events-auto inline-flex min-h-touch max-w-full items-center rounded-md border border-border bg-surface px-2 text-2xs whitespace-nowrap text-muted shadow-menu md:min-h-control-sm md:py-0",
     className,
   );
 
-  if (!credit.href) {
+  if (hosted) {
     return (
       <span data-testid="map-attribution" className={classes}>
-        {credit.label}
+        {hostedLabel}
       </span>
     );
   }
 
+  const credit = mapConfig.attribution;
   return (
     <a
       data-testid="map-attribution"

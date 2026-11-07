@@ -5,7 +5,7 @@ import { useConnectionStore } from "../../../stores/connection";
 import { useMapStyle } from "./useMapStyle";
 
 const STYLE_KEY = "fleet.map.style";
-const both = ["standard", "satellite"] as const;
+const all = ["standard", "streets", "satellite"] as const;
 
 beforeEach(() => {
   localStorage.clear();
@@ -23,16 +23,16 @@ describe("useMapStyle", () => {
 
   it("restores a persisted choice", () => {
     guardedStorage.set(STYLE_KEY, "satellite");
-    const { result } = renderHook(() => useMapStyle({ styles: both }));
+    const { result } = renderHook(() => useMapStyle({ styles: all }));
     expect(result.current.chosenStyle).toBe("satellite");
     expect(result.current.effectiveStyle).toBe("satellite");
   });
 
   it("persists a valid choice and ignores an unavailable one", () => {
-    const { result } = renderHook(() => useMapStyle({ styles: both }));
-    act(() => result.current.chooseStyle("satellite"));
-    expect(result.current.chosenStyle).toBe("satellite");
-    expect(guardedStorage.get(STYLE_KEY)).toBe("satellite");
+    const { result } = renderHook(() => useMapStyle({ styles: all }));
+    act(() => result.current.chooseStyle("streets"));
+    expect(result.current.chosenStyle).toBe("streets");
+    expect(guardedStorage.get(STYLE_KEY)).toBe("streets");
 
     const limited = renderHook(() => useMapStyle({ styles: ["standard"] }));
     act(() => limited.result.current.chooseStyle("satellite"));
@@ -42,26 +42,55 @@ describe("useMapStyle", () => {
   it("falls back to standard offline, restores the choice online and notices once", () => {
     guardedStorage.set(STYLE_KEY, "satellite");
     useConnectionStore.setState({ network: "offline" });
-    const { result } = renderHook(() => useMapStyle({ styles: both }));
+    const { result } = renderHook(() => useMapStyle({ styles: all }));
 
     expect(result.current.chosenStyle).toBe("satellite");
     expect(result.current.effectiveStyle).toBe("standard");
-    expect(result.current.fallbackNotice).toBe(true);
+    expect(result.current.fallback).toEqual({ style: "satellite", reason: "offline" });
 
-    act(() => result.current.dismissFallbackNotice());
-    expect(result.current.fallbackNotice).toBe(false);
+    act(() => result.current.dismissFallback());
+    expect(result.current.fallback).toBeNull();
 
     act(() => useConnectionStore.setState({ network: "online" }));
     expect(result.current.effectiveStyle).toBe("satellite");
 
     act(() => useConnectionStore.setState({ network: "offline" }));
-    expect(result.current.fallbackNotice).toBe(true);
+    expect(result.current.fallback).toEqual({ style: "satellite", reason: "offline" });
   });
 
   it("does not notice when the chosen style already works offline", () => {
     useConnectionStore.setState({ network: "offline" });
-    const { result } = renderHook(() => useMapStyle({ styles: both }));
+    const { result } = renderHook(() => useMapStyle({ styles: all }));
     expect(result.current.effectiveStyle).toBe("standard");
-    expect(result.current.fallbackNotice).toBe(false);
+    expect(result.current.fallback).toBeNull();
+  });
+
+  it("does not switch to a hosted style while offline", () => {
+    useConnectionStore.setState({ network: "offline" });
+    const { result } = renderHook(() => useMapStyle({ styles: all }));
+    act(() => result.current.chooseStyle("streets"));
+    expect(result.current.chosenStyle).toBe("standard");
+    expect(guardedStorage.get(STYLE_KEY)).toBeNull();
+  });
+
+  it("reverts a failed hosted style to Map and raises one notice", () => {
+    guardedStorage.set(STYLE_KEY, "satellite");
+    const { result } = renderHook(() => useMapStyle({ styles: all }));
+
+    act(() => result.current.failStyle("satellite", "quota"));
+    expect(result.current.chosenStyle).toBe("standard");
+    expect(result.current.effectiveStyle).toBe("standard");
+    expect(result.current.fallback).toEqual({ style: "satellite", reason: "quota" });
+    expect(guardedStorage.get(STYLE_KEY)).toBe("standard");
+  });
+
+  it("ignores a repeated failure notice for the same style", () => {
+    guardedStorage.set(STYLE_KEY, "streets");
+    const { result } = renderHook(() => useMapStyle({ styles: all }));
+
+    act(() => result.current.failStyle("streets", "failed"));
+    const first = result.current.fallback;
+    act(() => result.current.failStyle("streets", "failed"));
+    expect(result.current.fallback).toBe(first);
   });
 });

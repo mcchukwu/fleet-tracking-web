@@ -16,61 +16,57 @@ function readUrl(value: string | undefined, fallback: string): string {
   return typeof value === "string" && value.trim() !== "" ? value : fallback;
 }
 
-export interface SatelliteConfig {
-  tilesUrl: string;
-  attribution: string;
-  attributionHref?: string;
+export interface MapTilerConfig {
+  apiKey: string;
 }
 
-export interface SatelliteEnv {
-  VITE_SATELLITE_TILES_URL?: string;
-  VITE_SATELLITE_ATTRIBUTION?: string;
-  VITE_SATELLITE_ATTRIBUTION_HREF?: string;
+export interface MapTilerEnv {
+  VITE_MAPTILER_API_KEY?: string;
 }
 
-function isHttpUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
+export type MapTilerStyleId = "streets" | "satellite";
 
 /**
- * Satellite is env-gated rather than API-gated: it exists only when both a raster
- * template and its required attribution are configured. A partial configuration
- * hides the option instead of shipping imagery we cannot credit.
+ * MapTiler is opt-in through the build environment. A missing key hides the
+ * hosted styles rather than shipping a map that cannot load.
  */
-export function readSatelliteConfig(env: SatelliteEnv): SatelliteConfig | null {
-  const tilesUrl = env.VITE_SATELLITE_TILES_URL?.trim() ?? "";
-  const attribution = env.VITE_SATELLITE_ATTRIBUTION?.trim() ?? "";
-  if (!tilesUrl || !attribution) return null;
-  if (!isHttpUrl(tilesUrl) || !/\{z\}.*\{x\}.*\{y\}/.test(tilesUrl)) return null;
+export function readMapTilerConfig(env: MapTilerEnv): MapTilerConfig | null {
+  const apiKey = env.VITE_MAPTILER_API_KEY?.trim() ?? "";
+  return apiKey === "" ? null : { apiKey };
+}
 
-  const href = env.VITE_SATELLITE_ATTRIBUTION_HREF?.trim();
-  if (href && !isHttpUrl(href)) return null;
+export function availableStyles(config: MapTilerConfig | null): readonly MapStyleId[] {
+  return config ? ["standard", "streets", "satellite"] : ["standard"];
+}
 
+export function mapTilerMapId(
+  style: MapTilerStyleId,
+  theme: "light" | "dark",
+): "streets-v4" | "streets-v4-dark" | "hybrid-v4" {
+  if (style === "satellite") return "hybrid-v4";
+  return theme === "dark" ? "streets-v4-dark" : "streets-v4";
+}
+
+/** The API key is query data; never log this URL or its query string. */
+export function mapTilerStyleUrl(
+  style: MapTilerStyleId,
+  theme: "light" | "dark",
+  config: MapTilerConfig,
+): string {
+  return `https://api.maptiler.com/maps/${mapTilerMapId(style, theme)}/style.json?key=${encodeURIComponent(config.apiKey)}`;
+}
+
+export const MAPTILER_HOME = "https://www.maptiler.com";
+
+function readMapTilerEnv(): MapTilerEnv {
   return {
-    tilesUrl,
-    attribution,
-    ...(href ? { attributionHref: href } : {}),
+    VITE_MAPTILER_API_KEY: import.meta.env.VITE_MAPTILER_API_KEY,
   };
 }
 
-function readSatelliteEnv(): SatelliteEnv {
-  return {
-    VITE_SATELLITE_TILES_URL: import.meta.env.VITE_SATELLITE_TILES_URL,
-    VITE_SATELLITE_ATTRIBUTION: import.meta.env.VITE_SATELLITE_ATTRIBUTION,
-    VITE_SATELLITE_ATTRIBUTION_HREF: import.meta.env.VITE_SATELLITE_ATTRIBUTION_HREF,
-  };
-}
+export const mapTilerConfig = readMapTilerConfig(readMapTilerEnv());
 
-export const satelliteConfig = readSatelliteConfig(readSatelliteEnv());
-
-export const availableMapStyles: readonly MapStyleId[] = satelliteConfig
-  ? ["standard", "satellite"]
-  : ["standard"];
+export const availableMapStyles = availableStyles(mapTilerConfig);
 
 export const mapConfig = {
   provider: readProvider(),
@@ -78,10 +74,9 @@ export const mapConfig = {
     light: readUrl(import.meta.env.VITE_MAP_STYLE_URL_LIGHT, "https://tiles.openfreemap.org/styles/positron"),
     dark: readUrl(import.meta.env.VITE_MAP_STYLE_URL_DARK, "https://tiles.openfreemap.org/styles/dark"),
   },
-  glyphsUrl: readUrl(
-    import.meta.env.VITE_MAP_GLYPHS_URL,
-    "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
-  ),
+  // Only the standard base style uses this override; hosted styles bring their
+  // own glyphs and sprites.
+  glyphsUrl: import.meta.env.VITE_MAP_GLYPHS_URL?.trim() ?? "",
   attribution: {
     label: "© OpenStreetMap · OpenFreeMap",
     href: "https://openfreemap.org",

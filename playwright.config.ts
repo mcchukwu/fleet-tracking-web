@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_PATH;
+const review = process.env.REVIEW === "1";
 const launchOptions = executablePath
   ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
   : {};
@@ -40,11 +41,16 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     env: {
       VITE_MOCK: "1",
-      // Test-only satellite configuration. The fake adapter never fetches these
-      // tiles; it proves the style UI, persistence and offline fallback.
-      VITE_SATELLITE_TILES_URL: "https://satellite.test/{z}/{x}/{y}.jpg",
-      VITE_SATELLITE_ATTRIBUTION: "© Test imagery",
-      VITE_SATELLITE_ATTRIBUTION_HREF: "https://example.com/imagery",
+      // Ordinary e2e routes every style and tile request, so no real key or
+      // quota is used. `e2e:review` deliberately uses the local key instead so
+      // the human sees real MapTiler cartography.
+      ...(review
+        ? {}
+        : {
+            VITE_MAPTILER_API_KEY: "test-key",
+            VITE_MAP_STYLE_URL_LIGHT: "https://styles.test/standard-light.json",
+            VITE_MAP_STYLE_URL_DARK: "https://styles.test/standard-dark.json",
+          }),
     },
   },
 });

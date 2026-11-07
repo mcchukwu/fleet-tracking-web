@@ -7,7 +7,7 @@ function menu(overrides: Partial<Parameters<typeof MapStyleMenu>[0]> = {}) {
   const onChange = vi.fn();
   render(
     <MapStyleMenu
-      styles={["standard", "satellite"]}
+      styles={["standard", "streets", "satellite"]}
       value="standard"
       offline={false}
       onChange={onChange}
@@ -18,17 +18,19 @@ function menu(overrides: Partial<Parameters<typeof MapStyleMenu>[0]> = {}) {
 }
 
 describe("MapStyleMenu", () => {
-  it("offers both styles and marks the current one", async () => {
+  it("offers all styles and marks the current one", async () => {
     const user = userEvent.setup();
     menu();
 
     await user.click(screen.getByRole("button", { name: "Map style" }));
     const map = screen.getByRole("menuitemradio", { name: "Map" });
+    const streets = screen.getByRole("menuitemradio", { name: "Streets" });
     const satellite = screen.getByRole("menuitemradio", { name: "Satellite" });
     expect(map).toHaveAttribute("aria-checked", "true");
+    expect(streets).toHaveAttribute("aria-checked", "false");
     expect(satellite).toHaveAttribute("aria-checked", "false");
     expect(within(map).getByTestId("menu-item-indicator")).toBeVisible();
-    expect(within(satellite).queryByTestId("menu-item-indicator")).not.toBeInTheDocument();
+    expect(within(streets).queryByTestId("menu-item-indicator")).not.toBeInTheDocument();
   });
 
   it("changes the style without closing the menu", async () => {
@@ -40,22 +42,36 @@ describe("MapStyleMenu", () => {
     expect(onChange).toHaveBeenCalledWith("satellite");
   });
 
-  it("disables satellite offline and gives the reason", async () => {
+  it("disables both hosted styles offline with the reason", async () => {
     const user = userEvent.setup();
-    menu({ value: "satellite", offline: true });
+    menu({ value: "standard", offline: true });
 
     await user.click(screen.getByRole("button", { name: "Map style" }));
-    const satellite = screen.getByRole("menuitemradio", { name: /Satellite/ });
-    expect(satellite).toHaveAttribute("data-disabled");
-    expect(within(satellite).getByText("Satellite needs a connection")).toBeVisible();
+    for (const name of ["Streets", "Satellite"]) {
+      const item = screen.getByRole("menuitemradio", { name: new RegExp(name) });
+      expect(item).toHaveAttribute("data-disabled");
+      expect(within(item).getByText("Needs a connection")).toBeVisible();
+    }
+    expect(screen.getByRole("menuitemradio", { name: "Map" })).not.toHaveAttribute(
+      "data-disabled",
+    );
   });
 
-  it("shows only Map when the build does not offer satellite", async () => {
+  it("shows only Map when the build has no MapTiler key", async () => {
     const user = userEvent.setup();
     menu({ styles: ["standard"] });
 
     await user.click(screen.getByRole("button", { name: "Map style" }));
     expect(screen.getByRole("menuitemradio", { name: "Map" })).toBeVisible();
+    expect(screen.queryByRole("menuitemradio", { name: "Streets" })).not.toBeInTheDocument();
     expect(screen.queryByRole("menuitemradio", { name: "Satellite" })).not.toBeInTheDocument();
+  });
+
+  it("marks the picker busy while a style loads", () => {
+    menu({ loadingStyle: "satellite" });
+    expect(screen.getByRole("button", { name: "Map style" })).toHaveAttribute(
+      "aria-busy",
+      "true",
+    );
   });
 });

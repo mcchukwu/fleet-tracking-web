@@ -1,46 +1,70 @@
 import { describe, expect, it } from "vitest";
-import { readSatelliteConfig } from "./config";
+import {
+  availableStyles,
+  mapTilerMapId,
+  mapTilerStyleUrl,
+  readMapTilerConfig,
+} from "./config";
 
-const valid = {
-  VITE_SATELLITE_TILES_URL: "https://tiles.example.com/satellite/{z}/{x}/{y}.jpg",
-  VITE_SATELLITE_ATTRIBUTION: "© Example imagery",
-  VITE_SATELLITE_ATTRIBUTION_HREF: "https://example.com/licence",
-};
-
-describe("readSatelliteConfig", () => {
-  it("accepts a raster template with attribution", () => {
-    expect(readSatelliteConfig(valid)).toEqual({
-      tilesUrl: valid.VITE_SATELLITE_TILES_URL,
-      attribution: valid.VITE_SATELLITE_ATTRIBUTION,
-      attributionHref: valid.VITE_SATELLITE_ATTRIBUTION_HREF,
+describe("readMapTilerConfig", () => {
+  it("accepts a key", () => {
+    expect(readMapTilerConfig({ VITE_MAPTILER_API_KEY: "abc123" })).toEqual({
+      apiKey: "abc123",
     });
   });
 
-  it("omits a missing attribution link", () => {
-    const config = readSatelliteConfig({ ...valid, VITE_SATELLITE_ATTRIBUTION_HREF: undefined });
-    expect(config?.attributionHref).toBeUndefined();
+  it("trims the key", () => {
+    expect(readMapTilerConfig({ VITE_MAPTILER_API_KEY: "  abc123  " })).toEqual({
+      apiKey: "abc123",
+    });
   });
 
-  it("requires both the tile URL and the attribution", () => {
-    expect(readSatelliteConfig({ ...valid, VITE_SATELLITE_ATTRIBUTION: "" })).toBeNull();
-    expect(readSatelliteConfig({ ...valid, VITE_SATELLITE_TILES_URL: "  " })).toBeNull();
+  it("hides the hosted styles without a key", () => {
+    expect(readMapTilerConfig({})).toBeNull();
+    expect(readMapTilerConfig({ VITE_MAPTILER_API_KEY: "" })).toBeNull();
+    expect(readMapTilerConfig({ VITE_MAPTILER_API_KEY: "   " })).toBeNull();
+  });
+});
+
+describe("availableStyles", () => {
+  it("only offers Map without a key", () => {
+    expect(availableStyles(null)).toEqual(["standard"]);
   });
 
-  it("rejects non-http URLs and templates without tile placeholders", () => {
-    expect(
-      readSatelliteConfig({ ...valid, VITE_SATELLITE_TILES_URL: "javascript:alert(1)" }),
-    ).toBeNull();
-    expect(
-      readSatelliteConfig({
-        ...valid,
-        VITE_SATELLITE_TILES_URL: "https://tiles.example.com/satellite.jpg",
-      }),
-    ).toBeNull();
+  it("offers all three styles with a key", () => {
+    expect(availableStyles({ apiKey: "abc123" })).toEqual([
+      "standard",
+      "streets",
+      "satellite",
+    ]);
+  });
+});
+
+describe("MapTiler style URLs", () => {
+  const config = { apiKey: "abc123" };
+
+  it("uses the v4 streets family and its dark variant", () => {
+    expect(mapTilerMapId("streets", "light")).toBe("streets-v4");
+    expect(mapTilerMapId("streets", "dark")).toBe("streets-v4-dark");
+    expect(mapTilerMapId("satellite", "light")).toBe("hybrid-v4");
+    expect(mapTilerMapId("satellite", "dark")).toBe("hybrid-v4");
   });
 
-  it("rejects an attribution link that is not http", () => {
-    expect(
-      readSatelliteConfig({ ...valid, VITE_SATELLITE_ATTRIBUTION_HREF: "javascript:alert(1)" }),
-    ).toBeNull();
+  it("builds the style endpoint with the key as query data", () => {
+    expect(mapTilerStyleUrl("streets", "light", config)).toBe(
+      "https://api.maptiler.com/maps/streets-v4/style.json?key=abc123",
+    );
+    expect(mapTilerStyleUrl("streets", "dark", config)).toBe(
+      "https://api.maptiler.com/maps/streets-v4-dark/style.json?key=abc123",
+    );
+    expect(mapTilerStyleUrl("satellite", "dark", config)).toBe(
+      "https://api.maptiler.com/maps/hybrid-v4/style.json?key=abc123",
+    );
+  });
+
+  it("encodes a key that contains reserved characters", () => {
+    expect(mapTilerStyleUrl("satellite", "light", { apiKey: "a b&c" })).toBe(
+      "https://api.maptiler.com/maps/hybrid-v4/style.json?key=a%20b%26c",
+    );
   });
 });

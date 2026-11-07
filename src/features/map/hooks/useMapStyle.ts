@@ -6,6 +6,13 @@ import { useConnection } from "../../../stores/connection";
 
 export const MAP_STYLE_KEY = "fleet.map.style";
 
+export type MapStyleFallbackReason = "offline" | "failed" | "quota";
+
+export interface MapStyleFallback {
+  style: MapStyleId;
+  reason: MapStyleFallbackReason;
+}
+
 function isAvailableStyle(
   value: string | null,
   styles: readonly MapStyleId[],
@@ -27,9 +34,10 @@ export interface MapStyleController {
   effectiveStyle: MapStyleId;
   styles: readonly MapStyleId[];
   offline: boolean;
-  fallbackNotice: boolean;
-  dismissFallbackNotice: () => void;
+  fallback: MapStyleFallback | null;
+  dismissFallback: () => void;
   chooseStyle: (id: MapStyleId) => void;
+  failStyle: (id: MapStyleId, reason: MapStyleFallbackReason) => void;
 }
 
 export function useMapStyle(options: UseMapStyleOptions = {}): MapStyleController {
@@ -37,8 +45,8 @@ export function useMapStyle(options: UseMapStyleOptions = {}): MapStyleControlle
   const { network } = useConnection();
   const offline = network === "offline";
   const [chosenStyle, setChosenStyle] = useState<MapStyleId>(() => readStyle(styles));
-  const [fallbackNotice, setFallbackNotice] = useState(
-    () => offline && chosenStyle === "satellite",
+  const [fallback, setFallback] = useState<MapStyleFallback | null>(() =>
+    offline && chosenStyle !== "standard" ? { style: chosenStyle, reason: "offline" } : null,
   );
   const wasOfflineRef = useRef(offline);
 
@@ -47,30 +55,46 @@ export function useMapStyle(options: UseMapStyleOptions = {}): MapStyleControlle
   useEffect(() => {
     if (wasOfflineRef.current === offline) return;
     wasOfflineRef.current = offline;
-    setFallbackNotice(offline && chosenStyle === "satellite");
+    // The chosen style stays stored, so it returns when the connection does.
+    setFallback(offline && chosenStyle !== "standard" ? { style: chosenStyle, reason: "offline" } : null);
   }, [offline, chosenStyle]);
 
   const effectiveStyle: MapStyleId =
-    offline && chosenStyle === "satellite" ? "standard" : chosenStyle;
+    offline && chosenStyle !== "standard" ? "standard" : chosenStyle;
 
   const chooseStyle = useCallback(
     (id: MapStyleId) => {
       if (!styles.includes(id)) return;
+      if (offline && id !== "standard") return;
       setChosenStyle(id);
       guardedStorage.set(MAP_STYLE_KEY, id);
+      setFallback(null);
     },
-    [styles],
+    [offline, styles],
   );
 
-  const dismissFallbackNotice = useCallback(() => setFallbackNotice(false), []);
+  const failStyle = useCallback((id: MapStyleId, reason: MapStyleFallbackReason) => {
+    setChosenStyle((current) => (current === id ? "standard" : current));
+    if (guardedStorage.get(MAP_STYLE_KEY) === id) {
+      guardedStorage.set(MAP_STYLE_KEY, "standard");
+    }
+    setFallback((current) =>
+      current && current.style === id && current.reason === reason
+        ? current
+        : { style: id, reason },
+    );
+  }, []);
+
+  const dismissFallback = useCallback(() => setFallback(null), []);
 
   return {
     chosenStyle,
     effectiveStyle,
     styles,
     offline,
-    fallbackNotice,
-    dismissFallbackNotice,
+    fallback,
+    dismissFallback,
     chooseStyle,
+    failStyle,
   };
 }

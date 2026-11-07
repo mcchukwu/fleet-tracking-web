@@ -24,6 +24,7 @@ export interface MapControlsProps {
   styles: readonly MapStyleId[];
   baseStyle: MapStyleId;
   offline: boolean;
+  styleLoading?: MapStyleId | null;
   obscured?: boolean;
   panelOpen: boolean;
   geofencesVisible: boolean;
@@ -51,6 +52,7 @@ export function MapControls({
   styles,
   baseStyle,
   offline,
+  styleLoading = null,
   obscured = false,
   panelOpen,
   geofencesVisible,
@@ -203,6 +205,7 @@ export function MapControls({
           styles={styles}
           value={baseStyle}
           offline={offline}
+          loadingStyle={styleLoading}
           variant="ghost"
           open={styleOpen}
           onOpenChange={setStyleOpen}

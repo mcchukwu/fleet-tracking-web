@@ -37,9 +37,10 @@ There is no CORS. Vite proxies `/api` to staging by default. Set `VITE_PROXY_TAR
 - API runtime: `src/api`; mock handlers and fixtures: `src/mocks`.
 - Visual contract: `/styleguide`.
 - Theme is `light`, `dark` or `system` under `fleet.theme`. Accent is `blue`, `violet`, `fuchsia` or `graphite` under `fleet.accent`. Both live in the user menu's **Appearance** section; the top bar has no theme control.
-- Map style is a device preference under `fleet.map.style` (`standard` or `satellite`). Satellite is offered only when `VITE_SATELLITE_TILES_URL` and `VITE_SATELLITE_ATTRIBUTION` are set; it is online-only and falls back to the standard map with a notice while offline. Optional `VITE_SATELLITE_ATTRIBUTION_HREF` supplies the licence link, and `VITE_MAP_GLYPHS_URL` overrides the label glyph endpoint.
+- Map style is a device preference under `fleet.map.style` (`standard`, `streets` or `satellite`). `Map` is the default and works offline in the same sense as the rest of the app; `Streets` and `Satellite` need `VITE_MAPTILER_API_KEY` in `.env.local`. Without the key the picker offers only `Map`. Hosted styles are online-only, fall back to `Map` with a notice while offline, and disable with "Needs a connection". A failed style or a 403/429 quota response falls back to `Map` once without retrying. `VITE_MAP_GLYPHS_URL` overrides glyphs for the standard style only.
 - Map controls (zoom, bearing, fit, geofences, style, panel) are an app-level overlay. The adapter's native controls are not used. Attribution is rendered by the app and is never hidden.
 - `npm run dev`, `npm run check`, `npm run test`, `npm run e2e`, `npm run e2e:review`, `npm run build`.
+- `npm run e2e` mocks MapTiler style and tile responses with a test key; `npm run e2e:review` uses the local key so the review screenshots show real cartography.
 - If Playwright's bundled Chromium is not installed, point it at a system browser: `PLAYWRIGHT_CHROMIUM_PATH=/usr/bin/chromium npm run e2e`.
 - Error policy: `docs/error-handling.md`.
 

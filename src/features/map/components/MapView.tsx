@@ -8,6 +8,7 @@ import type {
   MapAdapter,
   MapGeofence,
   MapStyleId,
+  MapStyleState,
   MapVehicle,
   Viewport,
 } from "../../../map/types";
@@ -32,6 +33,7 @@ export interface MapViewProps {
   onSelect: (key: string) => void;
   onHover: (hover: { key: string; point: { x: number; y: number } } | null) => void;
   onViewport: (viewport: Viewport) => void;
+  onStyleChange: (state: MapStyleState) => void;
   onAdapterReady: (adapter: MapAdapter | null) => void;
 }
 
@@ -58,6 +60,7 @@ export function MapView({  vehicles,
   onSelect,
   onHover,
   onViewport,
+  onStyleChange,
   onAdapterReady,
 }: MapViewProps) {
   const [adapter, setAdapter] = useState<MapAdapter | null>(null);
@@ -75,12 +78,14 @@ export function MapView({  vehicles,
         bounds: event.bounds,
       });
     });
+    const offStyle = adapter.on("styleChange", onStyleChange);
     return () => {
       offClick();
       offHover();
       offViewport();
+      offStyle();
     };
-  }, [adapter, onHover, onSelect, onViewport]);
+  }, [adapter, onHover, onSelect, onStyleChange, onViewport]);
 
   useEffect(() => {
     setMapDebug({
@@ -111,6 +116,7 @@ export function MapView({  vehicles,
   function handleReady(ready: MapAdapter): void {
     setAdapter(ready);
     onAdapterReady(ready);
+    onStyleChange(ready.getStyleState());
     const viewport = ready.getViewport();
     setMapDebug({
       mapLoaded: true,

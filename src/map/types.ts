@@ -4,7 +4,18 @@ import type { AppError } from "../errors/types";
 
 export type LngLat = [number, number];
 
-export type MapStyleId = "standard" | "satellite";
+export type MapStyleId = "standard" | "streets" | "satellite";
+
+export type MapStyleFailureReason = "failed" | "quota";
+
+export interface MapStyleState {
+  style: MapStyleId;
+  status: "loading" | "ready" | "error";
+  attribution: readonly string[] | null;
+  targetStyle?: MapStyleId;
+  failedStyle?: MapStyleId;
+  reason?: MapStyleFailureReason;
+}
 
 export interface Bounds {
   south: number;
@@ -125,6 +136,7 @@ export interface MapEvents {
   clusterClick: { clusterId: string; count: number };
   geofenceClick: { id: string };
   mapClick: { point: LngLat };
+  styleChange: MapStyleState;
 }
 
 export interface MountOptions {
@@ -149,6 +161,7 @@ export interface MapAdapter {
   zoomOut(): void;
   resetBearing(): void;
   setBaseStyle(id: MapStyleId): void;
+  getStyleState(): MapStyleState;
   getViewport(): Viewport;
   on<K extends keyof MapEvents>(event: K, listener: (payload: MapEvents[K]) => void): () => void;
   readonly draw?: DrawController;

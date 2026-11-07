@@ -12,6 +12,8 @@ const snapshot: FleetDebugSnapshot = {
     bounds: null,
     bearing: null,
     baseStyle: null,
+    styleState: null,
+    activeStyle: null,
     selectedKey: null,
     hoveredKey: null,
     fitBounds: null,

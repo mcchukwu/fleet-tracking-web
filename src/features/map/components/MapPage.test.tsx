@@ -36,11 +36,12 @@ const mocks = vi.hoisted(() => ({
   mapStyle: {
     chosenStyle: "standard" as string,
     effectiveStyle: "standard" as string,
-    styles: ["standard", "satellite"] as readonly string[],
+    styles: ["standard", "streets", "satellite"] as readonly string[],
     offline: false,
-    fallbackNotice: false,
-    dismissFallbackNotice: vi.fn(),
+    fallback: null as null | { style: string; reason: string },
+    dismissFallback: vi.fn(),
     chooseStyle: vi.fn(),
+    failStyle: vi.fn(),
   },
   mapProps: [] as Array<{
     vehicles: readonly unknown[];
@@ -50,6 +51,7 @@ const mocks = vi.hoisted(() => ({
     baseStyle?: string;
     showErrorOverlay?: boolean;
     onSelect: (key: string) => void;
+    onStyleChange?: (state: unknown) => void;
     onViewport: (viewport: {
       center: [number, number];
       zoom: number;
@@ -93,18 +95,6 @@ vi.mock("../hooks/useMapStyle", () => ({
   useMapStyle: () => mocks.mapStyle,
 }));
 
-vi.mock("../../../map/config", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../../map/config")>();
-  return {
-    ...actual,
-    satelliteConfig: {
-      tilesUrl: "https://satellite.test/{z}/{x}/{y}.jpg",
-      attribution: "© Test imagery",
-      attributionHref: "https://example.com/imagery",
-    },
-  };
-});
-
 vi.mock("./MapView", () => ({
   MapView: (props: {
     vehicles: readonly unknown[];
@@ -114,6 +104,7 @@ vi.mock("./MapView", () => ({
     baseStyle?: string;
     showErrorOverlay?: boolean;
     onSelect: (key: string) => void;
+    onStyleChange?: (state: unknown) => void;
     onViewport: (viewport: unknown) => void;
   }) => {
     mocks.mapProps.push(props as never);
@@ -172,8 +163,8 @@ beforeEach(() => {
   mocks.mapProps = [];
   mocks.mapStyle.effectiveStyle = "standard";
   mocks.mapStyle.chosenStyle = "standard";
-  mocks.mapStyle.styles = ["standard", "satellite"];
-  mocks.mapStyle.fallbackNotice = false;
+  mocks.mapStyle.styles = ["standard", "streets", "satellite"];
+  mocks.mapStyle.fallback = null;
   window.history.replaceState({}, "", "/map");
   mocks.navigate.mockReset();
   mocks.toast.mockReset();
@@ -307,9 +298,9 @@ describe("MapPage", () => {
   });
 
   it("passes the effective base style to the map", async () => {
-    mocks.mapStyle.effectiveStyle = "satellite";
+    mocks.mapStyle.effectiveStyle = "streets";
     renderPage();
-    await waitFor(() => expect(mocks.mapProps.at(-1)?.baseStyle).toBe("satellite"));
+    await waitFor(() => expect(mocks.mapProps.at(-1)?.baseStyle).toBe("streets"));
   });
 
   it("reflects the map bearing in the controls", async () => {
@@ -340,15 +331,27 @@ describe("MapPage", () => {
     expect(screen.getAllByRole("link", { name: /OpenStreetMap/ }).length).toBeGreaterThan(0);
   });
 
-  it("shows the configured satellite credit when the satellite style is active", () => {
+  it("shows the style's MapTiler credit and logo when a hosted style is active", () => {
     mocks.mapStyle.chosenStyle = "satellite";
     mocks.mapStyle.effectiveStyle = "satellite";
     renderPage();
 
-    expect(screen.getByRole("link", { name: "© Test imagery" })).toHaveAttribute(
-      "href",
-      "https://example.com/imagery",
+    act(() => {
+      mocks.mapProps.at(-1)?.onStyleChange?.({
+        style: "satellite",
+        status: "ready",
+        attribution: ["© MapTiler © OpenStreetMap contributors"],
+      });
+    });
+
+    expect(screen.getByTestId("map-attribution")).toHaveTextContent(
+      "© MapTiler © OpenStreetMap contributors",
     );
+    expect(screen.getByRole("link", { name: "MapTiler" })).toHaveAttribute(
+      "href",
+      "https://www.maptiler.com",
+    );
+    expect(screen.queryByRole("link", { name: /OpenStreetMap · OpenFreeMap/ })).not.toBeInTheDocument();
   });
 
   it("hides the compact KPI when the sheet is full", async () => {

@@ -52,6 +52,7 @@ export function runAdapterContract(name: string, options: AdapterContractOptions
       expect(["native", "emulated"]).toContain(adapter.capabilities.clustering);
       expect(adapter.capabilities.comfortableVehicleCount).toBeGreaterThan(0);
       expect(adapter.capabilities.styles).toContain("standard");
+      expect(adapter.getStyleState().style).toBe("standard");
       expect(Boolean(adapter.draw)).toBe(adapter.capabilities.drawing);
       adapter.destroy();
     });

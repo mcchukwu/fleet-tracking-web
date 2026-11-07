@@ -14,8 +14,7 @@ import { STALE_AFTER_MS } from "../../../lib/status";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useMediaQuery } from "../../../lib/useMediaQuery";
 import { readMapDebug, setMapDebug } from "../../../dev/debug";
-import { satelliteConfig } from "../../../map/config";
-import type { MapAdapter, Viewport } from "../../../map/types";
+import type { MapAdapter, MapStyleState, Viewport } from "../../../map/types";
 import { useConnection } from "../../../stores/connection";
 import { useToast } from "../../../ui/Toast";
 import { cn } from "../../../ui/cn";
@@ -40,10 +39,12 @@ import {
 import { mapFreshness } from "../lib/freshness";
 import { toMapGeofences } from "../lib/geofences";
 import { fitPadding, type SheetSnap } from "../lib/padding";
+import { isHostedMapStyle, MAP_STYLE_LABELS } from "../lib/styles";
 import { KpiStrip, type KpiCell } from "./KpiStrip";
 import { MapAttribution } from "./MapAttribution";
 import { MapControls } from "./MapControls";
 import { MapInsetHarness } from "./MapInsetHarness";
+import { MapTilerLogo } from "./MapTilerLogo";
 import { MapView } from "./MapView";
 import { MobileVehicleSheet } from "./MobileVehicleSheet";
 import { VehiclePanel, type VehiclePanelProps } from "./VehiclePanel";
@@ -64,6 +65,11 @@ export function MapPage() {
   const alertsQuery = useOpenAlerts(authenticated);
   const preferences = useMapPreferences();
   const mapStyle = useMapStyle();
+  const {
+    fallback: mapStyleFallback,
+    chooseStyle: chooseMapStyle,
+    dismissFallback: dismissMapStyleFallback,
+  } = mapStyle;
   const { network, socket, socketDownAt, lastDataAt } = useConnection();
   const { toast } = useToast();
 
@@ -74,6 +80,8 @@ export function MapPage() {
   const bounds = viewport?.bounds ?? null;
   const [sheetSnap, setSheetSnap] = useState<SheetSnap>("peek");
   const [sheetObscured, setSheetObscured] = useState(false);
+  const [mapStyleState, setMapStyleState] = useState<MapStyleState | null>(null);
+  const [styleAttribution, setStyleAttribution] = useState<readonly string[] | null>(null);
   const adapterRef = useRef<MapAdapter | null>(null);
   const panelToggleRef = useRef<HTMLButtonElement>(null);
   const sheetHandleRef = useRef<HTMLButtonElement>(null);
@@ -258,7 +266,24 @@ export function MapPage() {
 
   const handleAdapterReady = useCallback((adapter: MapAdapter | null) => {
     adapterRef.current = adapter;
+    if (import.meta.env.DEV && import.meta.env.VITE_MOCK === "1") {
+      window.__FLEET_TEST_MAP__ = adapter;
+    }
   }, []);
+
+  const failMapStyle = mapStyle.failStyle;
+
+  const handleMapStyleChange = useCallback(
+    (state: MapStyleState) => {
+      setMapStyleState(state);
+      if (state.status === "ready") setStyleAttribution(state.attribution);
+      setMapDebug({ styleState: state.status, activeStyle: state.style });
+      if (state.failedStyle) {
+        failMapStyle(state.failedStyle, state.reason ?? "failed");
+      }
+    },
+    [failMapStyle],
+  );
 
   const zoomIn = useCallback(() => adapterRef.current?.zoomIn(), []);
   const zoomOut = useCallback(() => adapterRef.current?.zoomOut(), []);
@@ -280,15 +305,26 @@ export function MapPage() {
   }, [data.positioned, fitFleet]);
 
   useEffect(() => {
-    if (!mapStyle.fallbackNotice) return;
-    toast({
-      tone: "info",
-      title: "Showing the standard map.",
-      description: "Satellite needs a connection.",
-      key: "map-style-offline",
-    });
-    mapStyle.dismissFallbackNotice();
-  }, [mapStyle, toast]);
+    if (!mapStyleFallback) return;
+    const { style, reason } = mapStyleFallback;
+    const label = MAP_STYLE_LABELS[style];
+    if (reason === "offline") {
+      toast({
+        tone: "info",
+        title: "Showing the standard map.",
+        description: `${label} needs a connection.`,
+        key: "map-style-offline",
+      });
+    } else {
+      toast({
+        tone: "error",
+        title: `${label} couldn't load. Showing the standard map.`,
+        key: "map-style-failed",
+        action: { label: "Retry", onClick: () => chooseMapStyle(style) },
+      });
+    }
+    dismissMapStyleFallback();
+  }, [mapStyleFallback, chooseMapStyle, dismissMapStyleFallback, toast]);
 
   useEffect(() => {
     if (!geofenceError) return;
@@ -376,12 +412,17 @@ export function MapPage() {
   };
 
   const kpiHidden = !isDesktop && sheetSnap === "full";
+  const activeStyle = mapStyleState?.style ?? "standard";
+  const loadingStyle =
+    mapStyleState?.status === "loading" ? mapStyleState.targetStyle ?? null : null;
+  const hostedActive = isHostedMapStyle(activeStyle);
   const controlsProps = {
     bearing: viewport?.bearing ?? 0,
     zoom: viewport?.zoom ?? 7,
     styles: mapStyle.styles,
     baseStyle: mapStyle.effectiveStyle,
     offline: mapStyle.offline,
+    styleLoading: loadingStyle,
     panelOpen: preferences.panelOpen,
     geofencesVisible: preferences.geofencesVisible,
     fitDisabled: data.positioned === 0,
@@ -418,6 +459,7 @@ export function MapPage() {
           onSelect={selectKey}
           onHover={handleHover}
           onViewport={setViewport}
+          onStyleChange={handleMapStyleChange}
           onAdapterReady={handleAdapterReady}
         />
       </ErrorBoundary>
@@ -501,9 +543,26 @@ export function MapPage() {
         </ErrorBoundary>
 
         <div className="pointer-events-none flex min-w-0 justify-end">
-          <MapAttribution styleId={mapStyle.effectiveStyle} satellite={satelliteConfig} />
+          <MapAttribution
+            styleId={activeStyle}
+            attribution={hostedActive ? styleAttribution : null}
+          />
         </div>
       </div>
+
+      {hostedActive ? (
+        <div
+          data-testid="maptiler-logo-anchor"
+          className={cn(
+            "map-bottom-anchor pointer-events-none absolute left-3 z-20",
+            isDesktop
+              ? cn(preferences.panelOpen ? "lg:left-96" : "lg:left-3")
+              : "map-inset-bottom",
+          )}
+        >
+          <MapTilerLogo />
+        </div>
+      ) : null}
 
       {!isDesktop && sheetSnap === "full" ? (
         <button

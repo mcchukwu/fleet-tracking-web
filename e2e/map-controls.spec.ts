@@ -30,7 +30,11 @@ function sheet(page: Page) {
 }
 
 function attribution(page: Page) {
-  return page.getByRole("link", { name: /OpenStreetMap/ });
+  return page.getByTestId("map-attribution");
+}
+
+function logo(page: Page) {
+  return page.getByTestId("maptiler-logo");
 }
 
 function summary(page: Page) {
@@ -303,7 +307,7 @@ test.describe("map controls", () => {
     await expectNoHorizontalScroll(page);
   });
 
-  test("satellite persists, falls back offline and restores online", async ({ page }) => {
+  test("MapTiler styles persist, fall back offline and restore online", async ({ page }) => {
     await gotoMap(page);
     await page.getByRole("button", { name: "Map style" }).click();
     await expect(
@@ -314,16 +318,20 @@ test.describe("map controls", () => {
     // targets page content, not transient menus. Everything else is scanned.
     await expectNoAxeViolations(page, ["region"]);
     await page.getByRole("menuitemradio", { name: "Satellite" }).click();
-    await expect.poll(async () => (await debugMap(page))?.baseStyle).toBe("satellite");
-    await expect(page.getByRole("link", { name: "© Test imagery" })).toBeVisible();
-    await expect(page.getByRole("link", { name: /OpenStreetMap/ })).toHaveCount(0);
+    await expect
+      .poll(async () => (await debugMap(page))?.styleState)
+      .toBe("ready");
+    await expect.poll(async () => (await debugMap(page))?.activeStyle).toBe("satellite");
+    await expect(logo(page)).toBeVisible();
+    await expect(attribution(page)).toHaveText("© MapTiler © OpenStreetMap contributors");
+    await expect(page.getByRole("link", { name: /OpenStreetMap · OpenFreeMap/ })).toHaveCount(0);
     await expectNoAxeViolations(page);
 
     await page.reload();
     await expect
       .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.mapLoaded), { timeout: 15_000 })
       .toBe(true);
-    await expect.poll(async () => (await debugMap(page))?.baseStyle).toBe("satellite");
+    await expect.poll(async () => (await debugMap(page))?.activeStyle).toBe("satellite");
 
     await page.evaluate(() => {
       Object.defineProperty(navigator, "onLine", { configurable: true, get: () => false });
@@ -331,14 +339,16 @@ test.describe("map controls", () => {
     });
     await expect(page.getByText("Showing the standard map.").first()).toBeVisible();
     await expect.poll(async () => (await debugMap(page))?.baseStyle).toBe("standard");
-    await expect(page.getByRole("link", { name: /OpenStreetMap/ })).toBeVisible();
-    await expect(page.getByRole("link", { name: "© Test imagery" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /OpenStreetMap · OpenFreeMap/ })).toBeVisible();
+    await expect(logo(page)).toHaveCount(0);
 
     await page.getByRole("button", { name: "Map style" }).click();
-    const satellite = page.getByRole("menuitemradio", { name: /Satellite/ });
-    await expect(satellite).toHaveAttribute("data-disabled", "");
-    await expect(page.getByRole("menu").getByText("Satellite needs a connection")).toBeVisible();
-    await captureForReview(page, "02b-satellite-offline");
+    for (const name of ["Streets", "Satellite"]) {
+      const item = page.getByRole("menuitemradio", { name: new RegExp(name) });
+      await expect(item).toHaveAttribute("data-disabled", "");
+      await expect(page.getByRole("menu").getByText("Needs a connection").first()).toBeVisible();
+    }
+    await captureForReview(page, "02b-maptiler-offline");
     await page.keyboard.press("Escape");
 
     await page.evaluate(() => {
@@ -346,6 +356,57 @@ test.describe("map controls", () => {
       window.dispatchEvent(new Event("online"));
     });
     await expect.poll(async () => (await debugMap(page))?.baseStyle).toBe("satellite");
+  });
+
+  test("logo, credit, controls and sheet never collide for any style", async ({ page }) => {
+    for (const label of ["Map", "Streets", "Satellite"] as const) {
+      await gotoMap(page);
+      await page.getByRole("button", { name: "Map style" }).click();
+      await page.getByRole("menuitemradio", { name: label }).click();
+      await expect.poll(async () => (await debugMap(page))?.styleState).toBe("ready");
+      await page.keyboard.press("Escape");
+
+      await expectNoOverlap(controls(page), attribution(page));
+      await expectNoOverlap(controls(page), summary(page));
+      await expectNoOverlap(attribution(page), summary(page));
+      if (label === "Map") {
+        await expect(logo(page)).toHaveCount(0);
+      } else {
+        await expect(logo(page)).toBeVisible();
+        await expectNoOverlap(logo(page), controls(page));
+        await expectNoOverlap(logo(page), attribution(page));
+        await expectNoOverlap(logo(page), summary(page));
+        if (isMobile(page)) {
+          await expectNoOverlap(logo(page), sheet(page));
+          const sheetBox = await sheet(page).boundingBox();
+          const logoBox = await logo(page).boundingBox();
+          if (!sheetBox || !logoBox) throw new Error("missing boxes");
+          expect(logoBox.y + logoBox.height).toBeLessThanOrEqual(sheetBox.y + 1);
+        }
+      }
+      if (isMobile(page)) {
+        await expectNoOverlap(attribution(page), sheet(page));
+        await expectNoOverlap(controls(page), sheet(page));
+      }
+      if (isMobile(page) && label !== "Map") {
+        const handle = page.getByRole("button", { name: /Showing \d+ of \d+/ });
+        await handle.focus();
+        await page.keyboard.press("End");
+        await page.waitForTimeout(300);
+        await expect(controls(page)).toHaveCSS("opacity", "0");
+        const full = await sheet(page).boundingBox();
+        const logoBox = await logo(page).boundingBox();
+        const creditBox = await attribution(page).boundingBox();
+        if (!full || !logoBox || !creditBox) throw new Error("missing boxes");
+        expect(logoBox.y + logoBox.height).toBeLessThanOrEqual(full.y + 1);
+        expect(creditBox.y + creditBox.height).toBeLessThanOrEqual(full.y + 1);
+        await expect(logo(page)).toBeVisible();
+        await expectNoOverlap(logo(page), sheet(page));
+      }
+      await expectNoAxeViolations(page);
+      await expectNoHorizontalScroll(page);
+      await captureForReview(page, `maptiler-${label.toLowerCase()}`);
+    }
   });
 
   test("appearance changes theme and accent without closing the menu", async ({ page, theme }) => {
