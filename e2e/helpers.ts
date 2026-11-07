@@ -28,8 +28,13 @@ export async function expectNoHorizontalScroll(page: Page): Promise<void> {
   expect(overflows, "page has horizontal scroll").toBe(false);
 }
 
-export async function expectNoAxeViolations(page: Page): Promise<void> {
-  const results = await new AxeBuilder({ page }).analyze();
+export async function expectNoAxeViolations(
+  page: Page,
+  disabledRules: readonly string[] = [],
+): Promise<void> {
+  const builder = new AxeBuilder({ page });
+  if (disabledRules.length > 0) builder.disableRules([...disabledRules]);
+  const results = await builder.analyze();
   expect(
     results.violations,
     results.violations.map((violation) => `${violation.id}: ${violation.help}`).join("\n"),

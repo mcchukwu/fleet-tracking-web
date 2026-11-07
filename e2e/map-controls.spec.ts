@@ -92,27 +92,50 @@ test.describe("map controls", () => {
 
   test("the inset harness shifts the controls by the drawer width", async ({ page }) => {
     test.skip(isMobile(page), "desktop-only harness");
-    await page.setViewportSize({ width: 1024, height: 900 });
-    await gotoMap(page);
-    const before = await controls(page).boundingBox();
+    for (const width of [1024, 1440] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await gotoMap(page);
+      const before = await controls(page).boundingBox();
 
-    await page.goto("/map?map=fake&inset=1");
-    await expect
-      .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.mapLoaded), { timeout: 15_000 })
-      .toBe(true);
-    const harness = page.getByTestId("map-inset-harness");
-    await expect(harness).toBeVisible();
-    const shifted = await controls(page).boundingBox();
+      await page.goto("/map?map=fake&inset=1");
+      await expect
+        .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.mapLoaded), {
+          timeout: 15_000,
+        })
+        .toBe(true);
+      const harness = page.getByTestId("map-inset-harness");
+      await expect(harness).toBeVisible();
+      const shifted = await controls(page).boundingBox();
 
-    expect(before).not.toBeNull();
-    expect(shifted).not.toBeNull();
-    if (!before || !shifted) return;
-    expect(Math.round(before.x - shifted.x)).toBe(432);
-    await page.waitForTimeout(300);
-    await expectNoOverlap(controls(page), harness);
-    await expectNoOverlap(controls(page), attribution(page));
-    await expectNoOverlap(attribution(page), harness);
-    await captureForReview(page, "02b-map-inset-harness");
+      expect(before).not.toBeNull();
+      expect(shifted).not.toBeNull();
+      if (!before || !shifted) return;
+      expect(Math.round(before.x - shifted.x)).toBe(432);
+      await page.waitForTimeout(300);
+
+      const footer = page.getByTestId("map-footer");
+      await expect(footer).toHaveCSS("transition-property", "transform");
+      await expect(footer).toHaveCSS("right", "12px");
+
+      const controlBox = await controls(page).boundingBox();
+      const attributionBox = await attribution(page).boundingBox();
+      if (!controlBox || !attributionBox) throw new Error("missing boxes");
+      expect(attributionBox.y).toBeGreaterThanOrEqual(
+        controlBox.y + controlBox.height - 1,
+      );
+      expect(
+        Math.abs(
+          attributionBox.x +
+            attributionBox.width -
+            (controlBox.x + controlBox.width),
+        ),
+      ).toBeLessThanOrEqual(1);
+
+      await expectNoOverlap(controls(page), harness);
+      await expectNoOverlap(controls(page), attribution(page));
+      await expectNoOverlap(attribution(page), harness);
+      await captureForReview(page, "02b-map-inset-harness");
+    }
   });
 
   test("mobile controls and attribution sit above the sheet", async ({ page }) => {
@@ -152,7 +175,7 @@ test.describe("map controls", () => {
     await page.waitForTimeout(300);
     const full = await sheet(page).boundingBox();
     if (!full) throw new Error("sheet has no box");
-    expect(full.y).toBeGreaterThanOrEqual(124);
+    expect(full.y).toBeGreaterThanOrEqual(128);
     expect(full.y).toBeLessThanOrEqual(132);
     expect(await summary(page).count()).toBe(0);
 
@@ -218,6 +241,43 @@ test.describe("map controls", () => {
     await captureForReview(page, "02b-sheet-half");
   });
 
+  test("a small drag returns to the snap it started from", async ({ page }) => {
+    test.skip(!isMobile(page), "mobile-only drag");
+    await gotoMap(page);
+    const header = page.getByTestId("sheet-header");
+    const peek = await sheet(page).boundingBox();
+    const peekHeader = await header.boundingBox();
+    if (!peek || !peekHeader) throw new Error("missing boxes");
+
+    await page.mouse.move(peekHeader.x + peekHeader.width / 2, peekHeader.y + 4);
+    await page.mouse.down();
+    await page.mouse.move(peekHeader.x + peekHeader.width / 2, peekHeader.y - 16, {
+      steps: 4,
+    });
+    await page.mouse.up();
+    await expect
+      .poll(async () => (await sheet(page).boundingBox())?.y ?? 0)
+      .toBe(peek.y);
+
+    const handle = page.getByRole("button", { name: /Showing \d+ of \d+/ });
+    await handle.focus();
+    await page.keyboard.press("End");
+    await page.waitForTimeout(300);
+    const full = await sheet(page).boundingBox();
+    const fullHeader = await header.boundingBox();
+    if (!full || !fullHeader) throw new Error("missing boxes");
+
+    await page.mouse.move(fullHeader.x + fullHeader.width / 2, fullHeader.y + 4);
+    await page.mouse.down();
+    await page.mouse.move(fullHeader.x + fullHeader.width / 2, fullHeader.y + 24, {
+      steps: 4,
+    });
+    await page.mouse.up();
+    await expect
+      .poll(async () => (await sheet(page).boundingBox())?.y ?? 0)
+      .toBe(full.y);
+  });
+
   test("the sheet header stays inside 360x640 at every snap", async ({ page }) => {
     test.skip(!isMobile(page), "mobile-only containment");
     await page.setViewportSize({ width: 360, height: 640 });
@@ -235,7 +295,7 @@ test.describe("map controls", () => {
       expect(box.y + box.height).toBeLessThanOrEqual(641);
       if (key === "End") {
         const full = await sheet(page).boundingBox();
-        expect(full?.y).toBeGreaterThanOrEqual(124);
+        expect(full?.y).toBeGreaterThanOrEqual(128);
         expect(full?.y).toBeLessThanOrEqual(132);
       }
       await captureForReview(page, `02b-sheet-360-${key.toLowerCase()}`);
@@ -250,10 +310,14 @@ test.describe("map controls", () => {
       page.getByRole("menuitemradio", { name: "Map" }).getByTestId("menu-item-indicator"),
     ).toBeVisible();
     await captureForReview(page, "02b-style-menu");
+    // The popup is portaled outside the landmarks by Radix; the "region" rule
+    // targets page content, not transient menus. Everything else is scanned.
+    await expectNoAxeViolations(page, ["region"]);
     await page.getByRole("menuitemradio", { name: "Satellite" }).click();
     await expect.poll(async () => (await debugMap(page))?.baseStyle).toBe("satellite");
     await expect(page.getByRole("link", { name: "© Test imagery" })).toBeVisible();
     await expect(page.getByRole("link", { name: /OpenStreetMap/ })).toHaveCount(0);
+    await expectNoAxeViolations(page);
 
     await page.reload();
     await expect

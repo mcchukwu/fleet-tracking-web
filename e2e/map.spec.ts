@@ -173,6 +173,13 @@ test.describe("map", () => {
       await expect(restored.getByLabel("Only in view")).toBeChecked();
     }
     await expect(restored.getByText("Showing 0 of 25")).toBeVisible();
+
+    if (isMobile(page)) {
+      await openFilters(page);
+      await page.getByRole("menuitem", { name: "Reset filters" }).click();
+      await expect(page).not.toHaveURL(/status=|depot=|sort=|view=1/);
+      await expect((await panel(page)).getByText("Showing 25 of 25")).toBeVisible();
+    }
   });
 
   test("a row selects the vehicle, highlights the marker and Back clears it", async ({ page }) => {
