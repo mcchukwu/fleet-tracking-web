@@ -39,6 +39,7 @@ There is no CORS. Vite proxies `/api` to staging by default. Set `VITE_PROXY_TAR
 - Theme is `light`, `dark` or `system` under `fleet.theme`. Accent is `blue`, `violet`, `fuchsia` or `graphite` under `fleet.accent`. Both live in the user menu's **Appearance** section; the top bar has no theme control.
 - Map style is a device preference under `fleet.map.style` (`standard`, `streets` or `satellite`). `Map` is the default and works offline in the same sense as the rest of the app; `Streets` and `Satellite` need `VITE_MAPTILER_API_KEY` in `.env.local`. Without the key the picker offers only `Map`. Hosted styles are online-only, fall back to `Map` with a notice while offline, and disable with "Needs a connection". A failed style or a 403/429 quota response falls back to `Map` once without retrying. `VITE_MAP_GLYPHS_URL` overrides glyphs for the standard style only.
 - Map controls (zoom, bearing, fit, geofences, style, panel) are an app-level overlay. The adapter's native controls are not used. Attribution is rendered by the app and is never hidden.
+- The vehicle drawer opens from `?v=<uuid>` (non-modal right panel on desktop, bottom sheet on mobile). It shows the full vehicle record, the last 24 hours of events (20 newest) and the edit/assign writes. `sim_number`, `device_model` and `protocol` are write-only: the API accepts them but never returns them, so the drawer shows `—` and the form labels the group write-only.
 - `npm run dev`, `npm run check`, `npm run test`, `npm run e2e`, `npm run e2e:review`, `npm run build`.
 - `npm run e2e` mocks MapTiler style and tile responses with a test key; `npm run e2e:review` uses the local key so the review screenshots show real cartography.
 - If Playwright's bundled Chromium is not installed, point it at a system browser: `PLAYWRIGHT_CHROMIUM_PATH=/usr/bin/chromium npm run e2e`.
@@ -50,6 +51,8 @@ Use the provided API types or generate from `api/openapi.yaml`; do not hand-writ
 
 - No user administration.
 - No alert close action, only acknowledge.
+- No driver unassignment: `PATCH /vehicles/{id}` drops `driver_id: null`, so the UI can change a driver but not clear one.
+- Device fields (`sim_number`, `device_model`, `protocol`) are accepted by `PATCH` but never returned by `GET /vehicles/{id}`; they cannot be verified after a save.
 - No pagination totals or report CSV export.
 - No WebSocket sequence number; resync with `/live/snapshot` on reconnect.
 - `GET /live/snapshot` has no bbox filter.

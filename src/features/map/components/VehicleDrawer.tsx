@@ -1,7 +1,10 @@
+import { useQueryClient } from "@tanstack/react-query";
 import type { SnapshotVehicle, Vehicle } from "../../../api/types";
 import { useTrips } from "../../../api/hooks/trips";
 import { useVehicle } from "../../../api/hooks/vehicles";
+import { queryKeys } from "../../../api/keys";
 import { ErrorState } from "../../../errors/ErrorState";
+import { SlowNotice } from "../../../errors/SlowNotice";
 import { normalize } from "../../../errors/normalize";
 import { ForbiddenState } from "../../../ui/StatePanel";
 import { Badge, StatusPill } from "../../../ui/Badge";
@@ -32,6 +35,13 @@ export interface VehicleDrawerProps {
   returnFocus?: () => void;
 }
 
+/** Dev-only render-crash injection for the e2e fault matrix. */
+const INJECT_CRASH =
+  import.meta.env.DEV &&
+  import.meta.env.VITE_MOCK === "1" &&
+  typeof window !== "undefined" &&
+  new URLSearchParams(window.location.search).get("crash") === "vehicle-drawer";
+
 export function VehicleDrawer({
   vehicleId,
   row,
@@ -46,6 +56,7 @@ export function VehicleDrawer({
   onAssign,
   returnFocus,
 }: VehicleDrawerProps) {
+  const queryClient = useQueryClient();
   const vehicleQuery = useVehicle(vehicleId);
   const vehicle = vehicleQuery.data;
   const tripId = vehicle?.trip_id ?? snapshotVehicle?.trip_id;
@@ -63,6 +74,8 @@ export function VehicleDrawer({
   function retryDetail(): void {
     void vehicleQuery.refetch();
   }
+
+  if (INJECT_CRASH) throw new Error("Injected vehicle drawer crash");
 
   return (
     <Drawer
@@ -114,7 +127,15 @@ export function VehicleDrawer({
           {row ? <VehicleCurrentState row={row} vehicle={vehicle} /> : null}
 
           {vehicleQuery.isPending ? (
-            <VehicleDrawerSkeleton />
+            <>
+              <SlowNotice
+                onRetry={retryDetail}
+                onCancel={() =>
+                  void queryClient.cancelQueries({ queryKey: queryKeys.vehicle(vehicleId) })
+                }
+              />
+              <VehicleDrawerSkeleton />
+            </>
           ) : (
             <>
               {detailError && !vehicle ? (

@@ -190,6 +190,11 @@ test.describe("map", () => {
       .getByRole("button", { name: "Select LSD-100-AA" })
       .click();
     await expect(page).toHaveURL(/v=[0-9a-f-]{36}/);
+    await expect(
+      isMobile(page)
+        ? page.getByTestId("vehicle-detail-sheet")
+        : page.getByTestId("drawer"),
+    ).toBeVisible();
     await expect
       .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.selectedKey))
       .toBe("demo-imei-0001");
@@ -371,6 +376,8 @@ test.describe("map", () => {
     const region = await panel(page);
 
     await region.getByRole("button", { name: "Select LSD-100-AA" }).click();
+    await page.keyboard.press("Escape");
+    await openPanel(page);
     const scroller = region.locator('ul[aria-label="Vehicles"]').locator("..");
     await scroller.evaluate((element) => {
       element.scrollTop = 400;

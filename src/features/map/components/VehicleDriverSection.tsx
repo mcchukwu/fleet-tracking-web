@@ -28,7 +28,7 @@ export function VehicleDriverSection({ driverName, driverPhone }: VehicleDriverS
           {driverPhone && dialable ? (
             <a
               href={`tel:${dialable}`}
-              className="rounded-sm text-accent-fg underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-focus-ring"
+              className="inline-flex h-touch items-center rounded-sm text-accent-fg underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-focus-ring md:h-auto"
             >
               {driverPhone}
             </a>

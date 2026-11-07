@@ -258,12 +258,14 @@ export function MapPage() {
             : document.querySelector<HTMLElement>(
                 `[data-vehicle-key="${CSS.escape(key)}"] button`,
               );
-        if (rowButton) {
-          rowButton.focus();
+        if (!isDesktop) {
+          // The list sheet is back at peek, so its header is the reachable origin.
+          sheetHandleRef.current?.focus();
+          if (!sheetHandleRef.current) rowButton?.focus();
           return;
         }
-        if (!isDesktop) {
-          sheetHandleRef.current?.focus();
+        if (rowButton) {
+          rowButton.focus();
           return;
         }
         const search = document.querySelector<HTMLElement>('input[name="vehicle-search"]');
@@ -276,6 +278,11 @@ export function MapPage() {
   const closeDrawer = useCallback(() => {
     updateSearch({ v: undefined });
   }, [updateSearch]);
+
+  const closeDetailSheet = useCallback(() => {
+    closeDrawer();
+    focusOrigin(selectedKey);
+  }, [closeDrawer, focusOrigin, selectedKey]);
 
   const centreSelected = useCallback(() => {
     const adapter = adapterRef.current;
@@ -313,9 +320,20 @@ export function MapPage() {
   }, []);
 
   const closeWrite = useCallback(() => {
+    const mode = writeMode;
     setWriteMode(null);
     setWriteVehicle(null);
-  }, []);
+    requestAnimationFrame(() => {
+      const label = mode === "edit" ? "Edit" : "Assign driver";
+      const root = mapRootRef.current;
+      if (!root) return;
+      const target = [...root.querySelectorAll<HTMLElement>("button")].find(
+        (button) =>
+          button.textContent?.trim() === label || button.getAttribute("aria-label") === label,
+      );
+      target?.focus();
+    });
+  }, [writeMode]);
 
   const refreshWriteVehicle = useCallback(() => {
     if (!writeVehicle) return;
@@ -606,6 +624,7 @@ export function MapPage() {
       {isDesktop && drawerOpen && selectedId ? (
         <ErrorBoundary level="panel" resetKeys={[selectedId]}>
           <VehicleDrawer
+            key={selectedId}
             vehicleId={selectedId}
             row={selectedRow}
             snapshotVehicle={snapshotVehicle}
@@ -626,6 +645,7 @@ export function MapPage() {
         drawerOpen && selectedId ? (
           <ErrorBoundary level="panel" resetKeys={[selectedId]}>
             <VehicleDetailSheet
+              key={selectedId}
               vehicleId={selectedId}
               row={selectedRow}
               snapshotVehicle={snapshotVehicle}
@@ -634,7 +654,7 @@ export function MapPage() {
               mapReady={viewport !== null}
               canMutate={canMutate}
               offline={offline}
-              onClose={closeDrawer}
+              onClose={closeDetailSheet}
               onCentre={centreSelected}
               onPlayback={openPlayback}
               onEdit={openEdit}

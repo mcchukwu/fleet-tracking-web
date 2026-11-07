@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -76,8 +77,9 @@ function renderSheet(
   const onSnap = vi.fn();
   const onClose = vi.fn();
   render(
-    <TooltipProvider>
-      <ToastProvider>
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <TooltipProvider>
+        <ToastProvider>
         <VehicleDetailSheet
           vehicleId="vehicle-1"
           row={row}
@@ -92,8 +94,9 @@ function renderSheet(
           onPlayback={vi.fn()}
           {...overrides}
         />
-      </ToastProvider>
-    </TooltipProvider>,
+        </ToastProvider>
+      </TooltipProvider>
+    </QueryClientProvider>,
   );
   return { onSnap, onClose };
 }
@@ -117,8 +120,10 @@ describe("VehicleDetailSheet", () => {
   });
 
   it("makes the body inert at peek and interactive at half", () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const { rerender } = render(
-      <TooltipProvider>
+      <QueryClientProvider client={client}>
+        <TooltipProvider>
         <ToastProvider>
           <VehicleDetailSheet
             vehicleId="vehicle-1"
@@ -134,12 +139,14 @@ describe("VehicleDetailSheet", () => {
             onPlayback={vi.fn()}
           />
         </ToastProvider>
-      </TooltipProvider>,
+      </TooltipProvider>
+      </QueryClientProvider>,
     );
     expect(screen.getByTestId("detail-sheet-content")).toHaveAttribute("inert");
 
     rerender(
-      <TooltipProvider>
+      <QueryClientProvider client={client}>
+        <TooltipProvider>
         <ToastProvider>
           <VehicleDetailSheet
             vehicleId="vehicle-1"
@@ -155,7 +162,8 @@ describe("VehicleDetailSheet", () => {
             onPlayback={vi.fn()}
           />
         </ToastProvider>
-      </TooltipProvider>,
+      </TooltipProvider>
+      </QueryClientProvider>,
     );
     expect(screen.getByTestId("detail-sheet-content")).not.toHaveAttribute("inert");
   });

@@ -37,6 +37,7 @@ export function DrawerActionButton({
       }}
       className={cn(
         "inline-flex h-touch items-center justify-center gap-1 rounded-md px-2 text-sm font-medium transition-colors duration-100 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:h-control-sm",
+        iconOnly ? "w-touch px-0 md:w-control-sm" : undefined,
         disabled
           ? "cursor-not-allowed text-subtle opacity-60"
           : "text-text hover:bg-surface-2",

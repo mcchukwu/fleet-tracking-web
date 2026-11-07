@@ -1,8 +1,11 @@
-import type { CSSProperties, Ref, RefObject } from "react";
+import { useEffect, useRef, type CSSProperties, type Ref, type RefObject } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronUp, Copy, X } from "lucide-react";
 import type { SnapshotVehicle, Vehicle } from "../../../api/types";
 import { useTrips } from "../../../api/hooks/trips";
 import { useVehicle } from "../../../api/hooks/vehicles";
+import { queryKeys } from "../../../api/keys";
+import { SlowNotice } from "../../../errors/SlowNotice";
 import { ErrorState } from "../../../errors/ErrorState";
 import { normalize } from "../../../errors/normalize";
 import { Badge, StatusPill } from "../../../ui/Badge";
@@ -40,6 +43,13 @@ export interface VehicleDetailSheetProps {
   onObscuredChange?: (obscured: boolean) => void;
 }
 
+/** Dev-only render-crash injection for the e2e fault matrix. */
+const INJECT_CRASH =
+  import.meta.env.DEV &&
+  import.meta.env.VITE_MOCK === "1" &&
+  typeof window !== "undefined" &&
+  new URLSearchParams(window.location.search).get("crash") === "vehicle-drawer";
+
 function sheetVisibleStyle(visible: number): CSSProperties {
   return { "--sheet-visible": `${visible}px` } as CSSProperties;
 }
@@ -62,12 +72,33 @@ export function VehicleDetailSheet({
   handleRef,
   onObscuredChange,
 }: VehicleDetailSheetProps) {
+  const queryClient = useQueryClient();
+  const closeRef = useRef<HTMLButtonElement>(null);
   const { sheetRef, visible, handlers } = useSheetDrag({
     snap,
     onSnap,
     ...(insetTarget ? { insetTarget } : {}),
     ...(onObscuredChange ? { onObscuredChange } : {}),
   });
+
+  useEffect(() => {
+    closeRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && active.closest('[role="dialog"]')) return;
+      if (!(active instanceof Node) || !sheetRef.current?.contains(active)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      onClose();
+    };
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => document.removeEventListener("keydown", onKeyDown, true);
+  }, [onClose, sheetRef]);
+
   const vehicleQuery = useVehicle(vehicleId);
   const vehicle = vehicleQuery.data;
   const tripId = vehicle?.trip_id ?? snapshotVehicle?.trip_id;
@@ -86,6 +117,8 @@ export function VehicleDetailSheet({
     void vehicleQuery.refetch();
   }
 
+  if (INJECT_CRASH) throw new Error("Injected vehicle drawer crash");
+
   return (
     <section
       ref={sheetRef}
@@ -95,6 +128,7 @@ export function VehicleDetailSheet({
       style={sheetVisibleStyle(visible)}
       className="mobile-sheet bg-surface shadow-float ring-border absolute inset-x-0 bottom-0 z-20 flex flex-col rounded-t-lg ring-1"
     >
+      <h2 className="sr-only">Vehicle details for {plate}</h2>
       <div
         data-testid="detail-sheet-header"
         className="h-sheet-peek border-border bg-surface relative z-10 flex shrink-0 touch-none flex-col border-b px-3 pt-2"
@@ -156,6 +190,7 @@ export function VehicleDetailSheet({
           </span>
           <span data-sheet-action>
             <button
+              ref={closeRef}
               type="button"
               aria-label="Close vehicle details"
               onClick={onClose}
@@ -212,7 +247,15 @@ export function VehicleDetailSheet({
           <>
             {row ? <VehicleCurrentState row={row} vehicle={vehicle} /> : null}
             {vehicleQuery.isPending ? (
-              <VehicleDrawerSkeleton />
+              <>
+                <SlowNotice
+                  onRetry={retryDetail}
+                  onCancel={() =>
+                    void queryClient.cancelQueries({ queryKey: queryKeys.vehicle(vehicleId) })
+                  }
+                />
+                <VehicleDrawerSkeleton />
+              </>
             ) : (
               <>
                 {detailError && !vehicle ? (

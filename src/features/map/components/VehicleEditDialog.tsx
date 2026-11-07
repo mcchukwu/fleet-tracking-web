@@ -104,7 +104,10 @@ export function VehicleEditDialog({
       ? { title: "Couldn't save the vehicle", detail: "Check the fields and try again." }
       : write.error.kind === "conflict" || write.error.kind === "not_found"
         ? { title: errorCopy(write.error).title, detail: errorCopy(write.error).detail }
-        : undefined
+        : (write.error.kind === "network" || write.error.kind === "timeout") &&
+            write.error.outcome === "failed"
+          ? { title: "It wasn't saved.", detail: "Try again." }
+          : undefined
     : undefined;
 
   return (

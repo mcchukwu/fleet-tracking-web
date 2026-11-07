@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SnapshotVehicle, Vehicle, VehicleEvent } from "../../../api/types";
@@ -90,8 +91,9 @@ const row = {
 
 function renderDrawer(overrides: Partial<Parameters<typeof VehicleDrawer>[0]> = {}) {
   return render(
-    <TooltipProvider>
-      <ToastProvider>
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <TooltipProvider>
+        <ToastProvider>
         <VehicleDrawer
           vehicleId="vehicle-1"
           row={row}
@@ -104,8 +106,9 @@ function renderDrawer(overrides: Partial<Parameters<typeof VehicleDrawer>[0]> = 
           onPlayback={vi.fn()}
           {...overrides}
         />
-      </ToastProvider>
-    </TooltipProvider>,
+        </ToastProvider>
+      </TooltipProvider>
+    </QueryClientProvider>,
   );
 }
 

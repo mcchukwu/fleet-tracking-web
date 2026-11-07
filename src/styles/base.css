@@ -127,8 +127,10 @@
     --map-inset-right: calc(var(--spacing-drawer) + 12px);
   }
 
-  .map-root[data-drawer-open="true"] .map-kpi {
-    right: calc(var(--spacing-drawer) + 24px);
+  @media (min-width: 1024px) {
+    .map-root[data-drawer-open="true"] .map-kpi {
+      right: calc(var(--spacing-drawer) + 24px);
+    }
   }
 
   .value-flash {

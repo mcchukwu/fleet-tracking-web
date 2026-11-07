@@ -94,21 +94,22 @@ test.describe("map controls", () => {
     await expectNoAxeViolations(page);
   });
 
-  test("the inset harness shifts the controls by the drawer width", async ({ page }) => {
-    test.skip(isMobile(page), "desktop-only harness");
+  test("the real drawer shifts the controls and keeps every panel clear", async ({ page }) => {
+    test.skip(isMobile(page), "desktop-only layout");
     for (const width of [1024, 1440] as const) {
       await page.setViewportSize({ width, height: 900 });
       await gotoMap(page);
       const before = await controls(page).boundingBox();
 
-      await page.goto("/map?map=fake&inset=1");
+      await page.goto(`/map?map=fake&v=4324a768-9b14-4223-a299-eb8da4d8d309`);
       await expect
         .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.mapLoaded), {
           timeout: 15_000,
         })
         .toBe(true);
-      const harness = page.getByTestId("map-inset-harness");
-      await expect(harness).toBeVisible();
+      const drawer = page.getByTestId("drawer");
+      await expect(drawer).toBeVisible();
+      await expect(page.getByTestId("map-root")).toHaveAttribute("data-drawer-open", "true");
       const shifted = await controls(page).boundingBox();
 
       expect(before).not.toBeNull();
@@ -135,10 +136,22 @@ test.describe("map controls", () => {
         ),
       ).toBeLessThanOrEqual(1);
 
-      await expectNoOverlap(controls(page), harness);
-      await expectNoOverlap(controls(page), attribution(page));
-      await expectNoOverlap(attribution(page), harness);
-      await captureForReview(page, "02b-map-inset-harness");
+      await expectNoOverlap(controls(page), drawer);
+      await expectNoOverlap(attribution(page), drawer);
+      await expectNoOverlap(summary(page), drawer);
+
+      if (width === 1024) {
+        await expect(page.getByRole("region", { name: "Vehicles" })).toHaveCount(0);
+        await expect(
+          page.getByRole("button", { name: "Close the vehicle drawer to show the list." }),
+        ).toHaveAttribute("aria-disabled", "true");
+      } else {
+        await expect(page.getByRole("region", { name: "Vehicles" })).toBeVisible();
+        await expectNoOverlap(page.getByRole("region", { name: "Vehicles" }), drawer);
+      }
+
+      await captureForReview(page, `03-drawer-layout-${width}`);
+      await expectNoAxeViolations(page);
     }
   });
 

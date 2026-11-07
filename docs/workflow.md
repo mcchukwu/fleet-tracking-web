@@ -43,8 +43,8 @@ Each slice ends with a working screen, its states, and a Playwright check.
 
 - Tailwind v4 is CSS-first. `src/styles/tokens.css` declares light/dark values, accent presets and the `@theme inline` mapping. No `tailwind.config.js`.
 - `ThemeProvider` persists the theme and accent. The inline script in `index.html` applies them before paint.
-- The drawer uses native `<dialog>` for focus containment and Escape.
-- Shared primitives are local for now. shadcn/Radix is deferred until a component needs it, such as a combobox or a menu.
+- The vehicle drawer is a non-modal right `<aside>` (420px, 12px inset, Escape and explicit focus return) so the map stays interactive. Modal edit, assign and confirm flows use the Radix `Dialog` primitive.
+- Shared primitives are local and Radix-based where needed (dialog, menu, tabs, tooltip, toast). The searchable `Combobox` is local and follows the ARIA combobox/listbox pattern; native selects remain for short, fixed lists.
 - TanStack Router uses code-based routes in `src/app/router.tsx`; search params are Zod-validated.
 - TanStack Query owns server state. The key factory is `src/api/keys.ts`.
 - The API client is `src/api/client.ts`. All failures normalize to `AppError` in `src/errors/`.

@@ -287,6 +287,8 @@ Shell and dialog sizes are tokens: `--spacing-touch: 44px`, `--spacing-rail-expa
 
 Below `lg`, the left panel and drawer become a **bottom sheet** with three snap points (peek 113px, half, full). The map remains interactive above it.
 
+At `lg`–`xl` the vehicle drawer hides the left panel without changing the saved preference; the panel toggle stays visible with `aria-disabled` and the reason "Close the vehicle drawer to show the list." At `xl` and above both may be open. The drawer publishes `--map-inset-right` (432px) and the KPI's right edge moves to 444px, so nothing sits under it.
+
 ---
 
 ## 6. Shape and elevation
@@ -477,11 +479,13 @@ Below `lg`, the map uses the compact variant: a 2×2 grid of the same four cells
 
 ### 10.6 Drawer (vehicle detail)
 
-- 420px, right side, floating panel. Header: plate (mono, `text-md`), status pill, close button. Sticky.
-- Sections in this order: current state (speed, heading, last seen), trip, driver, vehicle details, recent events.
-- Action row under the header: `Centre on map`, `Play back`, `Edit`, `Assign driver`. Actions the role cannot use follow §10.1.
-- `Esc` closes. Focus moves into the drawer on open and returns to the marker or row on close.
-- Data refreshes in place without layout shift; changed values get a 600ms background tint (`--accent-soft`) that fades.
+- 420px, right side, floating panel: `right-3 top-3 bottom-3`, `--radius-lg`, one border, `--shadow-float`, z-30. It is a non-modal `<aside>` labelled "Vehicle details for {plate}": the map, list and controls stay interactive, focus is not trapped, and Escape is handled explicitly (and does not reach the global shortcut).
+- Header: plate (mono, copy-on-click), status pill, stale badge, close button. Sticky.
+- A sticky action row sits under the header: `Centre on map`, `Play back`, `Edit`, `Assign driver`. Disabled actions stay visible and focusable with `aria-disabled` and a tooltip reason.
+- Sections in this order: current state (speed, heading, last seen, online, freshness, coordinates), trip, driver, vehicle details, recent events. Use divider rows, not nested cards.
+- `Esc` closes. Focus moves to the close button on open and returns to the originating row (or the mobile sheet handle) on close.
+- Data refreshes in place without layout shift; changed values get a 600ms background tint (`--accent-soft`) that fades. The tint remounts the value, so it needs no timer and disappears under reduced motion.
+- The write-only device fields show `—` with one line: "Device fields aren't returned by the API."
 
 ### 10.7 Dialog and confirm
 
@@ -493,9 +497,10 @@ Below `lg`, the map uses the compact variant: a 2×2 grid of the same four cells
 
 Bottom-right, 4s, one line plus an optional action. Success and info auto-dismiss; errors persist until dismissed. Never use a toast as the only record of an important result; alerts and audit entries live in their own screens. Respect `aria-live="polite"` (`assertive` for errors).
 
-### 10.9 Tooltip, menu, tabs, select
+### 10.9 Tooltip, menu, tabs, select, combobox
 
 - Standard Radix behaviour. Tooltip delay 400ms, content `text-xs`, never the only way to reach information. Menus 32px items, `--shadow-menu`. Tabs use an underline indicator in `--accent`, 36px height.
+- `Combobox` is the searchable single-select for long, changing lists (for example active drivers). It uses the ARIA 1.2 combobox/listbox pattern: a labelled input owns the keyboard, `aria-expanded`/`aria-controls`/`aria-activedescendant` are wired, options show a second line with the disambiguating detail (phone and licence for duplicated names), filtering ignores case, spaces and hyphens, and the list resets on blur. Options are 44px on touch. Loading, error, empty and disabled states are explicit; the disabled reason stays visible.
 
 ### 10.10 Map controls
 
@@ -504,6 +509,7 @@ Bottom-right, 4s, one line plus an optional action. Success and info auto-dismis
 - Zoom limits disable the relevant button with `Minimum zoom` / `Maximum zoom`; fit with no positioned vehicles disables with the reason `No vehicles are reporting a position`.
 - The style picker is a menu with radio semantics. Satellite is disabled with `Satellite needs a connection` offline and omitted entirely when the build has no tile source.
 - When the mobile sheet is above 60% height the stack fades and becomes inert (and any open menu closes). It never covers the KPI strip, a panel, the drawer or the attribution.
+- When the desktop vehicle drawer is open, the KPI's right edge moves to 444px and the controls stack translates left by 432px (`--map-inset-right`); at `lg`–`xl` the left panel hides, at `xl` it may stay open. It is a transform, never a width change.
 - Attribution is a single 11px line chip (`whitespace-nowrap`). Below `lg` it is the bottom item of the same bottom-right stack, right-aligned and 8px below the controls. It is a sibling of the controls, so it stays visible when they fade, and it rides the sheet inset to stay 12px above the sheet at every snap.
 
 ### 10.11 Appearance controls
@@ -582,7 +588,7 @@ Global banner states (below the top bar, 32px, dismissible only when resolved):
 
 | Screen | Pattern |
 |---|---|
-| Map | Full-bleed map, left list panel, KPI strip, right drawer, app-level map controls. Below `lg` the panel becomes a bottom sheet with peek (113px), half and full snap points; the KPI strip becomes the compact 2×2 grid; fit and geofence controls move into the sheet header. The sheet header is 113px and always visible: an 8px drag band, a 44px title/count/fit/geofences/filters row, and a 60px search row holding a 44px field with 8px above and below. The header is one opaque `surface` region and the single owner of the header separator: a 1px `border` line as its own bottom border, spanning the sheet's full width. The sheet edges are a non-layout ring and the row dividers share the separator's left and right x; a bottom safe-area inset is reserved inside the sheet so the last row clears it. Only the vehicle list scrolls, inside the sheet with contained overscroll; the header never moves and list scrolling never drags the sheet. At full the sheet ends 80px below the top bar, the KPI is hidden, and tapping that map strip returns to half. The controls stack sits bottom-right and shifts with `--map-inset-bottom` / `--map-inset-right`; above 60% sheet height it fades and goes inert. Vehicle rows are 56px, two lines: status pill, mono plate and data age; driver and speed. The plate is a copy button layered above the row's selection button. The map tooltip shows plate, speed and data age, clamped to the map edge. Attribution is a static link rendered by the feature, never injected from a remote style. |
+| Map | Full-bleed map, left list panel, KPI strip, right drawer, app-level map controls. Below `lg` the panel becomes a bottom sheet with peek (113px), half and full snap points; the KPI strip becomes the compact 2×2 grid; fit and geofence controls move into the sheet header. The vehicle detail sheet reuses the same 113px header rhythm: 8px drag band, a 44px plate/status/close row, an 8px gap, a 44px icon-action row, 8px bottom padding and a 1px separator. It defaults to half, the body is inert at peek, and at full it ends 80px below the top bar; closing it returns the list sheet at its previous snap. The sheet header is 113px and always visible: an 8px drag band, a 44px title/count/fit/geofences/filters row, and a 60px search row holding a 44px field with 8px above and below. The header is one opaque `surface` region and the single owner of the header separator: a 1px `border` line as its own bottom border, spanning the sheet's full width. The sheet edges are a non-layout ring and the row dividers share the separator's left and right x; a bottom safe-area inset is reserved inside the sheet so the last row clears it. Only the vehicle list scrolls, inside the sheet with contained overscroll; the header never moves and list scrolling never drags the sheet. At full the sheet ends 80px below the top bar, the KPI is hidden, and tapping that map strip returns to half. The controls stack sits bottom-right and shifts with `--map-inset-bottom` / `--map-inset-right`; above 60% sheet height it fades and goes inert. Vehicle rows are 56px, two lines: status pill, mono plate and data age; driver and speed. The plate is a copy button layered above the row's selection button. The map tooltip shows plate, speed and data age, clamped to the map edge. Attribution is a static link rendered by the feature, never injected from a remote style. |
 | Alerts, Trips, Drivers, Audit | Page title, filter row (selects and search, 32px), dense table, detail in a right drawer, never a separate page |
 | Geofences | Split view: list left (360px), map right with draw tools; unsaved polygon shown with dashed `--accent` stroke |
 | Playback | Map with route, bottom control bar: range selector, play, speed, scrubber, `Resolution: 30s` label from the API |
@@ -632,6 +638,8 @@ const pill = cva("inline-flex h-5 items-center gap-1 rounded-full px-2 text-xs f
 - [ ] Works at 1440px, 390px and 360px; no horizontal page scroll.
 - [ ] Map controls, attribution, KPI, panels and the sheet never overlap at any snap point.
 - [ ] The top bar contains no standalone theme or accent control; appearance lives in the user menu.
+- [ ] The vehicle drawer is non-modal, keeps the map interactive, and returns focus to its origin; disabled actions stay visible with a reason.
+- [ ] Write-only device fields show `—` with the API limitation, not an empty field pretending to be known.
 - [ ] Reduced-motion respected.
 - [ ] Offline behaviour verified (service worker on, network off).
 - [ ] No gradients, no nested cards, no decorative elements, no more than one primary button per view.
