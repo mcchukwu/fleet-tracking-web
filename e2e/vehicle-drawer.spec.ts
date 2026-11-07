@@ -114,11 +114,7 @@ test.describe("vehicle drawer", () => {
     await expect(page).not.toHaveURL(/v=/);
     await expect(drawer(page)).toHaveCount(0);
 
-    if (isMobile(page)) {
-      await expect(page.getByRole("button", { name: /Showing 25 of 25/ })).toBeFocused();
-    } else {
-      await expect(row).toBeFocused();
-    }
+    await expect(row).toBeFocused();
   });
 
   test("editing sends the change and updates the drawer", async ({ page }) => {
@@ -138,6 +134,78 @@ test.describe("vehicle drawer", () => {
       drawer(page).getByRole("button", { name: "Copy plate LSD-101-AB" }),
     ).toBeVisible();
     await expect(drawer(page).getByRole("button", { name: "Edit" })).toBeFocused();
+
+    const writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
+    expect(writes).toHaveLength(1);
+    expect(writes[0]?.method).toBe("PATCH");
+    expect(writes[0]?.body).toEqual({ plate: "LSD-101-AB" });
+  });
+
+  test("a write-only device field is accepted and still shows a dash", async ({ page }) => {
+    await gotoDrawer(page);
+    await drawer(page).getByRole("button", { name: "Edit" }).click();
+
+    const dialog = page.getByRole("dialog", { name: `Edit ${PLATE_2}` });
+    await dialog.getByLabel("SIM number").fill("892340000000001");
+    await dialog.getByRole("button", { name: "Save changes" }).click();
+
+    await expect(page.getByText("Vehicle updated.").first()).toBeVisible();
+    const simRow = drawer(page)
+      .locator("dl > div")
+      .filter({ hasText: "SIM number" });
+    await expect(simRow).toContainText("—");
+    await expect(
+      drawer(page).getByText("Device fields aren't returned by the API."),
+    ).toBeVisible();
+    const writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
+    expect(writes.at(-1)?.body).toEqual({ sim_number: "892340000000001" });
+  });
+
+  test("the detail sheet keeps its header on a 360x640 screen", async ({ page }) => {
+    test.skip(!isMobile(page), "mobile only");
+    await page.setViewportSize({ width: 360, height: 640 });
+    await gotoDrawer(page);
+
+    const sheet = drawer(page);
+    const headerBox = await sheet.getByTestId("detail-sheet-header").boundingBox();
+    if (!headerBox) throw new Error("detail header has no box");
+    expect(headerBox.y).toBeGreaterThanOrEqual(48);
+    expect(headerBox.y + headerBox.height).toBeLessThanOrEqual(640);
+    await expectNoHorizontalScroll(page);
+    await expectNoAxeViolations(page);
+  });
+
+  test("closing a full detail sheet releases the inert map controls", async ({ page }) => {
+    test.skip(!isMobile(page), "mobile-only sheet");
+    await gotoMap(page);
+    await openListSheet(page);
+    await page.getByRole("button", { name: `Select ${PLATE_2}` }).click();
+
+    const sheet = drawer(page);
+    const handle = sheet.getByRole("button", { name: new RegExp(`^${PLATE_2}`) });
+    await handle.focus();
+    await page.keyboard.press("End");
+    await expect(sheet).toHaveAttribute("data-snap", "full");
+
+    const controls = page.locator('fieldset[aria-label="Map controls"]');
+    await expect(controls).toHaveAttribute("inert");
+
+    await sheet.getByRole("button", { name: "Close vehicle details" }).click();
+    await expect(page.getByRole("button", { name: /Showing 25 of 25/ })).toBeVisible();
+    await expect(controls).not.toHaveAttribute("inert");
+  });
+
+  test("the panel shortcut explains itself instead of changing a hidden preference", async ({
+    page,
+  }) => {
+    test.skip((page.viewportSize()?.width ?? 0) < 1024, "desktop widths only");
+    await page.setViewportSize({ width: 1024, height: 900 });
+    await gotoDrawer(page);
+
+    const before = await page.evaluate(() => localStorage.getItem("fleet.map.panel"));
+    await page.keyboard.press("[");
+    await expect(page.getByText("Close the vehicle drawer to show the list.")).toBeVisible();
+    expect(await page.evaluate(() => localStorage.getItem("fleet.map.panel"))).toBe(before);
   });
 
   test("assigning a driver updates the drawer and cannot unassign", async ({ page }) => {

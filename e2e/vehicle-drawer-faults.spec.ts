@@ -29,18 +29,77 @@ async function gotoFault(page: Page, fault: string): Promise<void> {
 }
 
 test.describe("vehicle drawer faults", () => {
-  test("a detail server error keeps the live row and offers Retry", async ({ page }) => {
+  test("a detail server error keeps the live row, disables writes and offers Retry", async ({
+    page,
+  }) => {
     await gotoFault(page, "vehicle:server");
-    await expect(page.getByText("Something went wrong on our side").first()).toBeVisible();
+    // The query retries twice before the error surface appears.
+    await expect(page.getByText("Something went wrong on our side").first()).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(drawer(page).getByText("48 km/h")).toBeVisible();
     await expect(page.getByRole("button", { name: "Retry" }).first()).toBeVisible();
+    await expect(drawer(page).getByRole("button", { name: "Edit" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+    await expect(drawer(page).getByRole("button", { name: "Assign driver" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+    await expect(drawer(page).getByRole("button", { name: "Centre on map" })).not.toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
     await captureForReview(page, "03-drawer-detail-error");
+  });
+
+  test("a forbidden detail shows the forbidden state", async ({ page }) => {
+    await gotoFault(page, "vehicle:forbidden");
+    await expect(page.getByText("You don't have access to this.")).toBeVisible();
+    await expect(
+      drawer(page).getByRole("button", { name: "Close", exact: true }),
+    ).toBeVisible();
+    await captureForReview(page, "03-drawer-forbidden");
+  });
+
+  test("a conflict offers a refresh that loads the latest record", async ({ page }) => {
+    await page.goto(`/map?map=fake&v=${VEHICLE_2}`);
+    await expect(drawer(page)).toBeVisible();
+    await drawer(page).getByRole("button", { name: "Edit" }).click();
+
+    const dialog = page.getByRole("dialog", { name: `Edit ${PLATE_2}` });
+    await dialog.getByLabel("Plate").fill("LSD-101-AB");
+    await page.evaluate(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("fault", "vehicle-patch:conflict");
+      history.replaceState({}, "", `${url.pathname}${url.search}`);
+    });
+    await dialog.getByRole("button", { name: "Save changes" }).click();
+
+    await expect(dialog.getByText("The record changed elsewhere.")).toBeVisible();
+    await page.evaluate(async (id) => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("fault");
+      history.replaceState({}, "", `${url.pathname}${url.search}`);
+      await fetch(`/api/v1/vehicles/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plate: "LSD-101-AC" }),
+      });
+    }, VEHICLE_2);
+
+    await dialog.getByRole("button", { name: "Refresh" }).click();
+    const refreshed = page.getByRole("dialog", { name: "Edit LSD-101-AC" });
+    await expect(refreshed.getByLabel("Plate")).toHaveValue("LSD-101-AC");
   });
 
   test("an events failure is contained to the events section", async ({ page }) => {
     await gotoFault(page, "vehicle-events:server");
     await expect(page.getByRole("heading", { name: "Vehicle details", exact: true })).toBeVisible();
-    await expect(page.getByText("Something went wrong on our side").first()).toBeVisible();
+    await expect(page.getByText("Something went wrong on our side").first()).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.getByRole("button", { name: "Retry" }).first()).toBeVisible();
   });
 

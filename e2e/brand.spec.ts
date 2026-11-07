@@ -23,13 +23,14 @@ test.describe("brand", () => {
     await startAnonymous(page);
     await page.goto("/login");
     const loginLogo = page.locator('[data-brand-variant="lockup"]');
-    await expect(loginLogo).toBeVisible();
+    await expect(loginLogo).toBeVisible({ timeout: 15_000 });
     const loginBox = await loginLogo.boundingBox();
 
     await startSignedIn(page);
     await page.goto("/map");
     const shellLogo = page.locator('[data-brand-variant="lockup"]');
-    await expect(shellLogo).toBeVisible();
+    // Cold start in each Playwright project: the first paint can exceed the default 5s.
+    await expect(shellLogo).toBeVisible({ timeout: 15_000 });
     const shellBox = await shellLogo.boundingBox();
 
     expect(loginBox, "login logo has no box").not.toBeNull();
@@ -54,7 +55,9 @@ test.describe("brand", () => {
 
     await startAnonymous(page);
     await page.goto("/login");
-    await expectMinimumContrast(page.locator('[data-brand-variant="lockup"]'), 4.5);
+    const loginLogo = page.locator('[data-brand-variant="lockup"]');
+    await expect(loginLogo).toBeVisible({ timeout: 15_000 });
+    await expectMinimumContrast(loginLogo, 4.5);
     await expectNoAxeViolations(page);
     await captureForReview(page, "brand-login");
 

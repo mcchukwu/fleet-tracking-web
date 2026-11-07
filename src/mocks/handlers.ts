@@ -29,6 +29,25 @@ import { withFault } from "./faults";
 
 const API = "/api/v1";
 
+interface MockWrite {
+  method: string;
+  url: string;
+  body: unknown;
+}
+
+declare global {
+  interface Window {
+    __FLEET_MOCK_WRITES__?: MockWrite[];
+  }
+}
+
+/** Dev-and-mock only: lets e2e assert the exact body a write sent. */
+function recordMockWrite(method: string, url: string, body: unknown): void {
+  if (typeof window === "undefined") return;
+  window.__FLEET_MOCK_WRITES__ ??= [];
+  window.__FLEET_MOCK_WRITES__.push({ method, url, body });
+}
+
 const demoUsers: Record<string, User> = {
   "admin@demo.ftb": {
     id: "00000000-0000-0000-0000-000000000101",
@@ -356,6 +375,7 @@ export const handlers = [
         );
       }
       const update = parsed.data;
+      recordMockWrite("PATCH", `${API}/vehicles/${String(params.id)}`, update);
       if (
         update.status !== undefined &&
         !["active", "maintenance", "inactive"].includes(update.status)
@@ -385,7 +405,13 @@ export const handlers = [
           driver_phone: driver.phone,
         });
       }
-      const { driver_id: _driverId, ...fields } = update;
+      const {
+        driver_id: _driverId,
+        sim_number: _simNumber,
+        device_model: _deviceModel,
+        protocol: _protocol,
+        ...fields
+      } = update;
       Object.assign(vehicle, fields);
       return new HttpResponse(null, { status: 204 });
     });

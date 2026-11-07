@@ -163,7 +163,10 @@ export function withFault(
   const fault = new URL(request.url).searchParams.get("fault");
   if (!fault) return resolver();
   const [target, kind] = fault.split(":");
-  if (target !== resource || !kind || !isFaultKind(kind)) return resolver();
+  const methodTarget = `${resource}-${request.method.toLowerCase()}`;
+  if ((target !== resource && target !== methodTarget) || !kind || !isFaultKind(kind)) {
+    return resolver();
+  }
   return faultResponse(kind);
 }
 

@@ -92,6 +92,21 @@ describe("mock vehicle PATCH", () => {
     expect(response.status).toBe(403);
   });
 
+  it("accepts write-only device fields without storing them", async () => {
+    const response = await patchVehicle({
+      sim_number: "892340000000001",
+      device_model: "Teltonika FMB920",
+      protocol: "teltonika",
+    });
+    expect(response.status).toBe(204);
+
+    const detail = await fetch(`${API}/vehicles/${vehicleId}`);
+    const payload = (await detail.json()) as { data: Record<string, unknown> };
+    expect(payload.data).not.toHaveProperty("sim_number");
+    expect(payload.data).not.toHaveProperty("device_model");
+    expect(payload.data).not.toHaveProperty("protocol");
+  });
+
   it("returns a real-shaped unknown event for the unknown_enum fault", async () => {
     const response = await fetch(
       `${API}/vehicles/${vehicleId}/events?fault=vehicle-events%3Aunknown_enum`,

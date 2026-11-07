@@ -55,5 +55,6 @@ declare global {
       };
     } | null;
     __STYLE_TEST__?: { streets: number; satellite: number };
+    __FLEET_MOCK_WRITES__?: Array<{ method: string; url: string; body: unknown }>;
   }
 }
