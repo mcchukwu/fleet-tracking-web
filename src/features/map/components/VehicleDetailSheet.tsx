@@ -1,0 +1,243 @@
+import type { CSSProperties, Ref, RefObject } from "react";
+import { ChevronUp, Copy, X } from "lucide-react";
+import type { SnapshotVehicle, Vehicle } from "../../../api/types";
+import { useTrips } from "../../../api/hooks/trips";
+import { useVehicle } from "../../../api/hooks/vehicles";
+import { ErrorState } from "../../../errors/ErrorState";
+import { normalize } from "../../../errors/normalize";
+import { Badge, StatusPill } from "../../../ui/Badge";
+import { Button } from "../../../ui/Button";
+import { CopyButton } from "../../../ui/CopyButton";
+import { ForbiddenState } from "../../../ui/StatePanel";
+import { cn } from "../../../ui/cn";
+import { useSheetDrag } from "../hooks/useSheetDrag";
+import type { VehicleRow } from "../lib/filter";
+import { nextSheetSnap, toggleSheetSnap, type SheetSnap } from "../lib/sheet";
+import { VehicleActions } from "./VehicleActions";
+import { VehicleCurrentState } from "./VehicleCurrentState";
+import { VehicleDetailsSection } from "./VehicleDetailsSection";
+import { VehicleDrawerSkeleton } from "./VehicleDrawerSkeleton";
+import { VehicleDriverSection } from "./VehicleDriverSection";
+import { VehicleEventsSection } from "./VehicleEventsSection";
+import { VehicleTripSection } from "./VehicleTripSection";
+
+export interface VehicleDetailSheetProps {
+  vehicleId: string;
+  row: VehicleRow | null;
+  snapshotVehicle: SnapshotVehicle | null;
+  snap: SheetSnap;
+  onSnap: (snap: SheetSnap) => void;
+  mapReady: boolean;
+  canMutate: boolean;
+  offline: boolean;
+  onClose: () => void;
+  onCentre: () => void;
+  onPlayback: () => void;
+  onEdit?: (vehicle: Vehicle) => void;
+  onAssign?: (vehicle: Vehicle) => void;
+  insetTarget?: RefObject<HTMLElement | null>;
+  handleRef?: Ref<HTMLButtonElement>;
+  onObscuredChange?: (obscured: boolean) => void;
+}
+
+function sheetVisibleStyle(visible: number): CSSProperties {
+  return { "--sheet-visible": `${visible}px` } as CSSProperties;
+}
+
+export function VehicleDetailSheet({
+  vehicleId,
+  row,
+  snapshotVehicle,
+  snap,
+  onSnap,
+  mapReady,
+  canMutate,
+  offline,
+  onClose,
+  onCentre,
+  onPlayback,
+  onEdit,
+  onAssign,
+  insetTarget,
+  handleRef,
+  onObscuredChange,
+}: VehicleDetailSheetProps) {
+  const { sheetRef, visible, handlers } = useSheetDrag({
+    snap,
+    onSnap,
+    ...(insetTarget ? { insetTarget } : {}),
+    ...(onObscuredChange ? { onObscuredChange } : {}),
+  });
+  const vehicleQuery = useVehicle(vehicleId);
+  const vehicle = vehicleQuery.data;
+  const tripId = vehicle?.trip_id ?? snapshotVehicle?.trip_id;
+  const tripQuery = useTrips({ limit: 500 }, { enabled: Boolean(tripId) });
+  const trips = Array.isArray(tripQuery.data) ? tripQuery.data : undefined;
+  const detailError = vehicleQuery.error && !offline ? normalize(vehicleQuery.error) : null;
+  const notFound = detailError?.kind === "not_found";
+  const forbidden = detailError?.kind === "forbidden";
+  const plate = row?.plate ?? snapshotVehicle?.plate ?? vehicle?.plate ?? "Vehicle";
+  const status = row?.status ?? (vehicle?.online ? "idle" : "offline");
+  const lat = row?.lat ?? vehicle?.lat ?? null;
+  const lon = row?.lon ?? vehicle?.lon ?? null;
+  const hasPosition = lat !== null && lon !== null;
+
+  function retryDetail(): void {
+    void vehicleQuery.refetch();
+  }
+
+  return (
+    <section
+      ref={sheetRef}
+      aria-label={`Vehicle details for ${plate}`}
+      data-snap={snap}
+      data-testid="vehicle-detail-sheet"
+      style={sheetVisibleStyle(visible)}
+      className="mobile-sheet bg-surface shadow-float ring-border absolute inset-x-0 bottom-0 z-20 flex flex-col rounded-t-lg ring-1"
+    >
+      <div
+        data-testid="detail-sheet-header"
+        className="h-sheet-peek border-border bg-surface relative z-10 flex shrink-0 touch-none flex-col border-b px-3 pt-2"
+        onPointerDown={handlers.onPointerDown}
+        onPointerMove={handlers.onPointerMove}
+        onPointerUp={handlers.onPointerUp}
+        onPointerCancel={handlers.onPointerCancel}
+      >
+        <span aria-hidden="true" className="bg-border-strong mx-auto h-1 w-8 rounded-full" />
+
+        <div className="mt-1 flex h-touch min-w-0 items-center gap-2">
+          <button
+            ref={handleRef}
+            type="button"
+            data-sheet-action
+            aria-expanded={snap !== "peek"}
+            aria-controls="mobile-vehicle-detail"
+            className="h-touch focus-visible:outline-focus-ring flex min-w-0 flex-1 items-center gap-2 rounded-md text-left focus-visible:outline-2 focus-visible:outline-offset-0"
+            onClick={() => onSnap(toggleSheetSnap(snap, "half"))}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowUp") {
+                event.preventDefault();
+                onSnap(nextSheetSnap(snap, 1));
+              }
+              if (event.key === "ArrowDown") {
+                event.preventDefault();
+                onSnap(nextSheetSnap(snap, -1));
+              }
+              if (event.key === "Home") {
+                event.preventDefault();
+                onSnap("peek");
+              }
+              if (event.key === "End") {
+                event.preventDefault();
+                onSnap("full");
+              }
+            }}
+          >
+            <span className="truncate font-mono text-md font-medium text-text">{plate}</span>
+            <StatusPill status={status} />
+            {row?.stale ? <Badge tone="warning">Stale</Badge> : null}
+            <ChevronUp
+              aria-hidden="true"
+              className={cn(
+                "text-muted ml-auto size-4 shrink-0",
+                snap === "peek" ? undefined : "rotate-180",
+              )}
+              strokeWidth={1.5}
+            />
+          </button>
+          <span data-sheet-action>
+            <CopyButton
+              value={plate}
+              label="Plate"
+              className="w-touch justify-center rounded-md text-muted hover:bg-surface-2 md:w-control-sm"
+            >
+              <Copy aria-hidden="true" className="size-4" strokeWidth={1.5} />
+            </CopyButton>
+          </span>
+          <span data-sheet-action>
+            <button
+              type="button"
+              aria-label="Close vehicle details"
+              onClick={onClose}
+              className="inline-flex size-touch items-center justify-center rounded-md text-muted hover:bg-surface-2 hover:text-text focus-visible:outline-2 focus-visible:outline-focus-ring md:size-control-sm"
+            >
+              <X aria-hidden="true" className="size-4" strokeWidth={1.5} />
+            </button>
+          </span>
+        </div>
+
+        <div className="mt-2 flex h-touch min-w-0 items-center">
+          <span data-sheet-action>
+            <VehicleActions
+              variant="icons"
+              onCentre={onCentre}
+              onPlayback={onPlayback}
+              onEdit={() => {
+                if (vehicle) onEdit?.(vehicle);
+              }}
+              onAssign={() => {
+                if (vehicle) onAssign?.(vehicle);
+              }}
+              mapReady={mapReady}
+              hasPosition={hasPosition}
+              canMutate={canMutate}
+              offline={offline}
+              hasVehicle={!notFound}
+            />
+          </span>
+        </div>
+      </div>
+
+      <div
+        id="mobile-vehicle-detail"
+        data-testid="detail-sheet-content"
+        {...(snap === "peek" ? { inert: true, "aria-hidden": true } : {})}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+      >
+        {notFound ? (
+          <div className="p-4">
+            <p className="text-base font-medium text-text">Vehicle not found</p>
+            <p className="mt-1 text-sm text-muted">It may have been removed.</p>
+            <Button className="mt-4" onClick={onClose}>
+              Close
+            </Button>
+          </div>
+        ) : forbidden ? (
+          <ForbiddenState action={<Button onClick={onClose}>Close</Button>} />
+        ) : detailError && !vehicle && !row ? (
+          <div className="p-4">
+            <ErrorState error={detailError} onRetry={retryDetail} />
+          </div>
+        ) : (
+          <>
+            {row ? <VehicleCurrentState row={row} vehicle={vehicle} /> : null}
+            {vehicleQuery.isPending ? (
+              <VehicleDrawerSkeleton />
+            ) : (
+              <>
+                {detailError && !vehicle ? (
+                  <div className="border-b border-border p-4">
+                    <ErrorState compact error={detailError} onRetry={retryDetail} />
+                  </div>
+                ) : null}
+                <VehicleTripSection
+                  tripId={tripId}
+                  snapshotVehicle={snapshotVehicle}
+                  trips={trips}
+                  tripQuery={tripQuery}
+                  offline={offline}
+                />
+                <VehicleDriverSection
+                  driverName={vehicle?.driver_name ?? row?.driverName}
+                  driverPhone={vehicle?.driver_phone}
+                />
+                {vehicle ? <VehicleDetailsSection vehicle={vehicle} /> : null}
+                <VehicleEventsSection vehicleId={vehicleId} offline={offline} />
+              </>
+            )}
+          </>
+        )}
+      </div>
+    </section>
+  );
+}

@@ -50,6 +50,7 @@ import { MapView } from "./MapView";
 import { MobileVehicleSheet } from "./MobileVehicleSheet";
 import { AssignDriverDialog } from "./AssignDriverDialog";
 import { VehicleDrawer } from "./VehicleDrawer";
+import { VehicleDetailSheet } from "./VehicleDetailSheet";
 import { VehicleEditDialog } from "./VehicleEditDialog";
 import { VehiclePanel, type VehiclePanelProps } from "./VehiclePanel";
 
@@ -84,7 +85,8 @@ export function MapPage() {
   const [loadingCancelled, setLoadingCancelled] = useState(false);
   const [viewport, setViewport] = useState<Viewport | null>(null);
   const bounds = viewport?.bounds ?? null;
-  const [sheetSnap, setSheetSnap] = useState<SheetSnap>("peek");
+  const [listSnap, setListSnap] = useState<SheetSnap>("peek");
+  const [detailSnap, setDetailSnap] = useState<SheetSnap>("half");
   const [sheetObscured, setSheetObscured] = useState(false);
   const [mapStyleState, setMapStyleState] = useState<MapStyleState | null>(null);
   const [styleAttribution, setStyleAttribution] = useState<readonly string[] | null>(null);
@@ -137,8 +139,9 @@ export function MapPage() {
   const snapshotVehicle =
     snapshotQuery.data?.find((vehicle) => vehicle.id === selectedId) ?? null;
   const hoveredRow = data.rows.find((row) => row.key === hoveredKey) ?? null;
-  const drawerOpen = isDesktop && selectedId !== null;
+  const drawerOpen = selectedId !== null;
   const panelVisible = preferences.panelOpen && (!drawerOpen || isXl);
+  const sheetSnap = drawerOpen && !isDesktop ? detailSnap : listSnap;
 
   const offline = network === "offline";
   // Offline is a state, not an error: keep the cached map and rows and let the
@@ -282,7 +285,7 @@ export function MapPage() {
       Math.max(adapter.getViewport().zoom, 13),
       { padding },
     );
-    if (!isDesktop) setSheetSnap("peek");
+    if (!isDesktop) setDetailSnap("peek");
   }, [isDesktop, padding, selectedRow]);
 
   const openPlayback = useCallback(() => {
@@ -322,9 +325,12 @@ export function MapPage() {
   const selectKey = useCallback(
     (key: string) => {
       const row = rowsRef.current.find((item) => item.key === key);
-      if (row) updateSearch({ v: row.id }, false);
+      if (row) {
+        if (!isDesktop) setDetailSnap("half");
+        updateSearch({ v: row.id }, false);
+      }
     },
-    [updateSearch],
+    [isDesktop, updateSearch],
   );
 
   const fitFleet = useCallback(() => {
@@ -597,7 +603,7 @@ export function MapPage() {
         </aside>
       ) : null}
 
-      {drawerOpen && selectedId ? (
+      {isDesktop && drawerOpen && selectedId ? (
         <ErrorBoundary level="panel" resetKeys={[selectedId]}>
           <VehicleDrawer
             vehicleId={selectedId}
@@ -617,32 +623,55 @@ export function MapPage() {
       ) : null}
 
       {!isDesktop ? (
-        <MobileVehicleSheet
-          snap={sheetSnap}
-          onSnap={setSheetSnap}
-          shown={rows.length}
-          total={data.total}
-          filters={filters}
-          depots={depots}
-          geofencesVisible={preferences.geofencesVisible}
-          fitDisabled={data.positioned === 0}
-          insetTarget={mapRootRef}
-          handleRef={sheetHandleRef}
-          onFit={fitFleet}
-          onToggleGeofences={preferences.toggleGeofences}
-          onFilterChange={changeFilters}
-          onResetFilters={resetFilters}
-          onObscuredChange={setSheetObscured}
-        >
-          <ErrorBoundary level="panel">
-            <VehiclePanel
-              {...panelProps}
-              className="min-h-0 flex-1"
-              showHeader={false}
-              showFilters={false}
+        drawerOpen && selectedId ? (
+          <ErrorBoundary level="panel" resetKeys={[selectedId]}>
+            <VehicleDetailSheet
+              vehicleId={selectedId}
+              row={selectedRow}
+              snapshotVehicle={snapshotVehicle}
+              snap={detailSnap}
+              onSnap={setDetailSnap}
+              mapReady={viewport !== null}
+              canMutate={canMutate}
+              offline={offline}
+              onClose={closeDrawer}
+              onCentre={centreSelected}
+              onPlayback={openPlayback}
+              onEdit={openEdit}
+              onAssign={openAssign}
+              insetTarget={mapRootRef}
+              handleRef={sheetHandleRef}
+              onObscuredChange={setSheetObscured}
             />
           </ErrorBoundary>
-        </MobileVehicleSheet>
+        ) : (
+          <MobileVehicleSheet
+            snap={listSnap}
+            onSnap={setListSnap}
+            shown={rows.length}
+            total={data.total}
+            filters={filters}
+            depots={depots}
+            geofencesVisible={preferences.geofencesVisible}
+            fitDisabled={data.positioned === 0}
+            insetTarget={mapRootRef}
+            handleRef={sheetHandleRef}
+            onFit={fitFleet}
+            onToggleGeofences={preferences.toggleGeofences}
+            onFilterChange={changeFilters}
+            onResetFilters={resetFilters}
+            onObscuredChange={setSheetObscured}
+          >
+            <ErrorBoundary level="panel">
+              <VehiclePanel
+                {...panelProps}
+                className="min-h-0 flex-1"
+                showHeader={false}
+                showFilters={false}
+              />
+            </ErrorBoundary>
+          </MobileVehicleSheet>
+        )
       ) : null}
 
       <div
@@ -692,12 +721,15 @@ export function MapPage() {
         <button
           type="button"
           onClick={() => {
-            setSheetSnap("half");
+            if (drawerOpen) setDetailSnap("half");
+            else setListSnap("half");
             focusSheetHandle();
           }}
           className="absolute inset-x-0 top-0 z-10 h-sheet-strip w-full focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring"
         >
-          <span className="sr-only">Collapse the vehicle list</span>
+          <span className="sr-only">
+            {drawerOpen ? "Collapse the vehicle details" : "Collapse the vehicle list"}
+          </span>
         </button>
       ) : null}
 

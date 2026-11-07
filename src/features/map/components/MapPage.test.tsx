@@ -121,6 +121,14 @@ vi.mock("./VehicleDrawer", () => ({
   ),
 }));
 
+vi.mock("./VehicleDetailSheet", () => ({
+  VehicleDetailSheet: (props: { vehicleId: string; row: { plate: string } | null }) => (
+    <section aria-label={`Vehicle details for ${props.row?.plate ?? "Vehicle"}`}>
+      Sheet {props.vehicleId}
+    </section>
+  ),
+}));
+
 const user = {
   id: "user-1",
   tenant_id: "tenant-demo",
@@ -264,6 +272,17 @@ describe("MapPage", () => {
 
     expect(screen.getByRole("button", { name: /Showing 3 of 3/ })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Vehicles" })).not.toBeInTheDocument();
+  });
+
+  it("replaces the list sheet with the vehicle detail sheet on mobile", () => {
+    mocks.desktop = false;
+    mocks.search = { v: "uuid-1" };
+    renderPage();
+
+    expect(
+      screen.getByRole("region", { name: "Vehicle details for AAA-100" }),
+    ).toBeVisible();
+    expect(screen.queryByRole("button", { name: /Showing 3 of 3/ })).not.toBeInTheDocument();
   });
 
   it("does not present zero KPIs or hide the map error when the snapshot fails", async () => {

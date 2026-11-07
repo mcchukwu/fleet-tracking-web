@@ -1,43 +1,14 @@
 import { ChevronUp, Layers, Maximize2 } from "lucide-react";
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties,
-  type PointerEvent,
-  type ReactNode,
-  type Ref,
-  type RefObject,
-} from "react";
+import type { CSSProperties, ReactNode, Ref, RefObject } from "react";
 import { SearchInput } from "../../../ui/SearchInput";
 import { IconButton } from "../../../ui/IconButton";
 import { cn } from "../../../ui/cn";
+import { useSheetDrag } from "../hooks/useSheetDrag";
 import type { MapFilterValues } from "../lib/filter";
-import { SHEET_PEEK } from "../lib/constants";
-import {
-  clampVisible,
-  isObscured,
-  nearestSnap,
-  nextSheetSnap,
-  SHEET_STRIP,
-  sheetMetricsFromAvailable,
-  sheetVisible,
-  toggleSheetSnap,
-  TOP_BAR_HEIGHT,
-  type SheetSnap,
-} from "../lib/sheet";
+import { nextSheetSnap, toggleSheetSnap, type SheetSnap } from "../lib/sheet";
 import { MobileFilterMenu } from "./MobileFilterMenu";
 
 export type { SheetSnap } from "../lib/sheet";
-
-function readToken(name: string, fallback: number): number {
-  if (typeof window === "undefined") return fallback;
-  const value = Number.parseFloat(
-    window.getComputedStyle(document.documentElement).getPropertyValue(name),
-  );
-  return Number.isFinite(value) ? value : fallback;
-}
 
 function sheetVisibleStyle(visible: number): CSSProperties {
   return { "--sheet-visible": `${visible}px` } as CSSProperties;
@@ -80,158 +51,15 @@ export function MobileVehicleSheet({
   onObscuredChange,
   children,
 }: MobileVehicleSheetProps) {
-  const [viewportHeight, setViewportHeight] = useState(() =>
-    typeof window === "undefined" ? 800 : window.innerHeight,
-  );
-  // The sheet is measured against the map surface it is anchored to, not the
-  // window: banners and the top bar live outside this page and shrink it.
-  const [containerHeight, setContainerHeight] = useState<number | null>(null);
-  const availableHeight =
-    containerHeight ??
-    Math.max(0, viewportHeight - readToken("--spacing-topbar", TOP_BAR_HEIGHT));
-  const metrics = useMemo(
-    () =>
-      sheetMetricsFromAvailable(
-        availableHeight,
-        readToken("--spacing-sheet-strip", SHEET_STRIP),
-        readToken("--spacing-sheet-peek", SHEET_PEEK),
-      ),
-    [availableHeight],
-  );
-  const visible = sheetVisible(snap, metrics);
-
-  const sheetRef = useRef<HTMLElement>(null);
-  const dragRef = useRef<{ startY: number; startVisible: number } | null>(null);
-  const pendingRef = useRef<number | null>(null);
-  const frameRef = useRef<number | null>(null);
-  const obscuredRef = useRef(false);
+  const { sheetRef, visible, handlers } = useSheetDrag({
+    snap,
+    onSnap,
+    ...(insetTarget ? { insetTarget } : {}),
+    ...(onObscuredChange ? { onObscuredChange } : {}),
+  });
   const fitLabel = fitDisabled
     ? "No vehicles are reporting a position"
     : "Fit the fleet";
-
-  function publish(candidate: number): number {
-    const next = clampVisible(candidate, metrics);
-    sheetRef.current?.style.setProperty("--sheet-visible", `${next}px`);
-    insetTarget?.current?.style.setProperty("--map-inset-bottom", `${next}px`);
-    const obscured = isObscured(next, metrics);
-    if (obscured !== obscuredRef.current) {
-      obscuredRef.current = obscured;
-      onObscuredChange?.(obscured);
-    }
-    return next;
-  }
-
-  function flush(): void {
-    if (pendingRef.current === null) return;
-    publish(pendingRef.current);
-  }
-
-  function schedule(): void {
-    if (typeof requestAnimationFrame !== "function") {
-      flush();
-      return;
-    }
-    if (frameRef.current !== null) return;
-    frameRef.current = requestAnimationFrame(() => {
-      frameRef.current = null;
-      flush();
-    });
-  }
-
-  useEffect(() => {
-    const onResize = () => setViewportHeight(window.innerHeight);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
-  useEffect(() => {
-    const target = insetTarget?.current;
-    return () => {
-      if (frameRef.current !== null && typeof cancelAnimationFrame === "function") {
-        cancelAnimationFrame(frameRef.current);
-        frameRef.current = null;
-      }
-      target?.removeAttribute("data-sheet-dragging");
-    };
-  }, [insetTarget]);
-
-  useEffect(() => {
-    const container = sheetRef.current?.parentElement;
-    if (!container || typeof ResizeObserver === "undefined") return;
-    const update = () => setContainerHeight(container.clientHeight);
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const next = clampVisible(visible, metrics);
-    sheetRef.current?.style.setProperty("--sheet-visible", `${next}px`);
-    insetTarget?.current?.style.setProperty("--map-inset-bottom", `${next}px`);
-    const obscured = isObscured(next, metrics);
-    if (obscured !== obscuredRef.current) {
-      obscuredRef.current = obscured;
-      onObscuredChange?.(obscured);
-    }
-  }, [visible, metrics, insetTarget, onObscuredChange]);
-
-  function onPointerDown(event: PointerEvent<HTMLDivElement>): void {
-    const target = event.target as HTMLElement;
-    // Portals (menus, tooltips) bubble through the React tree, not the DOM tree.
-    // A pointer inside a portal must never start a sheet drag.
-    if (!event.currentTarget.contains(target)) return;
-    if (target.closest("[data-sheet-action]")) return;
-    dragRef.current = { startY: event.clientY, startVisible: visible };
-    // Keep the keyboard focus where it is: a pointer drag must not blur the
-    // focused control before the control stack is obscured.
-    event.preventDefault();
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-    insetTarget?.current?.setAttribute("data-sheet-dragging", "true");
-  }
-
-  function onPointerMove(event: PointerEvent<HTMLDivElement>): void {
-    if (!dragRef.current) return;
-    pendingRef.current =
-      dragRef.current.startVisible + (dragRef.current.startY - event.clientY);
-    schedule();
-  }
-
-  function endDrag(snapToNearest: boolean): void {
-    if (!dragRef.current) return;
-    dragRef.current = null;
-    if (
-      frameRef.current !== null &&
-      typeof cancelAnimationFrame === "function"
-    ) {
-      cancelAnimationFrame(frameRef.current);
-      frameRef.current = null;
-    }
-
-    const target = snapToNearest
-      ? nearestSnap(pendingRef.current ?? visible, metrics)
-      : snap;
-    pendingRef.current = null;
-    // Resolve the snap before publishing: when the nearest snap is the snap the
-    // sheet already reports, React does not re-render, so this imperative write
-    // is the only thing that returns the sheet to its resting height.
-    publish(sheetVisible(target, metrics));
-    insetTarget?.current?.removeAttribute("data-sheet-dragging");
-    if (snapToNearest) onSnap(target);
-  }
-
-  function onPointerUp(event: PointerEvent<HTMLDivElement>): void {
-    if (dragRef.current) {
-      pendingRef.current =
-        dragRef.current.startVisible + (dragRef.current.startY - event.clientY);
-    }
-    endDrag(true);
-  }
-
-  function onPointerCancel(): void {
-    if (dragRef.current) pendingRef.current = visible;
-    endDrag(false);
-  }
 
   return (
     <section
@@ -244,10 +72,10 @@ export function MobileVehicleSheet({
       <div
         data-testid="sheet-header"
         className="h-sheet-peek border-border bg-surface relative z-10 flex shrink-0 touch-none flex-col border-b px-3"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerCancel}
+        onPointerDown={handlers.onPointerDown}
+        onPointerMove={handlers.onPointerMove}
+        onPointerUp={handlers.onPointerUp}
+        onPointerCancel={handlers.onPointerCancel}
       >
         <span
           aria-hidden="true"
