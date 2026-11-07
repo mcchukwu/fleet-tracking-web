@@ -109,6 +109,62 @@ describe("VehicleEditDialog", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it("adopts fresh server values when the vehicle prop changes", () => {
+    const { rerender } = render(
+      <ToastProvider>
+        <VehicleEditDialog
+          open
+          vehicle={vehicle}
+          onClose={vi.fn()}
+          onSaved={vi.fn()}
+          onRefresh={vi.fn()}
+          readOnly={false}
+        />
+      </ToastProvider>,
+    );
+    expect(screen.getByLabelText("Plate")).toHaveValue("LSD-100-AA");
+
+    rerender(
+      <ToastProvider>
+        <VehicleEditDialog
+          open
+          vehicle={{ ...vehicle, plate: "LSD-100-AC" }}
+          onClose={vi.fn()}
+          onSaved={vi.fn()}
+          onRefresh={vi.fn()}
+          readOnly={false}
+        />
+      </ToastProvider>,
+    );
+    expect(screen.getByLabelText("Plate")).toHaveValue("LSD-100-AC");
+  });
+
+  it("does not offer a save when a text field is cleared", async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    await user.clear(screen.getByLabelText("Department"));
+
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+    expect(screen.getByText("No changes to save.")).toBeVisible();
+  });
+
+  it("links the administrative status error to its select", async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    await user.clear(screen.getByLabelText("Plate"));
+    await user.type(screen.getByLabelText("Plate"), "LSD-100-AB");
+    await user.selectOptions(screen.getByLabelText("Administrative status"), "");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Choose an administrative status.");
+    const select = screen.getByLabelText("Administrative status");
+    expect(select).toHaveAttribute("aria-invalid", "true");
+    expect(select.getAttribute("aria-describedby")).toContain(alert.id);
+  });
+
   it("rejects clearing the year without sending a request", async () => {
     const user = userEvent.setup();
     renderDialog();

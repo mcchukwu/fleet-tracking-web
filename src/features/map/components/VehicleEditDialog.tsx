@@ -57,7 +57,8 @@ export function VehicleEditDialog({
   });
 
   const driverId = useWatch({ control, name: "driver_id" });
-  const noChanges = !isDirty;
+  const watchedValues = useWatch({ control });
+  const noChanges = Object.keys(diffVehicle(vehicle, watchedValues)).length === 0;
 
   useEffect(() => {
     if (!isDirty || !open) return;
@@ -165,21 +166,20 @@ export function VehicleEditDialog({
               disabled={readOnly}
               {...register("plate")}
             />
-            <div className="flex flex-col gap-1">
-              <Select label="Administrative status" disabled={readOnly} {...register("status")}>
-                <option value="">Choose a status</option>
-                {administrativeStatuses.map((status) => (
-                  <option key={status} value={status}>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </option>
-                ))}
-              </Select>
-              {errors.status ? (
-                <p className="text-xs text-danger">{errors.status.message}</p>
-              ) : (
-                <p className="text-xs text-muted">Not the live map status.</p>
-              )}
-            </div>
+            <Select
+              label="Administrative status"
+              hint="Not the live map status."
+              error={errors.status?.message}
+              disabled={readOnly}
+              {...register("status")}
+            >
+              <option value="">Choose a status</option>
+              {administrativeStatuses.map((status) => (
+                <option key={status} value={status}>
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </option>
+              ))}
+            </Select>
 
             <Combobox
               className="sm:col-span-2"

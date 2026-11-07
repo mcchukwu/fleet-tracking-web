@@ -53,6 +53,14 @@ describe("VehicleActions", () => {
     );
   });
 
+  it("disables edit and assign until the detail record is available", async () => {
+    const { onEdit } = renderActions({ canEdit: false });
+    const edit = screen.getByRole("button", { name: "Edit" });
+    expect(edit).toHaveAttribute("aria-disabled", "true");
+    await userEvent.click(edit);
+    expect(onEdit).not.toHaveBeenCalled();
+  });
+
   it("marks edits and assignments offline", () => {
     renderActions({ offline: true });
     expect(screen.getByRole("button", { name: "Edit" })).toHaveAttribute(

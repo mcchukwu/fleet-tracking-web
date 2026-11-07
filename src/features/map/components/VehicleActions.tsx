@@ -12,6 +12,7 @@ export interface VehicleActionsProps {
   canMutate: boolean;
   offline: boolean;
   hasVehicle?: boolean;
+  canEdit?: boolean;
 }
 
 export function VehicleActions({
@@ -25,6 +26,7 @@ export function VehicleActions({
   canMutate,
   offline,
   hasVehicle = true,
+  canEdit = true,
 }: VehicleActionsProps) {
   const iconOnly = variant === "icons";
   const centreReason = !mapReady
@@ -39,14 +41,18 @@ export function VehicleActions({
       ? "You're offline."
       : !hasVehicle
         ? "Vehicle not found."
-        : undefined;
+        : !canEdit
+          ? "Vehicle details aren't loaded."
+          : undefined;
   const assignReason = !canMutate
     ? "Your role can't assign drivers."
     : offline
       ? "You're offline."
       : !hasVehicle
         ? "Vehicle not found."
-        : undefined;
+        : !canEdit
+          ? "Vehicle details aren't loaded."
+          : undefined;
 
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-1">

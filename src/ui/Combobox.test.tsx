@@ -123,6 +123,10 @@ describe("Combobox", () => {
     rerender(
       <Combobox label="Driver" items={[]} value={null} onChange={onChange} error="Couldn't load drivers." />,
     );
-    expect(screen.getByText("Couldn't load drivers.")).toBeVisible();
+    const message = screen.getByRole("alert");
+    expect(message).toHaveTextContent("Couldn't load drivers.");
+    const input = screen.getByRole("combobox", { name: "Driver" });
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(input).toHaveAttribute("aria-describedby", message.id);
   });
 });

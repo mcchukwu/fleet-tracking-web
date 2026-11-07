@@ -62,29 +62,33 @@ const TEXT_FIELDS = [
 const DEVICE_FIELDS = ["sim_number", "device_model", "protocol"] as const;
 
 /** The server drops nulls, so the form never clears a driver or a year. */
-export function diffVehicle(original: Vehicle, values: VehicleFormValues): VehicleUpdate {
+export function diffVehicle(
+  original: Vehicle,
+  values: Partial<VehicleFormValues>,
+): VehicleUpdate {
   const diff: VehicleUpdate = {};
 
   for (const field of TEXT_FIELDS) {
-    const next = trimmed(values[field]);
+    const next = trimmed(values[field] ?? "");
     if (next !== "" && next !== original[field]) diff[field] = next;
   }
 
-  const year = values.year.trim();
+  const year = (values.year ?? "").trim();
   if (year !== "") {
     const parsed = Number(year);
     if (Number.isInteger(parsed) && parsed !== original.year) diff.year = parsed;
   }
 
-  const status = toAdministrativeStatus(values.status);
+  const status = toAdministrativeStatus(values.status ?? "");
   if (status && status !== original.status) diff.status = status;
 
-  if (values.driver_id !== "" && values.driver_id !== (original.driver_id ?? "")) {
-    diff.driver_id = values.driver_id;
+  const driverId = values.driver_id ?? "";
+  if (driverId !== "" && driverId !== (original.driver_id ?? "")) {
+    diff.driver_id = driverId;
   }
 
   for (const field of DEVICE_FIELDS) {
-    const next = trimmed(values[field]);
+    const next = trimmed(values[field] ?? "");
     if (next !== "" && next !== (original[field] ?? "")) diff[field] = next;
   }
 

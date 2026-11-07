@@ -125,6 +125,11 @@ export function Combobox({
         ? emptyMessage
         : null;
   const activeItem = open ? filtered[activeIndexClamped] : undefined;
+  const statusId = `${inputId}-status`;
+  const describedBy =
+    [disabled && disabledReason ? hintId : null, error ? statusId : null]
+      .filter(Boolean)
+      .join(" ") || undefined;
 
   return (
     <div
@@ -155,7 +160,8 @@ export function Combobox({
           aria-activedescendant={
             open && activeItem ? `${listId}-${activeItem.id}` : undefined
           }
-          aria-describedby={disabled && disabledReason ? hintId : undefined}
+          aria-describedby={describedBy}
+          aria-invalid={error ? true : undefined}
           aria-disabled={disabled || undefined}
           disabled={disabled}
           value={open ? query : display}
@@ -222,8 +228,8 @@ export function Combobox({
 
       {statusMessage ? (
         <p
-          id={`${inputId}-status`}
-          role={open && !loading && !error ? "status" : undefined}
+          id={statusId}
+          role={error ? "alert" : open && !loading ? "status" : undefined}
           className={cn(
             "flex items-center gap-1 text-xs",
             error ? "text-danger" : "text-muted",
