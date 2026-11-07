@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   search: {} as Record<string, unknown>,
   desktop: true,
+  xl: true,
   snapshot: {
     data: [] as SnapshotVehicle[],
     isPending: false,
@@ -75,7 +76,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 vi.mock("../../../lib/useMediaQuery", () => ({
-  useMediaQuery: () => mocks.desktop,
+  useMediaQuery: (query: string) => (query.includes("1280") ? mocks.xl : mocks.desktop),
 }));
 
 vi.mock("../../../api/hooks/vehicles", () => ({
@@ -110,6 +111,14 @@ vi.mock("./MapView", () => ({
     mocks.mapProps.push(props as never);
     return <div data-testid="fleet-map" />;
   },
+}));
+
+vi.mock("./VehicleDrawer", () => ({
+  VehicleDrawer: (props: { vehicleId: string; row: { plate: string } | null }) => (
+    <aside aria-label={`Vehicle details for ${props.row?.plate ?? "Vehicle"}`}>
+      Drawer {props.vehicleId}
+    </aside>
+  ),
 }));
 
 const user = {
@@ -160,6 +169,7 @@ beforeEach(() => {
   localStorage.clear();
   mocks.search = {};
   mocks.desktop = true;
+  mocks.xl = true;
   mocks.mapProps = [];
   mocks.mapStyle.effectiveStyle = "standard";
   mocks.mapStyle.chosenStyle = "standard";
@@ -395,17 +405,28 @@ describe("MapPage", () => {
     fireEvent.pointerUp(header, { clientY: 200, pointerId: 1 });
   });
 
-  it("publishes the drawer inset through the dev harness", async () => {
-    vi.stubEnv("VITE_MOCK", "1");
-    window.history.replaceState({}, "", "/map?inset=1");
+  it("opens the real drawer from ?v and publishes the inset contract", async () => {
+    mocks.search = { v: "uuid-1" };
     const { container } = renderPage();
 
     const root = container.querySelector<HTMLElement>('[data-testid="map-root"]');
-    expect(root).not.toBeNull();
-    await waitFor(() =>
-      expect(root?.style.getPropertyValue("--map-inset-right")).toBe("432px"),
-    );
-    expect(screen.getByTestId("map-inset-harness")).toBeVisible();
+    expect(root).toHaveAttribute("data-drawer-open", "true");
+    expect(
+      screen.getByRole("complementary", { name: "Vehicle details for AAA-100" }),
+    ).toBeVisible();
+    expect(container.querySelector(".map-kpi")).toHaveClass("lg:left-93");
+  });
+
+  it("hides the left panel below xl while the drawer is open", async () => {
+    mocks.desktop = true;
+    mocks.xl = false;
+    mocks.search = { v: "uuid-1" };
+    renderPage();
+
+    expect(screen.queryByRole("heading", { name: "Vehicles" })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Close the vehicle drawer to show the list." }),
+    ).toHaveAttribute("aria-disabled", "true");
   });
 
   it("keeps the geofence target stable across list ticks", async () => {

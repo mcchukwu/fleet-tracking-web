@@ -10,6 +10,7 @@ import type {
   MapStyleId,
   MapStyleState,
   MapVehicle,
+  Padding,
   Viewport,
 } from "../../../map/types";
 import { LoadingBar } from "../../../ui/StatePanel";
@@ -35,6 +36,8 @@ export interface MapViewProps {
   onViewport: (viewport: Viewport) => void;
   onStyleChange: (state: MapStyleState) => void;
   onAdapterReady: (adapter: MapAdapter | null) => void;
+  flyPadding?: Padding;
+  drawerOpen?: boolean;
 }
 
 /** Dev-only render-crash injection for the e2e fault matrix. */
@@ -62,6 +65,8 @@ export function MapView({  vehicles,
   onViewport,
   onStyleChange,
   onAdapterReady,
+  flyPadding,
+  drawerOpen = false,
 }: MapViewProps) {
   const [adapter, setAdapter] = useState<MapAdapter | null>(null);
   const flownFor = useRef<string | null>(null);
@@ -102,16 +107,23 @@ export function MapView({  vehicles,
       flownFor.current = null;
       return;
     }
-    if (flownFor.current === selectedKey) return;
+    const stamp = `${selectedKey}:${drawerOpen ? "drawer" : "map"}`;
+    if (flownFor.current === stamp) return;
     const vehicle = vehicles.find((item) => item.key === selectedKey);
     if (!vehicle) return;
-    flownFor.current = selectedKey;
+    flownFor.current = stamp;
     const bounds = adapter.getViewport().bounds;
     const [lon, lat] = vehicle.position;
     const inside =
       lat >= bounds.south && lat <= bounds.north && lon >= bounds.west && lon <= bounds.east;
-    if (!inside) adapter.flyTo(vehicle.position, Math.max(adapter.getViewport().zoom, 13));
-  }, [adapter, selectedKey, vehicles]);
+    // With the drawer open the marker must stay clear of the panel, so the
+    // camera always re-centres with the drawer-aware padding.
+    if (drawerOpen || !inside) {
+      adapter.flyTo(vehicle.position, Math.max(adapter.getViewport().zoom, 13), {
+        ...(flyPadding ? { padding: flyPadding } : {}),
+      });
+    }
+  }, [adapter, drawerOpen, flyPadding, selectedKey, vehicles]);
 
   function handleReady(ready: MapAdapter): void {
     setAdapter(ready);

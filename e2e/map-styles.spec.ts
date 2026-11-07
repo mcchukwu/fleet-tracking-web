@@ -212,6 +212,12 @@ test.describe("MapTiler review screenshots", () => {
   test.skip(process.env.REVIEW !== "1", "human review only");
 
   test("Lagos on Satellite and Streets", async ({ page }) => {
+    page.on("pageerror", (error) =>
+      process.stdout.write(`PAGEERROR ${error.message}\n${error.stack ?? ""}\n`),
+    );
+    page.on("console", (message) => {
+      if (message.type() === "error") process.stdout.write(`CONSOLE ${message.text()}\n`);
+    });
     await installStyleMock(page, {
       geofence: true,
       realStyles: process.env.REVIEW === "1",

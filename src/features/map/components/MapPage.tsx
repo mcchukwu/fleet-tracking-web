@@ -22,6 +22,7 @@ import { useMapData } from "../hooks/useMapData";
 import { useMapPreferences } from "../hooks/useMapPreferences";
 import { useMapShortcuts } from "../hooks/useMapShortcuts";
 import { useMapStyle } from "../hooks/useMapStyle";
+import { useCan } from "../../../auth/useCan";
 import { openAlertCountLabel } from "../lib/alerts";
 import {
   MAP_ROW_HEIGHT,
@@ -43,10 +44,10 @@ import { isHostedMapStyle, MAP_STYLE_LABELS } from "../lib/styles";
 import { KpiStrip, type KpiCell } from "./KpiStrip";
 import { MapAttribution } from "./MapAttribution";
 import { MapControls } from "./MapControls";
-import { MapInsetHarness } from "./MapInsetHarness";
 import { MapTilerLogo } from "./MapTilerLogo";
 import { MapView } from "./MapView";
 import { MobileVehicleSheet } from "./MobileVehicleSheet";
+import { VehicleDrawer } from "./VehicleDrawer";
 import { VehiclePanel, type VehiclePanelProps } from "./VehiclePanel";
 
 export function MapPage() {
@@ -54,7 +55,9 @@ export function MapPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
+  const isXl = useMediaQuery("(min-width: 1280px)");
   const authenticated = useAuthStore((state) => state.status === "authenticated");
+  const canMutate = useCan("mutate");
   const snapshotQuery = useLiveSnapshot(authenticated);
   const {
     data: geofences,
@@ -87,11 +90,6 @@ export function MapPage() {
   const sheetHandleRef = useRef<HTMLButtonElement>(null);
   const mapRootRef = useRef<HTMLDivElement>(null);
   const fittedOnce = useRef(false);
-  const harnessOpen =
-    import.meta.env.DEV &&
-    import.meta.env.VITE_MOCK === "1" &&
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).get("inset") === "1";
 
   const filters: MapFilterValues = useMemo(
     () => ({
@@ -131,7 +129,11 @@ export function MapPage() {
   const selectedId = search.v ?? null;
   const selectedRow = data.rows.find((row) => row.id === selectedId) ?? null;
   const selectedKey = selectedRow?.key ?? null;
+  const snapshotVehicle =
+    snapshotQuery.data?.find((vehicle) => vehicle.id === selectedId) ?? null;
   const hoveredRow = data.rows.find((row) => row.key === hoveredKey) ?? null;
+  const drawerOpen = isDesktop && selectedId !== null;
+  const panelVisible = preferences.panelOpen && (!drawerOpen || isXl);
 
   const offline = network === "offline";
   // Offline is a state, not an error: keep the cached map and rows and let the
@@ -197,7 +199,12 @@ export function MapPage() {
     setMapDebug({ stale });
   }, [stale]);
 
-  const padding = fitPadding({ isDesktop, panelOpen: preferences.panelOpen, sheetSnap });
+  const padding = fitPadding({
+    isDesktop,
+    panelOpen: panelVisible,
+    sheetSnap,
+    drawerOpen,
+  });
   const rowHeight = isDesktop ? MAP_ROW_HEIGHT : MAP_ROW_HEIGHT_TOUCH;
 
   const updateSearch = useCallback(
@@ -233,6 +240,59 @@ export function MapPage() {
       view: undefined,
     });
   }, [updateSearch]);
+
+  const focusOrigin = useCallback(
+    (key: string | null) => {
+      requestAnimationFrame(() => {
+        const rowButton =
+          key === null
+            ? null
+            : document.querySelector<HTMLElement>(
+                `[data-vehicle-key="${CSS.escape(key)}"] button`,
+              );
+        if (rowButton) {
+          rowButton.focus();
+          return;
+        }
+        if (!isDesktop) {
+          sheetHandleRef.current?.focus();
+          return;
+        }
+        const search = document.querySelector<HTMLElement>('input[name="vehicle-search"]');
+        (search ?? mapRootRef.current)?.focus();
+      });
+    },
+    [isDesktop],
+  );
+
+  const closeDrawer = useCallback(() => {
+    updateSearch({ v: undefined });
+  }, [updateSearch]);
+
+  const centreSelected = useCallback(() => {
+    const adapter = adapterRef.current;
+    if (!adapter || !selectedRow || selectedRow.lat === null || selectedRow.lon === null) return;
+    adapter.flyTo(
+      [selectedRow.lon, selectedRow.lat],
+      Math.max(adapter.getViewport().zoom, 13),
+      { padding },
+    );
+    if (!isDesktop) setSheetSnap("peek");
+  }, [isDesktop, padding, selectedRow]);
+
+  const openPlayback = useCallback(() => {
+    if (!selectedId) return;
+    const to = new Date();
+    const from = new Date(to.getTime() - 2 * 60 * 60_000);
+    void navigate({
+      to: "/playback",
+      search: {
+        vehicle: selectedId,
+        from: from.toISOString(),
+        to: to.toISOString(),
+      },
+    });
+  }, [navigate, selectedId]);
 
   const selectKey = useCallback(
     (key: string) => {
@@ -423,7 +483,9 @@ export function MapPage() {
     baseStyle: mapStyle.effectiveStyle,
     offline: mapStyle.offline,
     styleLoading: loadingStyle,
-    panelOpen: preferences.panelOpen,
+    panelOpen: panelVisible,
+    panelToggleReason:
+      drawerOpen && !isXl ? "Close the vehicle drawer to show the list." : undefined,
     geofencesVisible: preferences.geofencesVisible,
     fitDisabled: data.positioned === 0,
     panelToggleRef,
@@ -431,14 +493,30 @@ export function MapPage() {
     onZoomOut: zoomOut,
     onResetBearing: resetBearing,
     onFit: fitFleet,
-    onTogglePanel: () => preferences.setPanelOpen(!preferences.panelOpen),
+    onTogglePanel: () => {
+      if (drawerOpen && !isXl) {
+        toast({
+          tone: "info",
+          title: "Close the vehicle drawer to show the list.",
+          key: "panel-blocked-by-drawer",
+        });
+        return;
+      }
+      preferences.setPanelOpen(!preferences.panelOpen);
+    },
     onToggleGeofences: preferences.toggleGeofences,
     onStyleChange: mapStyle.chooseStyle,
     onObscuredFocusLoss: focusSheetHandle,
   };
 
   return (
-    <div ref={mapRootRef} data-testid="map-root" className="map-root relative h-full min-h-0">
+    <div
+      ref={mapRootRef}
+      data-testid="map-root"
+      data-drawer-open={drawerOpen ? "true" : undefined}
+      tabIndex={-1}
+      className="map-root relative h-full min-h-0 focus:outline-none"
+    >
       <h1 className="sr-only">Map</h1>
 
       <ErrorBoundary level="panel" resetKeys={[selectedKey]}>
@@ -461,14 +539,16 @@ export function MapPage() {
           onViewport={setViewport}
           onStyleChange={handleMapStyleChange}
           onAdapterReady={handleAdapterReady}
+          flyPadding={padding}
+          drawerOpen={drawerOpen}
         />
       </ErrorBoundary>
 
       {kpiHidden ? null : (
         <div
           className={cn(
-            "pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center pl-3 pr-14 lg:right-3 lg:px-3",
-            preferences.panelOpen ? "lg:left-93" : "lg:left-3",
+            "map-kpi pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center pl-3 pr-14 lg:right-3 lg:px-3",
+            panelVisible ? "lg:left-93" : "lg:left-3",
           )}
         >
           <div className="pointer-events-auto w-full max-w-md">
@@ -479,7 +559,7 @@ export function MapPage() {
         </div>
       )}
 
-      {isDesktop && preferences.panelOpen ? (
+      {isDesktop && panelVisible ? (
         <aside className="absolute bottom-3 left-3 top-3 z-20 w-panel">
           <ErrorBoundary level="panel">
             <VehiclePanel
@@ -490,6 +570,23 @@ export function MapPage() {
             />
           </ErrorBoundary>
         </aside>
+      ) : null}
+
+      {drawerOpen && selectedId ? (
+        <ErrorBoundary level="panel" resetKeys={[selectedId]}>
+          <VehicleDrawer
+            vehicleId={selectedId}
+            row={selectedRow}
+            snapshotVehicle={snapshotVehicle}
+            mapReady={viewport !== null}
+            canMutate={canMutate}
+            offline={offline}
+            onClose={closeDrawer}
+            onCentre={centreSelected}
+            onPlayback={openPlayback}
+            returnFocus={() => focusOrigin(selectedKey)}
+          />
+        </ErrorBoundary>
       ) : null}
 
       {!isDesktop ? (
@@ -576,8 +673,6 @@ export function MapPage() {
           <span className="sr-only">Collapse the vehicle list</span>
         </button>
       ) : null}
-
-      <MapInsetHarness open={harnessOpen} target={mapRootRef} />
     </div>
   );
 }

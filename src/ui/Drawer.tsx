@@ -7,7 +7,7 @@ export interface DrawerProps {
   open: boolean;
   /** Accessible name, e.g. "Vehicle details for LSD-100-AA". */
   label: string;
-  title: string;
+  title: ReactNode;
   headerAside?: ReactNode;
   actions?: ReactNode;
   onClose: () => void;

@@ -41,6 +41,18 @@ describe("MapControls", () => {
     ).toBeDisabled();
   });
 
+  it("keeps the panel toggle visible and explains when the drawer hides the list", async () => {
+    const user = userEvent.setup();
+    const props = renderControls({ panelToggleReason: "Close the vehicle drawer to show the list." });
+    const toggle = screen.getByRole("button", {
+      name: "Close the vehicle drawer to show the list.",
+    });
+
+    expect(toggle).toHaveAttribute("aria-disabled", "true");
+    await user.click(toggle);
+    expect(props.onTogglePanel).not.toHaveBeenCalled();
+  });
+
   it("zooms and resets the bearing through the contract", async () => {
     const user = userEvent.setup();
     const props = renderControls({ bearing: 90 });

@@ -27,6 +27,7 @@ export interface MapControlsProps {
   styleLoading?: MapStyleId | null;
   obscured?: boolean;
   panelOpen: boolean;
+  panelToggleReason?: string;
   geofencesVisible: boolean;
   fitDisabled?: boolean;
   panelToggleRef?: Ref<HTMLButtonElement>;
@@ -55,6 +56,7 @@ export function MapControls({
   styleLoading = null,
   obscured = false,
   panelOpen,
+  panelToggleReason,
   geofencesVisible,
   fitDisabled = false,
   panelToggleRef,
@@ -179,14 +181,28 @@ export function MapControls({
                 icon={<Layers aria-hidden="true" className="size-4" strokeWidth={1.5} />}
               />
             </Tooltip>
-            <Tooltip label={panelOpen ? "Hide the vehicle panel" : "Show the vehicle panel"} side="left">
+            <Tooltip
+              label={
+                panelToggleReason ??
+                (panelOpen ? "Hide the vehicle panel" : "Show the vehicle panel")
+              }
+              side="left"
+            >
               <IconButton
                 ref={panelToggleRef}
                 size="lg"
                 variant="ghost"
-                label={panelOpen ? "Hide the vehicle panel" : "Show the vehicle panel"}
+                label={
+                  panelToggleReason ??
+                  (panelOpen ? "Hide the vehicle panel" : "Show the vehicle panel")
+                }
                 aria-expanded={panelOpen}
-                onClick={onTogglePanel}
+                aria-disabled={panelToggleReason ? true : undefined}
+                disabled={false}
+                onClick={() => {
+                  if (!panelToggleReason) onTogglePanel();
+                }}
+                className={panelToggleReason ? "cursor-not-allowed opacity-60" : undefined}
                 icon={
                   panelOpen ? (
                     <PanelLeftClose aria-hidden="true" className="size-4" strokeWidth={1.5} />
