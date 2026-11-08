@@ -80,4 +80,35 @@ describe("Drawer", () => {
     expect(onParentKeyDown).not.toHaveBeenCalled();
     expect(onReturn).toHaveBeenCalledTimes(1);
   });
+
+  it("renders the page placement as a right panel with its own close label", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(
+      <div>
+        <button type="button" onClick={() => undefined}>
+          Origin
+        </button>
+        <Drawer
+          open
+          placement="page"
+          label="Alert details"
+          title="Geofence exit"
+          closeLabel="Close alert details"
+          onClose={onClose}
+        >
+          <p>Alert body</p>
+        </Drawer>
+      </div>,
+    );
+
+    const panel = screen.getByRole("complementary", { name: "Alert details" });
+    expect(panel).toHaveAttribute("data-placement", "page");
+    expect(panel).toHaveClass("fixed", "top-1/4", "rounded-t-lg");
+    expect(panel).toHaveClass("md:top-15", "md:rounded-lg");
+    expect(screen.getByRole("button", { name: "Close alert details" })).toHaveFocus();
+
+    await user.keyboard("{Escape}");
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });

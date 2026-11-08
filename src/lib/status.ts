@@ -85,6 +85,17 @@ const alertTypeLabels: Record<AlertType, string> = {
   unplanned_trip: "Unplanned trip",
 };
 
+/** Known types in product order; loaded unknown types are appended by the filter. */
+export const alertTypeOptions: readonly AlertType[] = [
+  "geofence_enter",
+  "geofence_exit",
+  "route_deviation",
+  "idle",
+  "speeding",
+  "device_offline",
+  "unplanned_trip",
+];
+
 export function isAlertType(value: string): value is AlertType {
   return Object.hasOwn(alertTypeLabels, value);
 }

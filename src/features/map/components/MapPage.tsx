@@ -26,7 +26,7 @@ import { useMapPreferences } from "../hooks/useMapPreferences";
 import { useMapShortcuts } from "../hooks/useMapShortcuts";
 import { useMapStyle } from "../hooks/useMapStyle";
 import { useCan } from "../../../auth/useCan";
-import { openAlertCountLabel } from "../lib/alerts";
+import { openAlertCountLabel } from "../../../lib/alerts";
 import {
   MAP_ROW_HEIGHT,
   MAP_ROW_HEIGHT_TOUCH,

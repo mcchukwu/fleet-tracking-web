@@ -21,6 +21,7 @@ import { normalize } from "../errors/normalize";
 import { recordError } from "../errors/report";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
 import { LoginPage } from "../features/login/components/LoginPage";
+import { AlertsPage } from "../features/alerts/components/AlertsPage";
 import { MapPage } from "../features/map/components/MapPage";
 import { AppShell } from "../features/shell/components/AppShell";
 import { SessionExpiryDialog } from "../features/shell/components/SessionExpiryDialog";
@@ -191,7 +192,7 @@ const alertsRoute = createRoute({
   path: "/alerts",
   validateSearch: alertsSearchSchema,
   beforeLoad: ({ context }) => requireCapability(context.user, "read"),
-  component: placeholder("Alerts", "The alerts list ships in Slice 4."),
+  component: AlertsPage,
 });
 
 const tripsRoute = createRoute({

@@ -1,5 +1,4 @@
 import type { Alert, SnapshotVehicle } from "../../../api/types";
-import { MISSING, formatNumber } from "../../../lib/format";
 
 /** Alerts key on the vehicle UUID; the map keys positions on external_id. */
 export function recentAlertKeys(
@@ -21,9 +20,4 @@ export function recentAlertKeys(
   }
 
   return keys;
-}
-
-export function openAlertCountLabel(count: number | undefined, limit: number): string {
-  if (count === undefined) return MISSING;
-  return count >= limit ? `${formatNumber(limit)}+` : formatNumber(count);
 }

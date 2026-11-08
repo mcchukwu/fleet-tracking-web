@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Alert, SnapshotVehicle } from "../../../api/types";
-import { openAlertCountLabel, recentAlertKeys } from "./alerts";
+import { recentAlertKeys } from "./alerts";
 
 const NOW = Date.parse("2026-11-04T10:00:00Z");
 
@@ -60,11 +60,5 @@ describe("map alert window", () => {
     const outside = recentAlertKeys([alert({ occurred_at: "2026-11-04T09:44:59Z" })], vehicles, NOW, 15 * 60_000);
     expect(inside.size).toBe(1);
     expect(outside.size).toBe(0);
-  });
-
-  it("labels a full page as 500+ and unknown as missing", () => {
-    expect(openAlertCountLabel(45, 500)).toBe("45");
-    expect(openAlertCountLabel(500, 500)).toBe("500+");
-    expect(openAlertCountLabel(undefined, 500)).toBe("—");
   });
 });

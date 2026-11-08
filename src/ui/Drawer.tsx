@@ -10,6 +10,10 @@ export interface DrawerProps {
   title: ReactNode;
   headerAside?: ReactNode;
   actions?: ReactNode;
+  /** The map panel floats inside the map; a page panel is fixed to the viewport. */
+  placement?: "map" | "page";
+  closeLabel?: string;
+  titleClassName?: string;
   onClose: () => void;
   /** Called when the panel leaves the screen so focus can return to its origin. */
   returnFocus?: () => void;
@@ -18,8 +22,9 @@ export interface DrawerProps {
 }
 
 /**
- * Non-modal right panel. The map stays interactive, so focus is not trapped;
+ * Non-modal drawer. The map stays interactive, so focus is not trapped;
  * Escape and focus return are handled explicitly. Modals stay in Dialog.
+ * Page placement is a right panel at md+ and a top-quarter sheet below md.
  */
 export function Drawer({
   open,
@@ -27,6 +32,9 @@ export function Drawer({
   title,
   headerAside,
   actions,
+  placement = "map",
+  closeLabel,
+  titleClassName,
   onClose,
   returnFocus,
   children,
@@ -67,27 +75,40 @@ export function Drawer({
 
   if (!open) return null;
 
+  const resolvedCloseLabel =
+    closeLabel ?? (placement === "map" ? "Close vehicle details" : "Close details");
+
   return (
     <aside
       ref={panelRef}
       aria-label={label}
       aria-labelledby={label ? undefined : titleId}
       data-testid="drawer"
+      data-placement={placement}
       className={cn(
-        "absolute bottom-3 right-3 top-3 z-30 flex w-drawer max-w-full flex-col overflow-hidden rounded-lg border border-border bg-surface text-text shadow-float",
+        "z-30 flex flex-col overflow-hidden border border-border bg-surface text-text shadow-float",
+        placement === "map"
+          ? "absolute bottom-3 right-3 top-3 w-drawer max-w-full rounded-lg"
+          : "fixed inset-x-0 bottom-0 top-1/4 rounded-t-lg md:inset-x-auto md:bottom-3 md:right-3 md:top-15 md:w-drawer md:max-w-full md:rounded-lg",
         className,
       )}
     >
       <div className="flex h-topbar shrink-0 items-center justify-between gap-2 border-b border-border px-4">
         <div className="flex min-w-0 items-center gap-2">
-          <h2 id={titleId} className="truncate font-mono text-md font-medium text-text">
+          <h2
+            id={titleId}
+            className={cn(
+              "truncate text-md font-medium text-text",
+              titleClassName ?? "font-mono",
+            )}
+          >
             {title}
           </h2>
           {headerAside}
         </div>
         <IconButton
           ref={closeRef}
-          label="Close vehicle details"
+          label={resolvedCloseLabel}
           icon={<X aria-hidden="true" className="size-4" strokeWidth={1.5} />}
           onClick={onClose}
         />

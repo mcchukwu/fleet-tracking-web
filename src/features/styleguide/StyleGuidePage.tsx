@@ -56,6 +56,7 @@ import { Textarea } from "../../ui/Textarea";
 import { useToast } from "../../ui/Toast";
 import { Tooltip } from "../../ui/Tooltip";
 import { InlineError } from "../../errors/InlineError";
+import { EvidenceList } from "../../ui/EvidenceList";
 
 function Section({
   id,
@@ -167,6 +168,7 @@ export function StyleGuidePage() {
   const [search, setSearch] = useState("");
   const [driverId, setDriverId] = useState<string | null>("driver-1");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [pageDrawerOpen, setPageDrawerOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [blockingOpen, setBlockingOpen] = useState(false);
   const [tableState, setTableState] = useState<TableState>("default");
@@ -533,6 +535,35 @@ export function StyleGuidePage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </Drawer>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="secondary" onClick={() => setPageDrawerOpen(true)}>
+              Open page drawer
+            </Button>
+            <span className="text-xs text-muted">
+              Alerts detail: right panel at md+, a top-quarter sheet below md.
+            </span>
+          </div>
+          <Drawer
+            open={pageDrawerOpen}
+            placement="page"
+            label="Alert details"
+            title="Geofence exit"
+            titleClassName="font-sans"
+            closeLabel="Close alert details"
+            headerAside={
+              <div className="flex items-center gap-2">
+                <SeverityBadge level="high" />
+                <AlertStatusBadge status="open" />
+              </div>
+            }
+            onClose={() => setPageDrawerOpen(false)}
+          >
+            <div className="space-y-4 p-4">
+              <EvidenceList
+                evidence={{ geofence_id: "00000000-0000-0000-0000-000000000202", distance_m: 2091.58 }}
+              />
             </div>
           </Drawer>
         </Section>

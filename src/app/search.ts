@@ -12,10 +12,12 @@ export const mapSearchSchema = z.object({
 });
 
 export const alertsSearchSchema = z.object({
-  status: text,
+  status: z.enum(["open", "acked", "closed"]).optional().catch(undefined),
   type: text,
-  severity: text,
+  severity: z.enum(["low", "medium", "high", "critical"]).optional().catch(undefined),
   q: text,
+  tab: z.enum(["alerts", "rules"]).optional().catch(undefined),
+  alert: text,
 });
 
 export const tripsSearchSchema = z.object({

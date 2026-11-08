@@ -36,6 +36,32 @@ describe("route search schemas", () => {
     expect(alertsSearchSchema.parse({ status: 42 }).status).toBeUndefined();
   });
 
+  it("keeps a valid alert status, severity, tab and selected id", () => {
+    expect(
+      alertsSearchSchema.parse({
+        status: "open",
+        severity: "high",
+        type: "speeding",
+        q: "LSD",
+        tab: "rules",
+        alert: "alert-1",
+      }),
+    ).toEqual({
+      status: "open",
+      severity: "high",
+      type: "speeding",
+      q: "LSD",
+      tab: "rules",
+      alert: "alert-1",
+    });
+  });
+
+  it("drops an unknown alert enum or tab", () => {
+    expect(alertsSearchSchema.parse({ status: "pending", severity: "extreme", tab: "other" })).toEqual(
+      {},
+    );
+  });
+
   it("falls back to an automatic playback resolution", () => {
     expect(playbackSearchSchema.parse({}).resolution).toBeUndefined();
     expect(playbackSearchSchema.parse({ resolution: "5m" }).resolution).toBe("5m");

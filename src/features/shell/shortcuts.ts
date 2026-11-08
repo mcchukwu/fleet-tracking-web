@@ -28,7 +28,7 @@ export const shortcuts: readonly ShortcutDefinition[] = [
   { id: "previous-vehicle", keys: ["k"], label: "Previous vehicle", scope: "map", active: false },
   { id: "open-vehicle", keys: ["Enter"], label: "Open the selected vehicle", scope: "map", active: false },
   { id: "toggle-panel", keys: ["["], label: "Toggle the vehicle panel", scope: "map", active: false },
-  { id: "acknowledge", keys: ["a"], label: "Acknowledge the focused alert", scope: "alerts", active: false },
+  { id: "acknowledge", keys: ["a"], label: "Acknowledge the focused alert", scope: "alerts", active: true },
   { id: "play-pause", keys: ["Space"], label: "Play or pause playback", scope: "playback", active: false },
   { id: "step-back", keys: ["←"], label: "Step back one position", scope: "playback", active: false },
   { id: "step-forward", keys: ["→"], label: "Step forward one position", scope: "playback", active: false },
