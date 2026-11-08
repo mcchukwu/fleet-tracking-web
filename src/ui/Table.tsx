@@ -1,4 +1,4 @@
-import type { HTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from "react";
+import type { HTMLAttributes, Ref, TdHTMLAttributes, ThHTMLAttributes } from "react";
 import { cn } from "./cn";
 
 export function Table({ className, children }: { className?: string; children: React.ReactNode }) {
@@ -17,9 +17,18 @@ export function TBody({ children }: { children: React.ReactNode }) {
   return <tbody>{children}</tbody>;
 }
 
-export function TR({ className, selected = false, ...props }: HTMLAttributes<HTMLTableRowElement> & { selected?: boolean }) {
+export function TR({
+  className,
+  selected = false,
+  ref,
+  ...props
+}: HTMLAttributes<HTMLTableRowElement> & {
+  selected?: boolean;
+  ref?: Ref<HTMLTableRowElement>;
+}) {
   return (
     <tr
+      ref={ref}
       aria-selected={selected || undefined}
       className={cn("h-row border-b border-l-2 border-l-transparent border-border transition-colors duration-100 last:border-0 hover:bg-surface-2", selected ? "border-l-accent bg-accent-soft" : "", className)}
       {...props}

@@ -25,6 +25,8 @@ export interface AlertRowProps {
   pending: boolean;
   disabledReason?: string;
   highlighted: boolean;
+  dataIndex?: number;
+  measureRef?: (element: HTMLTableRowElement | null) => void;
 }
 
 export function AlertRow({
@@ -36,6 +38,8 @@ export function AlertRow({
   pending,
   disabledReason,
   highlighted,
+  dataIndex,
+  measureRef,
 }: AlertRowProps) {
   const now = useNow();
   const timeTooltip = formatTimeTooltip(alert.occurred_at);
@@ -45,6 +49,8 @@ export function AlertRow({
 
   return (
     <TR
+      ref={measureRef}
+      data-index={dataIndex}
       selected={highlighted}
       className={cn("cursor-pointer", highlighted && "value-flash")}
       onClick={(event) => {
