@@ -1,14 +1,28 @@
 import { z } from "zod";
 import { ContractError } from "../errors/types";
+import { alertMessageSchema } from "./alerts";
 import type {
-  Alert,
   Geofence,
   GeofenceKind,
+  Point,
   SnapshotVehicle,
   TripStatus,
   Vehicle,
   VehicleEvent,
 } from "./types";
+
+export {
+  alertEntitySchema,
+  alertMessageSchema,
+  alertRuleSchema,
+  alertRulesResponseSchema,
+  alertsResponseSchema,
+  parseAlertRules,
+  parseAlerts,
+} from "./alerts";
+export type { AlertRulesParseResult, AlertsParseResult } from "./alerts";
+
+export type AlertMessage = z.infer<typeof alertMessageSchema>;
 
 const timestamp = z
   .string()
@@ -41,37 +55,6 @@ export const positionMessageSchema = z.object({
   lon: z.number(),
   recorded_at: timestamp,
 });
-
-const alertFrame = z
-  .object({
-    id: z.union([z.string(), z.number()]).optional(),
-    type: z.string().optional(),
-    severity: z.string().optional(),
-    occurred_at: timestamp.optional(),
-    geofence_id: z.string().optional(),
-    geofence_name: z.string().optional(),
-    event_type: z.string().optional(),
-    event_time: timestamp.optional(),
-    latency_ns: z.number().optional(),
-  })
-  .loose();
-
-// Two documented shapes exist and no real frame has been observed. Accept both.
-export const alertMessageSchema = z
-  .object({
-    type: z.literal("alert"),
-    tenant_id: z.string().optional(),
-    vehicle_id: z.string(),
-    alert: alertFrame.optional(),
-    id: z.union([z.string(), z.number()]).optional(),
-    severity: z.string().optional(),
-    occurred_at: timestamp.optional(),
-    geofence_id: z.string().optional(),
-    geofence_name: z.string().optional(),
-    event_type: z.string().optional(),
-    event_time: timestamp.optional(),
-  })
-  .loose();
 
 export const liveMessageSchema = z.discriminatedUnion("type", [
   positionMessageSchema,
@@ -255,43 +238,22 @@ export function parseGeofences(payload: unknown): GeofenceParseResult {
   return { geofences, rejected };
 }
 
-export const alertEntitySchema = z.object({
-  id: z.union([z.string(), z.number()]).transform(String),
-  vehicle_id: z.string().min(1),
-  plate: z.string().optional().default(""),
-  trip_id: z.string().optional(),
-  type: z.string(),
-  severity: z.string(),
-  status: z.string(),
-  occurred_at: timestamp,
-  acked_at: timestamp.optional(),
-  evidence: z.record(z.string(), z.unknown()).optional().default({}),
+export const historyPointSchema = z.object({
+  t: timestamp,
+  lat: z.number(),
+  lon: z.number(),
+  speed_kph: z.number(),
+  heading_deg: z.number(),
 });
 
-export const alertsSchema = z.object({ data: z.array(z.unknown()) });
-
-export type AlertsParseResult = { alerts: Alert[]; rejected: number };
-
-export function parseAlerts(payload: unknown): AlertsParseResult {
-  const envelope = alertsSchema.safeParse(payload);
-  if (!envelope.success) throw new ContractError("Alert envelope is not { data: [] }");
-
-  const alerts: Alert[] = [];
-  let rejected = 0;
-  for (const row of envelope.data.data) {
-    const parsed = alertEntitySchema.safeParse(row);
-    if (!parsed.success) {
-      rejected += 1;
-      continue;
-    }
-    alerts.push(parsed.data);
-  }
-
-  if (envelope.data.data.length > 0 && alerts.length === 0) {
-    throw new ContractError("No alert row matched the expected shape");
-  }
-  return { alerts, rejected };
-}
+/** An empty range arrives as `data: null`; the UI treats it as no points. */
+export const historyResponseSchema = z.object({
+  data: z
+    .array(historyPointSchema)
+    .nullable()
+    .transform((value) => value ?? ([] as Point[])),
+  resolution: z.string(),
+});
 
 export const auditEntrySchema = z.object({
   id: z.union([z.number(), z.string()]),
@@ -343,7 +305,7 @@ export const importResultSchema = z.object({
   errors: z.array(importErrorSchema).nullable(),
 });
 
-export type LiveMessage = z.infer<typeof liveMessageSchema>;export type PositionMessage = z.infer<typeof positionMessageSchema>;
-export type AlertMessage = z.infer<typeof alertMessageSchema>;
+export type LiveMessage = z.infer<typeof liveMessageSchema>;
+export type PositionMessage = z.infer<typeof positionMessageSchema>;
 export type SystemHealth = z.infer<typeof systemHealthSchema>;
 export type AuditResponse = z.infer<typeof auditResponseSchema>;

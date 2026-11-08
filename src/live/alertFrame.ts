@@ -1,4 +1,4 @@
-import type { AlertMessage } from "../api/schemas";
+import type { AlertMessage } from "../api/alerts";
 import type { AlertSeverity } from "../api/types";
 import { alertTypeLabel, isAlertType } from "../lib/status";
 

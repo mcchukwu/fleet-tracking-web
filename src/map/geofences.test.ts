@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Geofence } from "../../../api/types";
+import type { Geofence } from "../api/types";
 import { repairRing, toMapGeofences } from "./geofences";
 
 function geofence(overrides: Partial<Geofence> = {}): Geofence {

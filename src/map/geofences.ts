@@ -1,5 +1,5 @@
-import type { Geofence } from "../../../api/types";
-import type { LngLat, MapGeofence } from "../../../map/types";
+import type { Geofence } from "../api/types";
+import type { LngLat, MapGeofence } from "./types";
 
 function isPoint(value: unknown): value is LngLat {
   return (

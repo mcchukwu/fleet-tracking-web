@@ -25,6 +25,8 @@ export interface FleetMapProps {
   adapter?: MapAdapter;
   provider?: MapProvider;
   variant?: "full" | "static";
+  /** Accessible name; the alert detail uses "Alert position". */
+  label?: string;
   vehicles?: readonly MapVehicle[];
   geofences?: readonly MapGeofence[];
   route?: MapRoute | null;
@@ -40,6 +42,7 @@ export function FleetMap({
   adapter,
   provider,
   variant = "full",
+  label = "Live map",
   vehicles = EMPTY_VEHICLES,
   geofences = EMPTY_GEOFENCES,
   route = null,
@@ -177,7 +180,7 @@ export function FleetMap({
 
   return (
     <section
-      aria-label="Live map"
+      aria-label={label}
       aria-busy={!loaded && !error ? true : undefined}
       className={cn(
         "relative overflow-hidden bg-surface-2",

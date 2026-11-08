@@ -12,8 +12,10 @@ import { endpointTimeouts } from "./timeouts";
 import {
   auditResponseSchema,
   errorResponseSchema,
+  historyResponseSchema,
   importResultSchema,
   loginResponseSchema,
+  parseAlertRules,
   parseAlerts,
   parseGeofences,
   parseSnapshot,
@@ -25,7 +27,6 @@ import {
 } from "./schemas";
 import type {
   AlertFilters,
-  AlertRule,
   AuditFilters,
   Driver,
   DriverInput,
@@ -34,7 +35,6 @@ import type {
   HistoryRange,
   ImportResult,
   LoginResponse,
-  Point,
   ReportSummary,
   Trip,
   TripFilters,
@@ -321,12 +321,15 @@ export class FleetApiClient {
     return { data: result.events };
   }
 
-  history(id: string, range: HistoryRange = {}, options: RequestOptions = {}) {
-    return this.request<{ data: Point[]; resolution: string }>(
+  async history(id: string, range: HistoryRange = {}, options: RequestOptions = {}) {
+    const payload = await this.request<unknown>(
       "GET",
       `/vehicles/${id}/history${queryString(range)}`,
       undefined,
       { ...options, timeoutMs: options.timeoutMs ?? HISTORY_TIMEOUT_MS },
+    );
+    return this.parse(payload, "/vehicles/:id/history", (value) =>
+      historyResponseSchema.parse(value),
     );
   }
 
@@ -365,8 +368,11 @@ export class FleetApiClient {
     return this.request<void>("POST", `/alerts/${id}/ack`, undefined, options);
   }
 
-  alertRules(options: RequestOptions = {}) {
-    return this.request<{ data: AlertRule[] }>("GET", "/alert-rules", undefined, options);
+  async alertRules(options: RequestOptions = {}) {
+    const payload = await this.request<unknown>("GET", "/alert-rules", undefined, options);
+    const result = this.parse(payload, "/alert-rules", parseAlertRules);
+    this.noteRejectedRows("/alert-rules", result.rejected);
+    return { data: result.rules };
   }
 
   updateAlertRule(

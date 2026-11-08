@@ -47,5 +47,13 @@ export const alertRulesFixture: AlertRule[] = [
     "type": "unplanned_trip",
     "enabled": true,
     "config": {}
+  },
+  {
+    "id": "4d5e6f7a-8b9c-4d0e-9f1a-2b3c4d5e6f87",
+    "type": "solar_flare",
+    "enabled": true,
+    "config": {
+      "threshold": 5
+    }
   }
 ];

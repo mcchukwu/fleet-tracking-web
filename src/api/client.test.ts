@@ -181,4 +181,39 @@ describe("api client", () => {
       client.importVehicles(new File(["imei\n1"], "vehicles.csv", { type: "text/csv" })),
     ).resolves.toMatchObject({ imported: 1 });
   });
+
+  it("parses alert rules and drops malformed rows", async () => {
+    const client = new FleetApiClient(
+      "",
+      fetcherOf(
+        jsonResponse({
+          data: [
+            { id: "rule-1", type: "idle", enabled: true, config: null },
+            { id: "bad", type: "idle", enabled: "yes" },
+          ],
+        }),
+      ),
+    );
+    const response = await client.alertRules();
+    expect(response.data).toEqual([{ id: "rule-1", type: "idle", enabled: true, config: {} }]);
+  });
+
+  it("normalises a null history page to an empty array", async () => {
+    const client = new FleetApiClient(
+      "",
+      fetcherOf(jsonResponse({ data: null, resolution: "30s" })),
+    );
+    await expect(client.history("v", { from: "a", to: "b" })).resolves.toEqual({
+      data: [],
+      resolution: "30s",
+    });
+  });
+
+  it("turns a malformed history body into a contract error", async () => {
+    const client = new FleetApiClient(
+      "",
+      fetcherOf(jsonResponse({ data: [{ lat: "x" }], resolution: "30s" })),
+    );
+    expect((await caught(client.history("v"))).kind).toBe("contract");
+  });
 });

@@ -20,4 +20,15 @@ describe("query keys", () => {
     expect(queryKeys.vehicle("a")).toEqual(["vehicle", "a"]);
     expect(queryKeys.vehicle("a")).not.toEqual(queryKeys.vehicle("b"));
   });
+
+  it("keeps every alert key under the alerts root so live invalidation reaches them", () => {
+    const keys = [
+      queryKeys.alerts({ status: "open" }),
+      queryKeys.alertsFeed({ status: "open", type: "speeding" }),
+      queryKeys.alertLookup("abc"),
+    ];
+    for (const key of keys) expect(key[0]).toBe("alerts");
+    expect(queryKeys.alertsFeed({ status: "open" })).not.toEqual(queryKeys.alertsFeed({}));
+    expect(queryKeys.alertLookup("a")).not.toEqual(queryKeys.alertLookup("b"));
+  });
 });

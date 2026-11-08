@@ -5,6 +5,8 @@ import { useOpenAlerts, OPEN_ALERT_LIMIT } from "../../../api/hooks/alerts";
 import { useGeofences } from "../../../api/hooks/geofences";
 import { useLiveSnapshot } from "../../../api/hooks/vehicles";
 import { queryKeys } from "../../../api/keys";
+import { MapAttribution } from "../../../map/MapAttribution";
+import { toMapGeofences } from "../../../map/geofences";
 import { useAuthStore } from "../../../auth/store";
 import { errorCopy } from "../../../errors/catalog";
 import { ErrorBoundary } from "../../../errors/ErrorBoundary";
@@ -39,11 +41,9 @@ import {
   type MapFilterValues,
 } from "../lib/filter";
 import { mapFreshness } from "../lib/freshness";
-import { toMapGeofences } from "../lib/geofences";
 import { fitPadding, type SheetSnap } from "../lib/padding";
 import { isHostedMapStyle, MAP_STYLE_LABELS } from "../lib/styles";
 import { KpiStrip, type KpiCell } from "./KpiStrip";
-import { MapAttribution } from "./MapAttribution";
 import { MapControls } from "./MapControls";
 import { MapTilerLogo } from "./MapTilerLogo";
 import { MapView } from "./MapView";

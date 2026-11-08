@@ -17,7 +17,7 @@ import {
   isKnownSeverity,
   recentEvents,
 } from "../lib/events";
-import { EvidenceList } from "./EvidenceList";
+import { EvidenceList } from "../../../ui/EvidenceList";
 import { VehicleSection } from "./VehicleField";
 
 export interface VehicleEventsSectionProps {

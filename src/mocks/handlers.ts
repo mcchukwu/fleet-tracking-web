@@ -223,7 +223,6 @@ const driverInputSchema = z.object({
   phone: z.string().optional(),
   licence: z.string().optional(),
 });
-const alertRuleUpdateSchema = z.record(z.string(), z.unknown());
 
 async function readJson(request: Request): Promise<unknown> {
   try {
@@ -443,8 +442,25 @@ export const handlers = [
 
   http.get(`${API}/vehicles/:id/history`, ({ request }) => {
     return withFault("vehicle-history", request, () => {
-      const resolution = new URL(request.url).searchParams.get("resolution") ?? "30s";
-      return HttpResponse.json({ data: historyFixture, resolution });
+      const url = new URL(request.url);
+      const resolution = url.searchParams.get("resolution") ?? "30s";
+      const from = url.searchParams.get("from");
+      const to = url.searchParams.get("to");
+      if (!from) return HttpResponse.json({ data: historyFixture, resolution });
+
+      // The fixture is a real 2 Nov capture; shift it into the requested window
+      // so an alert detail can resolve a position for any alert in the fixtures.
+      const start = Date.parse(from);
+      const end = to ? Date.parse(to) : start + 10 * 60_000;
+      const span = Math.max(0, end - start);
+      const gap = historyFixture.length > 1 ? span / (historyFixture.length - 1) : 0;
+      return HttpResponse.json({
+        data: historyFixture.map((point, index) => ({
+          ...point,
+          t: new Date(start + Math.round(gap * index)).toISOString(),
+        })),
+        resolution,
+      });
     });
   }),
 
@@ -478,6 +494,29 @@ export const handlers = [
   http.post(`${API}/__mock/alerts`, async ({ request }) => {
     const body = (await readJson(request)) as { vehicle_id?: string } | null;
     return HttpResponse.json({ data: appendMockAlert(body?.vehicle_id) });
+  }),
+
+  http.post(`${API}/__mock/alerts/bulk`, async ({ request }) => {
+    const body = (await readJson(request)) as { count?: number } | null;
+    const count = Math.max(0, Math.min(5_000, Math.floor(body?.count ?? 0)));
+    const now = Date.now();
+    const added: Alert[] = Array.from({ length: count }, (_, index) => {
+      const vehicle = state.vehicles[index % state.vehicles.length];
+      if (!vehicle) throw new Error("The mock has no vehicles");
+      return {
+        id: `00000000-0000-4000-8000-${index.toString(16).padStart(12, "0")}`,
+        vehicle_id: vehicle.id,
+        plate: vehicle.plate,
+        type: "geofence_exit",
+        severity: "medium",
+        status: index % 5 === 0 ? "acked" : "open",
+        occurred_at: new Date(now - index * 1_000).toISOString(),
+        ...(index % 5 === 0 ? { acked_at: new Date(now - index * 1_000 + 60_000).toISOString() } : {}),
+        evidence: { geofence_id: "00000000-0000-0000-0000-000000000203" },
+      };
+    });
+    state.alerts = [...added, ...state.alerts];
+    return HttpResponse.json({ data: { added: added.length } });
   }),
 
   http.get(`${API}/trips`, ({ request }) => {
@@ -529,22 +568,33 @@ export const handlers = [
       const url = new URL(request.url);
       const status = url.searchParams.get("status");
       const type = url.searchParams.get("type");
-      const data = state.alerts.filter(
-        (alert) => (!status || alert.status === status) && (!type || alert.type === type),
-      );
-      return HttpResponse.json({ data });
+      const limitParam = Number.parseInt(url.searchParams.get("limit") ?? "", 10);
+      const offsetParam = Number.parseInt(url.searchParams.get("offset") ?? "", 10);
+      const limit = Number.isFinite(limitParam)
+        ? Math.min(500, Math.max(1, limitParam))
+        : 100;
+      const offset = Number.isFinite(offsetParam) ? Math.max(0, offsetParam) : 0;
+      const data = state.alerts
+        .filter(
+          (alert) => (!status || alert.status === status) && (!type || alert.type === type),
+        )
+        .sort((a, b) => Date.parse(b.occurred_at) - Date.parse(a.occurred_at));
+      return HttpResponse.json({ data: data.slice(offset, offset + limit) });
     });
   }),
 
   http.post(`${API}/alerts/:id/ack`, ({ params, request }) => {
     return withFault("alerts", request, () => {
+      const user = resolveUser();
+      if (!user || !can(user.role, "ack")) return forbidden();
       const alert = state.alerts.find((item) => item.id === params.id);
-      if (!alert) {
+      if (!alert || alert.status !== "open") {
         return HttpResponse.json(
-          { error: { code: "not_found", message: "This alert no longer exists." } },
+          { error: { code: "not_found", message: "open alert not found" } },
           { status: 404 },
         );
       }
+      recordMockWrite("POST", `${API}/alerts/${String(params.id)}/ack`, null);
       alert.status = "acked";
       alert.acked_at = new Date().toISOString();
       return new HttpResponse(null, { status: 204 });
@@ -557,13 +607,28 @@ export const handlers = [
 
   http.patch(`${API}/alert-rules/:id`, async ({ params, request }) => {
     return withFault("alert-rules", request, async () => {
+      const user = resolveUser();
+      if (!user || !can(user.role, "mutate")) return forbidden();
       const rule = state.alertRules.find((item) => item.id === params.id);
       if (!rule) {
-        return HttpResponse.json({ error: { code: "not_found", message: "not found" } }, { status: 404 });
+        return HttpResponse.json({ error: { code: "not_found", message: "rule not found" } }, { status: 404 });
       }
-      const parsed = alertRuleUpdateSchema.safeParse(await readJson(request));
-      if (!parsed.success) return badRequest();
-      Object.assign(rule, parsed.data);
+      const raw = await readJson(request);
+      if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return badRequest();
+      const body = raw as { enabled?: unknown; config?: unknown };
+      if (body.enabled !== undefined && typeof body.enabled !== "boolean") return badRequest();
+      if (
+        body.config !== undefined &&
+        body.config !== null &&
+        (typeof body.config !== "object" || Array.isArray(body.config))
+      ) {
+        return badRequest();
+      }
+      recordMockWrite("PATCH", `${API}/alert-rules/${String(params.id)}`, raw);
+      if (body.enabled !== undefined) rule.enabled = body.enabled;
+      if (body.config !== undefined) {
+        rule.config = (body.config as Record<string, unknown> | null) ?? {};
+      }
       return new HttpResponse(null, { status: 204 });
     });
   }),

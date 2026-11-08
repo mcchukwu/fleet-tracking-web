@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   auditResponseSchema,
+  historyResponseSchema,
   liveMessageSchema,
   parseAlerts,
   parseGeofences,
@@ -148,6 +149,31 @@ describe("contract schemas", () => {
   it("rejects an alert envelope that is not a data array", () => {
     expect(() => parseAlerts({ rows: [] })).toThrow();
     expect(() => parseAlerts({ data: [{ nope: true }] })).toThrow();
+  });
+
+  it("normalises a null history page to no points", () => {
+    const parsed = historyResponseSchema.parse({ data: null, resolution: "30s" });
+    expect(parsed.data).toEqual([]);
+    expect(parsed.resolution).toBe("30s");
+  });
+
+  it("accepts an empty history array and real points", () => {
+    expect(historyResponseSchema.parse({ data: [], resolution: "raw" }).data).toEqual([]);
+
+    const parsed = historyResponseSchema.parse({
+      data: [{ t: "2026-11-02T18:00:00Z", lat: 6.45, lon: 3.39, speed_kph: 42, heading_deg: 92 }],
+      resolution: "30s",
+    });
+    expect(parsed.data[0]?.lat).toBe(6.45);
+  });
+
+  it("rejects a history point row that breaks the contract", () => {
+    expect(() =>
+      historyResponseSchema.parse({
+        data: [{ t: "2026-11-02T18:00:00Z", lat: "6.45", lon: 3.39 }],
+        resolution: "30s",
+      }),
+    ).toThrow();
   });
 });
 

@@ -6,8 +6,6 @@ import {
   eventLabel,
   eventWindowFrom,
   eventsCapLabel,
-  formatEvidenceValue,
-  humanizeEvidenceKey,
   isKnownAlertStatus,
   isKnownSeverity,
   recentEvents,
@@ -76,15 +74,5 @@ describe("event presentation", () => {
   it("builds a 24h window from the current time", () => {
     const now = Date.parse("2026-11-07T12:00:00Z");
     expect(Date.parse(eventWindowFrom(now))).toBe(now - EVENT_WINDOW_MS);
-  });
-
-  it("humanises evidence keys and values as text", () => {
-    expect(humanizeEvidenceKey("distance_m")).toBe("Distance m");
-    expect(formatEvidenceValue("distance_m", 2091.58)).toBe("2091.58 m");
-    expect(formatEvidenceValue("speed_kph", 96)).toBe("96 km/h");
-    expect(formatEvidenceValue("geofence_id", "abc")).toBe("abc");
-    expect(formatEvidenceValue("nested", { a: 1 })).toBe('{"a":1}');
-    expect(formatEvidenceValue("enabled", true)).toBe("Yes");
-    expect(formatEvidenceValue("missing", null)).toBe("—");
   });
 });

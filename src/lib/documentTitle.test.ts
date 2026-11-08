@@ -14,4 +14,10 @@ describe("document title", () => {
     expect(formatDocumentTitle("Alerts", 3)).toBe("(3) Alerts · Fleet Console");
     expect(formatDocumentTitle("Alerts", 0)).toBe("Alerts · Fleet Console");
   });
+
+  it("preserves a capped count label", () => {
+    expect(formatDocumentTitle("Alerts", "500+")).toBe("(500+) Alerts · Fleet Console");
+    expect(formatDocumentTitle("Alerts", "0")).toBe("Alerts · Fleet Console");
+    expect(formatDocumentTitle("Alerts", "")).toBe("Alerts · Fleet Console");
+  });
 });

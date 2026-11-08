@@ -1,6 +1,6 @@
-import { mapConfig } from "../../../map/config";
-import type { MapStyleId } from "../../../map/types";
-import { cn } from "../../../ui/cn";
+import { mapConfig } from "./config";
+import type { MapStyleId } from "./types";
+import { cn } from "../ui/cn";
 
 export interface MapAttributionProps {
   styleId: MapStyleId;

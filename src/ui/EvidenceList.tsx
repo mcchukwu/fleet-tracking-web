@@ -1,5 +1,5 @@
-import { formatEvidenceValue, humanizeEvidenceKey } from "../lib/events";
-import { CopyButton } from "../../../ui/CopyButton";
+import { formatEvidenceValue, humanizeEvidenceKey } from "../lib/evidence";
+import { CopyButton } from "./CopyButton";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -23,7 +23,12 @@ export function EvidenceList({ evidence }: EvidenceListProps) {
           </dt>
           <dd className="min-w-0 break-words font-mono text-text">
             {typeof value === "string" && UUID.test(value) ? (
-              <CopyButton inline value={value} label={humanizeEvidenceKey(key)} className="text-xs" />
+              <CopyButton
+                inline
+                value={value}
+                label={humanizeEvidenceKey(key)}
+                className="text-xs"
+              />
             ) : (
               formatEvidenceValue(key, value)
             )}

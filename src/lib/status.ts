@@ -1,4 +1,4 @@
-import type { AlertSeverity, AlertType, TripStatus } from "../api/types";
+import type { AlertSeverity, AlertStatus, AlertType, TripStatus } from "../api/types";
 
 export type VehicleDisplayStatus = "moving" | "idle" | "offline" | "alert";
 export type DataFreshness = "fresh" | "delayed" | "stale";
@@ -54,12 +54,26 @@ export const alertStatusLabels = {
   closed: "Closed",
 } as const;
 
+export function isAlertStatus(value: string | null | undefined): value is AlertStatus {
+  return value !== null && value !== undefined && Object.hasOwn(alertStatusLabels, value);
+}
+
+/** Every filter and badge uses this order; critical first. */
+export const alertStatusOptions: readonly AlertStatus[] = ["open", "acked", "closed"];
+
 export const severityLabels: Record<AlertSeverity, string> = {
   low: "Low",
   medium: "Medium",
   high: "High",
   critical: "Critical",
 };
+
+export function isAlertSeverity(value: string | null | undefined): value is AlertSeverity {
+  return value !== null && value !== undefined && Object.hasOwn(severityLabels, value);
+}
+
+/** Every filter and list uses this order; critical first. */
+export const severityOptions: readonly AlertSeverity[] = ["critical", "high", "medium", "low"];
 
 const alertTypeLabels: Record<AlertType, string> = {
   geofence_enter: "Geofence entry",

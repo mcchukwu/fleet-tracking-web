@@ -1,5 +1,6 @@
 import type {
   AlertFilters,
+  AlertServerFilters,
   AuditFilters,
   HistoryRange,
   TripFilters,
@@ -16,6 +17,8 @@ export const queryKeys = {
   vehicleHistory: (id: string, range: HistoryRange) => ["vehicle-history", id, range] as const,
   liveSnapshot: ["live-snapshot"] as const,
   alerts: (filters: AlertFilters = {}) => ["alerts", filters] as const,
+  alertsFeed: (filters: AlertServerFilters = {}) => ["alerts", "feed", filters] as const,
+  alertLookup: (id: string) => ["alerts", "lookup", id] as const,
   alertRules: ["alert-rules"] as const,
   trips: (filters: TripFilters = {}) => ["trips", filters] as const,
   drivers: ["drivers"] as const,

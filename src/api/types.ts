@@ -129,7 +129,8 @@ export interface Alert {
 
 export interface AlertRule {
   id: string;
-  type: AlertType;
+  // The server may add rule types; unknown types are read-only apart from the toggle.
+  type: string;
   enabled: boolean;
   config: Record<string, unknown>;
 }
@@ -243,6 +244,12 @@ export interface AlertFilters {
   type?: string;
   limit?: number;
   offset?: number;
+}
+
+/** The server accepts only these two filters; severity and plate search are client-side. */
+export interface AlertServerFilters {
+  status?: string;
+  type?: string;
 }
 
 export interface TripFilters {

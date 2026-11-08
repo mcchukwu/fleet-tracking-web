@@ -105,6 +105,17 @@ describe("FleetMap", () => {
     expect(adapter.tokens?.marker.radius).toBe(contractTokens.marker.radius);
   });
 
+  it("announces the static detail map by its own label", async () => {
+    const adapter = new FakeAdapter();
+    render(
+      <ThemeProvider>
+        <FleetMap adapter={adapter} variant="static" label="Alert position" />
+      </ThemeProvider>,
+    );
+    expect(screen.getByRole("region", { name: "Alert position" })).toBeInTheDocument();
+    await waitFor(() => expect(adapter.mounted).toBe(true));
+  });
+
   it("mounts with the requested base style and switches it later", async () => {
     const adapter = new FakeAdapter({ styles: ["standard", "satellite"] });
     const { rerender } = render(
