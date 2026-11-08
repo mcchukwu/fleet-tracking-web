@@ -130,3 +130,20 @@ describe("Combobox", () => {
     expect(input).toHaveAttribute("aria-describedby", message.id);
   });
 });
+
+describe("Combobox mono labels", () => {
+  it("applies the per-item label class to the primary line", async () => {
+    const user = userEvent.setup();
+    render(
+      <Combobox
+        label="Vehicle"
+        items={[{ id: "v1", label: "LSD-100-AA", labelClassName: "font-mono" }]}
+        value={null}
+        onChange={() => undefined}
+      />,
+    );
+    await user.click(screen.getByRole("combobox", { name: "Vehicle" }));
+    const label = screen.getByRole("option").querySelector("span");
+    expect(label).toHaveClass("font-mono");
+  });
+});

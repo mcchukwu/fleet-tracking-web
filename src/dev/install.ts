@@ -1,4 +1,4 @@
-import { readMapDebug, registerDebugSnapshot } from "./debug";
+import { readMapDebug, readPlaybackDebug, registerDebugSnapshot } from "./debug";
 import { useConnectionStore } from "../stores/connection";
 import { useLiveStore } from "../stores/live";
 
@@ -21,6 +21,7 @@ export function installDebugHook(): () => void {
         socketDownAt: connection.socketDownAt,
       },
       map: readMapDebug(),
+      playback: readPlaybackDebug(),
     };
   });
 }

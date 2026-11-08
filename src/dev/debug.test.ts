@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { readDebugSnapshot, registerDebugSnapshot, type FleetDebugSnapshot } from "./debug";
+import {
+  readDebugSnapshot,
+  readPlaybackDebug,
+  registerDebugSnapshot,
+  resetPlaybackDebug,
+  setPlaybackDebug,
+  type FleetDebugSnapshot,
+} from "./debug";
 
 const snapshot: FleetDebugSnapshot = {
   live: { positions: {}, version: 0, frameCount: 0, batchCount: 0, unknownKeys: 0 },
@@ -21,6 +28,23 @@ const snapshot: FleetDebugSnapshot = {
     geofenceCount: 0,
     stale: false,
   },
+  playback: {
+    vehicleId: null,
+    from: null,
+    to: null,
+    resolution: null,
+    pointCount: 0,
+    gapCount: 0,
+    eventCount: 0,
+    cursorIndex: null,
+    cursorPosition: null,
+    playheadMs: null,
+    playing: false,
+    speed: 1,
+    inGap: false,
+    cancelled: false,
+    reducedMotion: false,
+  },
 };
 
 describe("debug hook", () => {
@@ -32,5 +56,13 @@ describe("debug hook", () => {
     cleanup();
     expect(window.__FLEET_DEBUG__).toBeUndefined();
     expect(readDebugSnapshot()).toBeNull();
+  });
+
+  it("exposes and resets the playback snapshot", () => {
+    setPlaybackDebug({ pointCount: 12, playing: true, speed: 4 });
+    expect(readPlaybackDebug()).toMatchObject({ pointCount: 12, playing: true, speed: 4 });
+
+    resetPlaybackDebug();
+    expect(readPlaybackDebug()).toMatchObject({ pointCount: 0, playing: false, speed: 1 });
   });
 });

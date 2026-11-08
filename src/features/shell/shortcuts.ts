@@ -29,11 +29,11 @@ export const shortcuts: readonly ShortcutDefinition[] = [
   { id: "open-vehicle", keys: ["Enter"], label: "Open the selected vehicle", scope: "map", active: false },
   { id: "toggle-panel", keys: ["["], label: "Toggle the vehicle panel", scope: "map", active: false },
   { id: "acknowledge", keys: ["a"], label: "Acknowledge the focused alert", scope: "alerts", active: true },
-  { id: "play-pause", keys: ["Space"], label: "Play or pause playback", scope: "playback", active: false },
-  { id: "step-back", keys: ["←"], label: "Step back one position", scope: "playback", active: false },
-  { id: "step-forward", keys: ["→"], label: "Step forward one position", scope: "playback", active: false },
-  { id: "slower", keys: [","], label: "Slower playback", scope: "playback", active: false },
-  { id: "faster", keys: ["."], label: "Faster playback", scope: "playback", active: false },
+  { id: "play-pause", keys: ["Space"], label: "Play or pause playback", scope: "playback", active: true },
+  { id: "step-back", keys: ["←"], label: "Step back one position", scope: "playback", active: true },
+  { id: "step-forward", keys: ["→"], label: "Step forward one position", scope: "playback", active: true },
+  { id: "slower", keys: [","], label: "Slower playback", scope: "playback", active: true },
+  { id: "faster", keys: ["."], label: "Faster playback", scope: "playback", active: true },
 ];
 
 export const chordTargets: Record<string, string> = {

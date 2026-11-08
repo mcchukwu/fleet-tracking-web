@@ -45,6 +45,25 @@ export interface FleetDebugSnapshot {
     socketDownAt: number | null;
   };
   map: FleetDebugMapState;
+  playback: FleetDebugPlaybackState;
+}
+
+export interface FleetDebugPlaybackState {
+  vehicleId: string | null;
+  from: string | null;
+  to: string | null;
+  resolution: string | null;
+  pointCount: number;
+  gapCount: number;
+  eventCount: number;
+  cursorIndex: number | null;
+  cursorPosition: [number, number] | null;
+  playheadMs: number | null;
+  playing: boolean;
+  speed: number;
+  inGap: boolean;
+  cancelled: boolean;
+  reducedMotion: boolean;
 }
 
 type DebugReader = () => FleetDebugSnapshot;
@@ -70,6 +89,26 @@ const emptyMapState: FleetDebugMapState = {
 let reader: DebugReader | null = null;
 let mapState: FleetDebugMapState = { ...emptyMapState };
 
+const emptyPlaybackState: FleetDebugPlaybackState = {
+  vehicleId: null,
+  from: null,
+  to: null,
+  resolution: null,
+  pointCount: 0,
+  gapCount: 0,
+  eventCount: 0,
+  cursorIndex: null,
+  cursorPosition: null,
+  playheadMs: null,
+  playing: false,
+  speed: 1,
+  inGap: false,
+  cancelled: false,
+  reducedMotion: false,
+};
+
+let playbackState: FleetDebugPlaybackState = { ...emptyPlaybackState };
+
 export function setMapDebug(patch: Partial<FleetDebugMapState>): void {
   if (!import.meta.env.DEV) return;
   mapState = { ...mapState, ...patch };
@@ -81,6 +120,19 @@ export function resetMapDebug(): void {
 
 export function readMapDebug(): FleetDebugMapState {
   return mapState;
+}
+
+export function setPlaybackDebug(patch: Partial<FleetDebugPlaybackState>): void {
+  if (!import.meta.env.DEV) return;
+  playbackState = { ...playbackState, ...patch };
+}
+
+export function resetPlaybackDebug(): void {
+  playbackState = { ...emptyPlaybackState };
+}
+
+export function readPlaybackDebug(): FleetDebugPlaybackState {
+  return playbackState;
 }
 
 export function registerDebugSnapshot(next: DebugReader): () => void {

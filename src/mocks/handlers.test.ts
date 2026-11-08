@@ -228,3 +228,47 @@ describe("mock alert rules", () => {
     }
   });
 });
+
+describe("playback mock endpoints", () => {
+  const from = encodeURIComponent("2026-11-08T14:00:00Z");
+  const to = encodeURIComponent("2026-11-08T14:10:00Z");
+
+  it("generates history at the requested resolution", async () => {
+    const response = await fetch(
+      `${API}/vehicles/${vehicleId}/history?from=${from}&to=${to}&resolution=30s`,
+    );
+    const body = (await response.json()) as { data: unknown[]; resolution: string };
+    expect(response.status).toBe(200);
+    expect(body.resolution).toBe("30s");
+    expect(body.data).toHaveLength(21);
+  });
+
+  it("rejects a reversed or oversized range with invalid_range", async () => {
+    const reversed = await fetch(
+      `${API}/vehicles/${vehicleId}/history?from=${to}&to=${from}&resolution=30s`,
+    );
+    expect(reversed.status).toBe(400);
+    expect(await reversed.json()).toMatchObject({ error: { code: "invalid_range" } });
+  });
+
+  it("returns a null page for an unknown vehicle", async () => {
+    const response = await fetch(
+      `${API}/vehicles/00000000-0000-0000-0000-000000000000/history?from=${from}&to=${to}`,
+    );
+    const body = (await response.json()) as { data: unknown };
+    expect(response.status).toBe(200);
+    expect(body.data).toBeNull();
+  });
+
+  it("shifts events into the requested range and 404s an unknown vehicle", async () => {
+    const response = await fetch(`${API}/vehicles/${vehicleId}/events?from=${from}&to=${to}`);
+    const body = (await response.json()) as { data: Array<{ at: string }> };
+    const times = body.data.map((event) => Date.parse(event.at));
+    expect(times.every((time) => time >= Date.parse("2026-11-08T14:00:00Z"))).toBe(true);
+
+    const missing = await fetch(
+      `${API}/vehicles/00000000-0000-0000-0000-000000000000/events?from=${from}&to=${to}`,
+    );
+    expect(missing.status).toBe(404);
+  });
+});

@@ -77,14 +77,18 @@ export function useVehicleEvents(
   return useQuery(vehicleEventsQueryOptions(id, range, options));
 }
 
-export function useVehicleHistory(id: string | undefined, range: HistoryRange) {
+export function useVehicleHistory(
+  id: string | undefined,
+  range: HistoryRange,
+  options: { enabled?: boolean } = {},
+) {
   return useQuery({
     queryKey: queryKeys.vehicleHistory(id ?? "", range),
     queryFn: ({ signal }) => {
       if (!id) throw new Error("useVehicleHistory requires an id");
       return api.history(id, range, { signal });
     },
-    enabled: Boolean(id),
+    enabled: Boolean(id) && (options.enabled ?? true),
     meta: { scope: "screen", resource: "vehicle-history" },
   });
 }

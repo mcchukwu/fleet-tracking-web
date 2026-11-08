@@ -6,6 +6,9 @@ import {
   formatCount,
   formatDistance,
   formatHeading,
+  formatPlaybackDuration,
+  formatPlaybackRange,
+  formatPlaybackTime,
   formatRelativeTime,
   formatSpeed,
   formatTimeTooltip,
@@ -69,5 +72,36 @@ describe("format", () => {
     expect(formatAgeSeconds(125)).toBe("2m");
     expect(formatAgeSeconds(7_200)).toBe("2h");
     expect(formatAgeSeconds(null)).toBe(MISSING);
+  });
+});
+
+describe("playback formatting", () => {
+  const iso = (y: number, m: number, d: number, h: number, min: number, s = 0) =>
+    new Date(y, m - 1, d, h, min, s).toISOString();
+
+  it("shows seconds and an optional date prefix", () => {
+    expect(formatPlaybackTime(iso(2026, 11, 8, 14, 30, 5))).toBe("14:30:05");
+    expect(formatPlaybackTime(iso(2026, 11, 8, 14, 30, 5), true)).toBe("8 Nov 14:30:05");
+  });
+
+  it("returns the missing value for an invalid instant", () => {
+    expect(formatPlaybackTime("not-a-date")).toBe(MISSING);
+  });
+
+  it("formats a same-day range once and a cross-day range with both dates", () => {
+    expect(
+      formatPlaybackRange(iso(2026, 11, 8, 14, 0), iso(2026, 11, 8, 16, 0)),
+    ).toBe("14:00 – 16:00");
+    expect(
+      formatPlaybackRange(iso(2026, 11, 8, 22, 0), iso(2026, 11, 9, 2, 0)),
+    ).toBe("8 Nov 22:00 – 9 Nov 02:00");
+  });
+
+  it("formats durations in hours, minutes and days", () => {
+    expect(formatPlaybackDuration(30 * 60_000)).toBe("30m");
+    expect(formatPlaybackDuration(2 * 3_600_000)).toBe("2h");
+    expect(formatPlaybackDuration(90 * 60_000)).toBe("1h 30m");
+    expect(formatPlaybackDuration(7 * 86_400_000)).toBe("7d");
+    expect(formatPlaybackDuration(-1)).toBe(MISSING);
   });
 });

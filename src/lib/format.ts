@@ -111,3 +111,71 @@ export function formatAgeSeconds(seconds: number | null | undefined): string {
   if (seconds < 3_600) return `${Math.floor(seconds / 60)}m`;
   return `${Math.floor(seconds / 3_600)}h`;
 }
+
+function playbackDate(iso: string): Date | null {
+  const date = dateOf(iso);
+  return date;
+}
+
+export function formatPlaybackTime(iso: string, includeDate = false): string {
+  const date = playbackDate(iso);
+  if (!date) return MISSING;
+  const time = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(date);
+  if (!includeDate) return time;
+  const day = new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+  }).format(date);
+  return `${day} ${time}`;
+}
+
+function localDay(date: Date): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  }).format(date);
+}
+
+function minutesOnly(date: Date): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
+export function formatPlaybackRange(from: string, to: string): string {
+  const start = playbackDate(from);
+  const end = playbackDate(to);
+  if (!start || !end) return MISSING;
+  if (localDay(start) === localDay(end)) {
+    return `${minutesOnly(start)} – ${minutesOnly(end)}`;
+  }
+  const startDay = new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+  }).format(start);
+  const endDay = new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+  }).format(end);
+  return `${startDay} ${minutesOnly(start)} – ${endDay} ${minutesOnly(end)}`;
+}
+
+export function formatPlaybackDuration(ms: number): string {
+  if (!isNumber(ms) || ms < 0) return MISSING;
+  const totalSeconds = Math.round(ms / 1_000);
+  const days = Math.floor(totalSeconds / 86_400);
+  const hours = Math.floor((totalSeconds % 86_400) / 3_600);
+  const minutes = Math.floor((totalSeconds % 3_600) / 60);
+  if (days > 0) return minutes > 0 ? `${days}d ${minutes}m` : `${days}d`;
+  if (hours > 0) return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+  if (minutes > 0) return `${minutes}m`;
+  return `${totalSeconds}s`;
+}

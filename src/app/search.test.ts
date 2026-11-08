@@ -64,8 +64,15 @@ describe("route search schemas", () => {
 
   it("falls back to an automatic playback resolution", () => {
     expect(playbackSearchSchema.parse({}).resolution).toBeUndefined();
+    expect(playbackSearchSchema.parse({ resolution: "auto" }).resolution).toBe("auto");
     expect(playbackSearchSchema.parse({ resolution: "5m" }).resolution).toBe("5m");
     expect(playbackSearchSchema.parse({ resolution: "nonsense" }).resolution).toBeUndefined();
+  });
+
+  it("keeps a UUID playback vehicle and drops any other id", () => {
+    const id = "4324a768-9b14-4223-a299-eb8da4d8d309";
+    expect(playbackSearchSchema.parse({ vehicle: id }).vehicle).toBe(id);
+    expect(playbackSearchSchema.parse({ vehicle: "demo-imei-0001" }).vehicle).toBeUndefined();
   });
 
   it("coerces the audit offset and rejects negatives", () => {

@@ -36,10 +36,10 @@ export const geofencesSearchSchema = z.object({
 });
 
 export const playbackSearchSchema = z.object({
-  vehicle: text,
+  vehicle: z.uuid().optional().catch(undefined),
   from: text,
   to: text,
-  resolution: z.enum(["raw", "30s", "5m"]).optional().catch(undefined),
+  resolution: z.enum(["auto", "raw", "30s", "5m"]).optional().catch(undefined),
 });
 
 export const reportsSearchSchema = z.object({

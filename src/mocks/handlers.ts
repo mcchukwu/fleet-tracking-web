@@ -9,13 +9,14 @@ import type {
   Trip,
   User,
   Vehicle,
+  VehicleEvent,
 } from "../api/types";
 import { alertRulesFixture } from "./fixtures/alertRules";
 import { alertsFixture } from "./fixtures/alerts";
 import { driversFixture } from "./fixtures/drivers";
-import { vehicleEventsFixture } from "./fixtures/events";
+import { shiftEventsToRange, vehicleEventsFixture } from "./fixtures/events";
 import { geofencesFixture } from "./fixtures/geofences";
-import { historyFixture } from "./fixtures/history";
+import { generateHistory, historyFixture } from "./fixtures/history";
 import { tripsFixture } from "./fixtures/trips";
 import {
   auditResponseFixture,
@@ -417,10 +418,17 @@ export const handlers = [
   }),
 
   http.get(`${API}/vehicles/:id/events`, ({ params, request }) => {
-    const fault = new URL(request.url).searchParams.get("fault");
+    const url = new URL(request.url);
+    const from = Date.parse(url.searchParams.get("from") ?? "");
+    const to = Date.parse(url.searchParams.get("to") ?? "");
+    const inRange = Number.isFinite(from) && Number.isFinite(to);
+    const shift = (events: readonly VehicleEvent[]) =>
+      inRange ? shiftEventsToRange(events, from, to) : events;
+
+    const fault = url.searchParams.get("fault");
     if (fault === "vehicle-events:unknown_enum") {
       return HttpResponse.json({
-        data: [
+        data: shift([
           ...vehicleEventsFixture,
           {
             kind: "solar_flare",
@@ -430,17 +438,21 @@ export const handlers = [
             at: "2026-11-02T21:00:00Z",
             evidence: { source: "future" },
           },
-        ],
+        ]),
       });
     }
+    if (!params.id || !state.vehicles.some((vehicle) => vehicle.id === params.id)) {
+      return HttpResponse.json(
+        { error: { code: "not_found", message: "vehicle not found" } },
+        { status: 404 },
+      );
+    }
     return withFault("vehicle-events", request, () =>
-      params.id
-        ? HttpResponse.json({ data: vehicleEventsFixture })
-        : HttpResponse.json({ data: [] }),
+      HttpResponse.json({ data: shift(vehicleEventsFixture) }),
     );
   }),
 
-  http.get(`${API}/vehicles/:id/history`, ({ request }) => {
+  http.get(`${API}/vehicles/:id/history`, ({ params, request }) => {
     return withFault("vehicle-history", request, () => {
       const url = new URL(request.url);
       const resolution = url.searchParams.get("resolution") ?? "30s";
@@ -448,17 +460,26 @@ export const handlers = [
       const to = url.searchParams.get("to");
       if (!from) return HttpResponse.json({ data: historyFixture, resolution });
 
-      // The fixture is a real 2 Nov capture; shift it into the requested window
-      // so an alert detail can resolve a position for any alert in the fixtures.
-      const start = Date.parse(from);
-      const end = to ? Date.parse(to) : start + 10 * 60_000;
-      const span = Math.max(0, end - start);
-      const gap = historyFixture.length > 1 ? span / (historyFixture.length - 1) : 0;
+      const fromMs = Date.parse(from);
+      const toMs = to ? Date.parse(to) : fromMs + 10 * 60_000;
+      if (toMs <= fromMs || toMs - fromMs > 7 * 86_400_000) {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "invalid_range",
+              message: "range must be positive and at most 7 days",
+            },
+          },
+          { status: 400 },
+        );
+      }
+      const id = typeof params.id === "string" ? params.id : "";
+      if (!id || !state.vehicles.some((vehicle) => vehicle.id === id)) {
+        return HttpResponse.json({ data: null, resolution });
+      }
+      const step = resolution === "raw" ? "raw" : resolution === "5m" ? "5m" : "30s";
       return HttpResponse.json({
-        data: historyFixture.map((point, index) => ({
-          ...point,
-          t: new Date(start + Math.round(gap * index)).toISOString(),
-        })),
+        data: generateHistory(id, fromMs, toMs, step),
         resolution,
       });
     });

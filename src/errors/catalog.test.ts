@@ -57,6 +57,7 @@ describe("error catalog", () => {
   it("shows a server message only for allowlisted codes", () => {
     expect(isSafeServerCode("geofence_has_events")).toBe(true);
     expect(isSafeServerCode("invalid_request")).toBe(true);
+    expect(isSafeServerCode("invalid_range")).toBe(true);
     expect(isSafeServerCode("internal")).toBe(false);
     const safe = errorCopy(error({ kind: "conflict", code: "geofence_has_events", serverMessage: "It has events." }));
     expect(safe.detail).toBe("It has events.");

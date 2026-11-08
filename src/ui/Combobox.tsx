@@ -8,6 +8,8 @@ export interface ComboboxItem {
   label: string;
   /** Secondary line that also participates in the search, e.g. phone and licence. */
   description?: string;
+  /** Optional class for the primary line, e.g. mono for a plate. */
+  labelClassName?: string;
 }
 
 export interface ComboboxProps {
@@ -216,7 +218,7 @@ export function Combobox({
                   isSelected ? "text-accent-fg" : "text-text",
                 )}
               >
-                <span className="font-medium">{item.label}</span>
+                <span className={cn("font-medium", item.labelClassName)}>{item.label}</span>
                 {item.description ? (
                   <span className="text-xs text-muted">{item.description}</span>
                 ) : null}
