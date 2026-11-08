@@ -479,13 +479,13 @@ Below `lg`, the map uses the compact variant: a 2×2 grid of the same four cells
 
 ### 10.6 Drawer (vehicle detail)
 
-- 420px, right side, floating panel: `right-3 top-3 bottom-3`, `--radius-lg`, one border, `--shadow-float`, z-30. It is a non-modal `<aside>` labelled "Vehicle details for {plate}": the map, list and controls stay interactive, focus is not trapped, and Escape is handled explicitly (and does not reach the global shortcut).
-- Header: plate (mono, copy-on-click), status pill, stale badge, close button. Sticky.
+- 420px, right side, floating panel: `right-3 top-3 bottom-3`, `--radius-lg`, one border, `--shadow-float`, z-30. It is a non-modal `<aside>` labelled "Vehicle details for {plate}": the map, list and controls stay interactive, focus is not trapped, and Escape is handled explicitly (and does not reach the global shortcut).- Header: plate (mono, copy-on-click), status pill, stale badge, close button. Sticky.
 - A sticky action row sits under the header: `Centre on map`, `Play back`, `Edit`, `Assign driver`. Disabled actions stay visible and focusable with `aria-disabled` and a tooltip reason.
 - Sections in this order: current state (speed, heading, last seen, online, freshness, coordinates), trip, driver, vehicle details, recent events. Use divider rows, not nested cards.
 - `Esc` closes. Focus moves to the close button on open and returns to the originating row (or the mobile sheet handle) on close.
 - Data refreshes in place without layout shift; changed values get a 600ms background tint (`--accent-soft`) that fades. The tint remounts the value, so it needs no timer and disappears under reduced motion.
 - The write-only device fields show `—` with one line: "Device fields aren't returned by the API."
+- **Page placement** (`placement="page"`): the same non-modal drawer, used by the Alerts detail. At `md+` it is the familiar 420px right panel (`right-3`, `top-3`, `bottom-3`). Below `md` it becomes a bottom sheet anchored at `top-1/4`, leaving the page title and tabs visible; it has no drag handle or snap points. It moves focus to its close button on open, stops Escape before the global shortcut, and returns focus to the originating row. The title uses the UI font rather than the mono plate style.
 
 ### 10.7 Dialog and confirm
 
@@ -516,6 +516,12 @@ Bottom-right, 4s, one line plus an optional action. Success and info auto-dismis
 
 - Live inside the user menu as a labelled group: a segmented theme row (light, dark, system) and four accent swatches. They are menu radio items and do not close the menu on change.
 - The swatch is a small visual inside a full menu row; the row keeps the menu's touch target.
+
+### 10.12 Evidence list
+
+- Free-form evidence renders as a definition list of humanised keys and mono values: numbers keep their units, booleans become Yes/No, nested values are JSON text, and missing values are `—`.
+- UUID-like values are copy-on-click. Nothing in evidence is ever rendered as HTML.
+- Empty evidence says "No evidence recorded." A detail may offer a "Raw JSON" toggle; it renders a scrollable `<pre>` of the stringified object, text only.
 
 ---
 
@@ -589,7 +595,7 @@ Global banner states (below the top bar, 32px, dismissible only when resolved):
 | Screen | Pattern |
 |---|---|
 | Map | Full-bleed map, left list panel, KPI strip, right drawer, app-level map controls. Below `lg` the panel becomes a bottom sheet with peek (113px), half and full snap points; the KPI strip becomes the compact 2×2 grid; fit and geofence controls move into the sheet header. The vehicle detail sheet reuses the same 113px header rhythm: 8px drag band, a 44px plate/status/close row, an 8px gap, a 44px icon-action row, 8px bottom padding and a 1px separator. It defaults to half, the body is inert at peek, and at full it ends 80px below the top bar; closing it returns the list sheet at its previous snap. The sheet header is 113px and always visible: an 8px drag band, a 44px title/count/fit/geofences/filters row, and a 60px search row holding a 44px field with 8px above and below. The header is one opaque `surface` region and the single owner of the header separator: a 1px `border` line as its own bottom border, spanning the sheet's full width. The sheet edges are a non-layout ring and the row dividers share the separator's left and right x; a bottom safe-area inset is reserved inside the sheet so the last row clears it. Only the vehicle list scrolls, inside the sheet with contained overscroll; the header never moves and list scrolling never drags the sheet. At full the sheet ends 80px below the top bar, the KPI is hidden, and tapping that map strip returns to half. The controls stack sits bottom-right and shifts with `--map-inset-bottom` / `--map-inset-right`; above 60% sheet height it fades and goes inert. Vehicle rows are 56px, two lines: status pill, mono plate and data age; driver and speed. The plate is a copy button layered above the row's selection button. The map tooltip shows plate, speed and data age, clamped to the map edge. Attribution is a static link rendered by the feature, never injected from a remote style. |
-| Alerts, Trips, Drivers, Audit | Page title, filter row (selects and search, 32px), dense table, detail in a right drawer, never a separate page |
+| Alerts, Trips, Drivers, Audit | Page title, filter row (selects and search, 32px), dense table, detail in a right drawer, never a separate page. Alerts uses the shared `Drawer` page placement: right panel at `md+`, top-quarter sheet below `md`, always leaving the title and tabs visible. The alert detail's static map is the same `FleetMap`, labelled "Alert position", with the shared attribution chip. |
 | Geofences | Split view: list left (360px), map right with draw tools; unsaved polygon shown with dashed `--accent` stroke |
 | Playback | Map with route, bottom control bar: range selector, play, speed, scrubber, `Resolution: 30s` label from the API |
 | Import | Drop zone with expected headers listed, then a result summary (total, imported, failed) and an error table limited to the first 100 rows |
@@ -639,6 +645,9 @@ const pill = cva("inline-flex h-5 items-center gap-1 rounded-full px-2 text-xs f
 - [ ] Map controls, attribution, KPI, panels and the sheet never overlap at any snap point.
 - [ ] The top bar contains no standalone theme or accent control; appearance lives in the user menu.
 - [ ] The vehicle drawer is non-modal, keeps the map interactive, and returns focus to its origin; disabled actions stay visible with a reason.
+- [ ] The page drawer leaves the page title and tabs visible at every viewport; the Alerts mobile sheet starts at `top-1/4`.
+- [ ] Evidence renders as text, never HTML; raw JSON is a `<pre>`; an acknowledged alert shows its time and no invented actor.
+- [ ] The live-alert pill is a button, not a second live region; the global toast remains the single announcement.
 - [ ] Write-only device fields show `—` with the API limitation, not an empty field pretending to be known.
 - [ ] Reduced-motion respected.
 - [ ] Offline behaviour verified (service worker on, network off).
