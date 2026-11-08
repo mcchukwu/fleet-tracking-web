@@ -201,7 +201,12 @@ export function MapPage() {
     [],
   );
 
-  useDocumentTitle("Map", openAlertCount);
+  useDocumentTitle(
+    "Map",
+    openAlertCount === undefined
+      ? undefined
+      : openAlertCountLabel(openAlertCount, OPEN_ALERT_LIMIT),
+  );
 
   useEffect(() => {
     setMapDebug({ stale });

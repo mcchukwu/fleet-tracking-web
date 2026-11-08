@@ -216,6 +216,17 @@ describe("MapPage", () => {
     await waitFor(() => expect(document.title).toBe("(3) Map · Fleet Console"));
   });
 
+  it("keeps the 500+ cap in the map document title", async () => {
+    mocks.alerts.data = Array.from({ length: 500 }, (_, index) => ({
+      id: `a${index}`,
+      status: "open",
+      occurred_at: now,
+    })) as Alert[];
+
+    renderPage();
+    await waitFor(() => expect(document.title).toBe("(500+) Map · Fleet Console"));
+  });
+
   it("returns focus to the panel toggle after closing the panel", async () => {
     renderPage();
 
