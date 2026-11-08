@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { AlertRule } from "../../../api/types";
 import { alertTypeLabel, isAlertType } from "../../../lib/status";
 import { formatEvidenceValue, humanizeEvidenceKey } from "../../../lib/evidence";
 import { InlineError } from "../../../errors/InlineError";
 import { Button } from "../../../ui/Button";
 import { Checkbox } from "../../../ui/Checkbox";
+import { Tooltip } from "../../../ui/Tooltip";
 import type { RuleWriteError } from "../hooks/useAlertRulesWrite";
 import { AlertRuleConfigForm } from "./AlertRuleConfigForm";
 
@@ -29,6 +30,13 @@ export function AlertRuleRow({
   const [retryAction, setRetryAction] = useState<(() => void) | null>(null);
   const editable = isAlertType(rule.type);
   const hasConfig = Object.keys(rule.config).length > 0;
+  const typeLabel = alertTypeLabel(rule.type);
+  const roleDisabled = Boolean(disabledReason);
+
+  function withReason(node: ReactNode): ReactNode {
+    if (!roleDisabled || node === null) return node;
+    return <Tooltip label={disabledReason ?? ""}>{node}</Tooltip>;
+  }
 
   function toggle(enabled: boolean): void {
     setRetryAction(() => () => onToggle(rule, enabled));
@@ -43,26 +51,40 @@ export function AlertRuleRow({
   return (
     <li className="flex flex-col gap-2 border-b border-border py-3 last:border-0">
       <div className="flex flex-wrap items-center gap-2">
-        <Checkbox
-          label="Enabled"
-          checked={rule.enabled}
-          disabled={Boolean(disabledReason) || pending}
-          onChange={(event) => toggle(event.target.checked)}
-        />
-        <p className="min-w-0 flex-1 text-sm font-medium text-text">
-          {alertTypeLabel(rule.type)}
-        </p>
-        {editable && hasConfig ? (
-          <Button
-            size="sm"
-            variant="ghost"
-            aria-expanded={editing}
-            onClick={() => setEditing((value) => !value)}
-            disabled={Boolean(disabledReason)}
-          >
-            {editing ? "Hide settings" : "Edit settings"}
-          </Button>
-        ) : null}
+        {withReason(
+          <Checkbox
+            label="Enabled"
+            aria-label={`Enable ${typeLabel} rule`}
+            checked={rule.enabled}
+            disabled={pending}
+            aria-disabled={roleDisabled || undefined}
+            onChange={(event) => {
+              if (roleDisabled) return;
+              toggle(event.target.checked);
+            }}
+            className={roleDisabled ? "cursor-not-allowed" : undefined}
+          />,
+        )}
+        <p className="min-w-0 flex-1 text-sm font-medium text-text">{typeLabel}</p>
+        {withReason(
+          editable && hasConfig ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              aria-label={`Edit ${typeLabel} settings`}
+              aria-expanded={editing}
+              aria-disabled={roleDisabled || undefined}
+              disabled={pending}
+              onClick={() => {
+                if (roleDisabled) return;
+                setEditing((value) => !value);
+              }}
+              className={roleDisabled ? "cursor-not-allowed opacity-50" : undefined}
+            >
+              {editing ? "Hide settings" : "Edit settings"}
+            </Button>
+          ) : null,
+        )}
       </div>
 
       {!editable ? (

@@ -20,14 +20,18 @@ describe("AlertAckButton", () => {
   it("acknowledges when enabled", async () => {
     const onAck = vi.fn();
     render(<AlertAckButton alert={alert} pending={false} onAck={onAck} />);
-    await userEvent.click(screen.getByRole("button", { name: "Acknowledge" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Acknowledge alert for LSD-101-AA" }),
+    );
     expect(onAck).toHaveBeenCalledTimes(1);
   });
 
   it("blocks a second submit while pending", async () => {
     const onAck = vi.fn();
     render(<AlertAckButton alert={alert} pending onAck={onAck} />);
-    const button = screen.getByRole("button", { name: "Acknowledge" });
+    const button = screen.getByRole("button", {
+      name: "Acknowledge alert for LSD-101-AA",
+    });
     expect(button).toHaveAttribute("aria-busy", "true");
     await userEvent.click(button);
     expect(onAck).not.toHaveBeenCalled();
@@ -45,7 +49,9 @@ describe("AlertAckButton", () => {
         />
       </TooltipProvider>,
     );
-    const button = screen.getByRole("button", { name: "Acknowledge" });
+    const button = screen.getByRole("button", {
+      name: "Acknowledge alert for LSD-101-AA",
+    });
     expect(button).toHaveAttribute("aria-disabled", "true");
     button.focus();
     expect(button).toHaveFocus();

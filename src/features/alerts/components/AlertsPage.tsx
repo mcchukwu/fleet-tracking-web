@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { OPEN_ALERT_LIMIT, useAlertLookup, useOpenAlerts } from "../../../api/hooks/alerts";
 import { useGeofences } from "../../../api/hooks/geofences";
@@ -18,6 +18,7 @@ import {
   alertTypeOptions,
   emptyReason,
   filterAlerts,
+  filterSignature,
   type AlertFilterValues,
 } from "../lib/filter";
 import { AlertFilters } from "./AlertFilters";
@@ -41,6 +42,7 @@ function AlertsPageContent() {
   const search = useSearch({ from: "/_app/alerts" });
   const navigate = useNavigate();
   const pageRef = useRef<HTMLDivElement>(null);
+  const [ackOrigin, setAckOrigin] = useState<"row" | "detail">("row");
   const { network, lastDataAt } = useConnection();
   const offline = network === "offline";
   const canAck = useCan("ack");
@@ -95,7 +97,13 @@ function AlertsPageContent() {
 
   const openCount = openAlerts.data ? openAlerts.data.length : undefined;
   const openLabel = openAlertCountLabel(openCount, OPEN_ALERT_LIMIT);
+  const openError = openAlerts.error ? normalize(openAlerts.error) : null;
   useDocumentTitle("Alerts", openAlerts.data ? openLabel : undefined);
+
+  const signature = filterSignature(filters);
+  useEffect(() => {
+    pageRef.current?.closest("main")?.scrollTo({ top: 0, behavior: "auto" });
+  }, [signature]);
 
   const closedError = !offline && feed.error ? normalize(feed.error) : null;
   const state: StateBoundaryState =
@@ -199,6 +207,7 @@ function AlertsPageContent() {
   }
 
   async function acknowledge(alert: Alert, origin: "row" | "detail"): Promise<void> {
+    setAckOrigin(origin);
     const index = alerts.findIndex((row) => row.id === alert.id);
     const outcome = await ack.acknowledge(alert);
     if (origin === "row" && (outcome === "acked" || outcome === "already_acked" || outcome === "gone")) {
@@ -219,7 +228,7 @@ function AlertsPageContent() {
   }
 
   function tripFor(alert: Alert): string | null {
-    return alert.trip_id ? alert.trip_id.slice(0, 8) : null;
+    return alert.trip_id ?? null;
   }
 
   return (
@@ -234,6 +243,19 @@ function AlertsPageContent() {
           <p className="text-sm text-muted">
             <span className="tabular-nums">{openLabel}</span> open ·{" "}
             <span className="tabular-nums">{feed.loadedCount}</span> loaded
+            {openError ? (
+              <span className="text-xs">
+                {" "}
+                · Count unavailable ·{" "}
+                <button
+                  type="button"
+                  onClick={() => void openAlerts.refetch()}
+                  className="rounded-sm text-accent-fg underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring"
+                >
+                  Retry
+                </button>
+              </span>
+            ) : null}
           </p>
         </div>
       </header>
@@ -273,7 +295,7 @@ function AlertsPageContent() {
             zoneFor={zoneFor}
             tripFor={tripFor}
             onScrollTopChange={feed.setAtTop}
-            ackError={ack.error}
+            ackError={ackOrigin === "row" ? ack.error : null}
             offline={offline}
             staleLabel={lastDataAt ? formatClockTime(lastDataAt) : undefined}
             forbiddenAction={
@@ -301,6 +323,7 @@ function AlertsPageContent() {
           offline={offline}
           pending={ack.pendingId === selectedId}
           disabledReason={disabledReason}
+          ackError={ackOrigin === "detail" ? ack.error : null}
           onClose={closeAlert}
           onAck={() => {
             if (selectedAlert) void acknowledge(selectedAlert, "detail");

@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Alert } from "../../../api/types";
+import type { Alert, Geofence } from "../../../api/types";
 import { normalize } from "../../../errors/normalize";
 import { ToastProvider } from "../../../ui/Toast";
 import { TooltipProvider } from "../../../ui/Tooltip";
@@ -102,7 +102,9 @@ describe("AlertDetailPanel", () => {
     expect(screen.getByText("Refinery Gate → Ibadan Customer")).toBeVisible();
     expect(screen.getByText("Unknown zone")).toBeVisible();
     expect(screen.getByRole("button", { name: "Raw JSON" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "Acknowledge" })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Acknowledge alert for LSD-101-AA" }),
+    ).toBeVisible();
   });
 
   it("moves focus to close, closes, and returns focus to the origin", async () => {
@@ -121,8 +123,39 @@ describe("AlertDetailPanel", () => {
   it("acknowledges from the detail action", async () => {
     const onAck = vi.fn();
     renderPanel({ onAck });
-    await userEvent.click(screen.getByRole("button", { name: "Acknowledge" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Acknowledge alert for LSD-101-AA" }),
+    );
     expect(onAck).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows an acknowledgement failure inside the detail", async () => {
+    const onAck = vi.fn();
+    renderPanel({
+      onAck,
+      ackError: {
+        alertId: "alert-1",
+        error: normalize(new TypeError("Failed to fetch")),
+        title: "It wasn't saved.",
+        detail: "Try again.",
+      },
+    });
+    expect(screen.getByText("It wasn't saved.")).toBeVisible();
+    await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(onAck).toHaveBeenCalledTimes(1);
+  });
+
+  it("names a known zone even when the position is unavailable", () => {
+    mocks.position.state = { status: "unavailable" };
+    const geofence: Geofence = {
+      id: "gf-1",
+      name: "Lekki Depot",
+      kind: "depot",
+      geometry: { type: "Polygon", coordinates: [[[3.47, 6.43], [3.49, 6.43], [3.47, 6.43]]] },
+    };
+    renderPanel({ geofences: [geofence] });
+    expect(screen.getByText("Lekki Depot")).toBeVisible();
+    expect(screen.queryByText("Unknown zone")).not.toBeInTheDocument();
   });
 
   it("shows the acknowledgement time without inventing an actor", () => {
@@ -134,7 +167,9 @@ describe("AlertDetailPanel", () => {
       },
     });
     expect(screen.getAllByText("Acknowledged")[0]).toBeVisible();
-    expect(screen.queryByRole("button", { name: "Acknowledge" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Acknowledge alert for LSD-101-AA" }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/Demo Dispatcher/)).not.toBeInTheDocument();
   });
 

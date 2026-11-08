@@ -5,6 +5,7 @@ import type { AlertRule } from "../../../api/types";
 import { ApiError } from "../../../errors/types";
 import { normalize } from "../../../errors/normalize";
 import { useConnectionStore } from "../../../stores/connection";
+import { TooltipProvider } from "../../../ui/Tooltip";
 import { AlertRulesPanel } from "./AlertRulesPanel";
 
 const mocks = vi.hoisted(() => ({
@@ -62,9 +63,17 @@ beforeEach(() => {
   useConnectionStore.setState({ network: "online" });
 });
 
+function renderRules() {
+  return render(
+    <TooltipProvider>
+      <AlertRulesPanel />
+    </TooltipProvider>,
+  );
+}
+
 describe("AlertRulesPanel", () => {
   it("lists known and unknown rules", () => {
-    render(<AlertRulesPanel />);
+    renderRules();
     expect(screen.getByText("Speeding")).toBeVisible();
     expect(screen.getByText("Unknown type: solar_flare")).toBeVisible();
     expect(screen.getByText("This rule type has no settings editor.")).toBeVisible();
@@ -72,12 +81,12 @@ describe("AlertRulesPanel", () => {
   });
 
   it("toggles a rule and saves a full config", async () => {
-    render(<AlertRulesPanel />);
-    const enables = screen.getAllByRole("checkbox", { name: "Enabled" });
-    await userEvent.click(enables[0] as HTMLElement);
+    renderRules();
+    const enables = screen.getByRole("checkbox", { name: "Enable Speeding rule" });
+    await userEvent.click(enables);
     expect(mocks.write.toggle).toHaveBeenCalledWith(speeding, false);
 
-    await userEvent.click(screen.getByRole("button", { name: "Edit settings" }));
+    await userEvent.click(screen.getByRole("button", { name: "Edit Speeding settings" }));
     const speed = screen.getByLabelText("Speed kph");
     await userEvent.clear(speed);
     await userEvent.type(speed, "81");
@@ -90,12 +99,23 @@ describe("AlertRulesPanel", () => {
 
   it("disables every control for a role that cannot mutate", () => {
     mocks.canMutate = false;
-    render(<AlertRulesPanel />);
+    renderRules();
     expect(screen.getByText("Your role can't change alert rules.")).toBeVisible();
-    for (const checkbox of screen.getAllByRole("checkbox", { name: "Enabled" })) {
-      expect(checkbox).toBeDisabled();
+    for (const checkbox of screen.getAllByRole("checkbox")) {
+      expect(checkbox).toHaveAttribute("aria-disabled", "true");
     }
-    expect(screen.getByRole("button", { name: "Edit settings" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Edit Speeding settings" }),
+    ).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("explains a role-disabled control with a tooltip", async () => {
+    mocks.canMutate = false;
+    renderRules();
+    await userEvent.hover(screen.getByRole("checkbox", { name: "Enable Speeding rule" }));
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Your role can't change alert rules.",
+    );
   });
 
   it("shows an inline rule error with Retry", () => {
@@ -105,7 +125,7 @@ describe("AlertRulesPanel", () => {
       title: "Couldn't change alert rules",
       detail: "Try again.",
     };
-    render(<AlertRulesPanel />);
+    renderRules();
     expect(screen.getByText("Couldn't change alert rules")).toBeVisible();
     expect(screen.getByRole("button", { name: "Retry" })).toBeVisible();
   });
@@ -113,15 +133,23 @@ describe("AlertRulesPanel", () => {
   it("renders loading, empty and error states", async () => {
     mocks.rules.data = [];
     mocks.rules.isPending = true;
-    const { rerender } = render(<AlertRulesPanel />);
+    const { rerender } = renderRules();
     await waitFor(() => expect(screen.getByLabelText("Loading")).toBeInTheDocument());
 
     mocks.rules.isPending = false;
-    rerender(<AlertRulesPanel />);
+    rerender(
+      <TooltipProvider>
+        <AlertRulesPanel />
+      </TooltipProvider>,
+    );
     expect(screen.getByText("No alert rules configured")).toBeVisible();
 
     mocks.rules.error = normalize(new ApiError(500, "internal", "boom"));
-    rerender(<AlertRulesPanel />);
+    rerender(
+      <TooltipProvider>
+        <AlertRulesPanel />
+      </TooltipProvider>,
+    );
     expect(screen.getByText("Something went wrong on our side")).toBeVisible();
   });
 });

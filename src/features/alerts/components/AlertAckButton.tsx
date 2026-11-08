@@ -30,7 +30,7 @@ export function AlertAckButton({
   const button = (
     <button
       type="button"
-      aria-label={iconOnly ? accessibleName : undefined}
+      aria-label={accessibleName}
       aria-disabled={disabled || undefined}
       aria-busy={pending || undefined}
       onClick={(event) => {

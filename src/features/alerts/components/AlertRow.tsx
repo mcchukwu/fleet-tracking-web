@@ -40,6 +40,8 @@ export function AlertRow({
   const now = useNow();
   const timeTooltip = formatTimeTooltip(alert.occurred_at);
   const relativeTime = formatRelativeTime(alert.occurred_at, now);
+  const ackedTooltip = alert.acked_at ? formatTimeTooltip(alert.acked_at) : null;
+  const canAck = isAlertStatus(alert.status) && alert.status === "open";
 
   return (
     <TR
@@ -61,7 +63,8 @@ export function AlertRow({
           onKeyDown={(event) => {
             if (event.key !== "a") return;
             event.preventDefault();
-            if (!disabledReason && !pending) onAck();
+            if (!canAck || disabledReason || pending) return;
+            onAck();
           }}
           className="-my-2 inline-flex h-touch min-w-touch items-center justify-center rounded-sm text-xs tabular-nums text-muted hover:text-text focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:my-0 md:h-auto md:min-w-0"
         >
@@ -100,7 +103,10 @@ export function AlertRow({
             <Badge tone="neutral">Unknown status: {alert.status}</Badge>
           )}
           {alert.acked_at ? (
-            <span className="text-xs tabular-nums text-muted">
+            <span
+              title={ackedTooltip ?? undefined}
+              className="text-xs tabular-nums text-muted"
+            >
               {formatRelativeTime(alert.acked_at, now)}
             </span>
           ) : null}
@@ -113,19 +119,21 @@ export function AlertRow({
 
       <TD className="hidden lg:table-cell">
         {tripLabel ? (
-          <span className="font-mono text-xs text-muted">{tripLabel}</span>
+          <CopyButton inline value={tripLabel} label="trip id" className="text-xs" />
         ) : (
           <span className="text-xs text-muted">{MISSING}</span>
         )}
       </TD>
 
       <TD className="text-right">
-        <AlertAckButton
-          alert={alert}
-          pending={pending}
-          disabledReason={disabledReason}
-          onAck={onAck}
-        />
+        {canAck ? (
+          <AlertAckButton
+            alert={alert}
+            pending={pending}
+            disabledReason={disabledReason}
+            onAck={onAck}
+          />
+        ) : null}
       </TD>
     </TR>
   );

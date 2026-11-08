@@ -39,6 +39,7 @@ const mocks = vi.hoisted(() => ({
     data: [] as Alert[],
     isPending: false,
     error: null as unknown,
+    refetch: vi.fn(),
   },
   lookup: {
     data: null as Alert | null,
@@ -122,7 +123,10 @@ beforeEach(() => {
   mocks.feed.newCount = 0;
   mocks.ack.acknowledge.mockResolvedValue("acked");
   mocks.ack.pendingId = null;
+  mocks.ack.error = null;
   mocks.openAlerts.data = [alert(), alert({ id: "alert-2" })];
+  mocks.openAlerts.error = null;
+  mocks.openAlerts.refetch.mockReset();
   useConnectionStore.setState({ network: "online", lastDataAt: null });
 });
 
@@ -208,26 +212,64 @@ describe("AlertsPage", () => {
     useConnectionStore.setState({ network: "offline" });
     renderPage();
     expect(screen.getByText(/Stale ·/)).toBeVisible();
-    expect(screen.getByRole("button", { name: "Acknowledge" })).toHaveAttribute(
-      "aria-disabled",
-      "true",
-    );
+    expect(
+      screen.getByRole("button", { name: "Acknowledge alert for LSD-101-AA" }),
+    ).toHaveAttribute("aria-disabled", "true");
   });
 
   it("disables acknowledge for a viewer", () => {
     mocks.canAck = false;
     renderPage();
-    expect(screen.getByRole("button", { name: "Acknowledge" })).toHaveAttribute(
-      "aria-disabled",
-      "true",
-    );
+    expect(
+      screen.getByRole("button", { name: "Acknowledge alert for LSD-101-AA" }),
+    ).toHaveAttribute("aria-disabled", "true");
   });
 
   it("acknowledges from a row", async () => {
     renderPage();
-    await userEvent.click(screen.getByRole("button", { name: "Acknowledge" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Acknowledge alert for LSD-101-AA" }),
+    );
     expect(mocks.ack.acknowledge).toHaveBeenCalledWith(
       expect.objectContaining({ id: "alert-1" }),
     );
+  });
+
+  it("offers a retry when the open count fails", async () => {
+    mocks.openAlerts.data = [];
+    mocks.openAlerts.error = new TypeError("Failed to fetch");
+    renderPage();
+    expect(screen.getByText(/Count unavailable/)).toBeVisible();
+    await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(mocks.openAlerts.refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns the list to the top when the filter signature changes", () => {
+    const main = document.createElement("main");
+    const scrollTo = vi.fn();
+    main.scrollTo = scrollTo;
+    document.body.appendChild(main);
+    const container = document.createElement("div");
+    main.appendChild(container);
+    const { rerender } = render(
+      <TooltipProvider>
+        <ToastProvider>
+          <AlertsPage />
+        </ToastProvider>
+      </TooltipProvider>,
+      { container },
+    );
+    scrollTo.mockClear();
+
+    mocks.search = { status: "open" };
+    rerender(
+      <TooltipProvider>
+        <ToastProvider>
+          <AlertsPage />
+        </ToastProvider>
+      </TooltipProvider>,
+    );
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "auto" });
+    main.remove();
   });
 });

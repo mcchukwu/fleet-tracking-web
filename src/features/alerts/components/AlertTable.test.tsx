@@ -85,10 +85,9 @@ describe("AlertTable", () => {
 
   it("shows a pending row and disables a viewer", async () => {
     const { rerender } = renderTable({ pendingId: "alert-1" });
-    expect(screen.getByRole("button", { name: "Acknowledge" })).toHaveAttribute(
-      "aria-busy",
-      "true",
-    );
+    expect(
+      screen.getByRole("button", { name: "Acknowledge alert for LSD-101-AA" }),
+    ).toHaveAttribute("aria-busy", "true");
 
     rerender(
       <TooltipProvider>
@@ -116,10 +115,37 @@ describe("AlertTable", () => {
         </ToastProvider>
       </TooltipProvider>,
     );
-    expect(screen.getByRole("button", { name: "Acknowledge" })).toHaveAttribute(
-      "aria-disabled",
-      "true",
-    );
+    expect(
+      screen.getByRole("button", { name: "Acknowledge alert for LSD-101-AA" }),
+    ).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("offers acknowledge only on open alerts", () => {
+    for (const status of ["acked", "closed", "pending"]) {
+      const { unmount } = renderTable({ alerts: [alert({ status })] });
+      expect(
+        screen.queryByRole("button", { name: "Acknowledge alert for LSD-101-AA" }),
+      ).not.toBeInTheDocument();
+      unmount();
+    }
+  });
+
+  it("shows the full trip id with copy and tooltips the acknowledged time", () => {
+    const tripId = "d72adc9e-d315-4a84-9c61-41735c005811";
+    renderTable({
+      alerts: [
+        alert({
+          status: "acked",
+          acked_at: "2026-11-02T20:09:00Z",
+        }),
+      ],
+      tripFor: () => tripId,
+    });
+    expect(screen.getByText(tripId)).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: `Copy trip id ${tripId}` }),
+    ).toBeVisible();
+    expect(screen.getAllByTitle(/UTC/)).toHaveLength(2);
   });
 
   it("offers Load more only when a page is full", async () => {

@@ -2,6 +2,7 @@ import { MapPin, Play } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import type { Alert, Geofence } from "../../../api/types";
 import { ErrorState } from "../../../errors/ErrorState";
+import { InlineError } from "../../../errors/InlineError";
 import type { AppError } from "../../../errors/types";
 import { formatCoordinates } from "../../../lib/format";
 import {
@@ -17,7 +18,8 @@ import { Drawer } from "../../../ui/Drawer";
 import { Skeleton } from "../../../ui/StatePanel";
 import { Timestamp } from "../../../ui/Timestamp";
 import { useAlertPosition } from "../hooks/useAlertPosition";
-import { positionSourceLabel } from "../lib/position";
+import type { AckErrorState } from "../hooks/useAlertAck";
+import { geofenceForAlert, positionSourceLabel } from "../lib/position";
 import { replaySearch } from "../lib/replay";
 import { AlertAckButton } from "./AlertAckButton";
 import { AlertEvidenceSection } from "./AlertEvidenceSection";
@@ -34,6 +36,7 @@ export interface AlertDetailPanelProps {
   offline?: boolean;
   pending: boolean;
   disabledReason?: string;
+  ackError?: AckErrorState | null;
   onClose: () => void;
   onAck: () => void;
   onRetryLookup: () => void;
@@ -89,6 +92,7 @@ function ResolvedAlertDetail({
   offline = false,
   pending,
   disabledReason,
+  ackError,
   onClose,
   onAck,
   returnFocus,
@@ -109,10 +113,7 @@ function ResolvedAlertDetail({
   );
 
   const positionState = position.state;
-  const geofence =
-    positionState.status === "evidence" || positionState.status === "history"
-      ? positionState.geofence
-      : null;
+  const geofence = geofenceForAlert(alert.evidence, geofences);
   const geofenceId = alert.evidence.geofence_id;
   const zoneLabel = geofence
     ? geofence.name
@@ -172,6 +173,14 @@ function ResolvedAlertDetail({
       returnFocus={returnFocus}
     >
       <div className="flex flex-col gap-4 p-4">
+        {ackError?.alertId === alert.id ? (
+          <InlineError
+            error={ackError.error}
+            copy={{ title: ackError.title, detail: ackError.detail }}
+            onRetry={disabledReason ? undefined : onAck}
+          />
+        ) : null}
+
         <dl className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-x-3 gap-y-2 text-xs">
           <dt className="text-muted">Plate</dt>
           <dd>
