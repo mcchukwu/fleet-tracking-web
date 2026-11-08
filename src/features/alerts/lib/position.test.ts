@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Geofence, Point } from "../../../api/types";
 import { formatClockTime } from "../../../lib/format";
 import {
+  boundsWithMinimumSpan,
   evidenceCoordinates,
   geofenceForAlert,
   nearestPoint,
@@ -82,6 +83,15 @@ describe("alert position", () => {
 
     const withFence = positionBounds({ lat: 6.45, lon: 3.39 }, geofence);
     expect(withFence).toEqual({ south: 6.43, west: 3.39, north: 6.45, east: 3.49 });
+  });
+
+  it("gives a single point a minimum span and leaves a wider box alone", () => {
+    const pointBounds = boundsWithMinimumSpan({ south: 6.45, west: 3.39, north: 6.45, east: 3.39 });
+    expect(pointBounds.north - pointBounds.south).toBeCloseTo(0.01);
+    expect(pointBounds.east - pointBounds.west).toBeCloseTo(0.01);
+
+    const wide = { south: 6.43, west: 3.39, north: 6.45, east: 3.49 };
+    expect(boundsWithMinimumSpan(wide)).toEqual(wide);
   });
 
   it("labels the position source honestly", () => {

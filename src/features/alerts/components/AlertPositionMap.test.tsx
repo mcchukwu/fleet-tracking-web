@@ -68,6 +68,13 @@ describe("AlertPositionMap", () => {
     expect(screen.getAllByTestId("map-attribution")[0]).toBeVisible();
     await waitFor(() => expect(adapter.vehicles[0]?.label).toBe("LSD-101-AA"));
     await waitFor(() => expect(adapter.geofences[0]?.id).toBe("gf-1"));
+    await waitFor(() => expect(adapter.getViewport().zoom).toBe(10));
+
+    const viewport = adapter.getViewport();
+    expect(viewport.bounds.south).toBeLessThanOrEqual(6.43);
+    expect(viewport.bounds.north).toBeGreaterThanOrEqual(6.45);
+    expect(viewport.bounds.west).toBeLessThanOrEqual(3.39);
+    expect(viewport.bounds.east).toBeGreaterThanOrEqual(3.49);
   });
 
   it("shows loading and unavailable without mounting a map", () => {
@@ -122,5 +129,22 @@ describe("AlertPositionMap", () => {
       </ThemeProvider>,
     );
     expect(screen.getByText("Map isn't available offline")).toBeVisible();
+  });
+
+  it("shows offline instead of a retryable position error", () => {
+    render(
+      <ThemeProvider>
+        <AlertPositionMap
+          alert={alert}
+          state={{ status: "error", error: normalize(new TypeError("Failed to fetch")) }}
+          geofence={null}
+          offline
+          onRetry={() => undefined}
+        />
+      </ThemeProvider>,
+    );
+    expect(screen.getByText("Map isn't available offline")).toBeVisible();
+    expect(screen.queryByText("Can't reach the server")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
   });
 });

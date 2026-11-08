@@ -81,6 +81,18 @@ export function positionBounds(position: Position, geofence: Geofence | null): B
   return { south, west, north, east };
 }
 
+/** A single point has no area; give the camera a small span instead of max zoom. */
+export function boundsWithMinimumSpan(bounds: Bounds, minSpan = 0.01): Bounds {
+  const latPad = Math.max(0, (minSpan - (bounds.north - bounds.south)) / 2);
+  const lonPad = Math.max(0, (minSpan - (bounds.east - bounds.west)) / 2);
+  return {
+    south: bounds.south - latPad,
+    west: bounds.west - lonPad,
+    north: bounds.north + latPad,
+    east: bounds.east + lonPad,
+  };
+}
+
 export type PositionSource = "evidence" | "history";
 
 export function positionSourceLabel(source: PositionSource, at?: string): string {
