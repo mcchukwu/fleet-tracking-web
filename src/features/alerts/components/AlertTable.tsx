@@ -13,6 +13,7 @@ import type { AppError } from "../../../errors/types";
 import { InlineError } from "../../../errors/InlineError";
 import { SlowNotice } from "../../../errors/SlowNotice";
 import { Button } from "../../../ui/Button";
+import { cn } from "../../../ui/cn";
 import { EmptyState, Skeleton } from "../../../ui/StatePanel";
 import { StateBoundary, type StateBoundaryState } from "../../../ui/StateBoundary";
 import { Table, TBody, TH, THead, TR } from "../../../ui/Table";
@@ -22,6 +23,17 @@ import { AlertNewPill } from "./AlertNewPill";
 import { AlertRow } from "./AlertRow";
 
 const COLUMNS = ["Time", "Plate", "Type", "Severity", "Status", "Zone", "Trip", ""] as const;
+
+const COLUMN_CLASSES = [
+  undefined,
+  undefined,
+  undefined,
+  "hidden md:table-cell",
+  undefined,
+  "hidden lg:table-cell",
+  "hidden lg:table-cell",
+  "text-right",
+] as const;
 
 type DisplayRow =
   | { kind: "alert"; alert: Alert }
@@ -51,7 +63,7 @@ function AlertTableSkeleton() {
         <THead>
           <TR>
             {COLUMNS.map((column, index) => (
-              <TH key={`${column}-${index}`} className={index === 7 ? "text-right" : undefined}>
+              <TH key={`${column}-${index}`} className={COLUMN_CLASSES[index]}>
                 {column || <span className="sr-only">Actions</span>}
               </TH>
             ))}
@@ -61,7 +73,10 @@ function AlertTableSkeleton() {
           {Array.from({ length: 6 }).map((_, index) => (
             <TR key={index}>
               {COLUMNS.map((column, columnIndex) => (
-                <td key={`${column}-${columnIndex}`} className="px-3">
+                <td
+                  key={`${column}-${columnIndex}`}
+                  className={cn("px-3", COLUMN_CLASSES[columnIndex])}
+                >
                   <Skeleton className="h-3 w-full max-w-24" />
                 </td>
               ))}

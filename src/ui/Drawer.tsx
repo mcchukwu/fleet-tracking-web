@@ -89,7 +89,7 @@ export function Drawer({
         "z-30 flex flex-col overflow-hidden border border-border bg-surface text-text shadow-float",
         placement === "map"
           ? "absolute bottom-3 right-3 top-3 w-drawer max-w-full rounded-lg"
-          : "fixed inset-x-0 bottom-0 top-1/4 rounded-t-lg md:inset-x-auto md:bottom-3 md:right-3 md:top-15 md:w-drawer md:max-w-full md:rounded-lg",
+          : "fixed inset-x-0 bottom-0 top-1/4 rounded-t-lg md:inset-x-auto md:bottom-3 md:right-3 md:top-topbar-offset md:w-drawer md:max-w-full md:rounded-lg",
         className,
       )}
     >

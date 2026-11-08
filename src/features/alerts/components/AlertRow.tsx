@@ -51,8 +51,7 @@ export function AlertRow({
     <TR
       ref={measureRef}
       data-index={dataIndex}
-      selected={highlighted}
-      className={cn("cursor-pointer", highlighted && "value-flash")}
+      className={cn("group cursor-pointer", highlighted && "value-flash bg-accent-soft")}
       onClick={(event) => {
         if ((event.target as HTMLElement).closest("button, a")) return;
         onOpen();
@@ -131,7 +130,7 @@ export function AlertRow({
         )}
       </TD>
 
-      <TD className="text-right">
+      <TD className="text-right opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
         {canAck ? (
           <AlertAckButton
             alert={alert}

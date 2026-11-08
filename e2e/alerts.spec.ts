@@ -104,6 +104,7 @@ test.describe("alerts", () => {
       page.getByText("Try a different search or clear the filters."),
     ).toBeVisible();
     await captureForReview(page, "04-alerts-empty");
+    await expectNoAxeViolations(page);
     await page.getByRole("button", { name: "Clear filters" }).click();
     await expect(page.getByTestId("alerts-page")).toContainText("10 loaded");
   });
@@ -129,6 +130,8 @@ test.describe("alerts", () => {
     await expect(page.getByTestId("alerts-page")).toContainText("500 loaded", {
       timeout: 10_000,
     });
+    const renderedRows = await page.getByRole("row").count();
+    expect(renderedRows).toBeLessThan(100);
     await page.getByRole("button", { name: "Load more" }).click();
     await expect(page.getByTestId("alerts-page")).toContainText("510 loaded");
   });
@@ -222,7 +225,7 @@ test.describe("alerts", () => {
   test("acknowledges from a row and removes it from the open filter", async ({ page }) => {
     await gotoAlerts(page, "status=open");
     const target = row(page, "LSD-102-AA", "Geofence exit");
-    await target.getByRole("button", { name: "Acknowledge" }).click();
+    await target.getByRole("button", { name: /Acknowledge alert for LSD-102-AA/ }).click();
 
     await expect(page.getByText("Acknowledged.").first()).toBeVisible();
     await expect(target).toHaveCount(0);
@@ -241,7 +244,7 @@ test.describe("alerts", () => {
   test("a viewer cannot acknowledge", async ({ page }) => {
     await setRole(page, "viewer");
     await gotoAlerts(page);
-    const ack = row(page, "LSD-102-AA", "Geofence exit").getByRole("button", { name: "Acknowledge" });
+    const ack = row(page, "LSD-102-AA", "Geofence exit").getByRole("button", { name: /Acknowledge alert for LSD-102-AA/ });
     await expect(ack).toHaveAttribute("aria-disabled", "true");
     await ack.click({ force: true });
     const writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
@@ -251,7 +254,7 @@ test.describe("alerts", () => {
   test("security can acknowledge", async ({ page }) => {
     await setRole(page, "security");
     await gotoAlerts(page);
-    await row(page, "LSD-102-AA", "Geofence exit").getByRole("button", { name: "Acknowledge" }).click();
+    await row(page, "LSD-102-AA", "Geofence exit").getByRole("button", { name: /Acknowledge alert for LSD-102-AA/ }).click();
     await expect(page.getByText("Acknowledged.").first()).toBeVisible();
   });
 
@@ -261,7 +264,7 @@ test.describe("alerts", () => {
       await fetch(`/api/v1/alerts/${id}/ack`, { method: "POST" });
     }, GEOFENCE_EXIT);
 
-    await row(page, "LSD-102-AA", "Geofence exit").getByRole("button", { name: "Acknowledge" }).click();
+    await row(page, "LSD-102-AA", "Geofence exit").getByRole("button", { name: /Acknowledge alert for LSD-102-AA/ }).click();
     await expect(
       page.getByText("This alert was acknowledged elsewhere.", { exact: true }),
     ).toBeVisible({
@@ -280,13 +283,14 @@ test.describe("alerts", () => {
     await expect(page.getByText("Unknown type: solar_flare")).toBeVisible();
     await expect(page.getByText("This rule type has no settings editor.")).toBeVisible();
     await captureForReview(page, "04-alerts-rules");
+    await expectNoAxeViolations(page);
 
-    await speeding.getByRole("checkbox", { name: "Enabled" }).click();
+    await speeding.getByRole("checkbox", { name: "Enable Speeding rule" }).click();
     await expect(page.getByText("Alert rule updated.").first()).toBeVisible();
     let writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
     expect(writes.at(-1)?.body).toEqual({ enabled: false });
 
-    await speeding.getByRole("button", { name: "Edit settings" }).click();
+    await speeding.getByRole("button", { name: "Edit Speeding settings" }).click();
     await speeding.getByLabel("Speed kph").fill("81");
     await speeding.getByRole("button", { name: "Save settings" }).click();
     await expect(page.getByText("Alert rule updated.").first()).toBeVisible();
@@ -308,9 +312,20 @@ test.describe("alerts", () => {
     await expect(page.getByText("Your role can't change alert rules.").first()).toBeVisible();
     const enabled = page.getByRole("listitem").filter({ hasText: "Speeding" }).getByRole(
       "checkbox",
-      { name: "Enabled" },
+      { name: "Enable Speeding rule" },
     );
     await expect(enabled).toBeDisabled();
+  });
+
+  test("the detail panel starts below the top bar on desktop", async ({ page }) => {
+    test.skip(isMobile(page), "desktop-only layout");
+    await gotoAlerts(page, `alert=${GEOFENCE_EXIT}`);
+    const drawer = page.getByRole("complementary", { name: "Alert details" });
+    await expect(drawer).toBeVisible();
+    const box = await drawer.boundingBox();
+    if (!box) throw new Error("missing drawer box");
+    expect(box.y).toBeGreaterThanOrEqual(59);
+    expect(box.y).toBeLessThanOrEqual(61);
   });
 
   test("the detail is a top-quarter sheet on mobile and leaves the title visible", async ({

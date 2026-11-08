@@ -2,6 +2,8 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import { captureForReview, expectNoAxeViolations, expectNoHorizontalScroll } from "./helpers";
 
+const ROUTE_DEVIATION = "ac1a223c-f9b0-46f3-9ead-13a10bfd6389";
+
 async function gotoFault(page: Page, fault: string, extra = ""): Promise<void> {
   await page.goto(
     `/alerts?map=fake&fault=${encodeURIComponent(fault)}${extra ? `&${extra}` : ""}`,
@@ -73,10 +75,11 @@ test.describe("alerts faults", () => {
     await context.setOffline(true);
     await expect(page.getByText("You're offline", { exact: false }).first()).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Acknowledge" }).first(),
+      page.getByRole("button", { name: /Acknowledge alert for/ }).first(),
     ).toHaveAttribute("aria-disabled", "true");
     await expect(page.getByText(/Stale ·/)).toBeVisible();
     await captureForReview(page, "04-alerts-offline");
+    await expectNoAxeViolations(page);
     await context.setOffline(false);
   });
 
@@ -142,13 +145,90 @@ test.describe("alerts faults", () => {
       .getByRole("row")
       .filter({ hasText: "LSD-102-AA" })
       .filter({ hasText: "Geofence exit" })
-      .getByRole("button", { name: "Acknowledge" })
+      .getByRole("button", { name: /Acknowledge alert for/ })
       .click();
 
     await expect(page.getByText("It wasn't saved.")).toBeVisible({ timeout: 40_000 });
     await expect(page.getByRole("alert").filter({ hasText: "It wasn't saved." })).toBeVisible();
     const writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
     expect(writes).toHaveLength(0);
+  });
+
+  test("a rules query failure shows a region error and Retry", async ({ page }) => {
+    await gotoFault(page, "alert-rules:server", "tab=rules");
+    await expect(page.getByText("Something went wrong on our side").first()).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByRole("button", { name: "Retry" }).first()).toBeVisible();
+    await captureForReview(page, "04-alerts-rules-error");
+    await expectNoAxeViolations(page);
+  });
+
+  test("a lost rule write reports that it was not saved", async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.goto("/alerts?map=fake&tab=rules");
+    const speeding = page.getByRole("listitem").filter({ hasText: "Speeding" });
+    await expect(speeding).toBeVisible();
+
+    await page.evaluate(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("fault", "alert-rules-patch:lost");
+      history.replaceState({}, "", `${url.pathname}${url.search}`);
+    });
+
+    await speeding.getByRole("checkbox", { name: "Enable Speeding rule" }).click();
+    await expect(page.getByText("It wasn't saved. Try again.")).toBeVisible({
+      timeout: 40_000,
+    });
+    const writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
+    expect(writes).toHaveLength(0);
+  });
+
+  test("a history failure keeps the detail readable and offers Retry", async ({ page }) => {
+    await page.goto(
+      `/alerts?map=fake&fault=${encodeURIComponent("vehicle-history:server")}&alert=${ROUTE_DEVIATION}`,
+    );
+    const drawer = page.getByRole("complementary", { name: "Alert details" });
+    await expect(drawer).toBeVisible();
+    await expect(drawer.getByText("Position unavailable")).toBeVisible({ timeout: 15_000 });
+    await expect(drawer.getByRole("button", { name: "Retry" }).first()).toBeVisible();
+    await captureForReview(page, "04-alerts-position-error");
+    await expectNoAxeViolations(page);
+  });
+
+  test("a trip lookup failure stays inside the trip section", async ({ page }) => {
+    await page.goto(
+      `/alerts?map=fake&fault=${encodeURIComponent("trips:server")}&alert=${ROUTE_DEVIATION}`,
+    );
+    const drawer = page.getByRole("complementary", { name: "Alert details" });
+    await expect(drawer).toBeVisible();
+    await expect(drawer.getByRole("heading", { name: "Route deviation" })).toBeVisible();
+    await expect(
+      drawer.getByText("Something went wrong on our side").first(),
+    ).toBeVisible({ timeout: 15_000 });
+    await captureForReview(page, "04-alerts-trip-error");
+    await expectNoAxeViolations(page);
+  });
+
+  test("the pending acknowledge state passes axe", async ({ page }) => {
+    test.setTimeout(30_000);
+    await page.goto("/alerts?map=fake");
+    await expect(page.getByLabel("Copy plate LSD-102-AA").first()).toBeVisible();
+
+    await page.evaluate(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("fault", "alerts-post:slow");
+      history.replaceState({}, "", `${url.pathname}${url.search}`);
+    });
+
+    const ack = page
+      .getByRole("row")
+      .filter({ hasText: "LSD-102-AA" })
+      .filter({ hasText: "Geofence exit" })
+      .getByRole("button", { name: /Acknowledge alert for/ });
+    await ack.click();
+    await expect(ack).toHaveAttribute("aria-busy", "true");
+    await expectNoAxeViolations(page);
   });
 
   test("a render crash is contained by the route boundary", async ({ page }) => {

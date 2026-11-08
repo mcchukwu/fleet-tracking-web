@@ -16,14 +16,6 @@ export function flattenPages(pages: readonly (readonly Alert[])[]): Alert[] {
   return sortNewestFirst([...byId.values()]);
 }
 
-export function nextOffsetFor(
-  pageCount: number,
-  lastPageLength: number,
-  pageSize: number,
-): number | null {
-  return lastPageLength === pageSize ? pageCount * pageSize : null;
-}
-
 function occurredAt(alert: Alert): number {
   const at = Date.parse(alert.occurred_at);
   return Number.isNaN(at) ? -Infinity : at;

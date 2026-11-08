@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Alert } from "../../../api/types";
-import { flattenPages, nextFeedView, nextOffsetFor } from "./feed";
+import { flattenPages, nextFeedView } from "./feed";
 
 function alert(id: string, occurred = "2026-11-02T12:00:00Z"): Alert {
   return {
@@ -22,11 +22,6 @@ describe("alert feed", () => {
       [alert("b", "2026-11-02T10:00:00Z"), alert("c", "2026-11-02T11:00:00Z")],
     ]);
     expect(flat.map((row) => row.id)).toEqual(["a", "c", "b"]);
-  });
-
-  it("asks for another page only when the last page is full", () => {
-    expect(nextOffsetFor(1, 500, 500)).toBe(500);
-    expect(nextOffsetFor(2, 10, 500)).toBeNull();
   });
 
   it("renders new head rows immediately when the list is at the top", () => {

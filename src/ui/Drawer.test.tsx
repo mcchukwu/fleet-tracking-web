@@ -105,7 +105,7 @@ describe("Drawer", () => {
     const panel = screen.getByRole("complementary", { name: "Alert details" });
     expect(panel).toHaveAttribute("data-placement", "page");
     expect(panel).toHaveClass("fixed", "top-1/4", "rounded-t-lg");
-    expect(panel).toHaveClass("md:top-15", "md:rounded-lg");
+    expect(panel).toHaveClass("md:top-topbar-offset", "md:rounded-lg");
     expect(screen.getByRole("button", { name: "Close alert details" })).toHaveFocus();
 
     await user.keyboard("{Escape}");

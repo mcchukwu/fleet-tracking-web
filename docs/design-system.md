@@ -252,7 +252,7 @@ Neutrals are the zinc scale. One accent. Status colours carry meaning and are us
 
 Nested actions inside a 56px vehicle row keep a 24px visual line but still offer the 44px touch target: the action grows symmetrically and negative vertical margins keep its layout contribution at one text line. The row's 56px selection button remains the primary target.
 
-Shell and dialog sizes are tokens: `--spacing-touch: 44px`, `--spacing-rail-expanded: 200px`, `--container-dialog: 480px`, `--container-content: 1440px`. Use `size-touch`/`h-touch` below `md`, `max-w-dialog` for dialogs and `max-w-content` for non-map page content.
+Shell and dialog sizes are tokens: `--spacing-touch: 44px`, `--spacing-rail-expanded: 200px`, `--spacing-topbar-offset: 60px` (48px top bar + 12px gap), `--container-dialog: 480px`, `--container-content: 1440px`. Use `size-touch`/`h-touch` below `md`, `max-w-dialog` for dialogs and `max-w-content` for non-map page content.
 
 ### 5.2 App layout
 
@@ -479,13 +479,14 @@ Below `lg`, the map uses the compact variant: a 2×2 grid of the same four cells
 
 ### 10.6 Drawer (vehicle detail)
 
-- 420px, right side, floating panel: `right-3 top-3 bottom-3`, `--radius-lg`, one border, `--shadow-float`, z-30. It is a non-modal `<aside>` labelled "Vehicle details for {plate}": the map, list and controls stay interactive, focus is not trapped, and Escape is handled explicitly (and does not reach the global shortcut).- Header: plate (mono, copy-on-click), status pill, stale badge, close button. Sticky.
+- 420px, right side, floating panel: `right-3 top-3 bottom-3`, `--radius-lg`, one border, `--shadow-float`, z-30. It is a non-modal `<aside>` labelled "Vehicle details for {plate}": the map, list and controls stay interactive, focus is not trapped, and Escape is handled explicitly (and does not reach the global shortcut).
+- Header: plate (mono, copy-on-click), status pill, stale badge, close button. Sticky.
 - A sticky action row sits under the header: `Centre on map`, `Play back`, `Edit`, `Assign driver`. Disabled actions stay visible and focusable with `aria-disabled` and a tooltip reason.
 - Sections in this order: current state (speed, heading, last seen, online, freshness, coordinates), trip, driver, vehicle details, recent events. Use divider rows, not nested cards.
 - `Esc` closes. Focus moves to the close button on open and returns to the originating row (or the mobile sheet handle) on close.
 - Data refreshes in place without layout shift; changed values get a 600ms background tint (`--accent-soft`) that fades. The tint remounts the value, so it needs no timer and disappears under reduced motion.
 - The write-only device fields show `—` with one line: "Device fields aren't returned by the API."
-- **Page placement** (`placement="page"`): the same non-modal drawer, used by the Alerts detail. At `md+` it is the familiar 420px right panel (`right-3`, `top-3`, `bottom-3`). Below `md` it becomes a bottom sheet anchored at `top-1/4`, leaving the page title and tabs visible; it has no drag handle or snap points. It moves focus to its close button on open, stops Escape before the global shortcut, and returns focus to the originating row. The title uses the UI font rather than the mono plate style.
+- **Page placement** (`placement="page"`): the same non-modal drawer, used by the Alerts detail. At `md+` it is the familiar 420px right panel (`right-3`, `top-topbar-offset`, `bottom-3`), where `--spacing-topbar-offset` is the 48px top bar plus a 12px gap. Below `md` it becomes a bottom sheet anchored at `top-1/4`, leaving the page title and tabs visible; it has no drag handle or snap points. It moves focus to its close button on open, stops Escape before the global shortcut, and returns focus to the originating row. The title uses the UI font rather than the mono plate style.
 
 ### 10.7 Dialog and confirm
 

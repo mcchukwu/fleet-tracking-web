@@ -59,6 +59,13 @@ describe("AlertTable", () => {
     expect(screen.getByText("—")).toBeVisible();
   });
 
+  it("highlights a new row without claiming it is selected", () => {
+    renderTable({ highlightIds: new Set(["alert-1"]) });
+    const row = screen.getByText("LSD-101-AA").closest("tr");
+    expect(row).toHaveClass("value-flash");
+    expect(row).not.toHaveAttribute("aria-selected");
+  });
+
   it("keeps unknown enums as neutral rows", () => {
     renderTable({
       alerts: [alert({ type: "solar_flare", severity: "extreme", status: "pending" })],
