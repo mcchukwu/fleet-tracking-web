@@ -32,7 +32,9 @@ test.describe("alerts faults", () => {
 
     await clearFault(page);
     await page.getByRole("button", { name: "Retry" }).first().click();
-    await expect(page.getByText("LSD-102-AA")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByLabel("Copy plate LSD-102-AA").first()).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
   test("a refresh error keeps the cached rows and labels them", async ({
@@ -40,7 +42,7 @@ test.describe("alerts faults", () => {
     liveSocket,
   }) => {
     await page.goto("/alerts?map=fake");
-    await expect(page.getByText("LSD-102-AA")).toBeVisible();
+    await expect(page.getByLabel("Copy plate LSD-102-AA").first()).toBeVisible();
     await liveSocket.wait();
 
     await page.evaluate(() => {
@@ -57,7 +59,7 @@ test.describe("alerts faults", () => {
     });
 
     await expect(page.getByText("Couldn't refresh")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText("LSD-102-AA")).toBeVisible();
+    await expect(page.getByLabel("Copy plate LSD-102-AA").first()).toBeVisible();
     await captureForReview(page, "04-alerts-stale-error");
   });
 
@@ -66,7 +68,7 @@ test.describe("alerts faults", () => {
     context,
   }) => {
     await page.goto("/alerts?map=fake");
-    await expect(page.getByText("LSD-102-AA")).toBeVisible();
+    await expect(page.getByLabel("Copy plate LSD-102-AA").first()).toBeVisible();
 
     await context.setOffline(true);
     await expect(page.getByText("You're offline", { exact: false }).first()).toBeVisible();
@@ -107,7 +109,7 @@ test.describe("alerts faults", () => {
 
   test("an unknown alert enum renders the neutral fallback", async ({ page }) => {
     await gotoFault(page, "alerts:unknown_enum");
-    await expect(page.getByText("Unknown type: solar_flare")).toBeVisible();
+    await expect(page.getByRole("cell", { name: "Unknown type: solar_flare" })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "Plate" })).toBeVisible();
   });
 
@@ -129,7 +131,7 @@ test.describe("alerts faults", () => {
   }) => {
     test.setTimeout(60_000);
     await page.goto("/alerts?map=fake");
-    await expect(page.getByText("LSD-102-AA")).toBeVisible();
+    await expect(page.getByLabel("Copy plate LSD-102-AA").first()).toBeVisible();
     await page.evaluate(() => {
       const url = new URL(window.location.href);
       url.searchParams.set("fault", "alerts-post:lost");
@@ -139,6 +141,7 @@ test.describe("alerts faults", () => {
     await page
       .getByRole("row")
       .filter({ hasText: "LSD-102-AA" })
+      .filter({ hasText: "Geofence exit" })
       .getByRole("button", { name: "Acknowledge" })
       .click();
 
@@ -151,7 +154,7 @@ test.describe("alerts faults", () => {
   test("a render crash is contained by the route boundary", async ({ page }) => {
     await page.goto("/alerts?map=fake&crash=alerts");
     await expect(page.getByText("This part of the page stopped working")).toBeVisible();
-    await expect(page.getByRole("navigation")).toBeVisible();
+    await expect(page.getByRole("banner")).toBeVisible();
     await expectNoHorizontalScroll(page);
     await captureForReview(page, "04-alerts-crash");
   });

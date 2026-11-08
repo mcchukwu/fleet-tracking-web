@@ -178,4 +178,21 @@ describe("AlertTable", () => {
     const table = screen.getByRole("table");
     expect(within(table).getByText("LSD-101-AA")).toBeVisible();
   });
+
+  it("shows the full region error when no rows are cached", () => {
+    renderTable({
+      alerts: [],
+      state: "error",
+      error: {
+        kind: "server",
+        retryable: true,
+        outcome: "failed",
+        context: { route: "/alerts" },
+        at: 0,
+      },
+    });
+    expect(screen.getByText("Something went wrong on our side")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeVisible();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
 });

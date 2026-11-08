@@ -39,6 +39,7 @@ export function AlertRow({
 }: AlertRowProps) {
   const now = useNow();
   const timeTooltip = formatTimeTooltip(alert.occurred_at);
+  const relativeTime = formatRelativeTime(alert.occurred_at, now);
 
   return (
     <TR
@@ -54,7 +55,7 @@ export function AlertRow({
           type="button"
           data-alert-row
           data-alert-id={alert.id}
-          aria-label={`Open alert for ${alert.plate}, ${timeTooltip}`}
+          aria-label={`Open alert for ${alert.plate}, ${relativeTime}, ${timeTooltip}`}
           title={timeTooltip}
           onClick={onOpen}
           onKeyDown={(event) => {
@@ -62,9 +63,9 @@ export function AlertRow({
             event.preventDefault();
             if (!disabledReason && !pending) onAck();
           }}
-          className="-my-2 inline-flex h-touch items-center rounded-sm text-xs tabular-nums text-muted hover:text-text focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:my-0 md:h-auto"
+          className="-my-2 inline-flex h-touch min-w-touch items-center justify-center rounded-sm text-xs tabular-nums text-muted hover:text-text focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:my-0 md:h-auto md:min-w-0"
         >
-          <time dateTime={alert.occurred_at}>{formatRelativeTime(alert.occurred_at, now)}</time>
+          <time dateTime={alert.occurred_at}>{relativeTime}</time>
         </button>
       </TD>
 
@@ -92,11 +93,18 @@ export function AlertRow({
       </TD>
 
       <TD>
-        {isAlertStatus(alert.status) ? (
-          <AlertStatusBadge status={alert.status} />
-        ) : (
-          <Badge tone="neutral">Unknown status: {alert.status}</Badge>
-        )}
+        <span className="inline-flex flex-wrap items-center gap-1">
+          {isAlertStatus(alert.status) ? (
+            <AlertStatusBadge status={alert.status} />
+          ) : (
+            <Badge tone="neutral">Unknown status: {alert.status}</Badge>
+          )}
+          {alert.acked_at ? (
+            <span className="text-xs text-muted">
+              {formatRelativeTime(alert.acked_at, now)}
+            </span>
+          ) : null}
+        </span>
       </TD>
 
       <TD className="hidden lg:table-cell">

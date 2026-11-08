@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef } from "react";
+import { Fragment, useEffect, useRef, type ReactNode } from "react";
 import type { Alert } from "../../../api/types";
 import type { AppError } from "../../../errors/types";
 import { SlowNotice } from "../../../errors/SlowNotice";
@@ -67,6 +67,7 @@ export interface AlertTableProps {
   ackError?: AckErrorState | null;
   offline?: boolean;
   staleLabel?: string;
+  forbiddenAction?: ReactNode;
 }
 
 export function AlertTable({
@@ -93,6 +94,7 @@ export function AlertTable({
   ackError = null,
   offline = false,
   staleLabel,
+  forbiddenAction,
 }: AlertTableProps) {
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -150,66 +152,66 @@ export function AlertTable({
       }
       empty={empty}
       staleLabel={staleLabel}
+      forbiddenAction={forbiddenAction}
       className="min-h-48"
     >
-      <div
-        ref={rootRef}
-        className="relative"
-      >
-        <Table>
-          <THead>
-            <TR>
-              <TH>Time</TH>
-              <TH>Plate</TH>
-              <TH>Type</TH>
-              <TH className="hidden md:table-cell">Severity</TH>
-              <TH>Status</TH>
-              <TH className="hidden lg:table-cell">Zone</TH>
-              <TH className="hidden lg:table-cell">Trip</TH>
-              <TH className="text-right">
-                <span className="sr-only">Actions</span>
-              </TH>
-            </TR>
-          </THead>
-          <TBody>
-            {alerts.map((alert) => (
-              <Fragment key={alert.id}>
-                <AlertRow
-                  alert={alert}
-                  zoneLabel={zoneFor(alert)}
-                  tripLabel={tripFor(alert)}
-                  onOpen={() => onOpen(alert.id)}
-                  onAck={() => onAck(alert)}
-                  pending={pendingId === alert.id}
-                  disabledReason={disabledReason}
-                  highlighted={highlightIds.has(alert.id)}
-                />
-                {ackError?.alertId === alert.id ? (
-                  <tr>
-                    <td colSpan={COLUMNS.length} className="border-b border-border px-3 py-2">
-                      <InlineError
-                        error={ackError.error}
-                        copy={{ title: ackError.title, detail: ackError.detail }}
-                        onRetry={() => onAck(alert)}
-                      />
-                    </td>
-                  </tr>
-                ) : null}
-              </Fragment>
-            ))}
-          </TBody>
-        </Table>
+      {state === "error" && alerts.length === 0 ? null : (
+        <div ref={rootRef} className="relative">
+          <Table>
+            <THead>
+              <TR>
+                <TH>Time</TH>
+                <TH>Plate</TH>
+                <TH>Type</TH>
+                <TH className="hidden md:table-cell">Severity</TH>
+                <TH>Status</TH>
+                <TH className="hidden lg:table-cell">Zone</TH>
+                <TH className="hidden lg:table-cell">Trip</TH>
+                <TH className="text-right">
+                  <span className="sr-only">Actions</span>
+                </TH>
+              </TR>
+            </THead>
+            <TBody>
+              {alerts.map((alert) => (
+                <Fragment key={alert.id}>
+                  <AlertRow
+                    alert={alert}
+                    zoneLabel={zoneFor(alert)}
+                    tripLabel={tripFor(alert)}
+                    onOpen={() => onOpen(alert.id)}
+                    onAck={() => onAck(alert)}
+                    pending={pendingId === alert.id}
+                    disabledReason={disabledReason}
+                    highlighted={highlightIds.has(alert.id)}
+                  />
+                  {ackError?.alertId === alert.id ? (
+                    <tr>
+                      <td colSpan={COLUMNS.length} className="border-b border-border px-3 py-2">
+                        <InlineError
+                          error={ackError.error}
+                          copy={{ title: ackError.title, detail: ackError.detail }}
+                          onRetry={() => onAck(alert)}
+                        />
+                      </td>
+                    </tr>
+                  ) : null}
+                </Fragment>
+              ))}
+            </TBody>
+          </Table>
 
-        {hasMore ? (
-          <div className="flex justify-center py-3">
-            <Button size="sm" onClick={onLoadMore} loading={loadingMore}>
-              Load more
-            </Button>
-          </div>
-        ) : null}
+          {hasMore ? (
+            <div className="flex justify-center py-3">
+              <Button size="sm" onClick={onLoadMore} loading={loadingMore}>
+                Load more
+              </Button>
+            </div>
+          ) : null}
 
-        <AlertNewPill count={newCount} onReveal={onRevealNew} />
-      </div>
+          <AlertNewPill count={newCount} onReveal={onRevealNew} />
+        </div>
+      )}
     </StateBoundary>
   );
 }

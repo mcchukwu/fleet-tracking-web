@@ -1,5 +1,5 @@
 import { useMemo, useRef } from "react";
-import { useNavigate, useSearch } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { OPEN_ALERT_LIMIT, useAlertLookup, useOpenAlerts } from "../../../api/hooks/alerts";
 import { useGeofences } from "../../../api/hooks/geofences";
 import type { Alert } from "../../../api/types";
@@ -158,6 +158,9 @@ function AlertsPageContent() {
       tab: value === "rules" ? "rules" : undefined,
       alert: undefined,
     });
+    setTimeout(() => {
+      document.querySelector<HTMLElement>('[role="tab"][data-state="active"]')?.focus();
+    }, 0);
   }
 
   function openAlert(id: string): void {
@@ -195,10 +198,10 @@ function AlertsPageContent() {
     }, 0);
   }
 
-  async function acknowledge(alert: Alert): Promise<void> {
+  async function acknowledge(alert: Alert, origin: "row" | "detail"): Promise<void> {
     const index = alerts.findIndex((row) => row.id === alert.id);
     const outcome = await ack.acknowledge(alert);
-    if (outcome === "acked" || outcome === "already_acked" || outcome === "gone") {
+    if (origin === "row" && (outcome === "acked" || outcome === "already_acked" || outcome === "gone")) {
       focusAfterAck(index);
     }
   }
@@ -256,7 +259,7 @@ function AlertsPageContent() {
             onRetry={feed.refetch}
             onCancelLoading={feed.cancel}
             onOpen={openAlert}
-            onAck={(alert) => void acknowledge(alert)}
+            onAck={(alert) => void acknowledge(alert, "row")}
             pendingId={ack.pendingId}
             disabledReason={disabledReason}
             hasMore={feed.hasMore}
@@ -273,6 +276,14 @@ function AlertsPageContent() {
             ackError={ack.error}
             offline={offline}
             staleLabel={lastDataAt ? formatClockTime(lastDataAt) : undefined}
+            forbiddenAction={
+              <Link
+                to="/map"
+                className="inline-flex h-touch items-center text-sm font-medium text-accent-fg underline-offset-4 hover:underline md:h-control-md"
+              >
+                Go back
+              </Link>
+            }
           />
         </TabsContent>
 
@@ -292,7 +303,7 @@ function AlertsPageContent() {
           disabledReason={disabledReason}
           onClose={closeAlert}
           onAck={() => {
-            if (selectedAlert) void acknowledge(selectedAlert);
+            if (selectedAlert) void acknowledge(selectedAlert, "detail");
           }}
           onRetryLookup={() => void lookup.refetch()}
           returnFocus={() => focusRow(selectedId)}

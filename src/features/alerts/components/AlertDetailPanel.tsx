@@ -113,6 +113,12 @@ function ResolvedAlertDetail({
     positionState.status === "evidence" || positionState.status === "history"
       ? positionState.geofence
       : null;
+  const geofenceId = alert.evidence.geofence_id;
+  const zoneLabel = geofence
+    ? geofence.name
+    : typeof geofenceId === "string"
+      ? "Unknown zone"
+      : "—";
 
   return (
     <Drawer
@@ -174,7 +180,12 @@ function ResolvedAlertDetail({
 
           <dt className="text-muted">Alert id</dt>
           <dd className="min-w-0">
-            <CopyButton inline value={alert.id} label="alert id" className="text-xs" />
+            <CopyButton
+              inline
+              value={alert.id}
+              label="alert id"
+              className="text-xs break-all"
+            />
           </dd>
 
           <dt className="text-muted">Occurred</dt>
@@ -197,9 +208,7 @@ function ResolvedAlertDetail({
           </dd>
 
           <dt className="text-muted">Zone</dt>
-          <dd className="text-text">
-            {geofence ? geofence.name : "—"}
-          </dd>
+          <dd className="text-text">{zoneLabel}</dd>
         </dl>
 
         <section aria-labelledby="alert-position-heading" className="flex flex-col gap-2">

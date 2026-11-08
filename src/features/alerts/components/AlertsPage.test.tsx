@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Alert } from "../../../api/types";
 import { useConnectionStore } from "../../../stores/connection";
@@ -55,6 +56,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@tanstack/react-router", () => ({
   useSearch: () => mocks.search,
   useNavigate: () => mocks.navigate,
+  Link: ({ to, children }: { to: string; children: ReactNode }) => <a href={to}>{children}</a>,
 }));
 
 vi.mock("../../../auth/useCan", () => ({

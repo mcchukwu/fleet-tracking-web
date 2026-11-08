@@ -100,6 +100,7 @@ describe("AlertDetailPanel", () => {
     expect(screen.getByRole("heading", { name: "Geofence exit" })).toBeVisible();
     expect(screen.getByText("From alert evidence")).toBeVisible();
     expect(screen.getByText("Refinery Gate → Ibadan Customer")).toBeVisible();
+    expect(screen.getByText("Unknown zone")).toBeVisible();
     expect(screen.getByRole("button", { name: "Raw JSON" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Acknowledge" })).toBeVisible();
   });

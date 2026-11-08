@@ -25,8 +25,9 @@ async function gotoAlerts(page: Page, search = ""): Promise<void> {
   await expect(page.getByRole("heading", { name: "Alerts" })).toBeVisible();
 }
 
-function row(page: Page, plate: string) {
-  return page.getByRole("row").filter({ hasText: plate });
+function row(page: Page, plate: string, type?: string) {
+  const base = page.getByRole("row").filter({ hasText: plate });
+  return type ? base.filter({ hasText: type }) : base;
 }
 
 test.describe("alerts", () => {
@@ -38,16 +39,20 @@ test.describe("alerts", () => {
       "active",
     );
     await expect(page.getByRole("columnheader", { name: "Plate" })).toBeVisible();
-    await expect(page.getByTestId("alerts-page")).toContainText("8 open");
+    await expect(page.getByTestId("alerts-page")).toContainText("7 open");
     await expect(page.getByTestId("alerts-page")).toContainText("10 loaded");
-    await expect.poll(() => page.title()).toBe("(8) Alerts · Fleet Console");
+    await expect.poll(() => page.title()).toBe("(7) Alerts · Fleet Console");
 
-    await expect(page.getByText("Speeding")).toBeVisible();
-    await expect(page.getByText("Route deviation")).toBeVisible();
-    await expect(page.getByText("Unknown type: solar_flare")).toBeVisible();
-    await expect(page.getByText("Unknown severity: extreme")).toBeVisible();
-    await expect(page.getByText("Unknown status: pending")).toBeVisible();
-    await expect(page.getByText("Ibadan Customer")).toBeVisible();
+    await expect(page.getByRole("cell", { name: "Speeding" })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "Route deviation" })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "Unknown type: solar_flare" })).toBeVisible();
+    await expect(
+      page.getByRole("cell", { name: /Unknown severity: extreme/ }),
+    ).toBeVisible();
+    await expect(page.getByRole("cell", { name: "Unknown status: pending" })).toBeVisible();
+    if (!isMobile(page)) {
+      await expect(page.getByRole("cell", { name: "Ibadan Customer" })).toBeVisible();
+    }
 
     await captureForReview(page, "04-alerts-list");
     await expectNoHorizontalScroll(page);
@@ -67,14 +72,14 @@ test.describe("alerts", () => {
     await page.getByLabel("Status").selectOption("");
     await page.getByLabel("Severity").selectOption("critical");
     await expect(page).toHaveURL(/severity=critical/);
-    await expect(page.getByText("Speeding")).toBeVisible();
-    await expect(page.getByText("Geofence exit")).toHaveCount(0);
+    await expect(row(page, "LSD-102-AA", "Speeding")).toBeVisible();
+    await expect(page.getByRole("cell", { name: "Geofence exit" })).toHaveCount(0);
 
     await page.getByLabel("Severity").selectOption("");
     await page.getByLabel("Search plate").fill("lsd101aa");
     await expect(page).toHaveURL(/q=lsd101aa/);
     await expect(row(page, "LSD-101-AA").first()).toBeVisible();
-    await expect(page.getByText("Speeding")).toHaveCount(0);
+    await expect(page.getByRole("cell", { name: "Speeding" })).toHaveCount(0);
 
     await page.getByLabel("Status").selectOption("open");
     await page.getByLabel("Type").selectOption("route_deviation");
@@ -142,7 +147,7 @@ test.describe("alerts", () => {
       });
     });
     await page.getByLabel("Status").selectOption("open");
-    await expect(page.getByTestId("alerts-page")).toContainText("56 loaded");
+    await expect(page.getByTestId("alerts-page")).toContainText("55 loaded");
 
     await page.locator("main").evaluate((element) => {
       element.scrollTop = element.scrollHeight;
@@ -171,7 +176,7 @@ test.describe("alerts", () => {
     await captureForReview(page, "04-alerts-new-pill");
 
     await pill.click();
-    await expect(page.getByTestId("alerts-page")).toContainText("57 loaded");
+    await expect(page.getByTestId("alerts-page")).toContainText("56 loaded");
     await expect
       .poll(() => page.locator("main").evaluate((element) => element.scrollTop))
       .toBe(0);
@@ -196,7 +201,7 @@ test.describe("alerts", () => {
 
     await page.keyboard.press("Escape");
     await expect(drawer).toHaveCount(0);
-    const origin = page.getByRole("button", { name: /Open alert for LSD-102-AA/ });
+    const origin = page.locator(`[data-alert-id="${GEOFENCE_EXIT}"]`);
     await expect(origin).toBeFocused();
 
     await expectNoAxeViolations(page);
@@ -210,13 +215,13 @@ test.describe("alerts", () => {
     await drawer.getByRole("button", { name: "Replay last 30 minutes" }).click();
     await expect(page).toHaveURL(/\/playback\?/);
     await expect(page).toHaveURL(/vehicle=6c69032e-b802-447e-8f7a-ad8c0ddc2359/);
-    await expect(page).toHaveURL(/from=2026-11-02T19%3A37%3A00.000Z/);
-    await expect(page).toHaveURL(/to=2026-11-02T20%3A09%3A00.000Z/);
+    await expect(page).toHaveURL(/from=2026-11-02T19%3A37%3A39.179Z/);
+    await expect(page).toHaveURL(/to=2026-11-02T20%3A09%3A39.179Z/);
   });
 
   test("acknowledges from a row and removes it from the open filter", async ({ page }) => {
     await gotoAlerts(page, "status=open");
-    const target = row(page, "LSD-102-AA");
+    const target = row(page, "LSD-102-AA", "Geofence exit");
     await target.getByRole("button", { name: "Acknowledge" }).click();
 
     await expect(page.getByText("Acknowledged.").first()).toBeVisible();
@@ -228,7 +233,7 @@ test.describe("alerts", () => {
     });
 
     await page.getByLabel("Status").selectOption("acked");
-    const acked = row(page, "LSD-102-AA");
+    const acked = row(page, "LSD-102-AA", "Geofence exit");
     await expect(acked.getByText("Acknowledged")).toBeVisible();
     await captureForReview(page, "04-alerts-acked");
   });
@@ -236,7 +241,7 @@ test.describe("alerts", () => {
   test("a viewer cannot acknowledge", async ({ page }) => {
     await setRole(page, "viewer");
     await gotoAlerts(page);
-    const ack = row(page, "LSD-102-AA").getByRole("button", { name: "Acknowledge" });
+    const ack = row(page, "LSD-102-AA", "Geofence exit").getByRole("button", { name: "Acknowledge" });
     await expect(ack).toHaveAttribute("aria-disabled", "true");
     await ack.click({ force: true });
     const writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
@@ -246,7 +251,7 @@ test.describe("alerts", () => {
   test("security can acknowledge", async ({ page }) => {
     await setRole(page, "security");
     await gotoAlerts(page);
-    await row(page, "LSD-102-AA").getByRole("button", { name: "Acknowledge" }).click();
+    await row(page, "LSD-102-AA", "Geofence exit").getByRole("button", { name: "Acknowledge" }).click();
     await expect(page.getByText("Acknowledged.").first()).toBeVisible();
   });
 
@@ -256,7 +261,7 @@ test.describe("alerts", () => {
       await fetch(`/api/v1/alerts/${id}/ack`, { method: "POST" });
     }, GEOFENCE_EXIT);
 
-    await row(page, "LSD-102-AA").getByRole("button", { name: "Acknowledge" }).click();
+    await row(page, "LSD-102-AA", "Geofence exit").getByRole("button", { name: "Acknowledge" }).click();
     await expect(page.getByText("This alert was acknowledged elsewhere.")).toBeVisible({
       timeout: 15_000,
     });

@@ -53,10 +53,17 @@ export function AlertRulesPanel() {
         onRetry={() => void query.refetch()}
         loading={<LoadingState rows={4} />}
         empty={
-          <EmptyState
-            title="No alert rules configured"
-            description="Alert rules appear here when the server has any."
-          />
+          offline ? (
+            <EmptyState
+              title="No alert rules available offline"
+              description="Reconnect to load the alert rules."
+            />
+          ) : (
+            <EmptyState
+              title="No alert rules configured"
+              description="Alert rules appear here when the server has any."
+            />
+          )
         }
         staleLabel={staleLabel}
       >

@@ -27,7 +27,7 @@ export function EvidenceList({ evidence }: EvidenceListProps) {
                 inline
                 value={value}
                 label={humanizeEvidenceKey(key)}
-                className="text-xs"
+                className="max-w-full text-xs break-all"
               />
             ) : (
               formatEvidenceValue(key, value)
