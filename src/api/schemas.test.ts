@@ -279,6 +279,17 @@ describe("vehicle events parser", () => {
     expect(result.rejected).toBe(2);
   });
 
+  it("uses the shared alert fields, so a non-string type is rejected", () => {
+    const result = parseVehicleEventsResponse({
+      data: [
+        { kind: "geofence", type: "enter", at: "2026-11-02T14:00:00Z" },
+        { kind: "alert", type: 42, at: "2026-11-02T21:00:00Z" },
+      ],
+    });
+    expect(result.events).toHaveLength(1);
+    expect(result.rejected).toBe(1);
+  });
+
   it("rejects an envelope that is not a data array and one where nothing parses", () => {
     expect(() => parseVehicleEventsResponse({ rows: [] })).toThrow();
     expect(() => parseVehicleEventsResponse({ data: [{ nope: true }] })).toThrow();

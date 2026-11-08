@@ -132,4 +132,10 @@ describe("alert live frame contract", () => {
   it("requires the vehicle id", () => {
     expect(alertMessageSchema.safeParse({ type: "alert" }).success).toBe(false);
   });
+
+  it("uses the shared alert fields, so a non-string type is rejected", () => {
+    expect(
+      alertMessageSchema.safeParse({ type: "alert", vehicle_id: "v-1", severity: 42 }).success,
+    ).toBe(false);
+  });
 });

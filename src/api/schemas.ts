@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { ContractError } from "../errors/types";
-import { alertMessageSchema } from "./alerts";
+import {
+  alertMessageSchema,
+  alertSeverityField,
+  alertStatusField,
+  alertTimestampField,
+  alertTypeField,
+} from "./alerts";
 import type {
   Geofence,
   GeofenceKind,
@@ -150,11 +156,11 @@ export function parseVehicleResponse(payload: unknown): Vehicle {
 
 const vehicleEventRowSchema = z.object({
   kind: z.string().min(1),
-  type: z.string().min(1),
+  type: alertTypeField,
   name: z.string().optional(),
-  severity: z.string().optional(),
-  status: z.string().optional(),
-  at: timestamp,
+  severity: alertSeverityField.optional(),
+  status: alertStatusField.optional(),
+  at: alertTimestampField,
   evidence: z.record(z.string(), z.unknown()).optional(),
 });
 

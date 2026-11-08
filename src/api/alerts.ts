@@ -7,6 +7,16 @@ const timestamp = z
   .refine((value) => !Number.isNaN(Date.parse(value)), "Invalid timestamp");
 
 /**
+ * The list row, the live frame's inner alert and vehicle events have different
+ * envelopes but the same classification fields. Share the field schemas so the
+ * three parsers cannot drift.
+ */
+export const alertTypeField = z.string();
+export const alertSeverityField = z.string();
+export const alertStatusField = z.string();
+export const alertTimestampField = timestamp;
+
+/**
  * The REST row is the alert contract. Unknown type, severity and status values
  * are kept as strings so one future enum cannot blank the list.
  */
@@ -15,11 +25,11 @@ export const alertEntitySchema = z.object({
   vehicle_id: z.string().min(1),
   plate: z.string().optional().default(""),
   trip_id: z.string().optional(),
-  type: z.string(),
-  severity: z.string(),
-  status: z.string(),
-  occurred_at: timestamp,
-  acked_at: timestamp.optional(),
+  type: alertTypeField,
+  severity: alertSeverityField,
+  status: alertStatusField,
+  occurred_at: alertTimestampField,
+  acked_at: alertTimestampField.optional(),
   evidence: z.record(z.string(), z.unknown()).optional().default({}),
 });
 
@@ -94,9 +104,9 @@ export function parseAlertRules(payload: unknown): AlertRulesParseResult {
 const alertFrame = z
   .object({
     id: z.union([z.string(), z.number()]).optional(),
-    type: z.string().optional(),
-    severity: z.string().optional(),
-    occurred_at: timestamp.optional(),
+    type: alertTypeField.optional(),
+    severity: alertSeverityField.optional(),
+    occurred_at: alertTimestampField.optional(),
     geofence_id: z.string().optional(),
     geofence_name: z.string().optional(),
     event_type: z.string().optional(),
@@ -113,8 +123,8 @@ export const alertMessageSchema = z
     vehicle_id: z.string(),
     alert: alertFrame.optional(),
     id: z.union([z.string(), z.number()]).optional(),
-    severity: z.string().optional(),
-    occurred_at: timestamp.optional(),
+    severity: alertSeverityField.optional(),
+    occurred_at: alertTimestampField.optional(),
     geofence_id: z.string().optional(),
     geofence_name: z.string().optional(),
     event_type: z.string().optional(),

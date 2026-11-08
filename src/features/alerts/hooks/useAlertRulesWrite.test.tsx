@@ -3,6 +3,8 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../../api/instance";
+import { queryKeys } from "../../../api/keys";
+import { normalize } from "../../../errors/normalize";
 import type { AlertRule } from "../../../api/types";
 import { ApiError } from "../../../errors/types";
 import { useConnectionStore } from "../../../stores/connection";
@@ -122,5 +124,57 @@ describe("useAlertRulesWrite", () => {
     });
     expect(result.current.error?.ruleId).toBe("rule-1");
     expect(result.current.error?.detail).toBe("Try again in a moment. If it keeps happening, check System.");
+  });
+
+  it("reconciles a lost rule write as saved and invalidates the rules", async () => {
+    vi.spyOn(api, "updateAlertRule").mockRejectedValue(
+      normalize(new TypeError("Failed to fetch"), {}, { outcome: "unknown" }),
+    );
+    vi.spyOn(api, "alertRules").mockResolvedValue({ data: [{ ...rule, enabled: false }] });
+    const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    const { result } = renderHook(() => useAlertRulesWrite({ canMutate: true }), {
+      wrapper: wrapperFor(queryClient),
+    });
+
+    await act(async () => {
+      expect(await result.current.toggle(rule, false)).toBe("saved");
+    });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: queryKeys.alertRules });
+    expect(result.current.error).toBeNull();
+  });
+
+  it("reports not saved when the refetch shows the old rule value", async () => {
+    vi.spyOn(api, "updateAlertRule").mockRejectedValue(
+      normalize(new TypeError("Failed to fetch"), {}, { outcome: "unknown" }),
+    );
+    vi.spyOn(api, "alertRules").mockResolvedValue({ data: [rule] });
+    const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+    const { result } = renderHook(() => useAlertRulesWrite({ canMutate: true }), {
+      wrapper: wrapperFor(queryClient),
+    });
+
+    await act(async () => {
+      expect(await result.current.toggle(rule, false)).toBe("failed");
+    });
+    expect(result.current.error?.detail).toBe("It wasn't saved. Try again.");
+  });
+
+  it("reports an unknown outcome when the rule is missing from the refetch", async () => {
+    vi.spyOn(api, "updateAlertRule").mockRejectedValue(
+      normalize(new TypeError("Failed to fetch"), {}, { outcome: "unknown" }),
+    );
+    vi.spyOn(api, "alertRules").mockResolvedValue({ data: [] });
+    const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+    const { result } = renderHook(() => useAlertRulesWrite({ canMutate: true }), {
+      wrapper: wrapperFor(queryClient),
+    });
+
+    await act(async () => {
+      expect(await result.current.saveConfig(rule, { speed_kph: 81 })).toBe("failed");
+    });
+    expect(result.current.error?.detail).toBe(
+      "We couldn't confirm that it saved. Check the rule before trying again.",
+    );
   });
 });

@@ -3,6 +3,8 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { api } from "../../../api/instance";
+import { queryKeys } from "../../../api/keys";
+import { normalize } from "../../../errors/normalize";
 import type { Alert } from "../../../api/types";
 import { ApiError } from "../../../errors/types";
 import { ToastProvider } from "../../../ui/Toast";
@@ -141,6 +143,28 @@ describe("useAlertAck", () => {
     });
     expect(outcome).toBe("unsaved");
     expect(result.current.error?.title).toBe("It wasn't saved.");
+  });
+
+  it("invalidates the alert caches when a lost response is reconciled as saved", async () => {
+    vi.spyOn(api, "ackAlert").mockRejectedValue(
+      normalize(new TypeError("Failed to fetch"), {}, { outcome: "unknown" }),
+    );
+    vi.spyOn(api, "alerts").mockResolvedValue({
+      data: [{ ...alert, status: "acked", acked_at: "2026-11-02T12:01:00Z" }],
+    });
+    const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    const { result } = renderHook(() => useAlertAck({ canAck: true }), {
+      wrapper: wrapperFor(queryClient),
+    });
+
+    let outcome = "";
+    await act(async () => {
+      outcome = await result.current.acknowledge(alert);
+    });
+    expect(outcome).toBe("acked");
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["alerts"] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: queryKeys.systemHealth });
   });
 
   it("refuses to send for a viewer or while offline", async () => {

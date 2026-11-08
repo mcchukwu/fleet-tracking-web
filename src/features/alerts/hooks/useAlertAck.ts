@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAckAlert } from "../../../api/hooks/alerts";
 import { api } from "../../../api/instance";
+import { queryKeys } from "../../../api/keys";
 import type { Alert } from "../../../api/types";
 import { errorCopy } from "../../../errors/catalog";
 import { normalize } from "../../../errors/normalize";
@@ -90,6 +91,14 @@ export function useAlertAck({ canAck }: { canAck: boolean }): AckController {
         });
 
         if (result.status === "success" || result.status === "reconciled") {
+          // The mutation's onSuccess ran only for a normal response; a lost
+          // response that the refetch proved saved still needs the refetch.
+          if (result.status === "reconciled") {
+            await Promise.all([
+              queryClient.invalidateQueries({ queryKey: ["alerts"] }),
+              queryClient.invalidateQueries({ queryKey: queryKeys.systemHealth }),
+            ]);
+          }
           toast({
             title: "Acknowledged.",
             tone: "success",
