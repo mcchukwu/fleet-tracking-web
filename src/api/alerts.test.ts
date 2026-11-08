@@ -90,6 +90,12 @@ describe("alert rule contract", () => {
     expect(rule).toEqual({ id: "rule-1", type: "solar_flare", enabled: false, config: {} });
   });
 
+  it("tolerates a non-object config coming back", () => {
+    expect(
+      alertRuleSchema.parse({ id: "rule-1", type: "idle", enabled: true, config: "bad" }).config,
+    ).toEqual({});
+  });
+
   it("defaults a missing config to an empty object", () => {
     expect(
       alertRuleSchema.parse({ id: "rule-2", type: "idle", enabled: true }).config,

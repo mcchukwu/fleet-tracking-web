@@ -95,6 +95,7 @@ test.describe("live feed", () => {
     await waitForLive(page);
     await waitForPosition(page, "demo-imei-0002");
     const titleBefore = await page.title();
+    const openBefore = Number(/\((\d+)\)/.exec(titleBefore)?.[1] ?? 0);
 
     await page.evaluate(() =>
       fetch("/api/v1/__mock/alerts", {
@@ -120,8 +121,10 @@ test.describe("live feed", () => {
       page.locator('[aria-live="polite"]').filter({ hasText: "Geofence exit" }).first(),
     ).toBeAttached();
 
-    expect(titleBefore).not.toContain("(6)");
-    await expect.poll(() => page.title(), { timeout: 15_000 }).toContain("(6)");
+    expect(titleBefore).not.toContain(`(${openBefore + 1})`);
+    await expect
+      .poll(() => page.title(), { timeout: 15_000 })
+      .toContain(`(${openBefore + 1})`);
     await captureForReview(page, "02-map-alert-toast");
   });
 

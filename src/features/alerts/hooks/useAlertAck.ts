@@ -139,7 +139,17 @@ export function useAlertAck({ canAck }: { canAck: boolean }): AckController {
           return "still_open";
         }
 
-        if (failure.kind === "forbidden" || failure.kind === "unauthenticated") {
+        if (failure.kind === "unauthenticated") {
+          setError({
+            alertId: alert.id,
+            error: failure,
+            title: "Your session expired",
+            detail: "Sign in, then try again.",
+          });
+          return "failed";
+        }
+
+        if (failure.kind === "forbidden") {
           setError({
             alertId: alert.id,
             error: failure,

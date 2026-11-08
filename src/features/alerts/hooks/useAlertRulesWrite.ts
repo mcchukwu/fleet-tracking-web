@@ -90,9 +90,11 @@ export function useAlertRulesWrite({
           error: failure,
           title: "Couldn't change alert rules",
           detail:
-            failure.kind === "forbidden" || failure.kind === "unauthenticated"
-              ? "Your role can't change alert rules."
-              : errorCopy(failure).detail,
+            failure.kind === "unauthenticated"
+              ? "Your session expired. Sign in, then try again."
+              : failure.kind === "forbidden"
+                ? "Your role can't change alert rules."
+                : errorCopy(failure).detail,
         });
         return "failed";
       } finally {

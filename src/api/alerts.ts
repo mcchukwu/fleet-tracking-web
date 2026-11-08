@@ -57,10 +57,13 @@ export const alertRuleSchema = z.object({
   type: z.string(),
   enabled: z.boolean(),
   config: z
-    .record(z.string(), z.unknown())
-    .nullable()
+    .unknown()
     .optional()
-    .transform((value) => value ?? {}),
+    .transform((value) =>
+      typeof value === "object" && value !== null && !Array.isArray(value)
+        ? (value as Record<string, unknown>)
+        : {},
+    ),
 });
 
 export const alertRulesResponseSchema = z.object({ data: z.array(z.unknown()) });

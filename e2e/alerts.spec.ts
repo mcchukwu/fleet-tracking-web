@@ -262,7 +262,9 @@ test.describe("alerts", () => {
     }, GEOFENCE_EXIT);
 
     await row(page, "LSD-102-AA", "Geofence exit").getByRole("button", { name: "Acknowledge" }).click();
-    await expect(page.getByText("This alert was acknowledged elsewhere.")).toBeVisible({
+    await expect(
+      page.getByText("This alert was acknowledged elsewhere.", { exact: true }),
+    ).toBeVisible({
       timeout: 15_000,
     });
   });

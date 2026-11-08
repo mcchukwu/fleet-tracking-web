@@ -100,7 +100,7 @@ export function AlertRow({
             <Badge tone="neutral">Unknown status: {alert.status}</Badge>
           )}
           {alert.acked_at ? (
-            <span className="text-xs text-muted">
+            <span className="text-xs tabular-nums text-muted">
               {formatRelativeTime(alert.acked_at, now)}
             </span>
           ) : null}
