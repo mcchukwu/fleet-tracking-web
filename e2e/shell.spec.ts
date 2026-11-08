@@ -200,6 +200,7 @@ test.describe("app shell", () => {
     await page.getByRole("link", { name: "Alerts" }).click();
     await expect(page).toHaveURL(/\/alerts$/);
     await expect(page.getByRole("heading", { name: "Alerts" })).toBeVisible();
+    await expect.poll(() => page.title()).toContain("Alerts · Fleet Console");
     await expect(page.getByRole("dialog", { name: "Navigation" })).toHaveCount(0);
   });
 
