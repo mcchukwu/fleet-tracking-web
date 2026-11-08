@@ -352,7 +352,8 @@ describe("MapLibre adapter", () => {
     expect(swapped.sources?.[SOURCE_IDS.vehicles]).toBeDefined();
     expect(swapped.layers?.some((layer) => layer.id === LAYER_IDS.vehicleCircle)).toBe(true);
     expect(instance.layers.has(LAYER_IDS.vehicleHalo)).toBe(true);
-    expect(instance.sources.size).toBe(3);
+    expect(instance.sources.size).toBe(4);
+    expect(instance.sources.has(SOURCE_IDS.routePoints)).toBe(true);
     expect(instance.zoom).toBe(12);
     expect(instance.bearing).toBe(45);
     const data = instance.sources.get(SOURCE_IDS.vehicles)?.data as {
@@ -483,6 +484,67 @@ describe("MapLibre adapter", () => {
     adapter.destroy();
   });
 
+  it("installs the route point source and the full route anatomy", async () => {
+    const adapter = createAdapter();
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+
+    const instance = map();
+    expect(instance.sources.get(SOURCE_IDS.routePoints)).toBeDefined();
+    expect(instance.layers.has(LAYER_IDS.routeChevrons)).toBe(true);
+    expect(instance.layers.has(LAYER_IDS.routePinStart)).toBe(true);
+    expect(instance.layers.has(LAYER_IDS.routePinEnd)).toBe(true);
+    expect(instance.layers.has(LAYER_IDS.routeCursor)).toBe(true);
+    adapter.destroy();
+  });
+
+  it("rewrites route points on a cursor tick but not the route line", async () => {
+    const adapter = createAdapter();
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+    const instance = map();
+    const lineSource = instance.sources.get(SOURCE_IDS.route);
+    const pointSource = instance.sources.get(SOURCE_IDS.routePoints);
+    if (!lineSource || !pointSource) throw new Error("route sources are missing");
+
+    const points: Array<[number, number]> = [
+      [3.4, 6.5],
+      [3.5, 6.6],
+    ];
+    const gapAfterIndex: number[] = [];
+    adapter.setRoute({
+      points,
+      gapAfterIndex,
+      cursorIndex: 0,
+      cursorPosition: points[0] ?? null,
+      chevrons: true,
+    });
+    const lineData = lineSource.data;
+    const pointData = pointSource.data;
+
+    adapter.setRoute({
+      points,
+      gapAfterIndex,
+      cursorIndex: 1,
+      cursorPosition: points[1] ?? null,
+      chevrons: true,
+    });
+    expect(lineSource.data).toBe(lineData);
+    expect(pointSource.data).not.toBe(pointData);
+    const cursor = (pointSource.data as {
+      features: Array<{ properties?: { role?: string }; geometry: { coordinates: number[] } }>;
+    }).features.find((feature) => feature.properties?.role === "cursor");
+    expect(cursor?.geometry.coordinates).toEqual(points[1]);
+
+    adapter.setRoute({
+      points: [...points, [3.6, 6.7]],
+      gapAfterIndex,
+      cursorIndex: 1,
+      cursorPosition: points[1] ?? null,
+      chevrons: true,
+    });
+    expect(lineSource.data).not.toBe(lineData);
+    adapter.destroy();
+  });
+
   it("writes vehicle data once per update", async () => {
     const adapter = createAdapter();
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
@@ -565,7 +627,8 @@ describe("MapLibre adapter", () => {
 
     expect(instance.styles).toHaveLength(1);
     expect((instance.styles[0] as { name: string }).name).toBe("standard-dark");
-    expect(instance.sources.size).toBe(3);
+    expect(instance.sources.size).toBe(4);
+    expect(instance.sources.has(SOURCE_IDS.routePoints)).toBe(true);
     adapter.destroy();
   });
 

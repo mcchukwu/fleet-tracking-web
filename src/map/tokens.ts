@@ -67,6 +67,15 @@ export function readMapTokens(element: HTMLElement = document.documentElement): 
       labelZoom: 12,
       labelSize: 12,
     },
+    route: {
+      lineWidth: 3,
+      chevronSpacing: 80,
+      cursorRadius: 7,
+      pinRadius: 5,
+      pinRingWidth: 2,
+      labelZoom: 12,
+      labelSize: 12,
+    },
     onImagery: {
       haloWidth: 2,
       haloColor: readVariable(styles, TOKEN_VARIABLES.imagery) || colors.surface,

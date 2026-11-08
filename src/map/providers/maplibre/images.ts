@@ -5,6 +5,7 @@ export const IMAGE_IDS = {
   chevron: "fleet-chevron",
   alert: "fleet-alert",
   hatch: "fleet-hatch",
+  routeChevron: "fleet-route-chevron",
 } as const;
 
 const SIZE = 48;
@@ -40,8 +41,22 @@ function alertImage(tokens: MapTokens): ImageData {
   return drawing.getImageData(0, 0, SIZE, SIZE);
 }
 
-function hatchImage(tokens: MapTokens): ImageData {
+function routeChevronImage(tokens: MapTokens): ImageData {
   const drawing = context();
+  drawing.fillStyle = tokens.colors.accent;
+  drawing.strokeStyle = tokens.colors.surface;
+  drawing.lineWidth = 5;
+  drawing.beginPath();
+  drawing.moveTo(SIZE * 0.36, SIZE * 0.26);
+  drawing.lineTo(SIZE * 0.72, SIZE * 0.5);
+  drawing.lineTo(SIZE * 0.36, SIZE * 0.74);
+  drawing.closePath();
+  drawing.fill();
+  drawing.stroke();
+  return drawing.getImageData(0, 0, SIZE, SIZE);
+}
+
+function hatchImage(tokens: MapTokens): ImageData {  const drawing = context();
   drawing.strokeStyle = tokens.colors.geofenceRestricted;
   drawing.lineWidth = 4;
   for (let offset = -SIZE; offset < SIZE * 2; offset += 16) {
@@ -62,6 +77,7 @@ export function installImages(map: Map, tokens: MapTokens): void {
   replaceImage(map, IMAGE_IDS.chevron, chevronImage(tokens));
   replaceImage(map, IMAGE_IDS.alert, alertImage(tokens));
   replaceImage(map, IMAGE_IDS.hatch, hatchImage(tokens));
+  replaceImage(map, IMAGE_IDS.routeChevron, routeChevronImage(tokens));
 }
 
 export function hasImages(map: Map): boolean {

@@ -61,6 +61,8 @@ export interface MapRoute {
   points: LngLat[];
   gapAfterIndex: number[];
   cursorIndex: number | null;
+  /** Prepared cursor position; a provider renders it without knowing the clock. */
+  cursorPosition: LngLat | null;
   chevrons: boolean;
 }
 
@@ -111,6 +113,15 @@ export interface MapTokens {
   geofence: {
     fillOpacity: number;
     strokeWidth: number;
+    labelZoom: number;
+    labelSize: number;
+  };
+  route: {
+    lineWidth: number;
+    chevronSpacing: number;
+    cursorRadius: number;
+    pinRadius: number;
+    pinRingWidth: number;
     labelZoom: number;
     labelSize: number;
   };

@@ -35,6 +35,15 @@ export const contractTokens: MapTokens = {
     clusterTextSize: 12,
   },
   geofence: { fillOpacity: 0.12, strokeWidth: 2, labelZoom: 12, labelSize: 12 },
+  route: {
+    lineWidth: 3,
+    chevronSpacing: 80,
+    cursorRadius: 7,
+    pinRadius: 5,
+    pinRingWidth: 2,
+    labelZoom: 12,
+    labelSize: 12,
+  },
   onImagery: { haloWidth: 2, haloColor: "halo-token" },
 };
 
@@ -142,7 +151,7 @@ export function runAdapterContract(name: string, options: AdapterContractOptions
           highlighted: false,
         },
       ]);
-      adapter.setRoute({ points: [[3.4, 6.5], [3.5, 6.6]], gapAfterIndex: [], cursorIndex: 0, chevrons: true });
+      adapter.setRoute({ points: [[3.4, 6.5], [3.5, 6.6]], gapAfterIndex: [], cursorIndex: 0, cursorPosition: [3.4, 6.5], chevrons: true });
       adapter.setTheme("light", contractTokens);
       adapter.fitBounds({ south: 6, west: 3, north: 7, east: 4 });
       adapter.flyTo([3.5, 6.6], 12);

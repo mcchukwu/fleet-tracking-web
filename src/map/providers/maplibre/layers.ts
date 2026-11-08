@@ -1,11 +1,12 @@
 import type { LayerSpecification } from "maplibre-gl";
-import type { Feature, FeatureCollection, LineString, Point, Polygon } from "geojson";
-import type { LngLat, MapGeofence, MapRoute, MapTokens, MapVehicle } from "../../types";
+import type { Feature, FeatureCollection, Point, Polygon } from "geojson";
+import type { LngLat, MapGeofence, MapTokens, MapVehicle } from "../../types";
 
 export const SOURCE_IDS = {
   vehicles: "fleet-vehicles",
   geofences: "fleet-geofences",
   route: "fleet-route",
+  routePoints: "fleet-route-points",
 } as const;
 
 export const LAYER_IDS = {
@@ -20,6 +21,11 @@ export const LAYER_IDS = {
   routeHalo: "fleet-route-halo",
   routeGap: "fleet-route-gap",
   routeLine: "fleet-route-line",
+  routeChevrons: "fleet-route-chevrons",
+  routePinStart: "fleet-route-pin-start",
+  routePinEnd: "fleet-route-pin-end",
+  routePinLabel: "fleet-route-pin-label",
+  routeCursor: "fleet-route-cursor",
   vehicleHit: "fleet-vehicle-hit",
   vehicleHalo: "fleet-vehicle-halo",
   vehicleSelectedHalo: "fleet-vehicle-selected-halo",
@@ -378,6 +384,7 @@ export function geofenceLayers(tokens: MapTokens, options: LayerOptions = {}): L
 
 export function routeLayers(tokens: MapTokens, options: LayerOptions = {}): LayerSpecification[] {
   const imagery = options.imagery === true;
+  const lineWidth = tokens.route.lineWidth;
   return [
     ...(imagery
       ? [
@@ -388,7 +395,7 @@ export function routeLayers(tokens: MapTokens, options: LayerOptions = {}): Laye
             layout: { "line-cap": "round" as const, "line-join": "round" as const },
             paint: {
               "line-color": tokens.onImagery.haloColor,
-              "line-width": 3 + tokens.onImagery.haloWidth * 2,
+              "line-width": lineWidth + tokens.onImagery.haloWidth * 2,
             },
           },
         ]
@@ -401,7 +408,7 @@ export function routeLayers(tokens: MapTokens, options: LayerOptions = {}): Laye
       layout: { "line-cap": "butt", "line-join": "round" },
       paint: {
         "line-color": tokens.colors.accent,
-        "line-width": 3,
+        "line-width": lineWidth,
         "line-dasharray": [2, 2],
       },
     },
@@ -413,7 +420,83 @@ export function routeLayers(tokens: MapTokens, options: LayerOptions = {}): Laye
       layout: { "line-cap": "round", "line-join": "round" },
       paint: {
         "line-color": tokens.colors.accent,
-        "line-width": 3,
+        "line-width": lineWidth,
+      },
+    },
+    {
+      id: LAYER_IDS.routeChevrons,
+      type: "symbol",
+      source: SOURCE_IDS.route,
+      filter: ["==", ["get", "gap"], false],
+      layout: {
+        "symbol-placement": "line",
+        "symbol-spacing": tokens.route.chevronSpacing,
+        "icon-image": "fleet-route-chevron",
+        "icon-size": 0.5,
+        "icon-rotation-alignment": "map",
+        "icon-allow-overlap": true,
+        "icon-ignore-placement": true,
+      },
+      paint: { "icon-opacity": 0.9 },
+    },
+    {
+      id: LAYER_IDS.routePinStart,
+      type: "circle",
+      source: SOURCE_IDS.routePoints,
+      filter: ["==", ["get", "role"], "start"],
+      paint: {
+        "circle-radius": tokens.route.pinRadius,
+        "circle-color": tokens.colors.accent,
+        "circle-stroke-color": tokens.colors.surface,
+        "circle-stroke-width": tokens.route.pinRingWidth,
+      },
+    },
+    {
+      id: LAYER_IDS.routePinEnd,
+      type: "circle",
+      source: SOURCE_IDS.routePoints,
+      filter: ["==", ["get", "role"], "end"],
+      paint: {
+        "circle-radius": tokens.route.pinRadius,
+        "circle-color": tokens.colors.surface,
+        "circle-stroke-color": tokens.colors.accent,
+        "circle-stroke-width": tokens.route.pinRingWidth,
+      },
+    },
+    {
+      id: LAYER_IDS.routePinLabel,
+      type: "symbol",
+      source: SOURCE_IDS.routePoints,
+      minzoom: tokens.route.labelZoom,
+      filter: [
+        "any",
+        ["==", ["get", "role"], "start"],
+        ["==", ["get", "role"], "end"],
+      ],
+      layout: {
+        "text-field": ["match", ["get", "role"], "start", "Start", "end", "End", ""],
+        "text-font": ["Noto Sans Regular"],
+        "text-size": tokens.route.labelSize,
+        "text-anchor": "bottom",
+        "text-offset": [0, -1.2],
+        "text-allow-overlap": true,
+      },
+      paint: {
+        "text-color": tokens.colors.text,
+        "text-halo-color": imagery ? tokens.onImagery.haloColor : tokens.colors.surface,
+        "text-halo-width": imagery ? tokens.onImagery.haloWidth : 1.5,
+      },
+    },
+    {
+      id: LAYER_IDS.routeCursor,
+      type: "circle",
+      source: SOURCE_IDS.routePoints,
+      filter: ["==", ["get", "role"], "cursor"],
+      paint: {
+        "circle-radius": tokens.route.cursorRadius,
+        "circle-color": tokens.colors.accent,
+        "circle-stroke-color": tokens.colors.surface,
+        "circle-stroke-width": 2,
       },
     },
   ];
@@ -493,27 +576,4 @@ export function geofenceCollection(geofences: readonly MapGeofence[]): FeatureCo
       geometry: { type: "Polygon", coordinates: geofence.rings },
     })),
   };
-}
-
-export function routeCollection(route: MapRoute | null): FeatureCollection<LineString> {
-  if (!route || route.points.length < 2) return { type: "FeatureCollection", features: [] };
-
-  const features: Array<{
-    type: "Feature";
-    properties: { gap: boolean };
-    geometry: LineString;
-  }> = [];
-
-  for (let index = 1; index < route.points.length; index += 1) {
-    const from = route.points[index - 1];
-    const to = route.points[index];
-    if (!from || !to) continue;
-    features.push({
-      type: "Feature",
-      properties: { gap: route.gapAfterIndex.includes(index - 1) },
-      geometry: { type: "LineString", coordinates: [from, to] },
-    });
-  }
-
-  return { type: "FeatureCollection", features };
 }

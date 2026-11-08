@@ -31,13 +31,13 @@ import {
   geofenceCollection,
   geofenceLayers,
   LAYER_IDS,
-  routeCollection,
   routeLayers,
   SOURCE_IDS,
   vehicleCollection,
   vehicleLayers,
   type VehicleFeatureCache,
 } from "./layers";
+import { routeLineCollection, routePointCollection } from "../../route";
 import {
   createMap,
   type GeoJSONSource,
@@ -117,6 +117,11 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
   let vehicleTargets: readonly MapVehicle[] = [];
   let geofences: readonly MapGeofence[] = [];
   let route: MapRoute | null = null;
+  let routeLineRefs: {
+    points: MapRoute["points"];
+    gapAfterIndex: MapRoute["gapAfterIndex"];
+    chevrons: boolean;
+  } | null = null;
   let displayed = new Map<string, LngLat>();
   let glides = new Map<
     string,
@@ -172,7 +177,8 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
     data:
       | ReturnType<typeof geofenceCollection>
       | ReturnType<typeof vehicleCollection>
-      | ReturnType<typeof routeCollection>,
+      | ReturnType<typeof routeLineCollection>
+      | ReturnType<typeof routePointCollection>,
   ): void {
     const target = source(id);
     if (target) {
@@ -249,7 +255,25 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
     if (!map) return;
     setVehicleData();
     applyData(SOURCE_IDS.geofences, geofenceCollection(geofences));
-    applyData(SOURCE_IDS.route, routeCollection(route));
+    setRouteLine(route);
+    setRoutePoints(route);
+  }
+
+  function setRouteLine(next: MapRoute | null): void {
+    applyData(
+      SOURCE_IDS.route,
+      routeLineCollection(next?.points ?? [], next?.gapAfterIndex ?? []),
+    );
+    routeLineRefs = next
+      ? { points: next.points, gapAfterIndex: next.gapAfterIndex, chevrons: next.chevrons }
+      : null;
+  }
+
+  function setRoutePoints(next: MapRoute | null): void {
+    applyData(
+      SOURCE_IDS.routePoints,
+      routePointCollection(next?.points ?? [], next?.cursorPosition ?? null),
+    );
   }
 
   function removeLayers(): void {
@@ -305,6 +329,9 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
     if (!map.getSource(SOURCE_IDS.route)) {
       map.addSource(SOURCE_IDS.route, { type: "geojson", data: emptyCollection() });
     }
+    if (!map.getSource(SOURCE_IDS.routePoints)) {
+      map.addSource(SOURCE_IDS.routePoints, { type: "geojson", data: emptyCollection() });
+    }
     if (!map.getSource(SOURCE_IDS.vehicles)) {
       map.addSource(SOURCE_IDS.vehicles, vehicleSourceSpec(tokens));
       clusterMaxZoom = tokens.marker.clusterMaxZoom;
@@ -330,7 +357,14 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
           data: vehicleCollection(vehicleTargets, displayed, featureCache),
         },
         [SOURCE_IDS.geofences]: { type: "geojson", data: geofenceCollection(geofences) },
-        [SOURCE_IDS.route]: { type: "geojson", data: routeCollection(route) },
+        [SOURCE_IDS.route]: {
+          type: "geojson",
+          data: routeLineCollection(route?.points ?? [], route?.gapAfterIndex ?? []),
+        },
+        [SOURCE_IDS.routePoints]: {
+          type: "geojson",
+          data: routePointCollection(route?.points ?? [], route?.cursorPosition ?? null),
+        },
       },
       layers: [
         ...base.layers,
@@ -711,6 +745,8 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
       lastTargets.clear();
       displayed = new Map();
       featureCache.features.clear();
+      route = null;
+      routeLineRefs = null;
       clusterMaxZoom = 0;
       lastDataAt = 0;
       hoveredKey = null;
@@ -811,7 +847,15 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
 
     setRoute(nextRoute: MapRoute | null): void {
       route = nextRoute;
-      applyData(SOURCE_IDS.route, routeCollection(nextRoute));
+      const previous = routeLineRefs;
+      const lineChanged =
+        !previous ||
+        !nextRoute ||
+        previous.points !== nextRoute.points ||
+        previous.gapAfterIndex !== nextRoute.gapAfterIndex ||
+        previous.chevrons !== nextRoute.chevrons;
+      if (lineChanged) setRouteLine(nextRoute);
+      setRoutePoints(nextRoute);
     },
 
     fitBounds(bounds: Bounds, options?: { padding?: Padding; animate?: boolean }): void {

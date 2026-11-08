@@ -65,4 +65,26 @@ describe("FakeAdapter determinism", () => {
     expect(adapter.flyPadding).toEqual({ top: 96, right: 444, bottom: 12, left: 12 });
     expect(adapter.clusters).toEqual([]);
   });
+
+  it("keeps the prepared route cursor for deterministic assertions", async () => {
+    const adapter = new FakeAdapter();
+    await adapter.mount(document.createElement("div"), {
+      theme: "light",
+      tokens: contractTokens,
+    });
+    adapter.setRoute({
+      points: [
+        [3.4, 6.5],
+        [3.5, 6.6],
+      ],
+      gapAfterIndex: [0],
+      cursorIndex: 1,
+      cursorPosition: [3.45, 6.55],
+      chevrons: true,
+    });
+
+    expect(adapter.route?.cursorPosition).toEqual([3.45, 6.55]);
+    expect(adapter.route?.cursorIndex).toBe(1);
+    expect(adapter.route?.gapAfterIndex).toEqual([0]);
+  });
 });

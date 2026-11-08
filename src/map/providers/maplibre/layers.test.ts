@@ -7,7 +7,6 @@ import {
   routeLayers,
   vehicleLayers,
 } from "./layers";
-
 const tokens: MapTokens = {
   ...contractTokens,
   onImagery: { haloWidth: 2, haloColor: "halo-token" },
@@ -85,5 +84,56 @@ describe("imagery halos", () => {
     const layers = vehicleLayers(tokens, { imagery: true });
     expect(paintOf(layers, LAYER_IDS.clusterHalo)["circle-color"]).toBe("halo-token");
     expect(paintOf(layers, LAYER_IDS.clusterCount)["text-halo-width"]).toBe(2);
+  });
+});
+
+describe("route anatomy", () => {
+  it("draws the line at the route token width with direction chevrons and pins", () => {
+    const layers = routeLayers(tokens);
+    const ids = layers.map((layer) => layer.id);
+    expect(ids).toContain(LAYER_IDS.routeChevrons);
+    expect(ids).toContain(LAYER_IDS.routePinStart);
+    expect(ids).toContain(LAYER_IDS.routePinEnd);
+    expect(ids).toContain(LAYER_IDS.routePinLabel);
+    expect(ids).toContain(LAYER_IDS.routeCursor);
+
+    expect(paintOf(layers, LAYER_IDS.routeLine)["line-width"]).toBe(tokens.route.lineWidth);
+    expect(paintOf(layers, LAYER_IDS.routeGap)["line-dasharray"]).toEqual([2, 2]);
+
+    const chevrons = layers.find((layer) => layer.id === LAYER_IDS.routeChevrons);
+    expect(chevrons?.type).toBe("symbol");
+    expect(chevrons?.layout).toMatchObject({
+      "symbol-placement": "line",
+      "symbol-spacing": tokens.route.chevronSpacing,
+      "icon-image": "fleet-route-chevron",
+    });
+  });
+
+  it("fills the start pin and rings the end pin", () => {
+    const layers = routeLayers(tokens);
+    expect(paintOf(layers, LAYER_IDS.routePinStart)["circle-color"]).toBe(tokens.colors.accent);
+    expect(paintOf(layers, LAYER_IDS.routePinEnd)["circle-color"]).toBe(tokens.colors.surface);
+    expect(paintOf(layers, LAYER_IDS.routePinEnd)["circle-stroke-color"]).toBe(
+      tokens.colors.accent,
+    );
+    expect(paintOf(layers, LAYER_IDS.routeCursor)["circle-radius"]).toBe(
+      tokens.route.cursorRadius,
+    );
+  });
+
+  it("keeps the cursor above the pins and the pins above the line", () => {
+    const ids = routeLayers(tokens).map((layer) => layer.id);
+    expect(ids.indexOf(LAYER_IDS.routeLine)).toBeLessThan(ids.indexOf(LAYER_IDS.routeChevrons));
+    expect(ids.indexOf(LAYER_IDS.routeChevrons)).toBeLessThan(ids.indexOf(LAYER_IDS.routePinStart));
+    expect(ids.indexOf(LAYER_IDS.routePinEnd)).toBeLessThan(ids.indexOf(LAYER_IDS.routeCursor));
+  });
+
+  it("shows Start and End labels from the route label zoom", () => {
+    const label = routeLayers(tokens).find((layer) => layer.id === LAYER_IDS.routePinLabel);
+    expect(label?.minzoom).toBe(tokens.route.labelZoom);
+    expect(label?.layout).toMatchObject({
+      "text-field": ["match", ["get", "role"], "start", "Start", "end", "End", ""],
+      "text-size": tokens.route.labelSize,
+    });
   });
 });
