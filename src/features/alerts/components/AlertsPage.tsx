@@ -252,7 +252,7 @@ function AlertsPageContent() {
                   onClick={() => void openAlerts.refetch()}
                   className="rounded-sm text-accent-fg underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring"
                 >
-                  Retry
+                  Retry count
                 </button>
               </span>
             ) : null}

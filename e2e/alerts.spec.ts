@@ -285,12 +285,12 @@ test.describe("alerts", () => {
     await captureForReview(page, "04-alerts-rules");
     await expectNoAxeViolations(page);
 
-    await speeding.getByRole("checkbox", { name: "Enable Speeding rule" }).click();
+    await speeding.getByRole("checkbox", { name: "Enabled Speeding rule" }).click();
     await expect(page.getByText("Alert rule updated.").first()).toBeVisible();
     let writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
     expect(writes.at(-1)?.body).toEqual({ enabled: false });
 
-    await speeding.getByRole("button", { name: "Edit Speeding settings" }).click();
+    await speeding.getByRole("button", { name: "Edit settings for Speeding" }).click();
     await speeding.getByLabel("Speed kph").fill("81");
     await speeding.getByRole("button", { name: "Save settings" }).click();
     await expect(page.getByText("Alert rule updated.").first()).toBeVisible();
@@ -312,7 +312,7 @@ test.describe("alerts", () => {
     await expect(page.getByText("Your role can't change alert rules.").first()).toBeVisible();
     const enabled = page.getByRole("listitem").filter({ hasText: "Speeding" }).getByRole(
       "checkbox",
-      { name: "Enable Speeding rule" },
+      { name: "Enabled Speeding rule" },
     );
     await expect(enabled).toBeDisabled();
   });

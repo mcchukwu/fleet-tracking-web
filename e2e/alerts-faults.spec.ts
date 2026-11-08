@@ -27,13 +27,15 @@ test.describe("alerts faults", () => {
     await expect(page.getByText("Something went wrong on our side").first()).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByRole("button", { name: "Retry" }).first()).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Retry", exact: true }).first(),
+    ).toBeVisible();
     await expect(page.getByText("Something broke.")).toHaveCount(0);
     await captureForReview(page, "04-alerts-error");
     await expectNoAxeViolations(page);
 
     await clearFault(page);
-    await page.getByRole("button", { name: "Retry" }).first().click();
+    await page.getByRole("button", { name: "Retry", exact: true }).first().click();
     await expect(page.getByLabel("Copy plate LSD-102-AA").first()).toBeVisible({
       timeout: 10_000,
     });
@@ -176,12 +178,27 @@ test.describe("alerts faults", () => {
       history.replaceState({}, "", `${url.pathname}${url.search}`);
     });
 
-    await speeding.getByRole("checkbox", { name: "Enable Speeding rule" }).click();
+    await speeding.getByRole("checkbox", { name: "Enabled Speeding rule" }).click();
     await expect(page.getByText("It wasn't saved. Try again.")).toBeVisible({
       timeout: 40_000,
     });
     const writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
     expect(writes).toHaveLength(0);
+  });
+
+  test("a detail lookup failure shows the error inside the drawer", async ({ page }) => {
+    await page.goto(
+      `/alerts?map=fake&fault=${encodeURIComponent("alerts:server")}&alert=does-not-exist`,
+    );
+    const drawer = page.getByRole("complementary", { name: "Alert details" });
+    await expect(drawer).toBeVisible();
+    await expect(drawer.getByText("Something went wrong on our side")).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(
+      drawer.getByRole("button", { name: "Retry", exact: true }),
+    ).toBeVisible();
+    await expectNoAxeViolations(page);
   });
 
   test("a history failure keeps the detail readable and offers Retry", async ({ page }) => {

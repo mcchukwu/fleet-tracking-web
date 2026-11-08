@@ -82,11 +82,11 @@ describe("AlertRulesPanel", () => {
 
   it("toggles a rule and saves a full config", async () => {
     renderRules();
-    const enables = screen.getByRole("checkbox", { name: "Enable Speeding rule" });
+    const enables = screen.getByRole("checkbox", { name: "Enabled Speeding rule" });
     await userEvent.click(enables);
     expect(mocks.write.toggle).toHaveBeenCalledWith(speeding, false);
 
-    await userEvent.click(screen.getByRole("button", { name: "Edit Speeding settings" }));
+    await userEvent.click(screen.getByRole("button", { name: "Edit settings for Speeding" }));
     const speed = screen.getByLabelText("Speed kph");
     await userEvent.clear(speed);
     await userEvent.type(speed, "81");
@@ -105,14 +105,14 @@ describe("AlertRulesPanel", () => {
       expect(checkbox).toHaveAttribute("aria-disabled", "true");
     }
     expect(
-      screen.getByRole("button", { name: "Edit Speeding settings" }),
+      screen.getByRole("button", { name: "Edit settings for Speeding" }),
     ).toHaveAttribute("aria-disabled", "true");
   });
 
   it("explains a role-disabled control with a tooltip", async () => {
     mocks.canMutate = false;
     renderRules();
-    await userEvent.hover(screen.getByRole("checkbox", { name: "Enable Speeding rule" }));
+    await userEvent.hover(screen.getByRole("checkbox", { name: "Enabled Speeding rule" }));
     expect(await screen.findByRole("tooltip")).toHaveTextContent(
       "Your role can't change alert rules.",
     );

@@ -148,7 +148,7 @@ export function AlertTable({
 
   useEffect(() => {
     setScroller(rootRef.current?.closest("main") ?? null);
-  }, []);
+  }, [state, alerts.length]);
 
   useEffect(() => {
     const element = rootRef.current?.closest("main");

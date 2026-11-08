@@ -54,7 +54,7 @@ export function AlertRuleRow({
         {withReason(
           <Checkbox
             label="Enabled"
-            aria-label={`Enable ${typeLabel} rule`}
+            aria-label={`Enabled ${typeLabel} rule`}
             checked={rule.enabled}
             disabled={pending}
             aria-disabled={roleDisabled || undefined}
@@ -71,7 +71,7 @@ export function AlertRuleRow({
             <Button
               size="sm"
               variant="ghost"
-              aria-label={`Edit ${typeLabel} settings`}
+              aria-label={`${editing ? "Hide settings" : "Edit settings"} for ${typeLabel}`}
               aria-expanded={editing}
               aria-disabled={roleDisabled || undefined}
               disabled={pending}

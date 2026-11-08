@@ -240,7 +240,7 @@ describe("AlertsPage", () => {
     mocks.openAlerts.error = new TypeError("Failed to fetch");
     renderPage();
     expect(screen.getByText(/Count unavailable/)).toBeVisible();
-    await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await userEvent.click(screen.getByRole("button", { name: "Retry count" }));
     expect(mocks.openAlerts.refetch).toHaveBeenCalledTimes(1);
   });
 
