@@ -14,7 +14,11 @@ import type {
 import { alertRulesFixture } from "./fixtures/alertRules";
 import { alertsFixture } from "./fixtures/alerts";
 import { driversFixture } from "./fixtures/drivers";
-import { shiftEventsToRange, vehicleEventsFixture } from "./fixtures/events";
+import {
+  shiftEventsToRange,
+  vehicleEventsFixture,
+  vehicleEventsForCount,
+} from "./fixtures/events";
 import { geofencesFixture } from "./fixtures/geofences";
 import { generateHistory, historyFixture } from "./fixtures/history";
 import { tripsFixture } from "./fixtures/trips";
@@ -425,11 +429,19 @@ export const handlers = [
     const shift = (events: readonly VehicleEvent[]) =>
       inRange ? shiftEventsToRange(events, from, to) : events;
 
+    const pageParams =
+      typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
+    const requestedCount = Number.parseInt(pageParams?.get("events") ?? "", 10);
+    const baseEvents =
+      Number.isFinite(requestedCount) && requestedCount >= 0 && requestedCount <= 500
+        ? vehicleEventsForCount(requestedCount)
+        : vehicleEventsFixture;
+
     const fault = url.searchParams.get("fault");
     if (fault === "vehicle-events:unknown_enum") {
       return HttpResponse.json({
         data: shift([
-          ...vehicleEventsFixture,
+          ...baseEvents,
           {
             kind: "solar_flare",
             type: "unmapped_event",
@@ -448,7 +460,7 @@ export const handlers = [
       );
     }
     return withFault("vehicle-events", request, () =>
-      HttpResponse.json({ data: shift(vehicleEventsFixture) }),
+      HttpResponse.json({ data: shift(baseEvents) }),
     );
   }),
 

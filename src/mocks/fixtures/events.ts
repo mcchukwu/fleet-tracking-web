@@ -45,6 +45,25 @@ export const vehicleEventsFixture: VehicleEvent[] = [
 ];
 
 /**
+ * Deterministic event volume for layout and density tests. One per minute,
+ * cycling through the shapes the real feed returns. Mock-only.
+ */
+export function vehicleEventsForCount(count: number): VehicleEvent[] {
+  const templates: readonly Omit<VehicleEvent, "at">[] = [
+    { kind: "alert", type: "speeding", severity: "critical", status: "open" },
+    { kind: "alert", type: "route_deviation", severity: "high", status: "open" },
+    { kind: "geofence", type: "enter", name: "Lekki Depot" },
+    { kind: "geofence", type: "exit", name: "Refinery Gate" },
+    { kind: "alert", type: "geofence_enter", severity: "medium", status: "acked" },
+  ];
+  const anchor = Date.parse("2026-11-02T14:00:00Z");
+  return Array.from({ length: Math.max(0, count) }, (_, index) => ({
+    ...templates[index % templates.length],
+    at: new Date(anchor + index * 60_000).toISOString(),
+  }));
+}
+
+/**
  * The committed capture is a real 2 Nov replay. Shift it into the requested
  * window when needed so any replay range has events; an event already inside
  * the range keeps its exact time.

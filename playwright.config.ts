@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_PATH;
+const port = Number(process.env.PLAYWRIGHT_PORT ?? 4173);
 const review = process.env.REVIEW === "1";
 const launchOptions = executablePath
   ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
@@ -15,7 +16,7 @@ export default defineConfig({
   reporter: [["list"], ["html", { open: "never" }]],
   outputDir: "test-results/artifacts",
   use: {
-    baseURL: "http://127.0.0.1:4173",
+    baseURL: `http://127.0.0.1:${port}`,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
@@ -36,8 +37,8 @@ export default defineConfig({
     ),
   ],
   webServer: {
-    command: "npm run dev -- --host 127.0.0.1 --port 4173",
-    url: "http://127.0.0.1:4173",
+    command: `npm run dev -- --host 127.0.0.1 --port ${port} --strictPort`,
+    url: `http://127.0.0.1:${port}`,
     reuseExistingServer: !process.env.CI,
     env: {
       VITE_MOCK: "1",

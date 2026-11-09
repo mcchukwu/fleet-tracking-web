@@ -52,8 +52,11 @@ export function PlaybackScrubber({
   const valueText = `${formatPlaybackTime(currentIso)}${inGap ? ", no data" : ""}`;
 
   return (
-    <div className={cn("flex flex-col gap-1", className)}>
-      <div className="relative flex h-touch items-center md:h-6">
+    <div className={cn("flex min-w-0 items-center gap-2", className)}>
+      <span className="min-w-14 shrink-0 text-xs tabular-nums text-muted">
+        {formatPlaybackTime(new Date(fromMs).toISOString())}
+      </span>
+      <div className="relative flex h-touch min-w-0 flex-1 items-center md:h-control-md">
         <div aria-hidden="true" className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-surface-3" />
         {gaps.map((gap) => {
           const start = percentOf(gap.startMs, fromMs, toMs);
@@ -93,14 +96,18 @@ export function PlaybackScrubber({
           value={playheadMs}
           disabled={disabled}
           onChange={(event) => onSeek(Number(event.target.value))}
-          className="relative z-20 h-touch w-full cursor-pointer appearance-none bg-transparent accent-accent disabled:cursor-not-allowed disabled:opacity-60 md:h-6"
+          className="relative z-20 h-full w-full cursor-pointer appearance-none bg-transparent accent-accent disabled:cursor-not-allowed disabled:opacity-60"
         />
       </div>
-      <div className="flex justify-between text-xs tabular-nums text-muted">
-        <span>{formatPlaybackTime(new Date(fromMs).toISOString())}</span>
-        <span>{formatPlaybackTime(currentIso)}</span>
-        <span>{formatPlaybackTime(new Date(toMs).toISOString())}</span>
-      </div>
+      <span
+        data-testid="playback-current-time"
+        className="min-w-16 shrink-0 text-center text-xs tabular-nums text-muted"
+      >
+        {formatPlaybackTime(currentIso)}
+      </span>
+      <span className="min-w-14 shrink-0 text-right text-xs tabular-nums text-muted">
+        {formatPlaybackTime(new Date(toMs).toISOString())}
+      </span>
     </div>
   );
 }

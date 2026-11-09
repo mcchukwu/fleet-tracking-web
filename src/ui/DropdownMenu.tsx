@@ -10,7 +10,7 @@ export const DropdownMenuSub = DropdownMenuPrimitive.Sub;
 export const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
 
 const itemStyles =
-  "flex h-touch select-none items-center gap-2 rounded-sm px-2 text-sm text-text outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-surface-2 data-[state=checked]:bg-accent-soft md:h-control-md";
+  "flex min-h-touch shrink-0 select-none items-center gap-2 rounded-sm px-2 text-sm text-text outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-surface-2 data-[state=checked]:bg-accent-soft md:min-h-control-md";
 
 function ItemIndicator() {
   return (

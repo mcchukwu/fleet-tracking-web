@@ -81,7 +81,7 @@ describe("PlaybackControls", () => {
     await userEvent.click(screen.getByRole("button", { name: "Step forward one position" }));
     expect(handlers.onStep.mock.calls).toEqual([[-1], [1]]);
 
-    await userEvent.selectOptions(screen.getByLabelText("Speed"), "4");
+    await userEvent.selectOptions(screen.getByLabelText("Playback speed"), "4");
     expect(handlers.onSpeedChange).toHaveBeenCalledWith(4);
 
     await userEvent.selectOptions(screen.getByLabelText("Range"), "30m");
@@ -94,6 +94,13 @@ describe("PlaybackControls", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Fit route" }));
     expect(handlers.onFit).toHaveBeenCalled();
+  });
+
+  it("keeps the speed name inside the trigger, with no stacked label", () => {
+    renderControls();
+    const speed = screen.getByLabelText("Playback speed");
+    expect(speed).toHaveDisplayValue("Speed 1×");
+    expect(screen.getByText("Playback speed")).toHaveClass("sr-only");
   });
 
   it("shows the response resolution, point count and gap label", () => {

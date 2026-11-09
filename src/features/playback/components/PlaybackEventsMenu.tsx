@@ -22,11 +22,18 @@ export function PlaybackEventsMenu({
 }: PlaybackEventsMenuProps) {
   if (events.length === 0) {
     return (
-      <div className="flex flex-col items-start gap-1">
-        <Button size="sm" variant="ghost" disabled aria-disabled="true">
+      <div className="flex items-center gap-2">
+        <Button
+          size="md"
+          variant="ghost"
+          disabled
+          aria-disabled="true"
+          title={disabledReason}
+          className="shrink-0 px-2 text-xs md:px-3"
+        >
           Events (0)
         </Button>
-        <span className="text-xs text-muted">{disabledReason}</span>
+        <span className="hidden text-xs text-muted md:inline">{disabledReason}</span>
       </div>
     );
   }
@@ -34,16 +41,19 @@ export function PlaybackEventsMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="sm" variant="ghost">
+        <Button size="md" variant="ghost" className="shrink-0 px-2 text-xs md:px-3">
           Events ({events.length})
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="max-h-64 w-72 overflow-y-auto">
+      <DropdownMenuContent
+        align="end"
+        className="flex max-h-menu w-80 flex-col gap-0.5 overflow-y-auto"
+      >
         {events.map((event) => (
           <DropdownMenuItem
             key={event.key}
             onSelect={() => onJump(event.atMs)}
-            className="flex flex-col items-start gap-1"
+            className="flex-col items-start gap-1 px-3 py-2"
           >
             <span className="flex w-full items-center gap-2">
               <span className="flex-1">{event.label}</span>

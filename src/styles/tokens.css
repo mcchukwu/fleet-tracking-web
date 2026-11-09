@@ -285,6 +285,11 @@
   to { background-color: transparent; }
 }
 
+/* Menus never take more than three fifths of the viewport; content scrolls inside. */
+@utility max-h-menu {
+  max-height: 60vh;
+}
+
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }

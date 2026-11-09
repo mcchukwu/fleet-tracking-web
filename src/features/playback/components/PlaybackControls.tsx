@@ -72,17 +72,18 @@ function ControlsSkeleton() {
   return (
     <div data-testid="playback-controls-skeleton" aria-busy="true" className="flex flex-col gap-3">
       <div className="flex flex-wrap items-end gap-2">
-        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-4 w-16" />
         <Skeleton className="h-4 w-24" />
         <Skeleton className="ml-auto h-8 w-20" />
       </div>
-      <div className="flex items-center gap-2">
-        <Skeleton className="h-8 w-8" />
-        <Skeleton className="h-8 w-8" />
-        <Skeleton className="h-8 w-8" />
-        <Skeleton className="ml-auto h-3 w-32" />
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
+        <div className="order-2 flex items-center gap-4 md:order-1">
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-20" />
+        </div>
+        <Skeleton className="order-1 h-8 w-full md:order-2 md:flex-1" />
       </div>
-      <Skeleton className="h-4 w-full" />
     </div>
   );
 }
@@ -140,7 +141,7 @@ export function PlaybackControls({
           <SlowNotice onRetry={onRetry} onCancel={onCancel} />
         </>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div data-testid="playback-controls-body" className="flex flex-col gap-3">
           <div className="flex flex-wrap items-end gap-2">
             <Select
               label="Range"
@@ -175,12 +176,22 @@ export function PlaybackControls({
             <span className="text-xs text-muted">
               {formatPlaybackDuration(toMs - fromMs)}
             </span>
+            <div className="ml-auto flex items-center gap-3 text-sm">
+              <span className="min-w-16 text-right tabular-nums">
+                {formatSpeed(inGap ? null : cursor.speedKph)}
+              </span>
+              <span className="min-w-14 tabular-nums">
+                {inGap ? MISSING : formatHeading(cursor.headingDeg)}
+              </span>
+              <span className="min-w-16 text-right text-xs tabular-nums text-muted">
+                {pointCount} points
+              </span>
+            </div>
             <Button
               size="sm"
               variant="ghost"
               onClick={onFit}
               disabled={unavailable}
-              className="ml-auto"
               aria-label="Fit route"
             >
               <Maximize2 aria-hidden="true" className="size-4" strokeWidth={1.5} />
@@ -188,55 +199,68 @@ export function PlaybackControls({
             </Button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <IconButton
-              size="sm"
-              label="Step back one position"
-              onClick={() => onStep(-1)}
-              disabled={unavailable}
-              icon={<SkipBack aria-hidden="true" className="size-4" strokeWidth={1.5} />}
-            />
-            <IconButton
-              size="sm"
-              variant="secondary"
-              label={playing ? "Pause" : "Play"}
-              onClick={onToggle}
-              disabled={unavailable}
-              icon={
-                playing ? (
-                  <Pause aria-hidden="true" className="size-4" strokeWidth={1.5} />
-                ) : (
-                  <Play aria-hidden="true" className="size-4" strokeWidth={1.5} />
-                )
-              }
-            />
-            <IconButton
-              size="sm"
-              label="Step forward one position"
-              onClick={() => onStep(1)}
-              disabled={unavailable}
-              icon={<SkipForward aria-hidden="true" className="size-4" strokeWidth={1.5} />}
-            />
-            <Select
-              label="Speed"
-              value={String(speed)}
-              onChange={(event) => onSpeedChange(Number(event.target.value))}
-              className="ml-2 w-20"
-            >
-              {PLAYBACK_SPEEDS.map((option) => (
-                <option key={option} value={option}>
-                  {option}×
-                </option>
-              ))}
-            </Select>
-            <div className="ml-auto flex items-center gap-3 text-sm">
-              <span className="tabular-nums">{formatSpeed(inGap ? null : cursor.speedKph)}</span>
-              <span className="tabular-nums">
-                {inGap ? MISSING : formatHeading(cursor.headingDeg)}
-              </span>
-              <span className="text-xs tabular-nums text-muted">{pointCount} points</span>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
+            <div className="order-2 flex items-center gap-4 md:order-1">
+              <fieldset
+                aria-label="Transport"
+                className="m-0 flex shrink-0 items-center gap-2 border-0 p-0"
+              >
+                <IconButton
+                  size="md"
+                  label="Step back one position"
+                  onClick={() => onStep(-1)}
+                  disabled={unavailable}
+                  icon={<SkipBack aria-hidden="true" className="size-4" strokeWidth={1.5} />}
+                />
+                <IconButton
+                  size="md"
+                  variant="secondary"
+                  label={playing ? "Pause" : "Play"}
+                  onClick={onToggle}
+                  disabled={unavailable}
+                  icon={
+                    playing ? (
+                      <Pause aria-hidden="true" className="size-4" strokeWidth={1.5} />
+                    ) : (
+                      <Play aria-hidden="true" className="size-4" strokeWidth={1.5} />
+                    )
+                  }
+                />
+                <IconButton
+                  size="md"
+                  label="Step forward one position"
+                  onClick={() => onStep(1)}
+                  disabled={unavailable}
+                  icon={<SkipForward aria-hidden="true" className="size-4" strokeWidth={1.5} />}
+                />
+              </fieldset>
+              <Select
+                label="Playback speed"
+                labelPlacement="inline"
+                compact
+                aria-label="Playback speed"
+                value={String(speed)}
+                onChange={(event) => onSpeedChange(Number(event.target.value))}
+                className="w-21 text-xs md:w-32"
+              >
+                {PLAYBACK_SPEEDS.map((option) => (
+                  <option key={option} value={option}>
+                    Speed {option}×
+                  </option>
+                ))}
+              </Select>
+              <PlaybackEventsMenu events={events} onJump={onJump} />
             </div>
-            <PlaybackEventsMenu events={events} onJump={onJump} />
+            <PlaybackScrubber
+              fromMs={fromMs}
+              toMs={toMs}
+              playheadMs={playheadMs}
+              gaps={gaps}
+              events={events}
+              onSeek={onSeek}
+              disabled={unavailable}
+              className="order-1 w-full md:order-2 md:min-w-0 md:flex-1"
+            />
           </div>
 
           {error ? (
@@ -259,16 +283,6 @@ export function PlaybackControls({
               )}
             </div>
           ) : null}
-
-          <PlaybackScrubber
-            fromMs={fromMs}
-            toMs={toMs}
-            playheadMs={playheadMs}
-            gaps={gaps}
-            events={events}
-            onSeek={onSeek}
-            disabled={unavailable}
-          />
 
           {gaps.length > 0 ? (
             <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
