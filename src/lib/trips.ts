@@ -1,10 +1,19 @@
 import type { Trip, TripInput, TripStatus, TripUpdate } from "../api/types";
 import { isTripStatus } from "./status";
 
-export type TripSort = "status" | "started" | "plate";
-export type TripAction = "assign" | "start" | "complete" | "cancel";
+export type TripSort = "status" | "started" | "plate";export type TripAction = "assign" | "start" | "complete" | "cancel";
 export type TripReconcileOutcome = "saved" | "not_saved" | "unknown";
 export type TripEmptyReason = "no-data" | "no-results" | "no-loaded-matches";
+
+export const tripSortOptions: readonly TripSort[] = ["status", "started", "plate"];
+
+export function isTripSort(value: string | null | undefined): value is TripSort {
+  return value === "status" || value === "started" || value === "plate";
+}
+
+export function tripSortValue(value: string | null | undefined): TripSort {
+  return isTripSort(value) ? value : "status";
+}
 
 const TERMINAL: ReadonlySet<TripStatus> = new Set(["completed", "cancelled"]);
 

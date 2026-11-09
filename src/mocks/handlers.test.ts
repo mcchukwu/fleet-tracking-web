@@ -3,6 +3,8 @@ import { appendMockAlert, freshenVehicles, resetMockState } from "./handlers";
 import { vehiclesFixture } from "./fixtures/vehicles";
 import { alertsFixture } from "./fixtures/alerts";
 import { perfVehicles } from "./perf";
+import { tripsFixture } from "./fixtures/trips";
+import { driversFixture } from "./fixtures/drivers";
 
 const API = `${window.location.origin}/api/v1`;
 const vehicleId = vehiclesFixture[0]?.id ?? "";
@@ -270,5 +272,160 @@ describe("playback mock endpoints", () => {
       `${API}/vehicles/00000000-0000-0000-0000-000000000000/events?from=${from}&to=${to}`,
     );
     expect(missing.status).toBe(404);
+  });
+});
+
+describe("mock trips", () => {
+  const activeDriver = driversFixture.find((driver) => driver.status === "active");
+  const vehicleId = vehiclesFixture[0]?.id ?? "";
+
+  async function patchTrip(id: string, body: unknown): Promise<Response> {
+    return fetch(`${API}/trips/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  it("applies status, limit and offset", async () => {
+    const response = await fetch(`${API}/trips?limit=2&offset=1`);
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as { data: Array<{ id: string }> };
+    expect(payload.data.map((row) => row.id)).toEqual([
+      tripsFixture[1]?.id,
+      tripsFixture[2]?.id,
+    ]);
+
+    const active = await fetch(`${API}/trips?status=active`);
+    const activePayload = (await active.json()) as { data: Array<{ status: string }> };
+    expect(activePayload.data.every((row) => row.status === "active")).toBe(true);
+
+    const unknown = await fetch(`${API}/trips?status=diverted`);
+    await expect(unknown.json()).resolves.toEqual({ data: [] });
+  });
+
+  it("supports the empty page flag and the trips-shaped unknown enum fault", async () => {
+    const empty = await fetch(`${API}/trips?empty=trips`);
+    await expect(empty.json()).resolves.toEqual({ data: [] });
+
+    const unknown = await fetch(`${API}/trips?fault=trips%3Aunknown_enum`);
+    const payload = (await unknown.json()) as { data: Array<{ status: string }> };
+    expect(payload.data[0]?.status).toBe("diverted");
+  });
+
+  it("creates a planned trip with a resolved driver and records the write", async () => {
+    const response = await fetch(`${API}/trips`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        vehicle_id: vehicleId,
+        driver_id: activeDriver?.id,
+        origin: "Refinery Gate",
+        destination: "Ibadan Customer",
+      }),
+    });
+    expect(response.status).toBe(201);
+    const created = (await response.json()) as { id: string };
+    expect(created.id).toBeTruthy();
+
+    const list = await fetch(`${API}/trips?limit=500`);
+    const payload = (await list.json()) as {
+      data: Array<{ id: string; status: string; driver_name?: string; distance_km: number }>;
+    };
+    const row = payload.data.find((trip) => trip.id === created.id);
+    expect(row).toMatchObject({
+      status: "planned",
+      driver_name: activeDriver?.name,
+      distance_km: 0,
+    });
+  });
+
+  it("rejects a create without the required fields", async () => {
+    const response = await fetch(`${API}/trips`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ vehicle_id: vehicleId }),
+    });
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: "invalid_request" },
+    });
+  });
+
+  it("sets timestamps and a distance on transitions", async () => {
+    const target = tripsFixture.find((trip) => trip.status === "active");
+    if (!target) throw new Error("fixture missing an active trip");
+
+    const started = await patchTrip(target.id, { status: "active" });
+    expect(started.status).toBe(204);
+
+    const completed = await patchTrip(target.id, { status: "completed" });
+    expect(completed.status).toBe(204);
+
+    const list = await fetch(`${API}/trips?limit=500`);
+    const payload = (await list.json()) as {
+      data: Array<{
+        id: string;
+        status: string;
+        started_at?: string;
+        ended_at?: string;
+        distance_km: number;
+      }>;
+    };
+    const row = payload.data.find((trip) => trip.id === target.id);
+    expect(row?.status).toBe("completed");
+    expect(row?.started_at).toBeTruthy();
+    expect(row?.ended_at).toBeTruthy();
+    expect(row?.distance_km).toBe(12.4);
+  });
+
+  it("rejects an unknown status and an empty body is a no-op", async () => {
+    const target = tripsFixture[1];
+    if (!target) throw new Error("fixture missing");
+
+    const unknown = await patchTrip(target.id, { status: "diverted" });
+    expect(unknown.status).toBe(400);
+    await expect(unknown.json()).resolves.toMatchObject({
+      error: { code: "invalid_status" },
+    });
+
+    const empty = await patchTrip(target.id, {});
+    expect(empty.status).toBe(204);
+  });
+
+  it("forbids viewer and security writes and allows the dispatcher", async () => {
+    for (const role of ["viewer", "security"]) {
+      localStorage.setItem("fleet.mockRole", role); // guard-ignore: test-only mock role override.
+      resetMockState();
+      const create = await fetch(`${API}/trips`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vehicle_id: vehicleId, origin: "A", destination: "B" }),
+      });
+      expect(create.status).toBe(403);
+      const transition = await patchTrip(tripsFixture[0]?.id ?? "", { status: "cancelled" });
+      expect(transition.status).toBe(403);
+    }
+
+    localStorage.setItem("fleet.mockRole", "dispatcher"); // guard-ignore: test-only mock role override.
+    resetMockState();
+    const create = await fetch(`${API}/trips`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ vehicle_id: vehicleId, origin: "A", destination: "B" }),
+    });
+    expect(create.status).toBe(201);
+  });
+
+  it("seeds a large page for the Load more test", async () => {
+    const response = await fetch(`${API}/__mock/trips/bulk`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ count: 105 }),
+    });
+    expect(response.status).toBe(200);
+    const page = await fetch(`${API}/trips?limit=100`);
+    const payload = (await page.json()) as { data: unknown[] };
+    expect(payload.data).toHaveLength(100);
   });
 });

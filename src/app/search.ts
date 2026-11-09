@@ -21,8 +21,15 @@ export const alertsSearchSchema = z.object({
 });
 
 export const tripsSearchSchema = z.object({
-  status: text,
+  status: z
+    .enum(["planned", "assigned", "active", "completed", "cancelled"])
+    .optional()
+    .catch(undefined),
   q: text,
+  // `sort` already belongs to the map route; TanStack merges route search
+  // types, so a second `sort` with different values fails type-checking.
+  order: text,
+  trip: text,
 });
 
 export const driversSearchSchema = z.object({

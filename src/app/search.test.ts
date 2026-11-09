@@ -6,6 +6,7 @@ import {
   mapSearchSchema,
   playbackSearchSchema,
   reportsSearchSchema,
+  tripsSearchSchema,
 } from "./search";
 
 describe("route search schemas", () => {
@@ -94,5 +95,23 @@ describe("route search schemas", () => {
       from: "2026-11-01",
       to: "2026-11-03",
     });
+  });
+});
+
+describe("trips route search", () => {
+  it("keeps a valid status, search, order and selected trip", () => {
+    expect(
+      tripsSearchSchema.parse({
+        status: "active",
+        q: "lsd",
+        order: "started",
+        trip: "trip-1",
+      }),
+    ).toEqual({ status: "active", q: "lsd", order: "started", trip: "trip-1" });
+  });
+
+  it("drops an unknown status instead of trusting it", () => {
+    expect(tripsSearchSchema.parse({ status: "diverted" })).toEqual({});
+    expect(tripsSearchSchema.parse({ status: 42 })).toEqual({});
   });
 });

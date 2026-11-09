@@ -211,13 +211,16 @@ const vehiclePatchSchema = z
   })
   .strict();
 const tripInputSchema = z.object({
-  vehicle_id: z.string(),
-  driver_id: z.string().optional(),
-  origin: z.string(),
-  destination: z.string(),
-  status: z.enum(["planned", "assigned", "active", "completed", "cancelled"]).optional(),
+  vehicle_id: z.string().min(1),
+  driver_id: z.string().min(1).optional(),
+  origin: z.string().min(1),
+  destination: z.string().min(1),
 });
-const tripUpdateSchema = z.record(z.string(), z.unknown());
+const tripStatuses = ["planned", "assigned", "active", "completed", "cancelled"] as const;
+const tripUpdateSchema = z.object({
+  status: z.enum(tripStatuses).optional(),
+  driver_id: z.string().min(1).optional(),
+});
 const geofenceInputSchema = z.object({
   name: z.string(),
   kind: z.enum(["depot", "customer", "restricted", "other"]).optional(),
@@ -553,45 +556,145 @@ export const handlers = [
   }),
 
   http.get(`${API}/trips`, ({ request }) => {
+    const fault = new URL(request.url).searchParams.get("fault");
+    if (fault === "trips:unknown_enum") {
+      const first = state.trips[0];
+      return HttpResponse.json({
+        data: first ? [{ ...first, status: "diverted" }] : [],
+      });
+    }
     return withFault("trips", request, () => {
-      const status = new URL(request.url).searchParams.get("status");
-      const data = status ? state.trips.filter((trip) => trip.status === status) : state.trips;
-      return HttpResponse.json({ data });
+      const url = new URL(request.url);
+      if (url.searchParams.get("empty") === "trips") {
+        return HttpResponse.json({ data: [] });
+      }
+      const status = url.searchParams.get("status");
+      const limitParam = Number.parseInt(url.searchParams.get("limit") ?? "", 10);
+      const offsetParam = Number.parseInt(url.searchParams.get("offset") ?? "", 10);
+      const limit = Number.isFinite(limitParam)
+        ? Math.min(500, Math.max(1, limitParam))
+        : 100;
+      const offset = Number.isFinite(offsetParam) ? Math.max(0, offsetParam) : 0;
+      const data = status
+        ? state.trips.filter((trip) => trip.status === status)
+        : state.trips;
+      return HttpResponse.json({ data: data.slice(offset, offset + limit) });
     });
   }),
 
   http.post(`${API}/trips`, async ({ request }) => {
     return withFault("trips", request, async () => {
+      const user = resolveUser();
+      if (!user || !can(user.role, "mutate")) return forbidden();
       const parsed = tripInputSchema.safeParse(await readJson(request));
-      if (!parsed.success) return badRequest();
-      const vehicle = state.vehicles.find((item) => item.id === parsed.data.vehicle_id);
+      if (!parsed.success) {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "invalid_request",
+              message: "vehicle_id, origin and destination are required",
+            },
+          },
+          { status: 400 },
+        );
+      }
+      const vehicle = state.vehicles.find(
+        (item) => item.id === parsed.data.vehicle_id,
+      );
+      const driver = parsed.data.driver_id
+        ? state.drivers.find((item) => item.id === parsed.data.driver_id)
+        : undefined;
       const id = `trip-${state.trips.length + 1}`;
+      recordMockWrite("POST", `${API}/trips`, parsed.data);
+      // Staging always creates a planned trip, even when a driver is supplied.
       state.trips = [
         ...state.trips,
         {
           id,
           vehicle_id: parsed.data.vehicle_id,
           plate: vehicle?.plate ?? "—",
-          ...(parsed.data.driver_id ? { driver_id: parsed.data.driver_id } : {}),
+          ...(driver
+            ? { driver_id: driver.id, driver_name: driver.name }
+            : {}),
           origin: parsed.data.origin,
           destination: parsed.data.destination,
-          status: parsed.data.status ?? "planned",
+          status: "planned",
           distance_km: 0,
         },
       ];
-      return HttpResponse.json({ id });
+      return HttpResponse.json({ id }, { status: 201 });
     });
+  }),
+
+  http.post(`${API}/__mock/trips/bulk`, async ({ request }) => {
+    const body = (await readJson(request)) as { count?: number } | null;
+    const count = Math.max(0, Math.min(5_000, Math.floor(body?.count ?? 0)));
+    const now = Date.now();
+    const added: Trip[] = Array.from({ length: count }, (_, index) => {
+      const vehicle = state.vehicles[index % state.vehicles.length];
+      if (!vehicle) throw new Error("The mock has no vehicles");
+      const status = index % 3 === 0 ? "completed" : "active";
+      return {
+        id: `00000000-0000-4000-9000-${index.toString(16).padStart(12, "0")}`,
+        vehicle_id: vehicle.id,
+        plate: vehicle.plate,
+        origin: "Refinery Gate",
+        destination: `Depot ${index % 4}`,
+        status,
+        distance_km: status === "completed" ? 12.4 : 0,
+        started_at: new Date(now - index * 60_000).toISOString(),
+        ...(status === "completed"
+          ? { ended_at: new Date(now - index * 60_000 + 30 * 60_000).toISOString() }
+          : {}),
+      };
+    });
+    state.trips = [...added, ...state.trips];
+    return HttpResponse.json({ data: { added: added.length } });
   }),
 
   http.patch(`${API}/trips/:id`, async ({ params, request }) => {
     return withFault("trips", request, async () => {
+      const user = resolveUser();
+      if (!user || !can(user.role, "mutate")) return forbidden();
       const trip = state.trips.find((item) => item.id === params.id);
       if (!trip) {
-        return HttpResponse.json({ error: { code: "not_found", message: "not found" } }, { status: 404 });
+        return HttpResponse.json(
+          { error: { code: "not_found", message: "not found" } },
+          { status: 404 },
+        );
       }
-      const parsed = tripUpdateSchema.safeParse(await readJson(request));
-      if (!parsed.success) return badRequest();
-      Object.assign(trip, parsed.data);
+      const raw = await readJson(request);
+      const parsed = tripUpdateSchema.safeParse(raw);
+      if (!parsed.success) {
+        return HttpResponse.json(
+          { error: { code: "invalid_status", message: "unknown trip status" } },
+          { status: 400 },
+        );
+      }
+      const { status, driver_id } = parsed.data;
+      if (driver_id !== undefined) {
+        const driver = state.drivers.find((item) => item.id === driver_id);
+        if (!driver) {
+          return HttpResponse.json(
+            { error: { code: "invalid_request", message: "unknown driver" } },
+            { status: 400 },
+          );
+        }
+        trip.driver_id = driver.id;
+        trip.driver_name = driver.name;
+      }
+      recordMockWrite("PATCH", `${API}/trips/${String(params.id)}`, raw);
+      if (status !== undefined) {
+        trip.status = status;
+        const now = new Date().toISOString();
+        if (status === "active") trip.started_at = trip.started_at ?? now;
+        if (status === "completed") {
+          trip.started_at = trip.started_at ?? now;
+          trip.ended_at = now;
+          trip.distance_km = 12.4;
+        }
+        if (status === "cancelled") trip.ended_at = now;
+      }
       return new HttpResponse(null, { status: 204 });
     });
   }),
