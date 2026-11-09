@@ -16,6 +16,7 @@ test.describe("playback faults", () => {
       timeout: 15_000,
     });
     await expect(page.getByRole("button", { name: "Retry" }).first()).toBeVisible();
+    await captureForReview(page, "05-playback-error");
     await expectNoAxeViolations(page);
   });
 
@@ -73,6 +74,7 @@ test.describe("playback faults", () => {
       "/playback?map=fake&vehicle=00000000-0000-0000-0000-000000000000&resolution=5m",
     );
     await expect(page.getByText("No positions in this range")).toBeVisible({ timeout: 15_000 });
+    await captureForReview(page, "05-playback-empty");
     await expectNoHorizontalScroll(page);
   });
 });

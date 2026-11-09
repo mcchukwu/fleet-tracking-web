@@ -39,6 +39,7 @@ test.describe("playback", () => {
     await expect(page.getByRole("heading", { name: "Choose a vehicle" })).toBeVisible();
     await expect(page).toHaveURL(/resolution=30s/);
     await expect(page).toHaveURL(/from=/);
+    await captureForReview(page, "05-playback-picker");
 
     await openVehicle(page, "LSD-100-AA");
     await expect(page).toHaveURL(new RegExp(`vehicle=${VEHICLE}`));
@@ -80,6 +81,11 @@ test.describe("playback", () => {
     await expect(page).toHaveURL(/resolution=auto/);
     await expect(page.getByText(/^Resolution: /)).toBeVisible();
     await waitForPoints(page);
+
+    await page.getByLabel("Range").selectOption("custom");
+    await expect(page.getByRole("dialog", { name: "Custom range" })).toBeVisible();
+    await captureForReview(page, "05-playback-custom-range");
+    await page.getByRole("button", { name: "Cancel" }).click();
   });
 
   test("plays, pauses and steps through points", async ({ page }) => {
@@ -91,6 +97,7 @@ test.describe("playback", () => {
     await expect
       .poll(async () => (await playback(page))?.playheadMs ?? 0, { timeout: 10_000 })
       .toBeGreaterThan(initial + 500);
+    await captureForReview(page, "05-playback-playing");
 
     await page.getByRole("button", { name: "Pause" }).click();
     const paused = (await playback(page))?.playheadMs ?? 0;
@@ -138,6 +145,7 @@ test.describe("playback", () => {
     await page.getByRole("button", { name: /^Events \(/ }).click();
     const row = page.getByRole("menuitem").filter({ hasText: "Speeding" }).first();
     await expect(row).toBeVisible();
+    await captureForReview(page, "05-playback-events");
     await row.click();
     await expect.poll(async () => (await playback(page))?.playing).toBe(false);
   });
@@ -150,6 +158,7 @@ test.describe("playback", () => {
     await context.setOffline(true);
     await expect(page.getByText("Offline · showing saved data")).toBeVisible({ timeout: 10_000 });
     expect((await playback(page))?.pointCount ?? 0).toBe(points);
+    await captureForReview(page, "05-playback-offline");
     await context.setOffline(false);
   });
 
