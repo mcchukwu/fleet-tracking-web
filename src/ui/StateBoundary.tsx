@@ -9,12 +9,7 @@ import { cn } from "./cn";
 import { EmptyState, ForbiddenState, LoadingState } from "./StatePanel";
 
 export type StateBoundaryState =
-  | "loading"
-  | "empty"
-  | "error"
-  | "stale"
-  | "forbidden"
-  | "ready";
+  "loading" | "empty" | "error" | "stale" | "forbidden" | "ready";
 
 export interface StateBoundaryProps {
   state: StateBoundaryState;
@@ -55,7 +50,11 @@ export function StateBoundary({
   const showLoading = useDelayedFlag(state === "loading");
 
   if (state === "loading") {
-    return <div className={className}>{showLoading ? (loading ?? <LoadingState />) : null}</div>;
+    return (
+      <div className={className}>
+        {showLoading ? (loading ?? <LoadingState />) : null}
+      </div>
+    );
   }
 
   if (state === "empty") {
@@ -96,9 +95,9 @@ export function StateBoundary({
     }
     return (
       <div className={className}>
-        <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+        <div className="border-border flex items-center justify-between gap-2 border-b px-3 py-2">
           <div className="flex min-w-0 items-center gap-2">
-            <p className="text-sm text-muted">Couldn't refresh</p>
+            <p className="text-muted text-sm">Couldn't refresh</p>
             {staleLabel && staleLabel !== "—" ? (
               <Badge tone="warning">Stale · {staleLabel}</Badge>
             ) : null}
@@ -109,7 +108,7 @@ export function StateBoundary({
             </Button>
           ) : null}
         </div>
-        <div>{children}</div>
+        <div className="flex min-h-0 flex-1 flex-col">{children}</div>
       </div>
     );
   }
