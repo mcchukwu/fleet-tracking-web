@@ -132,7 +132,7 @@ for (const viewport of VIEWPORTS) {
       const speed = page.getByLabel("Playback speed");
       const events = page.getByRole("button", { name: /^Events \(/ });
       const slider = page.getByRole("slider", { name: "Playback position" });
-      const scrubber = slider.locator("xpath=../..");
+      const scrubber = page.getByTestId("playback-scrubber");
       const currentTime = page.getByTestId("playback-current-time");
 
       await expect(speed).toHaveAccessibleName("Playback speed");
@@ -190,7 +190,7 @@ for (const viewport of VIEWPORTS) {
           expectedHeight,
         );
         expect(scrubberBox.bottom).toBeLessThanOrEqual(backBox.y);
-        expect(Math.abs(scrubberBox.height - expectedHeight)).toBeLessThanOrEqual(0.5);
+        expect(Math.abs(scrubberBox.height - (expectedHeight + 20))).toBeLessThanOrEqual(0.5);
         const body = await measure(page.getByTestId("playback-controls-body"));
         expect(Math.abs(scrubberBox.x - body.x)).toBeLessThanOrEqual(0.5);
         expect(Math.abs(scrubberBox.width - body.width)).toBeLessThanOrEqual(0.5);
@@ -202,10 +202,11 @@ for (const viewport of VIEWPORTS) {
             { name: "transport forward", box: forwardBox },
             { name: "speed", box: speedBox },
             { name: "events", box: eventsBox },
-            { name: "scrubber", box: scrubberBox },
           ],
           expectedHeight,
         );
+        expect(Math.abs(scrubberBox.height - (expectedHeight + 20))).toBeLessThanOrEqual(0.5);
+        expect(Math.abs(scrubberBox.bottom - backBox.bottom)).toBeLessThanOrEqual(0.5);
       }
 
       const timeStyle = await style(currentTime);
@@ -306,5 +307,91 @@ for (const viewport of VIEWPORTS) {
         await expect(menu).toBeHidden();
       }
     });
+  });
+}
+
+for (const viewport of [
+  { width: 390, height: 844 },
+  { width: 360, height: 640 },
+] as const) {
+  test.describe(`playback scrubber pointer ${viewport.width}x${viewport.height}`, () => {
+    test.use({ viewport: { width: viewport.width, height: viewport.height } });
+
+    for (const count of [5, 40] as const) {
+      test(`seeks on the track with ${count} events`, async ({ page }) => {
+        await gotoPlayback(page, count);
+        const slider = page.getByRole("slider", { name: "Playback position" });
+        const band = page.getByTestId("playback-event-band");
+        const sliderBox = await measure(slider);
+        const bandBox = await measure(band);
+
+        expect(bandBox.bottom).toBeLessThanOrEqual(sliderBox.y + 0.5);
+
+        if (count === 5) {
+          const markers = page.getByTestId("playback-event-marker");
+          await expect(markers).toHaveCount(5);
+          await expect(page.getByTestId("playback-event-tick")).toHaveCount(0);
+          for (const marker of await markers.all()) {
+            const box = await measure(marker);
+            expect(box.width).toBeGreaterThanOrEqual(24);
+            expect(box.height).toBeGreaterThanOrEqual(20);
+            expect(box.bottom).toBeLessThanOrEqual(sliderBox.y + 0.5);
+          }
+        } else {
+          await expect(page.getByTestId("playback-event-marker")).toHaveCount(0);
+          await expect(page.getByTestId("playback-event-tick")).toHaveCount(40);
+        }
+
+        const points = Array.from({ length: 21 }, (_, index) => ({
+          x: sliderBox.x + 1 + ((sliderBox.width - 2) * index) / 20,
+          y: sliderBox.y + sliderBox.height / 2,
+        }));
+        const hits = await slider.evaluate(
+          (element, samples) =>
+            samples.map(({ x, y }) => document.elementFromPoint(x, y) === element),
+          points,
+        );
+        expect(hits).toEqual(Array.from({ length: 21 }, () => true));
+
+        const items =
+          count === 5
+            ? page.getByTestId("playback-event-marker")
+            : page.getByTestId("playback-event-tick");
+        const before = await measure(items.nth(1));
+        const after = await measure(items.nth(2));
+        const clickX = (before.x + before.width / 2 + after.x + after.width / 2) / 2;
+        const clickY = sliderBox.y + sliderBox.height / 2;
+        await page.mouse.click(clickX, clickY);
+
+        const state = await slider.evaluate((element) => {
+          const input = element as HTMLInputElement;
+          return {
+            min: Number(input.min),
+            max: Number(input.max),
+            step: Number(input.step),
+            value: Number(input.value),
+          };
+        });
+        const expectedRaw = state.min + ((clickX - sliderBox.x) / sliderBox.width) * (state.max - state.min);
+        const expected = Math.min(
+          state.max,
+          Math.max(state.min, state.min + Math.round((expectedRaw - state.min) / state.step) * state.step),
+        );
+        expect(Math.abs(state.value - expected)).toBeLessThanOrEqual(state.step);
+
+        const expectedTime = await page.evaluate(
+          (ms) =>
+            new Intl.DateTimeFormat("en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+              hour12: false,
+            }).format(new Date(ms)),
+          state.value,
+        );
+        await expect(page.getByTestId("playback-current-time")).toContainText(expectedTime);
+        await captureForReview(page, `05-playback-pointer-${count}`);
+      });
+    }
   });
 }

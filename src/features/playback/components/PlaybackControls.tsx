@@ -85,7 +85,7 @@ function ControlsSkeleton() {
           <Skeleton className="h-8 w-24" />
           <Skeleton className="h-8 w-20" />
         </div>
-        <Skeleton className="order-1 h-8 w-full md:order-2 md:flex-1" />
+        <Skeleton className="order-1 h-16 w-full md:order-2 md:h-13 md:flex-1" />
       </div>
     </div>
   );
@@ -220,7 +220,7 @@ export function PlaybackControls({
             </Button>
           </div>
 
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:gap-4">
             <div className="order-2 flex items-center gap-4 md:order-1">
               <fieldset
                 aria-label="Transport"

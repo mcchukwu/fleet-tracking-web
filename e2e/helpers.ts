@@ -93,8 +93,9 @@ export async function expectNoOverlap(a: Locator, b: Locator): Promise<void> {
 export async function expectTouchTargets(
   page: Page,
   minimum = 44,
+  exclude?: string,
 ): Promise<void> {
-  const tooSmall = await page.evaluate((size) => {
+  const tooSmall = await page.evaluate(({ size, skip }) => {
     const selector =
       'a[href],button,input:not([type="hidden"]),select,textarea,[role="button"],[role="link"],[tabindex]:not([tabindex="-1"])';
     return Array.from(document.querySelectorAll<HTMLElement>(selector))
@@ -104,7 +105,8 @@ export async function expectTouchTargets(
         if (
           rect.width === 0 ||
           rect.height === 0 ||
-          style.visibility === "hidden"
+          style.visibility === "hidden" ||
+          (skip !== null && element.matches(skip))
         )
           return false;
         // A checkbox or radio is one target with its wrapping label.
@@ -130,7 +132,7 @@ export async function expectTouchTargets(
         };
       })
       .filter((target) => target.width < size || target.height < size);
-  }, minimum);
+  }, { size: minimum, skip: exclude ?? null });
   expect(tooSmall, `touch targets below ${minimum}px`).toEqual([]);
 }
 

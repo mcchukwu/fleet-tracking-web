@@ -78,6 +78,50 @@ describe("PlaybackScrubber", () => {
     expect(onSeek).toHaveBeenCalledWith(fromMs + 60 * 60_000);
   });
 
+  it("keeps event buttons in the band above the track", () => {
+    render(
+      <PlaybackScrubber
+        fromMs={fromMs}
+        toMs={toMs}
+        playheadMs={fromMs}
+        gaps={gaps}
+        events={events}
+        onSeek={() => undefined}
+      />,
+    );
+    const band = screen.getByTestId("playback-event-band");
+    const track = screen.getByTestId("playback-scrubber-track");
+    const marker = screen.getByTestId("playback-event-marker");
+    expect(band).toContainElement(marker);
+    expect(track).not.toContainElement(marker);
+  });
+
+  it("collapses dense events into non-interactive ticks", () => {
+    const dense = Array.from({ length: 40 }, (_, index) => ({
+      key: `dense:${index}`,
+      kind: "alert",
+      type: "speeding",
+      label: "Speeding",
+      severity: "critical" as const,
+      status: "open",
+      at: new Date(fromMs + index * 60_000).toISOString(),
+      atMs: fromMs + index * 60_000,
+      percent: (index / 39) * 100,
+    }));
+    render(
+      <PlaybackScrubber
+        fromMs={fromMs}
+        toMs={toMs}
+        playheadMs={fromMs}
+        gaps={gaps}
+        events={dense}
+        onSeek={() => undefined}
+      />,
+    );
+    expect(screen.queryAllByTestId("playback-event-marker")).toHaveLength(0);
+    expect(screen.getAllByTestId("playback-event-tick")).toHaveLength(40);
+  });
+
   it("adds the date to every time when the range spans local days", () => {
     render(
       <PlaybackScrubber

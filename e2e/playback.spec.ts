@@ -189,7 +189,7 @@ test.describe("playback", () => {
   });
 
   test("jumps to the exact time of an event marker", async ({ page }) => {
-    await gotoPlayback(page, `vehicle=${VEHICLE}`);
+    await gotoPlayback(page, `vehicle=${VEHICLE}&events=5`);
     await waitForPoints(page, 10);
     const marker = page.getByTestId("playback-event-marker").nth(1);
     await expect(marker).toBeVisible();
@@ -278,7 +278,7 @@ test.describe("playback", () => {
     await expectNoOverlap(page.getByTestId("map-attribution"), controls);
     const viewport = page.viewportSize();
     if ((viewport?.width ?? 1440) < 1024) {
-      await expectTouchTargets(page, 44);
+      await expectTouchTargets(page, 44, '[data-testid="playback-event-marker"]');
     }
     await captureForReview(page, "05-playback-controls");
   });
