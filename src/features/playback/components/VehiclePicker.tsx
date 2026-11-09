@@ -129,6 +129,7 @@ export function VehiclePicker({
       value={value}
       onChange={onChange}
       placeholder="Search by plate or IMEI"
+      emptyMessage="No vehicles match"
       initialFocus={initialFocus}
       className={className}
     />

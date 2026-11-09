@@ -12,28 +12,29 @@ import type { PlaybackEvent } from "../lib/events";
 export interface PlaybackEventsMenuProps {
   events: readonly PlaybackEvent[];
   onJump: (timeMs: number) => void;
+  includeDate?: boolean;
   disabledReason?: string;
 }
 
 export function PlaybackEventsMenu({
   events,
   onJump,
+  includeDate = false,
   disabledReason = "No events in this range.",
 }: PlaybackEventsMenuProps) {
   if (events.length === 0) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col items-start">
         <Button
           size="md"
           variant="ghost"
           disabled
           aria-disabled="true"
-          title={disabledReason}
           className="shrink-0 px-2 text-xs md:px-3"
         >
           Events (0)
         </Button>
-        <span className="hidden text-xs text-muted md:inline">{disabledReason}</span>
+        <span className="px-2 text-xs text-muted md:px-3">{disabledReason}</span>
       </div>
     );
   }
@@ -60,7 +61,7 @@ export function PlaybackEventsMenu({
               {event.severity ? <SeverityBadge level={event.severity} /> : null}
             </span>
             <span className="text-xs tabular-nums text-muted">
-              {formatPlaybackTime(event.at)}
+              {formatPlaybackTime(event.at, includeDate)}
             </span>
           </DropdownMenuItem>
         ))}

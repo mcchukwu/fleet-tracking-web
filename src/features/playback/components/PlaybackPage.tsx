@@ -13,14 +13,15 @@ import { useLiveSnapshot, useVehicleEvents, useVehicleHistory } from "../../../a
 import { queryKeys } from "../../../api/keys";
 import { ErrorBoundary } from "../../../errors/ErrorBoundary";
 import { ErrorState } from "../../../errors/ErrorState";
+import { useErrorStorm } from "../../../errors/global";
 import { normalize } from "../../../errors/normalize";
 import { resetPlaybackDebug, setPlaybackDebug } from "../../../dev/debug";
 import { MapAttribution } from "../../../map/MapAttribution";
 import type { MapAdapter, LngLat, MapRoute } from "../../../map/types";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
+import { spansLocalDays } from "../../../lib/format";
 import { useMediaQuery } from "../../../lib/useMediaQuery";
 import { useConnection } from "../../../stores/connection";
-import { LoadingBar } from "../../../ui/StatePanel";
 import { usePlaybackCamera } from "../hooks/usePlaybackCamera";
 import { usePlaybackClock } from "../hooks/usePlaybackClock";
 import { usePlaybackShortcuts } from "../hooks/usePlaybackShortcuts";
@@ -31,6 +32,7 @@ import { presetRange, resolutionParam } from "../lib/range";
 import { DEFAULT_RANGE_MS, RANGE_PRESETS, type RangePresetId } from "../lib/constants";
 import { ChangeVehicleDialog } from "./ChangeVehicleDialog";
 import { CustomRangeDialog } from "./CustomRangeDialog";
+import { GapAnnouncer } from "./GapAnnouncer";
 import { PlaybackControls } from "./PlaybackControls";
 import { PlaybackHeader } from "./PlaybackHeader";
 import { PlaybackMap } from "./PlaybackMap";
@@ -85,6 +87,7 @@ export function PlaybackPage() {
     useDefaultRange,
   } = usePlaybackUrl();
   const snapshot = useLiveSnapshot();
+  const storm = useErrorStorm();
   const { network } = useConnection();
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const queryClient = useQueryClient();
@@ -96,6 +99,8 @@ export function PlaybackPage() {
   const headerRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<HTMLElement>(null);
   const focusedVehicle = useRef<string | null>(null);
+  const changeTriggerRef = useRef<HTMLElement | null>(null);
+  const rangeTriggerRef = useRef<HTMLElement | null>(null);
 
   const offline = network === "offline";
   const defaulting = !from || !to;
@@ -124,6 +129,7 @@ export function PlaybackPage() {
   const gapResult = useMemo(() => findGaps(points), [points]);
   const fromMs = range.valid ? range.fromMs : 0;
   const toMs = range.valid ? range.toMs : 0;
+  const crossDay = range.valid && spansLocalDays(fromMs, toMs);
   const resetKey = `${vehicleId ?? ""}|${from ?? ""}|${to ?? ""}|${resolution}`;
 
   const clock = usePlaybackClock({
@@ -171,7 +177,13 @@ export function PlaybackPage() {
     setCancelled(false);
   }, [resetKey]);
 
-  useEffect(() => () => resetPlaybackDebug(), []);
+  useEffect(
+    () => () => {
+      resetPlaybackDebug();
+      if (import.meta.env.DEV) window.__FLEET_TEST_MAP__ = null;
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!import.meta.env.DEV) return;
@@ -239,13 +251,53 @@ export function PlaybackPage() {
     void history.refetch();
   }, [history]);
 
-  useEffect(() => {
-    if (!vehicleId || focusedVehicle.current === vehicleId || points.length === 0) return;
-    focusedVehicle.current = vehicleId;
+  const rememberFocus = (ref: { current: HTMLElement | null }) => {
+    ref.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  };
+
+  const restoreFocus = (ref: { current: HTMLElement | null }) => {
     requestAnimationFrame(() => {
-      controlsRef.current
-        ?.querySelector<HTMLButtonElement>('[aria-label="Play"], [aria-label="Pause"]')
-        ?.focus();
+      const target = ref.current;
+      if (target && document.contains(target)) target.focus();
+    });
+  };
+
+  const openChangeVehicle = () => {
+    rememberFocus(changeTriggerRef);
+    setChangeOpen(true);
+  };
+
+  const closeChangeVehicle = () => {
+    setChangeOpen(false);
+    restoreFocus(changeTriggerRef);
+  };
+
+  const openCustomRange = () => {
+    rememberFocus(rangeTriggerRef);
+    setCustomOpen(true);
+  };
+
+  const closeCustomRange = () => {
+    setCustomOpen(false);
+    restoreFocus(rangeTriggerRef);
+  };
+
+  useEffect(() => {
+    if (!vehicleId) return;
+    const destination = `${vehicleId}|${points.length > 0 ? "play" : "loading"}`;
+    if (focusedVehicle.current === destination) return;
+    focusedVehicle.current = destination;
+    requestAnimationFrame(() => {
+      if (points.length > 0) {
+        const play = controlsRef.current?.querySelector<HTMLButtonElement>(
+          '[aria-label="Play"], [aria-label="Pause"]',
+        );
+        if (play) {
+          play.focus();
+          return;
+        }
+      }
+      controlsRef.current?.focus();
     });
   }, [vehicleId, points.length]);
 
@@ -261,14 +313,8 @@ export function PlaybackPage() {
       overlay = (
         <PlaybackStates variant="cancelled" onRetry={retryHistory} onResetRange={useDefaultRange} />
       );
-    } else if (offline && !cached && !history.isPending) {
+    } else if (offline && !cached) {
       overlay = <PlaybackStates variant="offline-uncached" />;
-    } else if (history.isPending && !cached) {
-      overlay = (
-        <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-4">
-          <LoadingBar label="Loading playback" />
-        </div>
-      );
     } else if (historyError && !cached) {
       overlay =
         historyError.kind === "forbidden" ? (
@@ -281,8 +327,14 @@ export function PlaybackPage() {
             variant="not-found"
             onBack={() => void navigate({ to: "/map", search: { v: vehicleId } })}
           />
+        ) : historyError.code === "invalid_range" ? (
+          <PlaybackStates
+            variant="validation"
+            message={historyError.serverMessage}
+            onResetRange={useDefaultRange}
+          />
         ) : (
-          <ErrorState error={historyError} onRetry={retryHistory} />
+          <ErrorState error={historyError} onRetry={retryHistory} compact={storm} />
         );
     } else if (!cached && !history.isPending) {
       overlay = <PlaybackStates variant="empty" onResetRange={useDefaultRange} />;
@@ -296,7 +348,16 @@ export function PlaybackPage() {
         <PlaybackMap
           route={route}
           offline={offline}
-          onReady={setAdapter}
+          onReady={(next) => {
+            setAdapter(next);
+            if (import.meta.env.DEV) window.__FLEET_TEST_MAP__ = next;
+          }}
+        />
+        <GapAnnouncer
+          inGap={clock.cursor.inGap}
+          playheadMs={clock.playheadMs}
+          gaps={gapResult.gaps}
+          includeDate={crossDay}
         />
 
         {headerVehicle ? (
@@ -304,7 +365,8 @@ export function PlaybackPage() {
             <PlaybackHeader
               vehicle={headerVehicle}
               offline={offline}
-              onChangeVehicle={() => setChangeOpen(true)}
+              savedAt={history.dataUpdatedAt}
+              onChangeVehicle={openChangeVehicle}
               className="pointer-events-auto w-full max-w-lg"
             />
           </div>
@@ -322,74 +384,76 @@ export function PlaybackPage() {
               </div>
             </div>
           </div>
-        ) : overlay ? (
-          <div className="pointer-events-none absolute inset-x-3 bottom-56 z-10 flex justify-center">
-            <div className="pointer-events-auto w-full max-w-md">{overlay}</div>
-          </div>
         ) : null}
 
-        {vehicleId && !defaulting && range.valid ? (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-end gap-1 p-2">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-1 p-2">
+          {overlay ? (
+            <div className="pointer-events-auto w-full max-w-md">{overlay}</div>
+          ) : null}
+          <div className="flex w-full flex-col items-end gap-1">
             <div className="pointer-events-none pr-1">
               <MapAttribution styleId="standard" attribution={null} />
             </div>
-            <PlaybackControls
-              controlsRef={controlsRef}
-              fromMs={fromMs}
-              toMs={toMs}
-              playheadMs={clock.playheadMs}
-              playing={clock.playing}
-              speed={clock.speed}
-              cursor={clock.cursor}
-              preset={preset}
-              resolution={resolution}
-              responseResolution={history.data?.resolution ?? resolution}
-              pointCount={points.length}
-              gaps={gapResult.gaps}
-              events={timeline}
-              loading={history.isPending && !cached}
-              error={cached ? historyError : null}
-              eventsError={eventsError}
-              disabled={cancelled}
-              onToggle={clock.toggle}
-              onStep={clock.step}
-              onSeek={clock.seek}
-              onSpeedChange={clock.setSpeed}
-              onPreset={(id) => {
-                const option = presetRange(presetMs(id));
-                setRange(option.from, option.to);
-              }}
-              onCustomRange={() => setCustomOpen(true)}
-              onResolution={setResolution}
-              onFit={camera.fit}
-              onJump={clock.seek}
-              onRetry={retryHistory}
-              onCancel={cancel}
-              onEventsRetry={() => void eventsQuery.refetch()}
-              className="pointer-events-auto w-full"
-            />
+            {vehicleId && !defaulting && range.valid ? (
+              <PlaybackControls
+                controlsRef={controlsRef}
+                fromMs={fromMs}
+                toMs={toMs}
+                playheadMs={clock.playheadMs}
+                playing={clock.playing}
+                speed={clock.speed}
+                cursor={clock.cursor}
+                preset={preset}
+                resolution={resolution}
+                responseResolution={history.data?.resolution ?? null}
+                pointCount={points.length}
+                gaps={gapResult.gaps}
+                events={timeline}
+                loading={history.isPending && !cached}
+                refreshing={history.isFetching && cached}
+                error={cached ? historyError : null}
+                eventsError={eventsError}
+                disabled={cancelled}
+                onToggle={clock.toggle}
+                onStep={clock.step}
+                onSeek={clock.seek}
+                onSpeedChange={clock.setSpeed}
+                onPreset={(id) => {
+                  const option = presetRange(presetMs(id));
+                  setRange(option.from, option.to);
+                }}
+                onCustomRange={openCustomRange}
+                onResolution={setResolution}
+                onFit={camera.fit}
+                onJump={clock.seek}
+                onRetry={retryHistory}
+                onCancel={cancel}
+                onEventsRetry={() => void eventsQuery.refetch()}
+                className="pointer-events-auto w-full"
+              />
+            ) : null}
           </div>
-        ) : null}
+        </div>
 
-        {changeOpen && vehicleId ? (
+        {vehicleId ? (
           <ChangeVehicleDialog
-            open
+            open={changeOpen}
             value={vehicleId}
             onChange={(id) => setVehicle(id)}
-            onClose={() => setChangeOpen(false)}
+            onClose={closeChangeVehicle}
           />
         ) : null}
 
-        {customOpen && from && to ? (
+        {from && to ? (
           <CustomRangeDialog
-            open
+            open={customOpen}
             from={from}
             to={to}
             onApply={(nextFrom, nextTo) => {
               setRange(nextFrom, nextTo);
-              setCustomOpen(false);
+              closeCustomRange();
             }}
-            onClose={() => setCustomOpen(false)}
+            onClose={closeCustomRange}
           />
         ) : null}
       </ErrorBoundary>

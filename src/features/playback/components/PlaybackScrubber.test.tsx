@@ -73,7 +73,25 @@ describe("PlaybackScrubber", () => {
       />,
     );
     expect(screen.getByTestId("gap-band")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: /Speeding at/i }));
+    const marker = screen.getByRole("button", { name: /Speeding \(critical\) at/i });
+    await userEvent.click(marker);
     expect(onSeek).toHaveBeenCalledWith(fromMs + 60 * 60_000);
+  });
+
+  it("adds the date to every time when the range spans local days", () => {
+    render(
+      <PlaybackScrubber
+        fromMs={fromMs}
+        toMs={fromMs + 24 * 60 * 60_000}
+        playheadMs={fromMs}
+        gaps={[]}
+        events={events}
+        onSeek={() => undefined}
+        includeDate
+      />,
+    );
+    const slider = screen.getByRole("slider", { name: "Playback position" });
+    expect(slider.getAttribute("aria-valuetext")).toMatch(/\d{1,2} \w{3} \d{2}:\d{2}:\d{2}/);
+    expect(screen.getByTestId("playback-current-time")).toHaveTextContent(/\d{1,2} \w{3}/);
   });
 });

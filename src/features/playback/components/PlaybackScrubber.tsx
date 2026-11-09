@@ -12,6 +12,7 @@ export interface PlaybackScrubberProps {
   events: readonly PlaybackEvent[];
   onSeek: (timeMs: number) => void;
   disabled?: boolean;
+  includeDate?: boolean;
   className?: string;
 }
 
@@ -20,6 +21,13 @@ const severityColor: Record<string, string> = {
   medium: "text-sev-medium",
   high: "text-sev-high",
   critical: "text-sev-critical",
+};
+
+const severityShape: Record<string, string> = {
+  low: "h-1 w-2 rounded-full",
+  medium: "size-2 rounded-full",
+  high: "size-2 rotate-45 rounded-none",
+  critical: "size-2 rounded-none",
 };
 
 function leftAt(percent: number): CSSProperties {
@@ -45,16 +53,17 @@ export function PlaybackScrubber({
   events,
   onSeek,
   disabled = false,
+  includeDate = false,
   className,
 }: PlaybackScrubberProps) {
   const inGap = gaps.some((gap) => playheadMs > gap.startMs && playheadMs < gap.endMs);
   const currentIso = new Date(playheadMs).toISOString();
-  const valueText = `${formatPlaybackTime(currentIso)}${inGap ? ", no data" : ""}`;
+  const valueText = `${formatPlaybackTime(currentIso, includeDate)}${inGap ? ", no data" : ""}`;
 
   return (
     <div className={cn("flex min-w-0 items-center gap-2", className)}>
       <span className="min-w-14 shrink-0 text-xs tabular-nums text-muted">
-        {formatPlaybackTime(new Date(fromMs).toISOString())}
+        {formatPlaybackTime(new Date(fromMs).toISOString(), includeDate)}
       </span>
       <div className="relative flex h-touch min-w-0 flex-1 items-center md:h-control-md">
         <div aria-hidden="true" className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-surface-3" />
@@ -75,15 +84,22 @@ export function PlaybackScrubber({
           <button
             key={event.key}
             type="button"
+            data-testid="playback-event-marker"
             onClick={() => onSeek(event.atMs)}
-            aria-label={`${event.label} at ${formatPlaybackTime(event.at)}`}
+            aria-label={`${event.label}${event.severity ? ` (${event.severity})` : ""} at ${formatPlaybackTime(event.at, includeDate)}`}
             className={cn(
-              "absolute top-0 z-10 flex size-touch -translate-x-1/2 items-start justify-center focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:size-4",
+              "absolute top-0 z-30 flex size-touch -translate-x-1/2 items-start justify-center focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:size-4",
               event.severity ? severityColor[event.severity] : "text-muted",
             )}
             style={leftAt(event.percent)}
           >
-            <span aria-hidden="true" className="mt-1 block size-2 rounded-full bg-current" />
+            <span
+              aria-hidden="true"
+              className={cn(
+                "mt-1 block bg-current",
+                event.severity ? severityShape[event.severity] : "size-2 rounded-full",
+              )}
+            />
           </button>
         ))}
         <input
@@ -103,10 +119,10 @@ export function PlaybackScrubber({
         data-testid="playback-current-time"
         className="min-w-16 shrink-0 text-center text-xs tabular-nums text-muted"
       >
-        {formatPlaybackTime(currentIso)}
+        {formatPlaybackTime(currentIso, includeDate)}
       </span>
       <span className="min-w-14 shrink-0 text-right text-xs tabular-nums text-muted">
-        {formatPlaybackTime(new Date(toMs).toISOString())}
+        {formatPlaybackTime(new Date(toMs).toISOString(), includeDate)}
       </span>
     </div>
   );

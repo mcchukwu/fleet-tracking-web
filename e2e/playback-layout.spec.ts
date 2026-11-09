@@ -1,6 +1,6 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { captureForReview } from "./helpers";
+import { captureForReview, expectNoOverlap } from "./helpers";
 
 const VEHICLE = "4324a768-9b14-4223-a299-eb8da4d8d309";
 const VIEWPORTS = [
@@ -8,6 +8,7 @@ const VIEWPORTS = [
   { width: 1024, height: 768 },
   { width: 768, height: 1024 },
   { width: 390, height: 844 },
+  { width: 360, height: 640 },
 ] as const;
 const EVENT_COUNTS = [1, 5, 40] as const;
 
@@ -71,6 +72,46 @@ function expectAligned(items: Array<{ name: string; box: Measured }>, expectedHe
     expect(Math.abs(box.height - expectedHeight), `${name} height`).toBeLessThanOrEqual(0.5);
     expect(Math.abs(box.bottom - (bottom ?? 0)), `${name} bottom`).toBeLessThanOrEqual(0.5);
   }
+}
+
+for (const viewport of [
+  { width: 390, height: 844 },
+  { width: 360, height: 640 },
+] as const) {
+  test.describe(`playback states ${viewport.width}x${viewport.height}`, () => {
+    test.use({ viewport: { width: viewport.width, height: viewport.height } });
+
+    test("keeps state actions clear of the control bar and always shows attribution", async ({
+      page,
+    }) => {
+      await page.goto(
+        `/playback?map=fake&vehicle=${VEHICLE}&fault=vehicle-history:server`,
+      );
+      await expect(page.getByText("Something went wrong on our side")).toBeVisible({
+        timeout: 15_000,
+      });
+      await expect(page.getByTestId("map-attribution")).toBeVisible();
+      const retry = page.getByRole("button", { name: "Retry" }).first();
+      await expect(retry).toBeVisible();
+      await expectNoOverlap(
+        retry,
+        page.getByRole("region", { name: "Playback controls" }),
+      );
+      await retry.click();
+      await captureForReview(page, "05-playback-state-clear");
+    });
+
+    test("shows attribution with the picker and an invalid range", async ({ page }) => {
+      await page.goto("/playback?map=fake");
+      await expect(page.getByTestId("map-attribution")).toBeVisible();
+
+      await page.goto(
+        `/playback?map=fake&vehicle=${VEHICLE}&from=2026-11-08T16:00:00Z&to=2026-11-08T14:00:00Z`,
+      );
+      await expect(page.getByText("Choose a valid range")).toBeVisible();
+      await expect(page.getByTestId("map-attribution")).toBeVisible();
+    });
+  });
 }
 
 for (const viewport of VIEWPORTS) {

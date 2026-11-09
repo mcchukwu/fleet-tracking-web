@@ -46,6 +46,7 @@ test.describe("playback", () => {
     await waitForPoints(page);
     await expect(page.getByRole("heading", { name: "Playback" })).toBeVisible();
     await expect(page.getByRole("region", { name: "Playback controls" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Play" })).toBeFocused();
     await expect.poll(() => page.title()).toBe("Playback · Fleet Console");
 
     await captureForReview(page, "05-playback-ready");
@@ -77,15 +78,52 @@ test.describe("playback", () => {
     });
     expect(Math.round((times.to - times.from) / 60_000)).toBe(30);
 
+    const autoRequest = page.waitForRequest(
+      (request) => request.url().includes("/history") && request.url().includes(VEHICLE),
+    );
     await page.getByLabel("Resolution").selectOption("auto");
     await expect(page).toHaveURL(/resolution=auto/);
-    await expect(page.getByText(/^Resolution: /)).toBeVisible();
+    const request = await autoRequest;
+    expect(new URL(request.url()).searchParams.has("resolution")).toBe(false);
+    await expect(page.getByText("Resolution: raw")).toBeVisible({ timeout: 15_000 });
     await waitForPoints(page);
 
     await page.getByLabel("Range").selectOption("custom");
     await expect(page.getByRole("dialog", { name: "Custom range" })).toBeVisible();
     await captureForReview(page, "05-playback-custom-range");
     await page.getByRole("button", { name: "Cancel" }).click();
+  });
+
+  test("closes both dialogs from their footer and returns focus to the trigger", async ({
+    page,
+  }) => {
+    await gotoPlayback(page, `vehicle=${VEHICLE}`);
+    await waitForPoints(page, 1);
+    const change = page.getByRole("button", { name: "Change vehicle" });
+    await change.click();
+    const changeDialog = page.getByRole("dialog", { name: "Change vehicle" });
+    await expect(changeDialog).toBeVisible();
+    await changeDialog.getByRole("button", { name: "Cancel" }).click();
+    await expect(changeDialog).toBeHidden();
+    await expect(change).toBeFocused();
+
+    await change.click();
+    await changeDialog.getByRole("button", { name: "Close dialog" }).click();
+    await expect(changeDialog).toBeHidden();
+    await expect(change).toBeFocused();
+
+    const range = page.getByLabel("Range");
+    await range.selectOption("custom");
+    const rangeDialog = page.getByRole("dialog", { name: "Custom range" });
+    await expect(rangeDialog).toBeVisible();
+    await rangeDialog.getByRole("button", { name: "Cancel" }).click();
+    await expect(rangeDialog).toBeHidden();
+    await expect(range).toBeFocused();
+
+    await range.selectOption("custom");
+    await page.keyboard.press("Escape");
+    await expect(rangeDialog).toBeHidden();
+    await expect(range).toBeFocused();
   });
 
   test("plays, pauses and steps through points", async ({ page }) => {
@@ -150,16 +188,81 @@ test.describe("playback", () => {
     await expect.poll(async () => (await playback(page))?.playing).toBe(false);
   });
 
-  test("keeps a cached route offline and shows the saved-data badge", async ({ page, context }) => {
+  test("jumps to the exact time of an event marker", async ({ page }) => {
+    await gotoPlayback(page, `vehicle=${VEHICLE}`);
+    await waitForPoints(page, 10);
+    const marker = page.getByTestId("playback-event-marker").nth(1);
+    await expect(marker).toBeVisible();
+    const label = await marker.getAttribute("aria-label");
+    expect(label).toMatch(/ at \d{2}:\d{2}:\d{2}$/);
+    const time = label?.slice(label.lastIndexOf(" at ") + 4) ?? "";
+
+    await marker.click();
+    await expect(page.getByRole("slider", { name: "Playback position" })).toHaveAttribute(
+      "aria-valuetext",
+      new RegExp(time.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+    );
+  });
+
+  test("keeps a cached route offline, refuses an uncached range and recovers", async ({
+    page,
+    context,
+  }) => {
     await gotoPlayback(page, `vehicle=${VEHICLE}`);
     await waitForPoints(page, 10);
     const points = (await playback(page))?.pointCount ?? 0;
 
     await context.setOffline(true);
-    await expect(page.getByText("Offline · showing saved data")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/^Offline · showing data from /)).toBeVisible({
+      timeout: 10_000,
+    });
     expect((await playback(page))?.pointCount ?? 0).toBe(points);
     await captureForReview(page, "05-playback-offline");
+
+    await page.getByLabel("Range").selectOption("24h");
+    await expect(page.getByText("Not available offline")).toBeVisible({ timeout: 10_000 });
+
     await context.setOffline(false);
+    await waitForPoints(page, 10);
+    await expect(page.getByText(/^Offline · showing data from /)).toBeHidden();
+  });
+
+  test("renders the route through the real MapLibre adapter", async ({ page }) => {
+    await page.route(/styles\.(test|openfreemap\.org)/, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ version: 8, sources: {}, layers: [] }),
+      }),
+    );
+    await page.goto(`/playback?vehicle=${VEHICLE}&resolution=30s`);
+    await expect(page.getByRole("region", { name: "Playback map" })).toBeVisible();
+
+    const routeDebug = async () =>
+      page.evaluate(() => {
+        const adapter = window.__FLEET_TEST_MAP__ as unknown as
+          | {
+              debugRoute?: () => {
+                mounted: boolean;
+                lineLayer: boolean;
+                lineFeatures: number;
+                pointFeatures: number;
+                cursor: boolean;
+              };
+            }
+          | null;
+        return adapter?.debugRoute?.() ?? null;
+      });
+
+    await expect
+      .poll(async () => (await routeDebug())?.lineFeatures ?? 0, { timeout: 30_000 })
+      .toBeGreaterThan(0);
+    const debug = await routeDebug();
+    expect(debug?.mounted).toBe(true);
+    expect(debug?.lineLayer).toBe(true);
+    expect(debug?.pointFeatures).toBeGreaterThanOrEqual(2);
+    expect(debug?.cursor).toBe(true);
+    await captureForReview(page, "05-playback-real-route");
   });
 
   test("keeps the header and controls apart on both viewports", async ({ page }) => {
@@ -167,10 +270,12 @@ test.describe("playback", () => {
     await waitForPoints(page, 10);
 
     await expectNoHorizontalScroll(page);
+    const controls = page.getByRole("region", { name: "Playback controls" });
     await expectNoOverlap(
-      page.getByRole("banner"),
-      page.getByRole("region", { name: "Playback controls" }),
+      page.locator('[data-testid="playback-page"] header'),
+      controls,
     );
+    await expectNoOverlap(page.getByTestId("map-attribution"), controls);
     const viewport = page.viewportSize();
     if ((viewport?.width ?? 1440) < 1024) {
       await expectTouchTargets(page, 44);

@@ -1,6 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import type { SnapshotVehicle } from "../../../api/types";
+import { formatClockTime } from "../../../lib/format";
 import { Badge } from "../../../ui/Badge";
 import { Button } from "../../../ui/Button";
 import { CopyButton } from "../../../ui/CopyButton";
@@ -9,6 +10,7 @@ import { cn } from "../../../ui/cn";
 export interface PlaybackHeaderProps {
   vehicle: Pick<SnapshotVehicle, "id" | "plate"> & Partial<Pick<SnapshotVehicle, "external_id">>;
   offline: boolean;
+  savedAt?: number | null;
   onChangeVehicle: () => void;
   className?: string;
 }
@@ -16,6 +18,7 @@ export interface PlaybackHeaderProps {
 export function PlaybackHeader({
   vehicle,
   offline,
+  savedAt,
   onChangeVehicle,
   className,
 }: PlaybackHeaderProps) {
@@ -52,7 +55,13 @@ export function PlaybackHeader({
               {vehicle.external_id}
             </CopyButton>
           ) : null}
-          {offline ? <Badge tone="warning">Offline · showing saved data</Badge> : null}
+          {offline ? (
+            <Badge tone="warning">
+              {savedAt
+                ? `Offline · showing data from ${formatClockTime(savedAt)}`
+                : "Offline · showing saved data"}
+            </Badge>
+          ) : null}
         </div>
       </div>
       <Button size="sm" variant="ghost" onClick={onChangeVehicle}>

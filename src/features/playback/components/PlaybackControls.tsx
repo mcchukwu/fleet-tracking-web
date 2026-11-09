@@ -9,7 +9,9 @@ import {
   formatPlaybackDuration,
   formatPlaybackTime,
   formatSpeed,
+  spansLocalDays,
 } from "../../../lib/format";
+import { useDelayedFlag } from "../../../lib/useDelayedFlag";
 import { Button } from "../../../ui/Button";
 import { IconButton } from "../../../ui/IconButton";
 import { Select } from "../../../ui/Select";
@@ -44,11 +46,12 @@ export interface PlaybackControlsProps {
   cursor: Cursor;
   preset: RangePresetId | null;
   resolution: ResolutionSetting;
-  responseResolution: string;
+  responseResolution: string | null;
   pointCount: number;
   gaps: readonly RouteGap[];
   events: readonly PlaybackEvent[];
   loading?: boolean;
+  refreshing?: boolean;
   error?: AppError | null;
   eventsError?: AppError | null;
   disabled?: boolean;
@@ -102,6 +105,7 @@ export function PlaybackControls({
   gaps,
   events,
   loading = false,
+  refreshing = false,
   error = null,
   eventsError = null,
   disabled = false,
@@ -124,12 +128,21 @@ export function PlaybackControls({
   const unavailable = disabled || pointCount === 0;
   const visibleGaps = gaps.slice(0, MAX_VISIBLE_GAP_LABELS);
   const hiddenGaps = gaps.length - visibleGaps.length;
-  const formatter = (ms: number) => formatPlaybackTime(new Date(ms).toISOString()).slice(0, 5);
+  const crossDay = spansLocalDays(fromMs, toMs);
+  const time = (ms: number) => formatPlaybackTime(new Date(ms).toISOString(), crossDay);
+  const formatter = (ms: number) => time(ms).replace(/:\d{2}$/, "");
+  const skeletonVisible = useDelayedFlag(loading);
+  const eventsDisabledReason = eventsError
+    ? eventsError.kind === "forbidden"
+      ? "You don't have access to events"
+      : "Events unavailable"
+    : undefined;
 
   return (
     <section
       ref={controlsRef}
       aria-label="Playback controls"
+      tabIndex={-1}
       className={cn(
         "rounded-lg border border-border bg-surface p-3 text-text shadow-float",
         className,
@@ -137,10 +150,14 @@ export function PlaybackControls({
     >
       {loading ? (
         <>
-          <ControlsSkeleton />
+          <div className={skeletonVisible ? undefined : "invisible"}>
+            <ControlsSkeleton />
+          </div>
           <SlowNotice onRetry={onRetry} onCancel={onCancel} />
         </>
       ) : (
+        <>
+          {refreshing ? <SlowNotice onRetry={onRetry} onCancel={onCancel} /> : null}
         <div data-testid="playback-controls-body" className="flex flex-col gap-3">
           <div className="flex flex-wrap items-end gap-2">
             <Select
@@ -148,8 +165,12 @@ export function PlaybackControls({
               value={preset ?? "custom"}
               onChange={(event) => {
                 const value = event.target.value;
-                if (value === "custom") onCustomRange();
-                else onPreset(value as RangePresetId);
+                if (value === "custom") {
+                  event.currentTarget.focus();
+                  onCustomRange();
+                } else {
+                  onPreset(value as RangePresetId);
+                }
               }}
               className="w-36"
             >
@@ -172,7 +193,7 @@ export function PlaybackControls({
                 </option>
               ))}
             </Select>
-            <span className="text-xs text-muted">Resolution: {responseResolution}</span>
+            <span className="text-xs text-muted">Resolution: {responseResolution ?? MISSING}</span>
             <span className="text-xs text-muted">
               {formatPlaybackDuration(toMs - fromMs)}
             </span>
@@ -249,7 +270,12 @@ export function PlaybackControls({
                   </option>
                 ))}
               </Select>
-              <PlaybackEventsMenu events={events} onJump={onJump} />
+              <PlaybackEventsMenu
+                events={events}
+                onJump={onJump}
+                includeDate={crossDay}
+                disabledReason={eventsDisabledReason}
+              />
             </div>
             <PlaybackScrubber
               fromMs={fromMs}
@@ -259,15 +285,12 @@ export function PlaybackControls({
               events={events}
               onSeek={onSeek}
               disabled={unavailable}
+              includeDate={crossDay}
               className="order-1 w-full md:order-2 md:min-w-0 md:flex-1"
             />
           </div>
 
-          {error ? (
-            <div className="rounded-md border border-border bg-surface-2">
-              <ErrorState error={error} compact onRetry={onRetry} />
-            </div>
-          ) : null}
+          {error ? <ErrorState error={error} compact onRetry={onRetry} /> : null}
 
           {eventsError ? (
             <div className="flex items-center justify-between gap-2 text-xs text-muted">
@@ -293,6 +316,7 @@ export function PlaybackControls({
             </div>
           ) : null}
         </div>
+        </>
       )}
     </section>
   );

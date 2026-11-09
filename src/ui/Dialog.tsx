@@ -87,7 +87,9 @@ export function Dialog({
             )}
           </div>
           {children ? <div className="mt-4">{children}</div> : null}
-          {footer ? <div className="mt-6 flex justify-end gap-2">{footer}</div> : null}
+          {footer ? (
+            <div className="relative z-menu mt-6 flex justify-end gap-2">{footer}</div>
+          ) : null}
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>

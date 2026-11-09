@@ -197,15 +197,13 @@ export function Combobox({
           )}
           strokeWidth={1.5}
         />
-      </div>
-
-      {open ? (
-        <ul
-          id={listId}
-          role="listbox"
-          aria-label={label}
-          className="z-menu max-h-64 overflow-y-auto rounded-md border border-border bg-surface p-1 shadow-menu"
-        >
+        {open ? (
+          <ul
+            id={listId}
+            role="listbox"
+            aria-label={label}
+            className="absolute inset-x-0 top-full z-menu mt-1 max-h-64 overflow-y-auto rounded-md border border-border bg-surface p-1 shadow-menu"
+          >
           {filtered.map((item, index) => {
             const isActive = index === activeIndexClamped;
             const isSelected = item.id === value;
@@ -231,8 +229,9 @@ export function Combobox({
               </li>
             );
           })}
-        </ul>
-      ) : null}
+          </ul>
+        ) : null}
+      </div>
 
       {statusMessage ? (
         <p

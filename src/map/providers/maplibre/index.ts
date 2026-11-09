@@ -122,6 +122,7 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
     gapAfterIndex: MapRoute["gapAfterIndex"];
     chevrons: boolean;
   } | null = null;
+  let routeDebug = { lineFeatures: 0, pointFeatures: 0, cursor: false };
   let displayed = new Map<string, LngLat>();
   let glides = new Map<
     string,
@@ -260,20 +261,22 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
   }
 
   function setRouteLine(next: MapRoute | null): void {
-    applyData(
-      SOURCE_IDS.route,
-      routeLineCollection(next?.points ?? [], next?.gapAfterIndex ?? []),
-    );
+    const collection = routeLineCollection(next?.points ?? [], next?.gapAfterIndex ?? []);
+    applyData(SOURCE_IDS.route, collection);
+    routeDebug = { ...routeDebug, lineFeatures: collection.features.length };
     routeLineRefs = next
       ? { points: next.points, gapAfterIndex: next.gapAfterIndex, chevrons: next.chevrons }
       : null;
   }
 
   function setRoutePoints(next: MapRoute | null): void {
-    applyData(
-      SOURCE_IDS.routePoints,
-      routePointCollection(next?.points ?? [], next?.cursorPosition ?? null),
-    );
+    const collection = routePointCollection(next?.points ?? [], next?.cursorPosition ?? null);
+    applyData(SOURCE_IDS.routePoints, collection);
+    routeDebug = {
+      ...routeDebug,
+      pointFeatures: collection.features.length,
+      cursor: collection.features.some((feature) => feature.properties.role === "cursor"),
+    };
   }
 
   function removeLayers(): void {
@@ -747,6 +750,7 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
       featureCache.features.clear();
       route = null;
       routeLineRefs = null;
+      routeDebug = { lineFeatures: 0, pointFeatures: 0, cursor: false };
       clusterMaxZoom = 0;
       lastDataAt = 0;
       hoveredKey = null;
@@ -894,6 +898,24 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
       return viewportOf(map);
     },
 
+    /**
+     * Test-only seam for the real adapter. It reads the data and layers the
+     * adapter actually installed; not part of the MapAdapter contract.
+     */
+    debugRoute(): {
+      mounted: boolean;
+      lineLayer: boolean;
+      lineFeatures: number;
+      pointFeatures: number;
+      cursor: boolean;
+    } {
+      return {
+        mounted: map !== null,
+        lineLayer: map ? map.getLayer(LAYER_IDS.routeLine) !== undefined : false,
+        ...routeDebug,
+      };
+    },
+
     on<K extends keyof MapEvents>(event: K, listener: (payload: MapEvents[K]) => void): () => void {
       const set = listeners.get(event) ?? new Set<(payload: never) => void>();
       set.add(listener as (payload: never) => void);
@@ -902,5 +924,5 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
         set.delete(listener as (payload: never) => void);
       };
     },
-  };
+  } as MapAdapter;
 }

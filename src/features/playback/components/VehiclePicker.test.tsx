@@ -107,6 +107,6 @@ describe("VehiclePicker", () => {
     const input = screen.getByRole("combobox", { name: "Vehicle" });
     await user.click(input);
     await user.type(input, "zzz");
-    expect(screen.getByText("No matches")).toBeVisible();
+    expect(screen.getByText("No vehicles match")).toBeVisible();
   });
 });

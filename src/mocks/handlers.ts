@@ -467,7 +467,7 @@ export const handlers = [
   http.get(`${API}/vehicles/:id/history`, ({ params, request }) => {
     return withFault("vehicle-history", request, () => {
       const url = new URL(request.url);
-      const resolution = url.searchParams.get("resolution") ?? "30s";
+      const resolution = url.searchParams.get("resolution") ?? "raw";
       const from = url.searchParams.get("from");
       const to = url.searchParams.get("to");
       if (!from) return HttpResponse.json({ data: historyFixture, resolution });

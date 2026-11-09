@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AppError } from "../../../errors/types";
 import { ErrorBoundary } from "../../../errors/ErrorBoundary";
+import { recordRequestFailure, resetErrorStorm } from "../../../errors/global";
 import { useConnectionStore } from "../../../stores/connection";
 import { ToastProvider } from "../../../ui/Toast";
 import { TooltipProvider } from "../../../ui/Tooltip";
@@ -192,6 +193,28 @@ describe("PlaybackPage", () => {
     expect(screen.getByText("Can't reach the server")).toBeVisible();
     await userEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(mocks.history.refetch).toHaveBeenCalled();
+  });
+
+  it("uses the compact error during an error storm", () => {
+    mocks.search = {
+      vehicle: vehicleId,
+      from: "2026-11-08T14:00:00Z",
+      to: "2026-11-08T16:00:00Z",
+      resolution: "30s",
+    };
+    mocks.history.data = undefined;
+    mocks.history.isError = true;
+    mocks.history.error = networkError;
+    recordRequestFailure("snapshot", "server");
+    recordRequestFailure("alerts", "network");
+    recordRequestFailure("trips", "unavailable");
+    try {
+      renderPage();
+      expect(screen.getByText("Can't reach the server")).toBeVisible();
+      expect(screen.queryByText(/Check your connection/)).not.toBeInTheDocument();
+    } finally {
+      resetErrorStorm();
+    }
   });
 
   it("shows a validation card for an invalid range and offers the default", async () => {

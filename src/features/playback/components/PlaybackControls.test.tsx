@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { PlaybackControls } from "./PlaybackControls";
@@ -110,10 +110,34 @@ describe("PlaybackControls", () => {
     expect(screen.getByText(/No data .* to .*/)).toBeVisible();
   });
 
-  it("uses a control-shaped skeleton while loading", () => {
+  it("does not claim a response resolution before one exists", () => {
+    renderControls({ responseResolution: null });
+    expect(screen.getByText("Resolution: —")).toBeVisible();
+  });
+
+  it("delays the control skeleton for 200ms while loading", async () => {
     renderControls({ loading: true, pointCount: 0 });
-    expect(screen.getByTestId("playback-controls-skeleton")).toBeVisible();
+    const skeleton = screen.getByTestId("playback-controls-skeleton");
+    expect(skeleton.parentElement).toHaveClass("invisible");
     expect(screen.queryByRole("button", { name: "Play" })).not.toBeInTheDocument();
+
+    await waitFor(() => expect(skeleton.parentElement).not.toHaveClass("invisible"), {
+      timeout: 1_000,
+    });
+  });
+
+  it("shows the slow state for a refresh with cached data", () => {
+    vi.useFakeTimers();
+    try {
+      renderControls({ refreshing: true });
+      expect(screen.queryByText("Still working…")).not.toBeInTheDocument();
+      act(() => {
+        vi.advanceTimersByTime(3_100);
+      });
+      expect(screen.getByText("Still working…")).toBeVisible();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("shows a paused label and disables transport without points", () => {

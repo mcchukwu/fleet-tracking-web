@@ -74,6 +74,17 @@ describe("usePlaybackCamera", () => {
     instance.flyTo([0, 0], 5);
     result.current.fit();
     expect(instance.viewport.bounds).toEqual({ south: 6.5, west: 3.4, north: 6.7, east: 3.6 });
+
+    instance.flyTo([0, 0], 5);
+    rerender({
+      adapter: instance,
+      points,
+      fitKey: "new-key",
+      topInset: 120,
+      bottomInset: 220,
+      reducedMotion: false,
+    });
+    expect(instance.viewport.center).toEqual([0, 0]);
   });
 
   it("does nothing without points", async () => {

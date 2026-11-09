@@ -31,7 +31,7 @@ describe("usePlaybackShortcuts", () => {
     expect(actions.onSpeed.mock.calls).toEqual([[-1], [1]]);
   });
 
-  it("ignores typing, sliders, buttons and open menus", () => {
+  it("ignores typing, sliders and open menus", () => {
     const actions = renderShortcuts();
     const input = document.createElement("input");
     document.body.append(input);
@@ -52,5 +52,22 @@ describe("usePlaybackShortcuts", () => {
     input.remove();
     slider.remove();
     menu.remove();
+  });
+
+  it("keeps speed and step keys working while a button has focus, but leaves Space to the button", () => {
+    const actions = renderShortcuts();
+    const button = document.createElement("button");
+    button.type = "button";
+    document.body.append(button);
+
+    press(".", button);
+    press(",", button);
+    press("ArrowRight", button);
+    expect(press(" ", button).defaultPrevented).toBe(false);
+
+    expect(actions.onSpeed.mock.calls).toEqual([[1], [-1]]);
+    expect(actions.onStep).toHaveBeenCalledWith(1);
+    expect(actions.onToggle).not.toHaveBeenCalled();
+    button.remove();
   });
 });

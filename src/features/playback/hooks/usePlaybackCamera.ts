@@ -55,7 +55,7 @@ export function usePlaybackCamera({
 
   useEffect(() => {
     fit();
-  }, [adapter, fitKey, fit, topInset, bottomInset]);
+  }, [adapter, fitKey, fit]);
 
   return { fit };
 }

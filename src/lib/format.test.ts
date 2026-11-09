@@ -12,6 +12,7 @@ import {
   formatRelativeTime,
   formatSpeed,
   formatTimeTooltip,
+  spansLocalDays,
 } from "./format";
 
 const now = Date.parse("2026-11-03T12:00:00Z");
@@ -95,6 +96,21 @@ describe("playback formatting", () => {
     expect(
       formatPlaybackRange(iso(2026, 11, 8, 22, 0), iso(2026, 11, 9, 2, 0)),
     ).toBe("8 Nov 22:00 – 9 Nov 02:00");
+  });
+
+  it("detects a range that crosses local midnight", () => {
+    expect(
+      spansLocalDays(
+        Date.parse(iso(2026, 11, 8, 14, 0)),
+        Date.parse(iso(2026, 11, 8, 16, 0)),
+      ),
+    ).toBe(false);
+    expect(
+      spansLocalDays(
+        Date.parse(iso(2026, 11, 8, 22, 0)),
+        Date.parse(iso(2026, 11, 9, 2, 0)),
+      ),
+    ).toBe(true);
   });
 
   it("formats durations in hours, minutes and days", () => {

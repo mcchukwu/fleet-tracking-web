@@ -142,6 +142,11 @@ function localDay(date: Date): string {
   }).format(date);
 }
 
+export function spansLocalDays(fromMs: number, toMs: number): boolean {
+  if (!isNumber(fromMs) || !isNumber(toMs)) return false;
+  return localDay(new Date(fromMs)) !== localDay(new Date(toMs));
+}
+
 function minutesOnly(date: Date): string {
   return new Intl.DateTimeFormat("en-GB", {
     hour: "2-digit",

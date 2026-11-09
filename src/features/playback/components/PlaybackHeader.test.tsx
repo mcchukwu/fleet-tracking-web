@@ -63,8 +63,10 @@ describe("PlaybackHeader", () => {
     expect(onChangeVehicle).toHaveBeenCalled();
   });
 
-  it("shows the offline saved-data badge", () => {
+  it("shows the offline saved-data badge with its age when known", () => {
     renderHeader({ offline: true });
     expect(screen.getByText("Offline · showing saved data")).toBeVisible();
+    renderHeader({ offline: true, savedAt: Date.parse("2026-11-08T14:02:00Z") });
+    expect(screen.getByText(/^Offline · showing data from \d{2}:\d{2}$/)).toBeVisible();
   });
 });

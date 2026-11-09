@@ -11,9 +11,14 @@ function isInteractive(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   return (
     target.closest(
-      'button, a, input, textarea, select, [role="slider"], [role="dialog"], [role="menu"]',
+      'input, textarea, select, [role="slider"], [role="dialog"], [role="menu"], [role="combobox"], [role="listbox"]',
     ) !== null
   );
+}
+
+function activatesNatively(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.closest('button, a, [role="button"], [role="link"]') !== null;
 }
 
 export function usePlaybackShortcuts({
@@ -28,6 +33,7 @@ export function usePlaybackShortcuts({
       if (isEditable(event.target) || isInteractive(event.target) || isModalOpen()) return;
 
       if (event.key === " ") {
+        if (activatesNatively(event.target)) return;
         event.preventDefault();
         onToggle();
         return;

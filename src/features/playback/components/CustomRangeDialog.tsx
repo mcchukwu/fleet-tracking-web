@@ -25,7 +25,10 @@ export function CustomRangeDialog({
 }: CustomRangeDialogProps) {
   const [start, setStart] = useState(() => toLocalInputValue(from));
   const [end, setEnd] = useState(() => toLocalInputValue(to));
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{
+    message: string;
+    fields: "start" | "end" | "both";
+  } | null>(null);
   const startRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLInputElement>(null);
 
@@ -41,14 +44,18 @@ export function CustomRangeDialog({
     const startIso = fromLocalInputValue(start);
     const endIso = fromLocalInputValue(end);
     if (!startIso || !endIso) {
-      setError("Choose a start and end time.");
+      setError({
+        message: "Choose a start and end time.",
+        fields: !startIso && !endIso ? "both" : startIso ? "end" : "start",
+      });
       (startIso ? endRef : startRef).current?.focus();
       return;
     }
     const validation = validateRange(startIso, endIso);
     if (!validation.valid) {
-      setError(validation.message);
-      (validation.reason === "order" || validation.reason === "too_long" ? startRef : endRef).current?.focus();
+      const crossField = validation.reason === "order" || validation.reason === "too_long";
+      setError({ message: validation.message, fields: crossField ? "both" : "start" });
+      (crossField ? startRef : endRef).current?.focus();
       return;
     }
     onApply(startIso, endIso);
@@ -80,6 +87,7 @@ export function CustomRangeDialog({
           type="datetime-local"
           value={start}
           onChange={(event) => setStart(event.target.value)}
+          error={error && error.fields !== "end" ? error.message : undefined}
         />
         <Input
           ref={endRef}
@@ -87,7 +95,7 @@ export function CustomRangeDialog({
           type="datetime-local"
           value={end}
           onChange={(event) => setEnd(event.target.value)}
-          error={error ?? undefined}
+          error={error && error.fields !== "start" ? error.message : undefined}
         />
       </div>
     </Dialog>
