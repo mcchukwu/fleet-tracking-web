@@ -898,23 +898,28 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
       return viewportOf(map);
     },
 
-    /**
-     * Test-only seam for the real adapter. It reads the data and layers the
-     * adapter actually installed; not part of the MapAdapter contract.
-     */
-    debugRoute(): {
-      mounted: boolean;
-      lineLayer: boolean;
-      lineFeatures: number;
-      pointFeatures: number;
-      cursor: boolean;
-    } {
-      return {
-        mounted: map !== null,
-        lineLayer: map ? map.getLayer(LAYER_IDS.routeLine) !== undefined : false,
-        ...routeDebug,
-      };
-    },
+    ...(import.meta.env.DEV
+      ? {
+          /**
+           * Test-only seam for the real adapter. It reads the data and layers
+           * the adapter actually installed; not part of the MapAdapter contract.
+           * Absent from production builds.
+           */
+          debugRoute(): {
+            mounted: boolean;
+            lineLayer: boolean;
+            lineFeatures: number;
+            pointFeatures: number;
+            cursor: boolean;
+          } {
+            return {
+              mounted: map !== null,
+              lineLayer: map ? map.getLayer(LAYER_IDS.routeLine) !== undefined : false,
+              ...routeDebug,
+            };
+          },
+        }
+      : {}),
 
     on<K extends keyof MapEvents>(event: K, listener: (payload: MapEvents[K]) => void): () => void {
       const set = listeners.get(event) ?? new Set<(payload: never) => void>();
