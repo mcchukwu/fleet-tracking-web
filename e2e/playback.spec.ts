@@ -13,7 +13,9 @@ const GAP_VEHICLE = "795b5251-1a04-475a-8df1-9aa1f9281bfc";
 
 async function gotoPlayback(page: Page, search = ""): Promise<void> {
   await page.goto(`/playback?map=fake${search ? `&${search}` : ""}`);
-  await expect(page.getByRole("region", { name: "Playback map" })).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Playback map" }),
+  ).toBeVisible();
 }
 
 async function playback(page: Page) {
@@ -22,7 +24,9 @@ async function playback(page: Page) {
 
 async function waitForPoints(page: Page, minimum = 1): Promise<void> {
   await expect
-    .poll(async () => (await playback(page))?.pointCount ?? 0, { timeout: 15_000 })
+    .poll(async () => (await playback(page))?.pointCount ?? 0, {
+      timeout: 15_000,
+    })
     .toBeGreaterThanOrEqual(minimum);
 }
 
@@ -34,9 +38,13 @@ async function openVehicle(page: Page, plate: string): Promise<void> {
 }
 
 test.describe("playback", () => {
-  test("picks a vehicle, writes the default range and draws the route", async ({ page }) => {
+  test("picks a vehicle, writes the default range and draws the route", async ({
+    page,
+  }) => {
     await gotoPlayback(page);
-    await expect(page.getByRole("heading", { name: "Choose a vehicle" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Choose a vehicle" }),
+    ).toBeVisible();
     await expect(page).toHaveURL(/resolution=30s/);
     await expect(page).toHaveURL(/from=/);
     await captureForReview(page, "05-playback-picker");
@@ -45,7 +53,9 @@ test.describe("playback", () => {
     await expect(page).toHaveURL(new RegExp(`vehicle=${VEHICLE}`));
     await waitForPoints(page);
     await expect(page.getByRole("heading", { name: "Playback" })).toBeVisible();
-    await expect(page.getByRole("region", { name: "Playback controls" })).toBeVisible();
+    await expect(
+      page.getByRole("region", { name: "Playback controls" }),
+    ).toBeVisible();
     await expect(page.getByRole("button", { name: "Play" })).toBeFocused();
     await expect.poll(() => page.title()).toBe("Playback · Fleet Console");
 
@@ -54,7 +64,9 @@ test.describe("playback", () => {
     await expectNoAxeViolations(page);
   });
 
-  test("round-trips the range and resolution through the URL", async ({ page }) => {
+  test("round-trips the range and resolution through the URL", async ({
+    page,
+  }) => {
     const to = new Date();
     const from = new Date(to.getTime() - 2 * 60 * 60_000);
     const search = `vehicle=${VEHICLE}&from=${encodeURIComponent(
@@ -79,17 +91,22 @@ test.describe("playback", () => {
     expect(Math.round((times.to - times.from) / 60_000)).toBe(30);
 
     const autoRequest = page.waitForRequest(
-      (request) => request.url().includes("/history") && request.url().includes(VEHICLE),
+      (request) =>
+        request.url().includes("/history") && request.url().includes(VEHICLE),
     );
     await page.getByLabel("Resolution").selectOption("auto");
     await expect(page).toHaveURL(/resolution=auto/);
     const request = await autoRequest;
     expect(new URL(request.url()).searchParams.has("resolution")).toBe(false);
-    await expect(page.getByText("Resolution: raw")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Resolution: raw")).toBeVisible({
+      timeout: 15_000,
+    });
     await waitForPoints(page);
 
     await page.getByLabel("Range").selectOption("custom");
-    await expect(page.getByRole("dialog", { name: "Custom range" })).toBeVisible();
+    await expect(
+      page.getByRole("dialog", { name: "Custom range" }),
+    ).toBeVisible();
     await captureForReview(page, "05-playback-custom-range");
     await page.getByRole("button", { name: "Cancel" }).click();
   });
@@ -133,7 +150,9 @@ test.describe("playback", () => {
 
     await page.getByRole("button", { name: "Play" }).click();
     await expect
-      .poll(async () => (await playback(page))?.playheadMs ?? 0, { timeout: 10_000 })
+      .poll(async () => (await playback(page))?.playheadMs ?? 0, {
+        timeout: 10_000,
+      })
       .toBeGreaterThan(initial + 500);
     await captureForReview(page, "05-playback-playing");
 
@@ -142,7 +161,9 @@ test.describe("playback", () => {
     await page.waitForTimeout(300);
     expect((await playback(page))?.playheadMs).toBe(paused);
 
-    await page.getByRole("button", { name: "Step forward one position" }).click();
+    await page
+      .getByRole("button", { name: "Step forward one position" })
+      .click();
     expect((await playback(page))?.playheadMs ?? 0).toBeGreaterThan(paused);
   });
 
@@ -166,7 +187,9 @@ test.describe("playback", () => {
   test("draws gaps honestly for the gap fixture", async ({ page }) => {
     await gotoPlayback(page, `vehicle=${GAP_VEHICLE}`);
     await expect
-      .poll(async () => (await playback(page))?.gapCount ?? 0, { timeout: 15_000 })
+      .poll(async () => (await playback(page))?.gapCount ?? 0, {
+        timeout: 15_000,
+      })
       .toBeGreaterThan(0);
     await expect(page.getByText(/No data .* to .*/).first()).toBeVisible();
     await captureForReview(page, "05-playback-gap");
@@ -177,11 +200,16 @@ test.describe("playback", () => {
     await gotoPlayback(page, `vehicle=${VEHICLE}`);
     await waitForPoints(page, 10);
     await expect
-      .poll(async () => (await playback(page))?.eventCount ?? 0, { timeout: 15_000 })
+      .poll(async () => (await playback(page))?.eventCount ?? 0, {
+        timeout: 15_000,
+      })
       .toBeGreaterThan(1);
 
     await page.getByRole("button", { name: /^Events \(/ }).click();
-    const row = page.getByRole("menuitem").filter({ hasText: "Speeding" }).first();
+    const row = page
+      .getByRole("menuitem")
+      .filter({ hasText: "Speeding" })
+      .first();
     await expect(row).toBeVisible();
     await captureForReview(page, "05-playback-events");
     await row.click();
@@ -197,8 +225,11 @@ test.describe("playback", () => {
     expect(label).toMatch(/ at \d{2}:\d{2}:\d{2}$/);
     const time = label?.slice(label.lastIndexOf(" at ") + 4) ?? "";
 
-    await marker.click();
-    await expect(page.getByRole("slider", { name: "Playback position" })).toHaveAttribute(
+    await marker.focus();
+    await page.keyboard.press("Enter");
+    await expect(
+      page.getByRole("slider", { name: "Playback position" }),
+    ).toHaveAttribute(
       "aria-valuetext",
       new RegExp(time.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
     );
@@ -220,14 +251,18 @@ test.describe("playback", () => {
     await captureForReview(page, "05-playback-offline");
 
     await page.getByLabel("Range").selectOption("24h");
-    await expect(page.getByText("Not available offline")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("Not available offline")).toBeVisible({
+      timeout: 10_000,
+    });
 
     await context.setOffline(false);
     await waitForPoints(page, 10);
     await expect(page.getByText(/^Offline · showing data from /)).toBeHidden();
   });
 
-  test("renders the route through the real MapLibre adapter", async ({ page }) => {
+  test("renders the route through the real MapLibre adapter", async ({
+    page,
+  }) => {
     await page.route(/styles\.(test|openfreemap\.org)/, (route) =>
       route.fulfill({
         status: 200,
@@ -236,26 +271,28 @@ test.describe("playback", () => {
       }),
     );
     await page.goto(`/playback?vehicle=${VEHICLE}&resolution=30s`);
-    await expect(page.getByRole("region", { name: "Playback map" })).toBeVisible();
+    await expect(
+      page.getByRole("region", { name: "Playback map" }),
+    ).toBeVisible();
 
     const routeDebug = async () =>
       page.evaluate(() => {
-        const adapter = window.__FLEET_TEST_MAP__ as unknown as
-          | {
-              debugRoute?: () => {
-                mounted: boolean;
-                lineLayer: boolean;
-                lineFeatures: number;
-                pointFeatures: number;
-                cursor: boolean;
-              };
-            }
-          | null;
+        const adapter = window.__FLEET_TEST_MAP__ as unknown as {
+          debugRoute?: () => {
+            mounted: boolean;
+            lineLayer: boolean;
+            lineFeatures: number;
+            pointFeatures: number;
+            cursor: boolean;
+          };
+        } | null;
         return adapter?.debugRoute?.() ?? null;
       });
 
     await expect
-      .poll(async () => (await routeDebug())?.lineFeatures ?? 0, { timeout: 30_000 })
+      .poll(async () => (await routeDebug())?.lineFeatures ?? 0, {
+        timeout: 30_000,
+      })
       .toBeGreaterThan(0);
     const debug = await routeDebug();
     expect(debug?.mounted).toBe(true);
@@ -265,7 +302,9 @@ test.describe("playback", () => {
     await captureForReview(page, "05-playback-real-route");
   });
 
-  test("keeps the header and controls apart on both viewports", async ({ page }) => {
+  test("keeps the header and controls apart on both viewports", async ({
+    page,
+  }) => {
     await gotoPlayback(page, `vehicle=${VEHICLE}`);
     await waitForPoints(page, 10);
 
@@ -277,8 +316,13 @@ test.describe("playback", () => {
     );
     await expectNoOverlap(page.getByTestId("map-attribution"), controls);
     const viewport = page.viewportSize();
+    const band = page.getByTestId("playback-event-band");
+    const bandBox = await band.boundingBox();
+    expect(bandBox?.height ?? 0).toBeGreaterThanOrEqual(
+      (viewport?.width ?? 1440) < 768 ? 44 : 28,
+    );
     if ((viewport?.width ?? 1440) < 1024) {
-      await expectTouchTargets(page, 44, '[data-testid="playback-event-marker"]');
+      await expectTouchTargets(page, 44);
     }
     await captureForReview(page, "05-playback-controls");
   });

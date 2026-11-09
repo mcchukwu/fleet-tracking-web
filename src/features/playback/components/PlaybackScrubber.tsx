@@ -1,13 +1,13 @@
 import {
-  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { formatPlaybackTime } from "../../../lib/format";
 import { cn } from "../../../ui/cn";
-import type { PlaybackEvent } from "../lib/events";
+import { nearestEventIndex, type PlaybackEvent } from "../lib/events";
 import type { RouteGap } from "../lib/history";
 
 export interface PlaybackScrubberProps {
@@ -23,9 +23,7 @@ export interface PlaybackScrubberProps {
 }
 
 const STEP_MS = 1_000;
-const MIN_MARKER_WIDTH = 24;
-const COMFORTABLE_MARKER_WIDTH = 44;
-const FALLBACK_BAND_WIDTH = 480;
+const DOT_INSET_PX = 4;
 
 const severityColor: Record<string, string> = {
   low: "text-sev-low",
@@ -41,9 +39,11 @@ const severityShape: Record<string, string> = {
   critical: "size-2 rounded-none",
 };
 
-function leftAt(percent: number): CSSProperties {
-  // guard-ignore: runtime timeline position; no utility class can express an arbitrary percentage.
-  return { left: `${percent}%` };
+function percentLeft(percent: number): CSSProperties {
+  // guard-ignore: runtime event position, clamped so the dot never protrudes over a time label.
+  return {
+    left: `clamp(${DOT_INSET_PX}px, ${percent}%, calc(100% - ${DOT_INSET_PX}px))`,
+  };
 }
 
 function bandStyle(startPercent: number, widthPercent: number): CSSProperties {
@@ -51,64 +51,9 @@ function bandStyle(startPercent: number, widthPercent: number): CSSProperties {
   return { left: `${startPercent}%`, width: `${widthPercent}%` };
 }
 
-function markerStyle(left: number, width: number): CSSProperties {
-  // guard-ignore: runtime marker position and hit-area width come from the measured track.
-  return { left: `${left}px`, width: `${width}px` };
-}
-
-function dotStyle(left: number): CSSProperties {
-  // guard-ignore: the dot keeps its time position inside an edge-clamped hit area.
-  return { left: `${left}px` };
-}
-
 function percentOf(timeMs: number, fromMs: number, toMs: number): number {
   const span = Math.max(1, toMs - fromMs);
   return Math.min(100, Math.max(0, ((timeMs - fromMs) / span) * 100));
-}
-
-function useBandWidth() {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [width, setWidth] = useState(FALLBACK_BAND_WIDTH);
-
-  useLayoutEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    const update = () => {
-      const next = element.getBoundingClientRect().width;
-      if (next > 0) setWidth(next);
-    };
-    update();
-    if (typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(update);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-
-  return [ref, width] as const;
-}
-
-function markerWidthFor(events: readonly PlaybackEvent[], bandWidth: number): number | null {
-  if (events.length === 0) return null;
-  const percents = events.map((event) => event.percent).sort((a, b) => a - b);
-  let previous: number | null = null;
-  let minGap = 100;
-  for (const percent of percents) {
-    if (previous !== null) minGap = Math.min(minGap, percent - previous);
-    previous = percent;
-  }
-  const available = (minGap / 100) * bandWidth;
-  if (available >= COMFORTABLE_MARKER_WIDTH) return COMFORTABLE_MARKER_WIDTH;
-  if (available >= MIN_MARKER_WIDTH) return MIN_MARKER_WIDTH;
-  return null;
-}
-
-function placementFor(percent: number, bandWidth: number, markerWidth: number) {
-  const center = (percent / 100) * bandWidth;
-  const left = Math.min(
-    Math.max(center - markerWidth / 2, 0),
-    Math.max(0, bandWidth - markerWidth),
-  );
-  return { left, dotLeft: center - left };
 }
 
 export function PlaybackScrubber({
@@ -122,13 +67,20 @@ export function PlaybackScrubber({
   includeDate = false,
   className,
 }: PlaybackScrubberProps) {
-  const inGap = gaps.some((gap) => playheadMs > gap.startMs && playheadMs < gap.endMs);
+  const inGap = gaps.some(
+    (gap) => playheadMs > gap.startMs && playheadMs < gap.endMs,
+  );
   const currentIso = new Date(playheadMs).toISOString();
   const valueText = `${formatPlaybackTime(currentIso, includeDate)}${inGap ? ", no data" : ""}`;
-  const [bandRef, bandWidth] = useBandWidth();
+  const laneRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
+  const markerRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const draggingRef = useRef(false);
-  const markerWidth = markerWidthFor(events, bandWidth);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const rovingIndex =
+    events.length > 0 ? Math.min(activeIndex, events.length - 1) : -1;
+  const preview = previewIndex === null ? null : (events[previewIndex] ?? null);
 
   const seekAt = (clientX: number) => {
     const track = trackRef.current;
@@ -163,66 +115,130 @@ export function PlaybackScrubber({
     }
   };
 
+  const eventAt = (clientX: number) => {
+    const lane = laneRef.current;
+    if (!lane) return null;
+    const rect = lane.getBoundingClientRect();
+    if (rect.width <= 0) return null;
+    const percent = Math.min(
+      100,
+      Math.max(0, ((clientX - rect.left) / rect.width) * 100),
+    );
+    const index = nearestEventIndex(events, percent);
+    return index === -1 ? null : { index, event: events[index] };
+  };
+
+  const previewAt = (clientX: number) => {
+    const hit = eventAt(clientX);
+    setPreviewIndex(hit ? hit.index : null);
+    return hit;
+  };
+
+  const handleLanePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (disabled) return;
+    const hit = previewAt(event.clientX);
+    if (!hit) return;
+    event.preventDefault();
+    setActiveIndex(hit.index);
+    onSeek(hit.event.atMs);
+  };
+
+  const handleLanePointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") setPreviewIndex(null);
+  };
+
+  const focusMarker = (index: number) => {
+    const next = (index + events.length) % events.length;
+    setActiveIndex(next);
+    markerRefs.current[next]?.focus();
+  };
+
+  const handleMarkerKeyDown = (
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+    index: number,
+  ) => {
+    if (events.length === 0) return;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      event.preventDefault();
+      event.stopPropagation();
+      focusMarker(index + 1);
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      event.preventDefault();
+      event.stopPropagation();
+      focusMarker(index - 1);
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      event.stopPropagation();
+      focusMarker(0);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      event.stopPropagation();
+      focusMarker(events.length - 1);
+    }
+  };
+
   return (
-    <div data-testid="playback-scrubber" className={cn("flex min-w-0 items-end gap-2", className)}>
-      <span className="flex h-touch min-w-14 shrink-0 items-center text-xs tabular-nums text-muted md:h-control-md">
+    <div
+      data-testid="playback-scrubber"
+      className={cn("flex min-w-0 items-end gap-2", className)}
+    >
+      <span className="h-touch text-muted md:h-control-md flex min-w-14 shrink-0 items-center text-xs tabular-nums">
         {formatPlaybackTime(new Date(fromMs).toISOString(), includeDate)}
       </span>
       <div className="flex min-w-0 flex-1 flex-col">
         <div
-          ref={bandRef}
+          ref={(node) => {
+            laneRef.current = node;
+          }}
           data-testid="playback-event-band"
-          className="relative h-5 w-full"
+          className="h-touch md:h-control-sm relative w-full touch-none"
+          onPointerMove={(event) => {
+            if (!disabled) previewAt(event.clientX);
+          }}
+          onPointerDown={handleLanePointerDown}
+          onPointerUp={handleLanePointerUp}
+          onPointerCancel={() => setPreviewIndex(null)}
+          onPointerLeave={() => setPreviewIndex(null)}
         >
-          {events.map((event) => {
-            if (markerWidth === null) {
-              return (
-                <span
-                  key={event.key}
-                  data-testid="playback-event-tick"
-                  aria-hidden="true"
-                  className={cn(
-                    "absolute top-0 h-2 w-0.5 -translate-x-1/2 rounded-full bg-current",
-                    event.severity ? severityColor[event.severity] : "text-muted",
-                  )}
-                  style={leftAt(event.percent)}
-                />
-              );
-            }
-            const placement = placementFor(event.percent, bandWidth, markerWidth);
-            return (
-              <button
-                key={event.key}
-                type="button"
-                data-testid="playback-event-marker"
-                onClick={() => onSeek(event.atMs)}
-                aria-label={`${event.label}${event.severity ? ` (${event.severity})` : ""} at ${formatPlaybackTime(event.at, includeDate)}`}
+          {events.map((event, index) => (
+            <button
+              key={event.key}
+              ref={(node) => {
+                markerRefs.current[index] = node;
+              }}
+              type="button"
+              data-testid="playback-event-marker"
+              tabIndex={index === rovingIndex ? 0 : -1}
+              aria-label={`${event.label}${event.severity ? ` (${event.severity})` : ""} at ${formatPlaybackTime(event.at, includeDate)}`}
+              onClick={() => onSeek(event.atMs)}
+              onFocus={() => setActiveIndex(index)}
+              onKeyDown={(keyEvent) => handleMarkerKeyDown(keyEvent, index)}
+              className={cn(
+                "group size-touch md:size-control-sm pointer-events-none absolute top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-sm outline-none",
+                event.severity ? severityColor[event.severity] : "text-muted",
+              )}
+              style={percentLeft(event.percent)}
+            >
+              <span
+                aria-hidden="true"
                 className={cn(
-                  "absolute top-0 flex h-5 items-start justify-center rounded-sm focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring",
-                  event.severity ? severityColor[event.severity] : "text-muted",
+                  "group-focus-visible:ring-focus-ring group-focus-visible:ring-offset-surface block bg-current group-focus-visible:ring-2 group-focus-visible:ring-offset-2",
+                  event.severity
+                    ? severityShape[event.severity]
+                    : "size-2 rounded-full",
                 )}
-                style={markerStyle(placement.left, markerWidth)}
-              >
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    "absolute top-1 block -translate-x-1/2 bg-current",
-                    event.severity ? severityShape[event.severity] : "size-2 rounded-full",
-                  )}
-                  style={dotStyle(placement.dotLeft)}
-                />
-              </button>
-            );
-          })}
+              />
+            </button>
+          ))}
         </div>
         <div
           ref={trackRef}
           data-testid="playback-scrubber-track"
-          className="relative flex h-touch min-w-0 items-center md:h-control-md"
+          className="h-touch md:h-control-md relative flex min-w-0 items-center"
         >
           <div
             aria-hidden="true"
-            className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-surface-3"
+            className="bg-surface-3 absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full"
           />
           {gaps.map((gap) => {
             const start = percentOf(gap.startMs, fromMs, toMs);
@@ -232,7 +248,7 @@ export function PlaybackScrubber({
                 key={`${gap.startMs}-${gap.endMs}`}
                 data-testid="gap-band"
                 aria-hidden="true"
-                className="absolute top-1/2 h-3 -translate-y-1/2 rounded-sm bg-idle-bg"
+                className="bg-idle-bg absolute top-1/2 h-3 -translate-y-1/2 rounded-sm"
                 style={bandStyle(start, Math.max(0.5, end - start))}
               />
             );
@@ -257,17 +273,17 @@ export function PlaybackScrubber({
             onMouseDown={(event) => {
               if (!disabled) event.preventDefault();
             }}
-            className="relative z-20 h-full w-full touch-none cursor-pointer appearance-none bg-transparent accent-accent disabled:cursor-not-allowed disabled:opacity-60"
+            className="accent-accent relative z-20 h-full w-full cursor-pointer touch-none appearance-none bg-transparent disabled:cursor-not-allowed disabled:opacity-60"
           />
         </div>
       </div>
       <span
         data-testid="playback-current-time"
-        className="flex h-touch min-w-16 shrink-0 items-center justify-center text-center text-xs tabular-nums text-muted md:h-control-md"
+        className="h-touch text-muted md:h-control-md flex w-24 min-w-24 shrink-0 items-center justify-center truncate text-center text-xs tabular-nums"
       >
-        {formatPlaybackTime(currentIso, includeDate)}
+        {preview ? preview.label : formatPlaybackTime(currentIso, includeDate)}
       </span>
-      <span className="flex h-touch min-w-14 shrink-0 items-center justify-end text-right text-xs tabular-nums text-muted md:h-control-md">
+      <span className="h-touch text-muted md:h-control-md flex min-w-14 shrink-0 items-center justify-end text-right text-xs tabular-nums">
         {formatPlaybackTime(new Date(toMs).toISOString(), includeDate)}
       </span>
     </div>

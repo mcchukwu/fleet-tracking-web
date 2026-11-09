@@ -1,23 +1,41 @@
 import { describe, expect, it } from "vitest";
-import { eventLabel, timelineEvents } from "./events";
+import {
+  eventLabel,
+  nearestEventIndex,
+  timelineEvents,
+  type PlaybackEvent,
+} from "./events";
 import type { VehicleEvent } from "../../../api/types";
 
 const fromMs = Date.parse("2026-11-08T14:00:00Z");
 const toMs = Date.parse("2026-11-08T16:00:00Z");
 
 function event(overrides: Partial<VehicleEvent>): VehicleEvent {
-  return { kind: "geofence", type: "enter", at: "2026-11-08T14:30:00Z", ...overrides };
+  return {
+    kind: "geofence",
+    type: "enter",
+    at: "2026-11-08T14:30:00Z",
+    ...overrides,
+  };
 }
 
 describe("eventLabel", () => {
   it("labels geofence entries and exits with the zone name", () => {
-    expect(eventLabel(event({ type: "enter", name: "Lekki Depot" }))).toBe("Entered Lekki Depot");
-    expect(eventLabel(event({ type: "exit", name: "Lekki Depot" }))).toBe("Exited Lekki Depot");
+    expect(eventLabel(event({ type: "enter", name: "Lekki Depot" }))).toBe(
+      "Entered Lekki Depot",
+    );
+    expect(eventLabel(event({ type: "exit", name: "Lekki Depot" }))).toBe(
+      "Exited Lekki Depot",
+    );
   });
 
   it("labels alert events with the shared alert type labels", () => {
-    expect(eventLabel(event({ kind: "alert", type: "route_deviation" }))).toBe("Route deviation");
-    expect(eventLabel(event({ kind: "alert", type: "geofence_exit" }))).toBe("Geofence exit");
+    expect(eventLabel(event({ kind: "alert", type: "route_deviation" }))).toBe(
+      "Route deviation",
+    );
+    expect(eventLabel(event({ kind: "alert", type: "geofence_exit" }))).toBe(
+      "Geofence exit",
+    );
   });
 
   it("keeps unknown kinds and types neutral", () => {
@@ -27,6 +45,43 @@ describe("eventLabel", () => {
     expect(eventLabel(event({ kind: "alert", type: "solar_flare" }))).toBe(
       "Unknown type: solar_flare",
     );
+  });
+});
+
+function row(percent: number, atMs: number): PlaybackEvent {
+  return {
+    key: `k:${percent}:${atMs}`,
+    kind: "alert",
+    type: "speeding",
+    label: "Speeding",
+    severity: "critical",
+    status: "open",
+    at: new Date(atMs).toISOString(),
+    atMs,
+    percent,
+  };
+}
+
+describe("nearestEventIndex", () => {
+  it("picks the event closest in x", () => {
+    const rows = [
+      row(10, fromMs + 1),
+      row(40, fromMs + 2),
+      row(80, fromMs + 3),
+    ];
+    expect(nearestEventIndex(rows, 44)).toBe(1);
+    expect(nearestEventIndex(rows, 78)).toBe(2);
+  });
+
+  it("resolves an exact tie to the earlier event regardless of array order", () => {
+    const earlier = row(25, fromMs + 1);
+    const later = row(75, fromMs + 2);
+    expect(nearestEventIndex([later, earlier], 50)).toBe(1);
+    expect(nearestEventIndex([earlier, later], 50)).toBe(0);
+  });
+
+  it("returns -1 when there are no events", () => {
+    expect(nearestEventIndex([], 50)).toBe(-1);
   });
 });
 

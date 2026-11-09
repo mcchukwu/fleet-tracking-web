@@ -56,21 +56,33 @@ async function style(locator: Locator) {
 
 async function gotoPlayback(page: Page, events: number): Promise<void> {
   await page.goto(`/playback?map=fake&vehicle=${VEHICLE}&events=${events}`);
-  await expect(page.getByRole("region", { name: "Playback controls" })).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Playback controls" }),
+  ).toBeVisible();
   await expect
     .poll(
-      () => page.evaluate(() => window.__FLEET_DEBUG__?.playback?.pointCount ?? 0),
+      () =>
+        page.evaluate(() => window.__FLEET_DEBUG__?.playback?.pointCount ?? 0),
       { timeout: 15_000 },
     )
     .toBeGreaterThan(0);
 }
 
-function expectAligned(items: Array<{ name: string; box: Measured }>, expectedHeight: number): void {
+function expectAligned(
+  items: Array<{ name: string; box: Measured }>,
+  expectedHeight: number,
+): void {
   const bottom = items[0]?.box.bottom;
   expect(bottom, "no measured controls").toBeDefined();
   for (const { name, box } of items) {
-    expect(Math.abs(box.height - expectedHeight), `${name} height`).toBeLessThanOrEqual(0.5);
-    expect(Math.abs(box.bottom - (bottom ?? 0)), `${name} bottom`).toBeLessThanOrEqual(0.5);
+    expect(
+      Math.abs(box.height - expectedHeight),
+      `${name} height`,
+    ).toBeLessThanOrEqual(0.5);
+    expect(
+      Math.abs(box.bottom - (bottom ?? 0)),
+      `${name} bottom`,
+    ).toBeLessThanOrEqual(0.5);
   }
 }
 
@@ -87,7 +99,9 @@ for (const viewport of [
       await page.goto(
         `/playback?map=fake&vehicle=${VEHICLE}&fault=vehicle-history:server`,
       );
-      await expect(page.getByText("Something went wrong on our side")).toBeVisible({
+      await expect(
+        page.getByText("Something went wrong on our side"),
+      ).toBeVisible({
         timeout: 15_000,
       });
       await expect(page.getByTestId("map-attribution")).toBeVisible();
@@ -101,7 +115,9 @@ for (const viewport of [
       await captureForReview(page, "05-playback-state-clear");
     });
 
-    test("shows attribution with the picker and an invalid range", async ({ page }) => {
+    test("shows attribution with the picker and an invalid range", async ({
+      page,
+    }) => {
       await page.goto("/playback?map=fake");
       await expect(page.getByTestId("map-attribution")).toBeVisible();
 
@@ -118,9 +134,12 @@ for (const viewport of VIEWPORTS) {
   test.describe(`playback layout ${viewport.width}x${viewport.height}`, () => {
     test.use({ viewport: { width: viewport.width, height: viewport.height } });
 
-    test("keeps one control height, one bottom line and a stable scrubber", async ({ page }) => {
+    test("keeps one control height, one bottom line and a stable scrubber", async ({
+      page,
+    }) => {
       const mobile = viewport.width < 768;
       const expectedHeight = mobile ? 44 : 32;
+      const laneHeight = mobile ? 44 : 28;
       await gotoPlayback(page, 5);
 
       const transport = page.getByRole("group", { name: "Transport" });
@@ -139,7 +158,8 @@ for (const viewport of VIEWPORTS) {
       await expect(speed).toHaveValue(/\d+/);
       expect(
         await speed.evaluate(
-          (element) => (element as HTMLSelectElement).selectedOptions[0]?.textContent,
+          (element) =>
+            (element as HTMLSelectElement).selectedOptions[0]?.textContent,
         ),
       ).toMatch(/^Speed \d+×$/);
       expect((await style(speed)).paddingLeft).toBeGreaterThan(0);
@@ -159,6 +179,8 @@ for (const viewport of VIEWPORTS) {
       const speedBox = await measure(speed);
       const eventsBox = await measure(events);
       const scrubberBox = await measure(scrubber);
+      const laneBox = await measure(page.getByTestId("playback-event-band"));
+      expect(laneBox.height).toBeGreaterThanOrEqual(laneHeight);
 
       expect(toggleBox.x - backBox.right).toBeCloseTo(8, 0);
       expect(forwardBox.x - toggleBox.right).toBeCloseTo(8, 0);
@@ -169,14 +191,22 @@ for (const viewport of VIEWPORTS) {
         ["toggle", toggleBox],
         ["forward", forwardBox],
       ] as const) {
-        expect(Math.abs(box.width - expectedHeight), `${name} target width`).toBeLessThanOrEqual(0.5);
+        expect(
+          Math.abs(box.width - expectedHeight),
+          `${name} target width`,
+        ).toBeLessThanOrEqual(0.5);
       }
       const clipped = await Promise.all(
         [speed, events].map((control) =>
-          control.evaluate((element) => element.scrollWidth > element.clientWidth + 1),
+          control.evaluate(
+            (element) => element.scrollWidth > element.clientWidth + 1,
+          ),
         ),
       );
-      expect(clipped, "speed or events label is clipped").toEqual([false, false]);
+      expect(clipped, "speed or events label is clipped").toEqual([
+        false,
+        false,
+      ]);
 
       if (mobile) {
         expectAligned(
@@ -190,10 +220,14 @@ for (const viewport of VIEWPORTS) {
           expectedHeight,
         );
         expect(scrubberBox.bottom).toBeLessThanOrEqual(backBox.y);
-        expect(Math.abs(scrubberBox.height - (expectedHeight + 20))).toBeLessThanOrEqual(0.5);
+        expect(
+          Math.abs(scrubberBox.height - (expectedHeight + laneHeight)),
+        ).toBeLessThanOrEqual(0.5);
         const body = await measure(page.getByTestId("playback-controls-body"));
         expect(Math.abs(scrubberBox.x - body.x)).toBeLessThanOrEqual(0.5);
-        expect(Math.abs(scrubberBox.width - body.width)).toBeLessThanOrEqual(0.5);
+        expect(Math.abs(scrubberBox.width - body.width)).toBeLessThanOrEqual(
+          0.5,
+        );
       } else {
         expectAligned(
           [
@@ -205,8 +239,12 @@ for (const viewport of VIEWPORTS) {
           ],
           expectedHeight,
         );
-        expect(Math.abs(scrubberBox.height - (expectedHeight + 20))).toBeLessThanOrEqual(0.5);
-        expect(Math.abs(scrubberBox.bottom - backBox.bottom)).toBeLessThanOrEqual(0.5);
+        expect(
+          Math.abs(scrubberBox.height - (expectedHeight + laneHeight)),
+        ).toBeLessThanOrEqual(0.5);
+        expect(
+          Math.abs(scrubberBox.bottom - backBox.bottom),
+        ).toBeLessThanOrEqual(0.5);
       }
 
       const timeStyle = await style(currentTime);
@@ -220,10 +258,14 @@ for (const viewport of VIEWPORTS) {
         return String(Math.round((Number(input.min) + Number(input.max)) / 2));
       });
       await slider.fill(middleValue);
-      await expect.poll(async () => (await measure(slider)).x).toBeCloseTo(start.x, 0);
+      await expect
+        .poll(async () => (await measure(slider)).x)
+        .toBeCloseTo(start.x, 0);
       const middle = await measure(slider);
       await page.keyboard.press("End");
-      await expect.poll(async () => (await measure(slider)).x).toBeCloseTo(start.x, 0);
+      await expect
+        .poll(async () => (await measure(slider)).x)
+        .toBeCloseTo(start.x, 0);
       const end = await measure(slider);
 
       expect(Math.abs(middle.x - start.x)).toBeLessThanOrEqual(0.5);
@@ -233,7 +275,9 @@ for (const viewport of VIEWPORTS) {
       await captureForReview(page, "05-playback-layout-bar");
     });
 
-    test("lays out the events menu without clipping or touching", async ({ page }) => {
+    test("lays out the events menu without clipping or touching", async ({
+      page,
+    }) => {
       for (const count of EVENT_COUNTS) {
         await gotoPlayback(page, count);
         await page.getByRole("button", { name: /^Events \(/ }).click();
@@ -301,7 +345,9 @@ for (const viewport of VIEWPORTS) {
           .not.toBe("rgba(0, 0, 0, 0)");
         const focused = await style(first);
         expect(focused.outlineWidth).toBeGreaterThanOrEqual(2);
-        expect(firstBox.x - menuBox.x).toBeGreaterThanOrEqual(focused.outlineWidth);
+        expect(firstBox.x - menuBox.x).toBeGreaterThanOrEqual(
+          focused.outlineWidth,
+        );
 
         await page.keyboard.press("Escape");
         await expect(menu).toBeHidden();
@@ -317,7 +363,7 @@ for (const viewport of [
   test.describe(`playback scrubber pointer ${viewport.width}x${viewport.height}`, () => {
     test.use({ viewport: { width: viewport.width, height: viewport.height } });
 
-    for (const count of [5, 40] as const) {
+    for (const count of [5, 40, 60] as const) {
       test(`seeks on the track with ${count} events`, async ({ page }) => {
         await gotoPlayback(page, count);
         const slider = page.getByRole("slider", { name: "Playback position" });
@@ -326,20 +372,15 @@ for (const viewport of [
         const bandBox = await measure(band);
 
         expect(bandBox.bottom).toBeLessThanOrEqual(sliderBox.y + 0.5);
+        expect(bandBox.height).toBeGreaterThanOrEqual(44);
 
-        if (count === 5) {
-          const markers = page.getByTestId("playback-event-marker");
-          await expect(markers).toHaveCount(5);
-          await expect(page.getByTestId("playback-event-tick")).toHaveCount(0);
-          for (const marker of await markers.all()) {
-            const box = await measure(marker);
-            expect(box.width).toBeGreaterThanOrEqual(24);
-            expect(box.height).toBeGreaterThanOrEqual(20);
-            expect(box.bottom).toBeLessThanOrEqual(sliderBox.y + 0.5);
-          }
-        } else {
-          await expect(page.getByTestId("playback-event-marker")).toHaveCount(0);
-          await expect(page.getByTestId("playback-event-tick")).toHaveCount(40);
+        const markers = page.getByTestId("playback-event-marker");
+        await expect(markers).toHaveCount(count);
+        for (const marker of await markers.all()) {
+          const box = await measure(marker);
+          expect(box.width).toBeGreaterThanOrEqual(44);
+          expect(box.height).toBeGreaterThanOrEqual(44);
+          expect(box.bottom).toBeLessThanOrEqual(sliderBox.y + 0.5);
         }
 
         const points = Array.from({ length: 21 }, (_, index) => ({
@@ -348,18 +389,18 @@ for (const viewport of [
         }));
         const hits = await slider.evaluate(
           (element, samples) =>
-            samples.map(({ x, y }) => document.elementFromPoint(x, y) === element),
+            samples.map(
+              ({ x, y }) => document.elementFromPoint(x, y) === element,
+            ),
           points,
         );
         expect(hits).toEqual(Array.from({ length: 21 }, () => true));
 
-        const items =
-          count === 5
-            ? page.getByTestId("playback-event-marker")
-            : page.getByTestId("playback-event-tick");
-        const before = await measure(items.nth(1));
-        const after = await measure(items.nth(2));
-        const clickX = (before.x + before.width / 2 + after.x + after.width / 2) / 2;
+        const pairIndex = Math.floor(count / 2);
+        const before = await measure(markers.nth(pairIndex));
+        const after = await measure(markers.nth(pairIndex + 1));
+        const clickX =
+          (before.x + before.width / 2 + after.x + after.width / 2) / 2;
         const clickY = sliderBox.y + sliderBox.height / 2;
         await page.mouse.click(clickX, clickY);
 
@@ -372,12 +413,20 @@ for (const viewport of [
             value: Number(input.value),
           };
         });
-        const expectedRaw = state.min + ((clickX - sliderBox.x) / sliderBox.width) * (state.max - state.min);
+        const expectedRaw =
+          state.min +
+          ((clickX - sliderBox.x) / sliderBox.width) * (state.max - state.min);
         const expected = Math.min(
           state.max,
-          Math.max(state.min, state.min + Math.round((expectedRaw - state.min) / state.step) * state.step),
+          Math.max(
+            state.min,
+            state.min +
+              Math.round((expectedRaw - state.min) / state.step) * state.step,
+          ),
         );
-        expect(Math.abs(state.value - expected)).toBeLessThanOrEqual(state.step);
+        expect(Math.abs(state.value - expected)).toBeLessThanOrEqual(
+          state.step,
+        );
 
         const expectedTime = await page.evaluate(
           (ms) =>
@@ -389,9 +438,56 @@ for (const viewport of [
             }).format(new Date(ms)),
           state.value,
         );
-        await expect(page.getByTestId("playback-current-time")).toContainText(expectedTime);
+        await expect(page.getByTestId("playback-current-time")).toContainText(
+          expectedTime,
+        );
         await captureForReview(page, `05-playback-pointer-${count}`);
       });
     }
+  });
+}
+
+for (const count of [5, 40, 60] as const) {
+  test(`the event lane picks the nearest event out of ${count}`, async ({
+    page,
+  }) => {
+    await gotoPlayback(page, count);
+    const markers = page.getByTestId("playback-event-marker");
+    await expect(markers).toHaveCount(count);
+    const index = Math.floor(count / 2);
+    const earlier = markers.nth(index);
+    const later = markers.nth(index + 1);
+    const earlierLabel = (await earlier.getAttribute("aria-label")) ?? "";
+    const expectedTime = earlierLabel.slice(
+      earlierLabel.lastIndexOf(" at ") + 4,
+    );
+    const previewLabel = earlierLabel
+      .slice(0, earlierLabel.lastIndexOf(" at "))
+      .replace(/\s*\((?:low|medium|high|critical)\)$/, "");
+
+    const earlierBox = await measure(earlier);
+    const laterBox = await measure(later);
+    const laneBox = await measure(page.getByTestId("playback-event-band"));
+    const viewport = page.viewportSize();
+    expect(laneBox.height).toBeGreaterThanOrEqual(
+      (viewport?.width ?? 1440) < 768 ? 44 : 28,
+    );
+
+    const clickX =
+      (earlierBox.x + earlierBox.width / 2 + laterBox.x + laterBox.width / 2) /
+      2;
+    const clickY = laneBox.y + laneBox.height / 2;
+    await page.mouse.move(clickX, clickY);
+    await expect(page.getByTestId("playback-current-time")).toContainText(
+      previewLabel,
+    );
+    await page.mouse.click(clickX, clickY);
+
+    const valueText =
+      (await page
+        .getByRole("slider", { name: "Playback position" })
+        .getAttribute("aria-valuetext")) ?? "";
+    expect(valueText).toContain(expectedTime);
+    await captureForReview(page, `05-playback-lane-${count}`);
   });
 }

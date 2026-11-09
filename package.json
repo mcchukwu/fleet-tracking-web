@@ -12,6 +12,7 @@
     "test": "vitest run",
     "check": "npm run typecheck && npm run lint && npm run guard && npm test",
     "e2e": "playwright test",
+    "e2e:fast": "playwright test --project=desktop-light --project=mobile-dark",
     "e2e:review": "REVIEW=1 playwright test",
     "deploy": "wrangler deploy",
     "preview": "vite preview",
