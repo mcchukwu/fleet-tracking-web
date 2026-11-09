@@ -64,4 +64,5 @@ export const loginSearchSchema = z.object({
 
 export type MapSearch = z.infer<typeof mapSearchSchema>;
 export type AlertsSearch = z.infer<typeof alertsSearchSchema>;
+export type TripsSearch = z.infer<typeof tripsSearchSchema>;
 export type PlaybackSearch = z.infer<typeof playbackSearchSchema>;

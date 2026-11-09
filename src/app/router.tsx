@@ -28,6 +28,7 @@ import { AppShell } from "../features/shell/components/AppShell";
 import { SessionExpiryDialog } from "../features/shell/components/SessionExpiryDialog";
 import { ShellSkeleton } from "../features/shell/components/ShellSkeleton";
 import { StyleGuidePage } from "../features/styleguide/StyleGuidePage";
+import { TripsPage } from "../features/trips/components/TripsPage";
 import { ForbiddenState } from "../ui/StatePanel";
 import { NotFound } from "./NotFound";
 import { PlaceholderPage } from "./PlaceholderPage";
@@ -201,7 +202,7 @@ const tripsRoute = createRoute({
   path: "/trips",
   validateSearch: tripsSearchSchema,
   beforeLoad: ({ context }) => requireCapability(context.user, "read"),
-  component: placeholder("Trips", "The trips table ships in Slice 6."),
+  component: TripsPage,
 });
 
 const driversRoute = createRoute({
