@@ -1,5 +1,5 @@
 import { ChevronDown, CircleAlert, Search } from "lucide-react";
-import { useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { cn } from "./cn";
 /* oxlint-disable jsx-a11y/no-noninteractive-element-to-interactive-role, jsx-a11y/prefer-tag-over-role, jsx-a11y/click-events-have-key-events -- ARIA 1.2 combobox/listbox: the input owns the keyboard and aria-activedescendant; list options are pointer shortcuts. */
 
@@ -24,6 +24,7 @@ export interface ComboboxProps {
   disabled?: boolean;
   disabledReason?: string;
   placeholder?: string;
+  initialFocus?: boolean;
   className?: string;
 }
 
@@ -49,6 +50,7 @@ export function Combobox({
   disabled = false,
   disabledReason,
   placeholder = "Search",
+  initialFocus = false,
   className,
 }: ComboboxProps) {
   const listId = useId();
@@ -59,6 +61,10 @@ export function Combobox({
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (initialFocus) inputRef.current?.focus();
+  }, [initialFocus]);
 
   const selected = items.find((item) => item.id === value) ?? null;
   const display = selected?.label ?? selectedLabel ?? "";

@@ -1,3 +1,4 @@
+import type { HistoryResolution } from "../../../api/types";
 import {
   DEFAULT_RANGE_MS,
   MAX_RANGE_MS,
@@ -70,7 +71,7 @@ export function activePreset(
   return match?.id ?? null;
 }
 
-export function resolutionParam(setting: ResolutionSetting): ResolutionSetting | undefined {
+export function resolutionParam(setting: ResolutionSetting): HistoryResolution | undefined {
   return setting === "auto" ? undefined : setting;
 }
 

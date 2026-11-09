@@ -23,6 +23,7 @@ import { useDocumentTitle } from "../lib/useDocumentTitle";
 import { LoginPage } from "../features/login/components/LoginPage";
 import { AlertsPage } from "../features/alerts/components/AlertsPage";
 import { MapPage } from "../features/map/components/MapPage";
+import { PlaybackPage } from "../features/playback/components/PlaybackPage";
 import { AppShell } from "../features/shell/components/AppShell";
 import { SessionExpiryDialog } from "../features/shell/components/SessionExpiryDialog";
 import { ShellSkeleton } from "../features/shell/components/ShellSkeleton";
@@ -254,7 +255,7 @@ const playbackRoute = createRoute({
   path: "/playback",
   validateSearch: playbackSearchSchema,
   beforeLoad: ({ context }) => requireCapability(context.user, "read"),
-  component: placeholder("Playback", "Playback ships in Slice 5."),
+  component: PlaybackPage,
 });
 
 const forbiddenRoute = createRoute({
