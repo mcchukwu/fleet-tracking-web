@@ -57,7 +57,9 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@tanstack/react-router", () => ({
   useSearch: () => mocks.search,
   useNavigate: () => mocks.navigate,
-  Link: ({ to, children }: { to: string; children: ReactNode }) => <a href={to}>{children}</a>,
+  Link: ({ to, children }: { to: string; children: ReactNode }) => (
+    <a href={to}>{children}</a>
+  ),
 }));
 
 vi.mock("../../../auth/useCan", () => ({
@@ -134,8 +136,12 @@ describe("AlertsPage", () => {
   it("shows the counts and the document title", async () => {
     renderPage();
     expect(screen.getByRole("heading", { name: "Alerts" })).toBeVisible();
-    expect(screen.getByTestId("alerts-page")).toHaveTextContent("2 open · 1 loaded");
-    await waitFor(() => expect(document.title).toBe("(2) Alerts · Fleet Console"));
+    expect(screen.getByTestId("alerts-page")).toHaveTextContent(
+      "2 open · 1 loaded",
+    );
+    await waitFor(() =>
+      expect(document.title).toBe("(2) Alerts · Fleet Console"),
+    );
   });
 
   it("writes filter changes to the URL", async () => {
@@ -166,7 +172,9 @@ describe("AlertsPage", () => {
     mocks.feed.loadedCount = 0;
     mocks.feed.isLoading = true;
     const { rerender } = renderPage();
-    await waitFor(() => expect(screen.getByLabelText("Loading alerts")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByLabelText("Loading alerts")).toBeInTheDocument(),
+    );
 
     mocks.feed.isLoading = false;
     rerender(
@@ -245,20 +253,11 @@ describe("AlertsPage", () => {
   });
 
   it("returns the list to the top when the filter signature changes", () => {
-    const main = document.createElement("main");
-    const scrollTo = vi.fn();
-    main.scrollTo = scrollTo;
-    document.body.appendChild(main);
-    const container = document.createElement("div");
-    main.appendChild(container);
-    const { rerender } = render(
-      <TooltipProvider>
-        <ToastProvider>
-          <AlertsPage />
-        </ToastProvider>
-      </TooltipProvider>,
-      { container },
-    );
+    if (typeof HTMLElement.prototype.scrollTo !== "function") {
+      HTMLElement.prototype.scrollTo = () => undefined;
+    }
+    const scrollTo = vi.spyOn(HTMLElement.prototype, "scrollTo");
+    const { rerender } = renderPage();
     scrollTo.mockClear();
 
     mocks.search = { status: "open" };
@@ -270,6 +269,6 @@ describe("AlertsPage", () => {
       </TooltipProvider>,
     );
     expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "auto" });
-    main.remove();
+    scrollTo.mockRestore();
   });
 });

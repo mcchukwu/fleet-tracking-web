@@ -481,3 +481,12 @@ The playback bar has one control line at `md+` and two at narrow widths: the scr
 At 390px the full labels do not fit beside three 44px transport targets and 16px group gaps with the default select chrome. The speed select therefore uses a compact chevron and 8px inner padding below `md`, and the Events button uses 8px horizontal padding below `md`; both keep their full accessible names and are asserted to be unclipped. Trade-off: mobile controls are visually tighter than desktop, but no touch target or label is shrunk or truncated.
 
 The Events menu is `320px` wide, capped at `60vh` with scrolling, uses 4px menu padding and 2px between two-line items (8px 12px item padding, 56px tall). Menu items use a minimum height rather than a fixed height and never shrink inside a scrolling menu, so a two-line row cannot be compressed into its neighbour. These values are enforced by `e2e/playback-layout.spec.ts` at 1440x900, 1024x768, 768x1024 and 390x844 in both themes, with 1, 5 and 40 events.
+## 2026-11-09: One fixed-layout DataTable for every table
+
+All tables use `src/ui/DataTable.tsx`. Column definitions carry the id, header, width, alignment, cell renderer and sortable flag. The table is `table-layout: fixed`; `min-width` is the sum of the declared widths, so column geometry cannot depend on which virtualised rows happen to be mounted. The table's own scrollport supplies vertical and horizontal scrolling, which lets the header and first column be sticky while the virtualizer uses one fixed row height.
+
+Trade-off: a table needs a bounded height (for example `flex-1 min-h-0`) to be a useful scrollport. On narrow screens the table scrolls horizontally inside its container instead of hiding columns; that keeps one table shape and one set of widths at every viewport.
+
+Tables no longer collapse columns below breakpoints. Hidden columns made header and cell geometry depend on the viewport and produced zero-width cells that the virtualizer still had to map. Plates and trip IDs keep a full-value column width and never truncate; every other truncating cell carries a native `title` with its full value.
+
+The 44px touch target of an inline row action is rendered with symmetric negative margins so it does not raise the 36px row height. The virtualizer's fixed estimate therefore matches the rendered row.

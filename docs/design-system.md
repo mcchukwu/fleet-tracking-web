@@ -455,12 +455,21 @@ Each component lists its anatomy and its rules. All come from shadcn primitives 
 
 ### 10.3 Table
 
-- Real `<table>`, sticky header, 36px rows, `--border` row dividers, no zebra striping.
+Every table uses the shared `DataTable` primitive (`src/ui/DataTable.tsx`). Its column list is the only source of headers, widths and alignment.
+
+- Real `<table>` with a sticky header, 36px rows (`--spacing-row`), `--border` row dividers, no zebra striping.
 - Header: `label-caps`, `--text-muted`. Sortable columns show an arrow and use `aria-sort`.
-- Numeric columns right-aligned and tabular. Text left-aligned. Actions right-most, ghost buttons that appear on row hover and on focus-within.
+- Layout is `table-layout: fixed`. Widths come from one column-definition list (`id`, `header`, `width`, `align`, `cell`, `sortable`). The table's `min-width` is the sum of those widths, and it sits in a horizontal scroll container. Widths never depend on which rows are mounted.
+- Cells never wrap: `nowrap`, `overflow: hidden` and ellipsis, with a tooltip that shows the full value. Plates and IDs never truncate.
+- Every row uses the fixed row-height token, and the virtualizer uses the same value. No per-row measured heights.
+- Header alignment equals cell alignment in every column. Time and text columns are left-aligned. Numeric measures are right-aligned and tabular. Alignment never changes with viewport, scroll position or content.
+- Every cell has at least a 12px inset left and right, including cells that hold badges. A badge never touches a cell edge or divider.
+- Narrow screens use the same nowrap table with horizontal scrolling. The header and the first column are sticky. Nothing reflows while scrolling.
+- Scrolling changes nothing: header cell widths and content-relative x positions are identical before and after scrolling through the list. `expectStableColumns` in `e2e/helpers` enforces this.
 - Hover: `--surface-2`. Selected: `--accent-soft` plus a 2px `--accent` left edge.
-- Large lists (500 or more rows, e.g. vehicles): virtualise with TanStack Virtual. Paging follows the API (`limit` / `offset`, no totals): show `Load more` when the last page was full.
-- Row click opens detail; the first cell is the keyboard target (`Enter`).
+- Large lists (500 or more rows, e.g. vehicles): virtualise with TanStack Virtual inside the table's scrollport. Paging follows the API (`limit` / `offset`, no totals): show `Load more` when the last page was full.
+- Row click opens detail; the first cell is the keyboard target (`Enter`). The extra 44px touch target of an inline action uses symmetric negative margins so it never changes the 36px row height.
+- Skeletons use the same column widths and row height as the real table.
 
 ### 10.4 Status pill and badges
 
