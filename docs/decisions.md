@@ -459,3 +459,13 @@ The alert detail reuses `Drawer` with `placement="page"`: a 420px right panel at
 `EvidenceList` and its formatting helpers moved to `src/ui`/`src/lib`, and `MapAttribution` and `toMapGeofences` moved to `src/map`, so the vehicle drawer and alert detail share one implementation without a feature importing another feature. `openAlertCountLabel` moved to `src/lib/alerts.ts` for the same reason. The document title now accepts `number | string`, so a full 500-row open-alert page keeps `(500+)` instead of dropping the cap.
 
 Trade-off: client filtering only covers loaded pages. With more than 500 matching alerts, a plate or severity miss says “No alerts match in the loaded alerts” and offers `Load more` rather than claiming there are none. The mock history handler shifts its committed points into the requested `from`/`to` window so the detail can demonstrate a real history position; production still requests the exact alert range.
+
+## 2026-11-09: One fixed-layout DataTable for every table
+
+All tables use `src/ui/DataTable.tsx`. Column definitions carry the id, header, width, alignment, cell renderer and sortable flag. The table is `table-layout: fixed`; `min-width` is the sum of the declared widths, so column geometry cannot depend on which virtualised rows happen to be mounted. The table's own scrollport supplies vertical and horizontal scrolling, which lets the header and first column be sticky while the virtualizer uses one fixed row height.
+
+Trade-off: a table needs a bounded height (for example `flex-1 min-h-0`) to be a useful scrollport. On narrow screens the table scrolls horizontally inside its container instead of hiding columns; that keeps one table shape and one set of widths at every viewport.
+
+Tables no longer collapse columns below breakpoints. Hidden columns made header and cell geometry depend on the viewport and produced zero-width cells that the virtualizer still had to map. Plates and trip IDs keep a full-value column width and never truncate; every other truncating cell carries a native `title` with its full value.
+
+The 44px touch target of an inline row action is rendered with symmetric negative margins so it does not raise the 36px row height. The virtualizer's fixed estimate therefore matches the rendered row.

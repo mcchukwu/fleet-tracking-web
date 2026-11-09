@@ -1,6 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { OPEN_ALERT_LIMIT, useAlertLookup, useOpenAlerts } from "../../../api/hooks/alerts";
+import {
+  OPEN_ALERT_LIMIT,
+  useAlertLookup,
+  useOpenAlerts,
+} from "../../../api/hooks/alerts";
 import { useGeofences } from "../../../api/hooks/geofences";
 import type { Alert } from "../../../api/types";
 import { useCan } from "../../../auth/useCan";
@@ -41,7 +45,6 @@ export function AlertsPage() {
 function AlertsPageContent() {
   const search = useSearch({ from: "/_app/alerts" });
   const navigate = useNavigate();
-  const pageRef = useRef<HTMLDivElement>(null);
   const [ackOrigin, setAckOrigin] = useState<"row" | "detail">("row");
   const { network, lastDataAt } = useConnection();
   const offline = network === "offline";
@@ -62,7 +65,10 @@ function AlertsPageContent() {
   );
 
   const feed = useAlertFeed(filters);
-  const alerts = useMemo(() => filterAlerts(feed.visible, filters), [feed.visible, filters]);
+  const alerts = useMemo(
+    () => filterAlerts(feed.visible, filters),
+    [feed.visible, filters],
+  );
   const types = useMemo(
     () => alertTypeOptions(feed.visible, filters.type),
     [feed.visible, filters.type],
@@ -91,7 +97,10 @@ function AlertsPageContent() {
               : "not-found";
 
   const geofenceNames = useMemo(
-    () => new Map((geofences.data ?? []).map((geofence) => [geofence.id, geofence.name])),
+    () =>
+      new Map(
+        (geofences.data ?? []).map((geofence) => [geofence.id, geofence.name]),
+      ),
     [geofences.data],
   );
 
@@ -99,11 +108,6 @@ function AlertsPageContent() {
   const openLabel = openAlertCountLabel(openCount, OPEN_ALERT_LIMIT);
   const openError = openAlerts.error ? normalize(openAlerts.error) : null;
   useDocumentTitle("Alerts", openAlerts.data ? openLabel : undefined);
-
-  const signature = filterSignature(filters);
-  useEffect(() => {
-    pageRef.current?.closest("main")?.scrollTo({ top: 0, behavior: "auto" });
-  }, [signature]);
 
   const closedError = !offline && feed.error ? normalize(feed.error) : null;
   const state: StateBoundaryState =
@@ -132,10 +136,7 @@ function AlertsPageContent() {
       ? "You're offline."
       : undefined;
 
-  function updateSearch(
-    patch: Partial<AlertsSearch>,
-    replace = true,
-  ): void {
+  function updateSearch(patch: Partial<AlertsSearch>, replace = true): void {
     void navigate({
       to: "/alerts",
       search: { ...search, ...patch },
@@ -167,7 +168,9 @@ function AlertsPageContent() {
       alert: undefined,
     });
     setTimeout(() => {
-      document.querySelector<HTMLElement>('[role="tab"][data-state="active"]')?.focus();
+      document
+        .querySelector<HTMLElement>('[role="tab"][data-state="active"]')
+        ?.focus();
     }, 0);
   }
 
@@ -190,7 +193,9 @@ function AlertsPageContent() {
           return;
         }
       }
-      document.querySelector<HTMLElement>('[data-testid="alerts-page"] select')?.focus();
+      document
+        .querySelector<HTMLElement>('[data-testid="alerts-page"] select')
+        ?.focus();
     }, 0);
   }
 
@@ -202,23 +207,25 @@ function AlertsPageContent() {
         next.focus();
         return;
       }
-      document.querySelector<HTMLElement>('[data-testid="alerts-page"] select')?.focus();
+      document
+        .querySelector<HTMLElement>('[data-testid="alerts-page"] select')
+        ?.focus();
     }, 0);
   }
 
-  async function acknowledge(alert: Alert, origin: "row" | "detail"): Promise<void> {
+  async function acknowledge(
+    alert: Alert,
+    origin: "row" | "detail",
+  ): Promise<void> {
     setAckOrigin(origin);
     const index = alerts.findIndex((row) => row.id === alert.id);
     const outcome = await ack.acknowledge(alert);
-    if (origin === "row" && (outcome === "acked" || outcome === "already_acked" || outcome === "gone")) {
+    if (
+      origin === "row" &&
+      (outcome === "acked" || outcome === "already_acked" || outcome === "gone")
+    ) {
       focusAfterAck(index);
     }
-  }
-
-  function revealNew(): void {
-    const scroller = pageRef.current?.closest("main");
-    scroller?.scrollTo({ top: 0, behavior: "auto" });
-    feed.revealNew();
   }
 
   function zoneFor(alert: Alert): string | null {
@@ -233,14 +240,13 @@ function AlertsPageContent() {
 
   return (
     <div
-      ref={pageRef}
       data-testid="alerts-page"
-      className="relative mx-auto flex min-h-full w-full max-w-content flex-col px-4 py-6 text-text sm:px-6"
+      className="max-w-content text-text relative mx-auto flex h-full min-h-0 w-full flex-col px-4 py-6 sm:px-6"
     >
-      <header className="flex flex-wrap items-end justify-between gap-2">
+      <header className="flex shrink-0 flex-wrap items-end justify-between gap-2">
         <div className="flex flex-col gap-1">
-          <h1 className="text-lg font-semibold text-text">Alerts</h1>
-          <p className="text-sm text-muted">
+          <h1 className="text-text text-lg font-semibold">Alerts</h1>
+          <p className="text-muted text-sm">
             <span className="tabular-nums">{openLabel}</span> open ·{" "}
             <span className="tabular-nums">{feed.loadedCount}</span> loaded
             {openError ? (
@@ -250,7 +256,7 @@ function AlertsPageContent() {
                 <button
                   type="button"
                   onClick={() => void openAlerts.refetch()}
-                  className="rounded-sm text-accent-fg underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring"
+                  className="text-accent-fg focus-visible:outline-focus-ring rounded-sm underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0"
                 >
                   Retry count
                 </button>
@@ -260,19 +266,24 @@ function AlertsPageContent() {
         </div>
       </header>
 
-      <Tabs value={tab} onValueChange={changeTab} className="mt-4">
-        <TabsList aria-label="Alerts sections">
+      <Tabs
+        value={tab}
+        onValueChange={changeTab}
+        className="mt-4 flex min-h-0 flex-1 flex-col"
+      >
+        <TabsList aria-label="Alerts sections" className="shrink-0">
           <TabsTrigger value="alerts">Alerts</TabsTrigger>
           <TabsTrigger value="rules">Alert rules</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="alerts">
+        <TabsContent value="alerts" className="flex min-h-0 flex-1 flex-col">
           <AlertFilters
             values={filters}
             typeOptions={types}
             onChange={changeFilters}
             onReset={resetFilters}
             disabled={tab !== "alerts"}
+            className="shrink-0"
           />
           <AlertTable
             alerts={alerts}
@@ -288,20 +299,21 @@ function AlertsPageContent() {
             loadingMore={feed.isFetchingNextPage}
             onLoadMore={feed.loadMore}
             newCount={feed.newCount}
-            onRevealNew={revealNew}
+            onRevealNew={feed.revealNew}
             highlightIds={feed.highlightIds}
             emptyReason={reason}
             onClearFilters={resetFilters}
             zoneFor={zoneFor}
             tripFor={tripFor}
             onScrollTopChange={feed.setAtTop}
+            resetKey={filterSignature(filters)}
             ackError={ackOrigin === "row" ? ack.error : null}
             offline={offline}
             staleLabel={lastDataAt ? formatClockTime(lastDataAt) : undefined}
             forbiddenAction={
               <Link
                 to="/map"
-                className="inline-flex h-touch items-center text-sm font-medium text-accent-fg underline-offset-4 hover:underline md:h-control-md"
+                className="h-touch text-accent-fg md:h-control-md inline-flex items-center text-sm font-medium underline-offset-4 hover:underline"
               >
                 Go back
               </Link>
@@ -309,7 +321,7 @@ function AlertsPageContent() {
           />
         </TabsContent>
 
-        <TabsContent value="rules">
+        <TabsContent value="rules" className="min-h-0 flex-1 overflow-y-auto">
           <AlertRulesPanel />
         </TabsContent>
       </Tabs>

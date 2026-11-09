@@ -39,10 +39,10 @@ export function AlertAckButton({
         onAck();
       }}
       className={cn(
-        "inline-flex h-touch items-center justify-center gap-1 rounded-md px-2 text-sm font-medium transition-colors duration-100 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:h-control-sm",
-        iconOnly ? "w-touch px-0 md:w-control-sm" : undefined,
+        "h-touch focus-visible:outline-focus-ring md:h-control-sm -my-2 inline-flex items-center justify-center gap-1 rounded-md px-2 text-sm font-medium transition-colors duration-100 focus-visible:outline-2 focus-visible:outline-offset-0 md:my-0",
+        iconOnly ? "w-touch md:w-control-sm px-0" : undefined,
         disabled
-          ? "cursor-not-allowed text-subtle opacity-60"
+          ? "text-subtle cursor-not-allowed opacity-60"
           : "text-text hover:bg-surface-2",
         className,
       )}
