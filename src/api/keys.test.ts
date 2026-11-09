@@ -32,3 +32,12 @@ describe("query keys", () => {
     expect(queryKeys.alertLookup("a")).not.toEqual(queryKeys.alertLookup("b"));
   });
 });
+
+describe("trip feed key", () => {
+  it("stays under the trips root so one invalidation reaches the feed and detail lookups", () => {
+    const feed = queryKeys.tripsFeed({ status: "active" });
+    expect(feed).toEqual(["trips", "feed", { status: "active" }]);
+    expect(feed[0]).toBe("trips");
+    expect(queryKeys.tripsFeed({ status: "active" })).not.toEqual(queryKeys.tripsFeed({}));
+  });
+});

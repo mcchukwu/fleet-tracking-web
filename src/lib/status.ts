@@ -48,6 +48,23 @@ export const tripStatusLabels: Record<TripStatus, string> = {
   cancelled: "Cancelled",
 };
 
+export function isTripStatus(value: string | null | undefined): value is TripStatus {
+  return value !== null && value !== undefined && Object.hasOwn(tripStatusLabels, value);
+}
+
+export function tripStatusLabel(value: string): string {
+  return isTripStatus(value) ? tripStatusLabels[value] : `Unknown status: ${value}`;
+}
+
+/** Filters and transitions use this order; terminal statuses last. */
+export const tripStatusOptions: readonly TripStatus[] = [
+  "planned",
+  "assigned",
+  "active",
+  "completed",
+  "cancelled",
+];
+
 export const alertStatusLabels = {
   open: "Open",
   acked: "Acknowledged",

@@ -4,6 +4,7 @@ import type {
   AuditFilters,
   HistoryRange,
   TripFilters,
+  TripServerFilters,
   VehicleEventRange,
   VehicleFilters,
 } from "./types";
@@ -21,6 +22,7 @@ export const queryKeys = {
   alertLookup: (id: string) => ["alerts", "lookup", id] as const,
   alertRules: ["alert-rules"] as const,
   trips: (filters: TripFilters = {}) => ["trips", filters] as const,
+  tripsFeed: (filters: TripServerFilters = {}) => ["trips", "feed", filters] as const,
   drivers: ["drivers"] as const,
   geofences: ["geofences"] as const,
   reports: (from: string, to: string) => ["reports", from, to] as const,

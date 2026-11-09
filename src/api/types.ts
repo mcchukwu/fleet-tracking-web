@@ -94,7 +94,9 @@ export interface Trip {
   driver_name?: string;
   origin: string;
   destination: string;
-  status: TripStatus;
+  // The server may add statuses; the UI checks with isTripStatus and shows a
+  // neutral fallback instead of failing the row.
+  status: string;
   distance_km: number;
   started_at?: string;
   ended_at?: string;
@@ -256,6 +258,11 @@ export interface TripFilters {
   status?: string;
   limit?: number;
   offset?: number;
+}
+
+/** The server accepts only status; search and sort stay client-side. */
+export interface TripServerFilters {
+  status?: string;
 }
 
 export interface AuditFilters {

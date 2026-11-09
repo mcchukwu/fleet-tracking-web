@@ -6,6 +6,7 @@ import {
   parseAlerts,
   parseGeofences,
   parseSnapshot,
+  parseTrips,
   parseVehicleEventsResponse,
   parseVehicleResponse,
   systemHealthSchema,
@@ -297,5 +298,74 @@ describe("vehicle events parser", () => {
 
   it("accepts an empty event list", () => {
     expect(parseVehicleEventsResponse({ data: [] }).events).toEqual([]);
+  });
+});
+
+describe("trip parser", () => {
+  it("accepts real null driver and timestamps and normalises a null distance", () => {
+    const result = parseTrips({
+      data: [
+        {
+          id: "trip-1",
+          vehicle_id: "vehicle-1",
+          plate: "LSD-100-AA",
+          driver_id: null,
+          driver_name: null,
+          origin: " Refinery Gate ",
+          destination: "Ibadan Customer",
+          status: "planned",
+          distance_km: null,
+          started_at: null,
+          ended_at: null,
+        },
+      ],
+    });
+
+    expect(result.rejected).toBe(0);
+    expect(result.trips).toHaveLength(1);
+    expect(result.trips[0]).toMatchObject({
+      id: "trip-1",
+      status: "planned",
+      distance_km: 0,
+      origin: " Refinery Gate ",
+    });
+    expect(result.trips[0]).not.toHaveProperty("driver_id");
+    expect(result.trips[0]).not.toHaveProperty("started_at");
+  });
+
+  it("keeps an unknown status instead of dropping the row", () => {
+    const result = parseTrips({
+      data: [
+        {
+          id: "trip-1",
+          vehicle_id: "vehicle-1",
+          plate: "LSD-100-AA",
+          origin: "A",
+          destination: "B",
+          status: "diverted",
+          distance_km: 0,
+        },
+      ],
+    });
+
+    expect(result.trips[0]?.status).toBe("diverted");
+  });
+
+  it("drops only structurally invalid rows", () => {
+    const result = parseTrips({
+      data: [
+        { id: "trip-1", vehicle_id: "v", plate: "P", origin: "A", destination: "B", status: "planned" },
+        { id: "", vehicle_id: "v", plate: "P", origin: "A", destination: "B", status: "planned" },
+      ],
+    });
+
+    expect(result.trips).toHaveLength(1);
+    expect(result.rejected).toBe(1);
+  });
+
+  it("throws only when every row is unusable", () => {
+    expect(() => parseTrips({ data: [{ nope: true }] })).toThrow(/trip row/i);
+    expect(parseTrips({ data: [] })).toEqual({ trips: [], rejected: 0 });
+    expect(() => parseTrips({ data: null })).toThrow(/envelope/i);
   });
 });

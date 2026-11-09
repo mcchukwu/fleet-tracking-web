@@ -353,6 +353,7 @@ export function StyleGuidePage() {
             <Button size="lg">Large</Button>
             <Button loading>Saving</Button>
             <Button disabled>Disabled</Button>
+            <Button disabledReason="Your role can't change trips.">Start</Button>
             <IconButton
               label="More actions"
               icon={

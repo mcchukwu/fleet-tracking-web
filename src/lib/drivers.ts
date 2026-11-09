@@ -1,4 +1,4 @@
-import type { Driver } from "../../../api/types";
+import type { Driver } from "../api/types";
 
 function normalize(value: string): string {
   return value.trim().toLowerCase().replace(/[\s-]/g, "");

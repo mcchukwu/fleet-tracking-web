@@ -11,7 +11,7 @@ import { Combobox } from "../../../ui/Combobox";
 import { Dialog } from "../../../ui/Dialog";
 import { Input } from "../../../ui/Input";
 import { Select } from "../../../ui/Select";
-import { activeDrivers, driverDescription } from "../lib/drivers";
+import { activeDrivers, driverDescription } from "../../../lib/drivers";
 import {
   administrativeStatuses,
   createVehicleFormSchema,

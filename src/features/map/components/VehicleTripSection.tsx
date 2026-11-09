@@ -2,11 +2,12 @@ import type { SnapshotVehicle, Trip } from "../../../api/types";
 import { normalize } from "../../../errors/normalize";
 import { ErrorState } from "../../../errors/ErrorState";
 import { formatDistance, MISSING } from "../../../lib/format";
-import { tripStatusLabels } from "../../../lib/status";
+import { isTripStatus } from "../../../lib/status";
+import { tripDistanceKm } from "../../../lib/trips";
 import { useDelayedFlag } from "../../../lib/useDelayedFlag";
 import { Skeleton } from "../../../ui/StatePanel";
 import { Timestamp } from "../../../ui/Timestamp";
-import { TripStatusBadge } from "../../../ui/Badge";
+import { Badge, TripStatusBadge } from "../../../ui/Badge";
 import { VehicleField, VehicleSection } from "./VehicleField";
 
 export interface TripsResult {
@@ -22,10 +23,6 @@ export interface VehicleTripSectionProps {
   trips?: readonly Trip[];
   tripQuery: TripsResult;
   offline?: boolean;
-}
-
-function knownTripStatus(value: string | undefined): value is keyof typeof tripStatusLabels {
-  return value !== undefined && Object.hasOwn(tripStatusLabels, value);
 }
 
 export function VehicleTripSection({
@@ -53,7 +50,7 @@ export function VehicleTripSection({
           <VehicleField label="Origin">{MISSING}</VehicleField>
           <VehicleField label="Destination">{fallbackDestination ?? MISSING}</VehicleField>
           <VehicleField label="Status">
-            {knownTripStatus(fallbackStatus) ? (
+            {isTripStatus(fallbackStatus) ? (
               <TripStatusBadge status={fallbackStatus} />
             ) : (
               (fallbackStatus ?? MISSING)
@@ -107,7 +104,7 @@ export function VehicleTripSection({
           <VehicleField label="Origin">{MISSING}</VehicleField>
           <VehicleField label="Destination">{fallbackDestination ?? MISSING}</VehicleField>
           <VehicleField label="Status">
-            {knownTripStatus(fallbackStatus) ? (
+            {isTripStatus(fallbackStatus) ? (
               <TripStatusBadge status={fallbackStatus} />
             ) : (
               (fallbackStatus ?? MISSING)
@@ -136,12 +133,16 @@ export function VehicleTripSection({
         <VehicleField label="Origin">{trip.origin}</VehicleField>
         <VehicleField label="Destination">{trip.destination}</VehicleField>
         <VehicleField label="Status">
-          <TripStatusBadge status={trip.status} />
+          {isTripStatus(trip.status) ? (
+            <TripStatusBadge status={trip.status} />
+          ) : (
+            <Badge tone="neutral">Unknown status: {trip.status}</Badge>
+          )}
         </VehicleField>
         <VehicleField label="Started">
           {trip.started_at ? <Timestamp iso={trip.started_at} /> : MISSING}
         </VehicleField>
-        <VehicleField label="Distance">{formatDistance(trip.distance_km)}</VehicleField>
+        <VehicleField label="Distance">{formatDistance(tripDistanceKm(trip))}</VehicleField>
       </dl>
       {tripQuery.isError && !offline ? (
         <p className="mt-2 flex items-center justify-between gap-2 text-xs text-muted">

@@ -2,11 +2,9 @@ import { useTrips } from "../../../api/hooks/trips";
 import type { Trip } from "../../../api/types";
 import { ErrorState } from "../../../errors/ErrorState";
 import { normalize } from "../../../errors/normalize";
-import { tripStatusLabels } from "../../../lib/status";
+import { isTripStatus } from "../../../lib/status";
 import { Badge, TripStatusBadge } from "../../../ui/Badge";
 import { Skeleton } from "../../../ui/StatePanel";
-
-const TRIP_STATUSES = new Set(Object.keys(tripStatusLabels));
 
 export interface AlertTripSectionProps {
   tripId?: string;
@@ -59,7 +57,7 @@ export function AlertTripSection({ tripId }: AlertTripSectionProps) {
       </dd>
       <dt className="text-muted">Status</dt>
       <dd>
-        {TRIP_STATUSES.has(trip.status) ? (
+        {isTripStatus(trip.status) ? (
           <TripStatusBadge status={trip.status} />
         ) : (
           <Badge tone="neutral">Unknown status: {trip.status}</Badge>

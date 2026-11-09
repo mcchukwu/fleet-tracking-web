@@ -6,7 +6,7 @@ import { SlowNotice } from "../../../errors/SlowNotice";
 import { Button } from "../../../ui/Button";
 import { Combobox } from "../../../ui/Combobox";
 import { Dialog } from "../../../ui/Dialog";
-import { activeDrivers, driverDescription } from "../lib/drivers";
+import { activeDrivers, driverDescription } from "../../../lib/drivers";
 import { useVehicleWrite } from "../hooks/useVehicleWrite";
 
 export interface AssignDriverDialogProps {

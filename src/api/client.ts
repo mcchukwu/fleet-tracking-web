@@ -19,6 +19,7 @@ import {
   parseAlerts,
   parseGeofences,
   parseSnapshot,
+  parseTrips,
   parseVehicleEventsResponse,
   parseVehicleResponse,
   systemHealthSchema,
@@ -36,7 +37,6 @@ import type {
   ImportResult,
   LoginResponse,
   ReportSummary,
-  Trip,
   TripFilters,
   TripInput,
   TripUpdate,
@@ -340,8 +340,16 @@ export class FleetApiClient {
     return { data: result.vehicles };
   }
 
-  trips(filters: TripFilters = {}, options: RequestOptions = {}) {
-    return this.request<{ data: Trip[] }>("GET", `/trips${queryString(filters)}`, undefined, options);
+  async trips(filters: TripFilters = {}, options: RequestOptions = {}) {
+    const payload = await this.request<unknown>(
+      "GET",
+      `/trips${queryString(filters)}`,
+      undefined,
+      options,
+    );
+    const result = this.parse(payload, "/trips", parseTrips);
+    this.noteRejectedRows("/trips", result.rejected);
+    return { data: result.trips };
   }
 
   createTrip(input: TripInput, options: RequestOptions = {}) {

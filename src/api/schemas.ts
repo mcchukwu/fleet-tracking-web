@@ -12,6 +12,7 @@ import type {
   GeofenceKind,
   Point,
   SnapshotVehicle,
+  Trip,
   TripStatus,
   Vehicle,
   VehicleEvent,
@@ -251,6 +252,58 @@ export const historyPointSchema = z.object({
   speed_kph: z.number(),
   heading_deg: z.number(),
 });
+
+const tripRowSchema = z.object({
+  id: z.string().min(1),
+  vehicle_id: z.string().min(1),
+  plate: z.string(),
+  driver_id: z.string().nullable().optional(),
+  driver_name: z.string().nullable().optional(),
+  origin: z.string(),
+  destination: z.string(),
+  // An open string: unknown statuses stay renderable with a neutral fallback.
+  status: z.string().min(1),
+  distance_km: z.number().nullable().optional(),
+  started_at: timestamp.nullable().optional(),
+  ended_at: timestamp.nullable().optional(),
+});
+
+export type TripsParseResult = { trips: Trip[]; rejected: number };
+
+/** Null driver and timestamp fields arrive as JSON null; normalise both to absent. */
+export function parseTrips(payload: unknown): TripsParseResult {
+  const envelope = z.object({ data: z.array(z.unknown()) }).safeParse(payload);
+  if (!envelope.success) throw new ContractError("Trips envelope is not { data: [] }");
+
+  const trips: Trip[] = [];
+  let rejected = 0;
+  for (const row of envelope.data.data) {
+    const parsed = tripRowSchema.safeParse(row);
+    if (!parsed.success) {
+      rejected += 1;
+      continue;
+    }
+    const data = parsed.data;
+    trips.push({
+      id: data.id,
+      vehicle_id: data.vehicle_id,
+      plate: data.plate,
+      origin: data.origin,
+      destination: data.destination,
+      status: data.status,
+      distance_km: data.distance_km ?? 0,
+      ...(data.driver_id ? { driver_id: data.driver_id } : {}),
+      ...(data.driver_name ? { driver_name: data.driver_name } : {}),
+      ...(data.started_at ? { started_at: data.started_at } : {}),
+      ...(data.ended_at ? { ended_at: data.ended_at } : {}),
+    });
+  }
+
+  if (envelope.data.data.length > 0 && trips.length === 0) {
+    throw new ContractError("No trip row matched the expected shape");
+  }
+  return { trips, rejected };
+}
 
 /** An empty range arrives as `data: null`; the UI treats it as no points. */
 export const historyResponseSchema = z.object({

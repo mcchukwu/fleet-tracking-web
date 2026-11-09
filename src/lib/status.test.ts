@@ -5,7 +5,10 @@ import {
   getDataFreshness,
   getVehicleStatus,
   isAlertType,
+  isTripStatus,
+  tripStatusLabel,
   tripStatusLabels,
+  tripStatusOptions,
   vehicleStatusLabels,
 } from "./status";
 
@@ -90,5 +93,31 @@ describe("labels and ordering", () => {
   it("labels every trip and vehicle status", () => {
     expect(tripStatusLabels.completed).toBe("Completed");
     expect(vehicleStatusLabels.alert).toBe("Alert");
+  });
+});
+
+describe("trip status guards", () => {
+  it("accepts only the five known statuses, including prototype keys", () => {
+    for (const status of ["planned", "assigned", "active", "completed", "cancelled"]) {
+      expect(isTripStatus(status)).toBe(true);
+    }
+    for (const status of ["diverted", "toString", "__proto__", "", null, undefined]) {
+      expect(isTripStatus(status)).toBe(false);
+    }
+  });
+
+  it("labels an unknown status without throwing", () => {
+    expect(tripStatusLabel("active")).toBe("Active");
+    expect(tripStatusLabel("diverted")).toBe("Unknown status: diverted");
+  });
+
+  it("keeps one option order", () => {
+    expect(tripStatusOptions).toEqual([
+      "planned",
+      "assigned",
+      "active",
+      "completed",
+      "cancelled",
+    ]);
   });
 });

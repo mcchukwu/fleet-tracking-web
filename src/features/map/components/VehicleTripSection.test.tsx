@@ -48,7 +48,7 @@ describe("VehicleTripSection", () => {
     expect(screen.getByText("Refinery Gate")).toBeVisible();
     expect(screen.getByText("Ibadan Customer")).toBeVisible();
     expect(screen.getByText("Active")).toBeVisible();
-    expect(screen.getByText("0.0 km")).toBeVisible();
+    expect(screen.getByText("—")).toBeVisible();
   });
 
   it("falls back to the snapshot when the trip id is not in the list", () => {
