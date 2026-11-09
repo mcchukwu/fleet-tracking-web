@@ -243,7 +243,7 @@ export function DataTable<Row>({
                   data-row="data"
                   {...rowAttributes}
                   className={cn(
-                    "h-row border-border bg-surface hover:bg-surface-2 border-b transition-colors duration-100 last:border-0",
+                    "h-row border-border bg-surface hover:bg-surface-2 border-b transition-colors duration-100",
                     isSelected && "bg-accent-soft",
                     rowAttributes?.className,
                   )}

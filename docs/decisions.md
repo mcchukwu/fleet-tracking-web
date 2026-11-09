@@ -497,3 +497,27 @@ The 44px touch target of an inline row action is rendered with symmetric negativ
 Per-marker 44px targets cannot fit 40–60 events into the roughly 148px timeline left between the time readouts, so the event lane above the track is the pointer target. The lane is full width, 44px tall at touch breakpoints and 28px on desktop, with 8px dots centred inside it. Pointer input on the lane uses nearest-neighbour hit testing against event x positions; an exact tie jumps to the earlier event by `atMs`. Each event remains a real labelled button with roving tabindex and Enter/Space activation for keyboard and assistive technology, but the buttons have `pointer-events: none` so the lane owns pointing; dense ranges are never collapsed into ticks. The chosen event's label replaces the current-time readout while hovering or pressing. Dots and their invisible buttons are clamped 4px inside the lane at 0% and 100% so they cannot protrude over the time readouts. The track below remains the only pointer-seek surface, and the lane's fixed height keeps the control bar from resizing while events load.
 
 Trade-off: keyboard users tab to one marker and arrow between events instead of tabbing through every marker; the Events menu remains the collision-free chronological list. Per-marker 44px boxes still exist for the touch-target check, but they overlap in dense ranges, which is harmless because they are not pointer surfaces.
+
+## 2026-11-09: Trips contract
+
+Probed staging as dispatcher, security and viewer. `POST /trips` accepts `vehicle_id`, `origin` and `destination` (all required) plus an optional `driver_id`, and always creates a `planned` trip even when a driver is supplied. Select all driver detail stays available for the Assign step. The response is `201 {id}` only, so the page reconciles a create by refetching `GET /trips?limit=500` and matching the exact vehicle, trimmed route and optional driver against a row that was not in the pre-submit id set. A full 500-row list with no match is an unknown outcome, not a failure.
+
+`PATCH /trips/{id}` takes `status` and/or `driver_id` and returns `204`; an empty body is a no-op. Staging does not enforce transitions: completed-to-active, completed-to-cancelled and planned-to-assigned without a driver all returned `204`. The client therefore owns the matrix in `src/lib/trips.ts` and never offers an invalid action; a backend guard is a backlog item. `started_at` is set on `active`, `ended_at` on `completed` and `cancelled`, and completion computes `distance_km`; the client never sends distance or timestamps.
+
+`GET /trips/{id}` does not exist (`405`). The detail drawer resolves from the loaded feed first, then from `GET /trips?limit=500`; a trip older than that shows the not-found state. The list returns no total and no contractual order, so the page reports `N loaded`, applies a deterministic client sort and offers `Load more` only on a full 100-row page. `status` is the only server filter.
+
+Nullable `driver_id`, `driver_name`, `started_at` and `ended_at` arrive as JSON `null`; `distance_km` is always a number and is `0` before completion. The parser normalises nulls to absent, keeps unknown statuses for the neutral badge, drops only structurally invalid rows and throws only when every row is unusable. `distance_km` is shown only for completed trips, so an active trip never claims `0.0 km`.
+
+`GET /drivers` ignores `limit` and `offset`; the create and assign dialogs load the full list and filter active drivers client-side. Duplicate names are common, so every driver option carries phone and licence. The shared helpers moved to `src/lib/drivers.ts` because this is their second consumer.
+
+The default sort is operational: Active, Assigned, Planned, Completed, Cancelled, then newest start and plate. `Button` gained `disabledReason` (aria-disabled, blocked activation, focus ring, tooltip) instead of a fourth feature-local disabled action, and the state is shown on `/styleguide`.
+
+Trade-off: the trips sort URL key is `order`, not `sort`, because TanStack Router merges search types across routes and the map already owns a different `sort` enum. The URL contract stays explicit and the map route is untouched.
+
+## 2026-11-09: Trips row geometry
+
+Trips exposed a 1px row-height drift in the shared `DataTable`: the last data row dropped its bottom border while earlier rows kept it, so a measured column set saw both 36px and 37px rows. Every data row now keeps its `border-b`, which makes the fixed 36px height uniform and preserves the contiguous-divider rule. The action buttons in a trip row keep their 44px touch target with symmetric negative margins (`-my-1.5`), so the row stays 36px on mobile while every control remains reachable.
+
+Trade-off: the last row now draws a divider above the table's rounded border; the alternative was a per-table geometry exception that would break as soon as the last virtual row mounted.
+
+The row-open plate button and the copy control also keep a 44px mobile target with symmetric negative margins, so the vehicle cell and the actions cell share the same 36px row geometry.

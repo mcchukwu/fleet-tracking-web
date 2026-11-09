@@ -102,7 +102,7 @@ function TripOpenButton({ trip, onOpen }: TripOpenButtonProps) {
         aria-label={`Open trip to ${trip.destination} for ${trip.plate}`}
         title={trip.plate}
         onClick={onOpen}
-        className="focus-visible:outline-focus-ring -my-2 min-w-0 truncate rounded-sm font-mono text-sm text-text underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 md:my-0"
+        className="focus-visible:outline-focus-ring -my-2 inline-flex h-touch min-w-0 items-center truncate rounded-sm font-mono text-sm text-text underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 md:my-0 md:h-auto"
       >
         {trip.plate}
       </button>
@@ -183,6 +183,7 @@ export interface TripTableProps {
   forbiddenAction?: ReactNode;
   resetKey?: string;
   offline?: boolean;
+  cancelled?: boolean;
 }
 
 export function TripTable({
@@ -205,6 +206,7 @@ export function TripTable({
   forbiddenAction,
   resetKey,
   offline = false,
+  cancelled = false,
 }: TripTableProps) {
   "use no memo";
   const [scroller, setScroller] = useState<HTMLDivElement | null>(null);
@@ -374,7 +376,17 @@ export function TripTable({
     [disabledReason, onAction, onOpen, pendingId],
   );
 
-  const empty = offline ? (
+  const empty = cancelled ? (
+    <EmptyState
+      title="Loading cancelled"
+      description="The trip list request was cancelled."
+      action={
+        <Button size="sm" onClick={onRetry}>
+          Retry
+        </Button>
+      }
+    />
+  ) : offline ? (
     <EmptyState
       title="No trips available offline"
       description="Reconnect to load the trip list."

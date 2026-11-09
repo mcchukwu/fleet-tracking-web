@@ -28,6 +28,7 @@ export function TripRowActions({
         <Button
           size="sm"
           variant="secondary"
+          className="-my-1.5 md:my-0"
           loading={pending}
           {...(reason ? { disabledReason: reason } : {})}
           onClick={() => onAction(next.action)}
@@ -40,7 +41,7 @@ export function TripRowActions({
         <Button
           size="sm"
           variant="ghost"
-          className="text-danger hover:bg-alert-bg disabled:opacity-50"
+          className="-my-1.5 text-danger hover:bg-alert-bg disabled:opacity-50 md:my-0"
           disabled={pending}
           {...(reason ? { disabledReason: reason } : {})}
           onClick={() => onAction("cancel")}

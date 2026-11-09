@@ -106,6 +106,12 @@ describe("TripTable", () => {
     expect(screen.getByText("No trips match in the loaded trips")).toBeVisible();
   });
 
+  it("explains a cancelled load and offers Retry", () => {
+    renderTable({ trips: [], state: "empty", cancelled: true });
+    expect(screen.getByText("Loading cancelled")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeVisible();
+  });
+
   it("renders an inline action error with Retry", () => {
     const error: AppError = {
       kind: "network",

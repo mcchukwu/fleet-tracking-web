@@ -278,6 +278,7 @@ function TripsPageContent() {
           ? { staleLabel: formatClockTime(feed.dataUpdatedAt) }
           : {})}
         offline={offline}
+        cancelled={feed.cancelled}
         forbiddenAction={
           <Link
             to="/map"
