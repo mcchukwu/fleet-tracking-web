@@ -44,6 +44,23 @@ declare global {
         geofenceCount: number;
         stale: boolean;
       };
+      playback: {
+        vehicleId: string | null;
+        from: string | null;
+        to: string | null;
+        resolution: string | null;
+        pointCount: number;
+        gapCount: number;
+        eventCount: number;
+        cursorIndex: number | null;
+        cursorPosition: [number, number] | null;
+        playheadMs: number | null;
+        playing: boolean;
+        speed: number;
+        inGap: boolean;
+        cancelled: boolean;
+        reducedMotion: boolean;
+      };
     } | null;
     __FLEET_TEST_MAP__?: {
       flyTo: (point: [number, number], zoom?: number) => void;

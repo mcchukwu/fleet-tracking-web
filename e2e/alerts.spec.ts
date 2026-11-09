@@ -220,6 +220,14 @@ test.describe("alerts", () => {
     await expect(page).toHaveURL(/vehicle=6c69032e-b802-447e-8f7a-ad8c0ddc2359/);
     await expect(page).toHaveURL(/from=2026-11-02T19%3A37%3A39.179Z/);
     await expect(page).toHaveURL(/to=2026-11-02T20%3A09%3A39.179Z/);
+    await expect(page.getByRole("heading", { name: "Playback" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Playback controls" })).toBeVisible();
+    await expect
+      .poll(
+        () => page.evaluate(() => window.__FLEET_DEBUG__?.playback?.pointCount ?? 0),
+        { timeout: 15_000 },
+      )
+      .toBeGreaterThan(0);
   });
 
   test("acknowledges from a row and removes it from the open filter", async ({ page }) => {

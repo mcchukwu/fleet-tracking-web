@@ -20,6 +20,7 @@ export type ClockAction =
       toMs: number;
     }
   | { type: "speed"; direction: -1 | 1 }
+  | { type: "set-speed"; speed: number }
   | { type: "reset"; fromMs: number; toMs: number };
 
 export function createClock(fromMs: number, _toMs: number): ClockState {
@@ -94,6 +95,12 @@ export function clockReducer(state: ClockState, action: ClockAction): ClockState
       };
     case "speed":
       return { ...state, speed: nextSpeed(state.speed, action.direction) };
+    case "set-speed": {
+      const allowed = PLAYBACK_SPEEDS.includes(
+        action.speed as (typeof PLAYBACK_SPEEDS)[number],
+      );
+      return allowed ? { ...state, speed: action.speed } : state;
+    }
     case "reset":
       return { ...state, playheadMs: action.fromMs, playing: false };
   }

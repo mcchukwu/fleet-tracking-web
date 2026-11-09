@@ -42,6 +42,24 @@ vi.mock("@tanstack/react-router", () => ({
   ),
 }));
 
+vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({ cancelQueries: vi.fn() }),
+}));
+
+vi.mock("./PlaybackMap", () => ({
+  PlaybackMap: ({
+    onReady,
+  }: {
+    onReady: (adapter: null) => void;
+  }) => (
+    <section aria-label="Playback map">
+      <button type="button" onClick={() => onReady(null)}>
+        Map ready
+      </button>
+    </section>
+  ),
+}));
+
 vi.mock("../../../api/hooks/vehicles", () => ({
   useLiveSnapshot: () => ({
     data: [
