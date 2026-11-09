@@ -25,6 +25,8 @@ export interface ComboboxProps {
   disabledReason?: string;
   placeholder?: string;
   initialFocus?: boolean;
+  /** Keep the list out of flow so an enclosing dialog footer cannot move under the pointer. */
+  overlay?: boolean;
   className?: string;
 }
 
@@ -51,6 +53,7 @@ export function Combobox({
   disabledReason,
   placeholder = "Search",
   initialFocus = false,
+  overlay = false,
   className,
 }: ComboboxProps) {
   const listId = useId();
@@ -202,7 +205,10 @@ export function Combobox({
             id={listId}
             role="listbox"
             aria-label={label}
-            className="absolute inset-x-0 top-full z-menu mt-1 max-h-64 overflow-y-auto rounded-md border border-border bg-surface p-1 shadow-menu"
+            className={cn(
+              "z-menu max-h-64 overflow-y-auto rounded-md border border-border bg-surface p-1 shadow-menu",
+              overlay ? "absolute inset-x-0 top-full mt-1" : undefined,
+            )}
           >
           {filtered.map((item, index) => {
             const isActive = index === activeIndexClamped;

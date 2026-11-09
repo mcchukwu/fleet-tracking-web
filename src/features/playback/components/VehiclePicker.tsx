@@ -15,6 +15,7 @@ export interface VehiclePickerProps {
   onChange: (id: string) => void;
   onBack?: () => void;
   initialFocus?: boolean;
+  overlay?: boolean;
   className?: string;
 }
 
@@ -43,6 +44,7 @@ export function VehiclePicker({
   onChange,
   onBack,
   initialFocus = false,
+  overlay = false,
   className,
 }: VehiclePickerProps) {
   const snapshot = useLiveSnapshot();
@@ -131,6 +133,7 @@ export function VehiclePicker({
       placeholder="Search by plate or IMEI"
       emptyMessage="No vehicles match"
       initialFocus={initialFocus}
+      overlay={overlay}
       className={className}
     />
   );
