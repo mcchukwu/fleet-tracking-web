@@ -616,7 +616,7 @@ export function MapPage() {
       {kpiHidden ? null : (
         <div
           className={cn(
-            "map-kpi pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center pl-3 pr-14 lg:right-3 lg:px-3",
+            "map-kpi pointer-events-none absolute inset-x-0 top-3 z-panel flex justify-center pl-3 pr-14 lg:right-3 lg:px-3",
             panelVisible ? "lg:left-93" : "lg:left-3",
           )}
         >
@@ -629,7 +629,7 @@ export function MapPage() {
       )}
 
       {isDesktop && panelVisible ? (
-        <aside className="absolute bottom-3 left-3 top-3 z-20 w-panel">
+        <aside className="absolute bottom-3 left-3 top-3 z-panel w-panel">
           <ErrorBoundary level="panel">
             <VehiclePanel
               {...panelProps}
@@ -717,7 +717,7 @@ export function MapPage() {
       <div
         data-testid="map-footer"
         className={cn(
-          "map-bottom-anchor pointer-events-none absolute left-3 right-3 z-20 flex flex-col items-end gap-2",
+          "map-bottom-anchor pointer-events-none absolute left-3 right-3 z-map-controls flex flex-col items-end gap-2",
           isDesktop
             ? cn("map-inset-right", preferences.panelOpen ? "lg:left-93" : "lg:left-3")
             : "map-inset-bottom",
@@ -747,7 +747,7 @@ export function MapPage() {
         <div
           data-testid="maptiler-logo-anchor"
           className={cn(
-            "map-bottom-anchor pointer-events-none absolute left-3 z-20",
+            "map-bottom-anchor pointer-events-none absolute left-3 z-map-controls",
             isDesktop
               ? cn(preferences.panelOpen ? "lg:left-96" : "lg:left-3")
               : "map-inset-bottom",
@@ -765,7 +765,7 @@ export function MapPage() {
             else setListSnap("half");
             focusSheetHandle();
           }}
-          className="absolute inset-x-0 top-0 z-10 h-sheet-strip w-full focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring"
+          className="absolute inset-x-0 top-0 z-map h-sheet-strip w-full focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring"
         >
           <span className="sr-only">
             {drawerOpen ? "Collapse the vehicle details" : "Collapse the vehicle list"}

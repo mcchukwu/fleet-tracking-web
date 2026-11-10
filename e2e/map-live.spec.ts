@@ -151,7 +151,7 @@ test.describe("live feed", () => {
     }
 
     await expect(page.getByText("12 new alerts").first()).toBeVisible({ timeout: 10_000 });
-    await expect(page.locator(".z-toast").getByText("12 new alerts")).toHaveCount(1);
+    await expect(page.locator('[data-layer-portal="toast"]').getByText("12 new alerts")).toHaveCount(1);
     await expect(
       page.locator('[aria-live="polite"]').filter({ hasText: "12 new alerts" }).first(),
     ).toBeAttached();

@@ -1,3 +1,4 @@
+/* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- the scrollable table region must be keyboard reachable */
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import type {
   CSSProperties,
@@ -49,8 +50,8 @@ export interface DataTableProps<Row> {
     index: number,
     cells: readonly ReactNode[],
   ) => ReactNode | undefined;
-  onScroll?: (event: UIEvent<HTMLDivElement>) => void;
-  onScrollerChange?: (element: HTMLDivElement | null) => void;
+  onScroll?: (event: UIEvent<HTMLElement>) => void;
+  onScrollerChange?: (element: HTMLElement | null) => void;
 }
 
 function tableStyle(totalWidth: number): CSSProperties {
@@ -126,15 +127,17 @@ export function DataTable<Row>({
     rowHeight === DATA_TABLE_ROW_HEIGHT ? undefined : { height: rowHeight };
   const stickyFirst = columns.length > 0;
 
-  function scrollerRef(element: HTMLDivElement | null): void {
+  function scrollerRef(element: HTMLElement | null): void {
     onScrollerChange?.(element);
   }
 
   return (
     <div data-data-table className={cn("flex min-h-0 flex-col", className)}>
-      <div
+      <section
         ref={scrollerRef}
         data-data-table-scroll
+        tabIndex={0}
+        aria-label={`${label} scroll area`}
         className="border-border bg-surface min-h-0 flex-1 overflow-auto rounded-lg border"
         onScroll={onScroll}
       >
@@ -148,7 +151,7 @@ export function DataTable<Row>({
               <col key={column.id} style={colStyle(column.width)} />
             ))}
           </colgroup>
-          <thead className="bg-surface-2 sticky top-0 z-20">
+          <thead className="bg-surface-2 sticky top-0 z-panel">
             <tr className="h-row border-border border-b" style={rowStyle}>
               {columns.map((column, index) => {
                 const direction =
@@ -173,7 +176,7 @@ export function DataTable<Row>({
                       alignClass(column.align),
                       stickyFirst &&
                         index === 0 &&
-                        "bg-surface-2 sticky left-0 z-30",
+                        "bg-surface-2 sticky left-0 z-drawer",
                     )}
                     style={rowStyle}
                   >
@@ -211,7 +214,7 @@ export function DataTable<Row>({
                     column.align === "right" && "tabular-nums",
                     stickyFirst &&
                       cellIndex === 0 &&
-                      "sticky left-0 z-10 bg-inherit",
+                      "sticky left-0 z-map-controls bg-inherit",
                     isSelected &&
                       cellIndex === 0 &&
                       "ring-accent ring-2 ring-inset",
@@ -258,7 +261,7 @@ export function DataTable<Row>({
             ) : null}
           </tbody>
         </table>
-      </div>
+      </section>
     </div>
   );
 }

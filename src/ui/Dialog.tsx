@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 import { cn } from "./cn";
 import { IconButton } from "./IconButton";
+import { isPortalledPopoverTarget, LayerPortal } from "./LayerPortal";
 
 export type DialogVariant = "default" | "confirm" | "blocking";
 
@@ -49,30 +50,34 @@ export function Dialog({
         if (!blocking) onOpenChange(next);
       }}
     >
-      <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-dialog animate-fade-in bg-overlay" />
+      <LayerPortal layer="dialog">
+        <DialogPrimitive.Overlay className="animate-fade-in bg-overlay fixed inset-0" />
         <DialogPrimitive.Content
           onEscapeKeyDown={(event) => {
             if (blocking) event.preventDefault();
           }}
           onPointerDownOutside={(event) => {
-            if (blocking) event.preventDefault();
+            if (blocking || isPortalledPopoverTarget(event.target)) {
+              event.preventDefault();
+            }
           }}
           onInteractOutside={(event) => {
-            if (blocking) event.preventDefault();
+            if (blocking || isPortalledPopoverTarget(event.target)) {
+              event.preventDefault();
+            }
           }}
           className={cn(
-            "fixed left-1/2 top-1/2 z-dialog w-11/12 max-w-dialog -translate-x-1/2 -translate-y-1/2 animate-fade-in rounded-lg border border-border bg-surface p-6 text-text shadow-float",
+            "max-w-dialog animate-fade-in border-border bg-surface text-text shadow-float fixed top-1/2 left-1/2 w-11/12 -translate-x-1/2 -translate-y-1/2 rounded-lg border p-6",
             className,
           )}
         >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 space-y-1">
-              <DialogPrimitive.Title className="text-md font-medium text-text">
+              <DialogPrimitive.Title className="text-md text-text font-medium">
                 {title}
               </DialogPrimitive.Title>
               {description ? (
-                <DialogPrimitive.Description className="text-sm text-muted">
+                <DialogPrimitive.Description className="text-muted text-sm">
                   {description}
                 </DialogPrimitive.Description>
               ) : null}
@@ -81,17 +86,25 @@ export function Dialog({
               <DialogPrimitive.Close asChild>
                 <IconButton
                   label="Close dialog"
-                  icon={<X aria-hidden="true" className="size-4" strokeWidth={1.5} />}
+                  icon={
+                    <X
+                      aria-hidden="true"
+                      className="size-4"
+                      strokeWidth={1.5}
+                    />
+                  }
                 />
               </DialogPrimitive.Close>
             )}
           </div>
           {children ? <div className="mt-4">{children}</div> : null}
           {footer ? (
-            <div className="relative z-menu mt-6 flex justify-end gap-2">{footer}</div>
+            <div data-dialog-footer className="mt-6 flex justify-end gap-2">
+              {footer}
+            </div>
           ) : null}
         </DialogPrimitive.Content>
-      </DialogPrimitive.Portal>
+      </LayerPortal>
     </DialogPrimitive.Root>
   );
 }

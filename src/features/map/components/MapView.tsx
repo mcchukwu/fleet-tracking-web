@@ -161,7 +161,7 @@ export function MapView({  vehicles,
       />
 
       {loading && !hasData ? (
-        <div className="absolute inset-x-0 top-0 z-10">
+        <div className="absolute inset-x-0 top-0 z-map-controls">
           <LoadingBar label="Loading vehicles" />
         </div>
       ) : null}
@@ -169,7 +169,7 @@ export function MapView({  vehicles,
       {error && !hasData && showErrorOverlay ? (
         <div
           data-testid="map-error-overlay"
-          className="absolute inset-0 z-10 flex items-center justify-center bg-surface/90 p-4"
+          className="absolute inset-0 z-map-controls flex items-center justify-center bg-surface/90 p-4"
         >
           <ErrorState error={error} onRetry={onRetry} />
         </div>

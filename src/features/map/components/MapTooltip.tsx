@@ -66,7 +66,7 @@ export function MapTooltip({ row, point, now: fixedNow }: MapTooltipProps) {
       ref={ref}
       role="tooltip"
       style={tooltipStyle(point, metrics.container, metrics.tooltip)}
-      className="pointer-events-none absolute z-20 max-w-panel rounded-md border border-border bg-surface px-2 py-1 text-xs shadow-menu"
+      className="pointer-events-none absolute z-tooltip max-w-panel rounded-md border border-border bg-surface px-2 py-1 text-xs shadow-menu"
     >
       <p className="font-mono font-medium text-text">{row.plate}</p>
       <p

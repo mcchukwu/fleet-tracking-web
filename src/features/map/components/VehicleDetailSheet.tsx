@@ -129,12 +129,12 @@ export function VehicleDetailSheet({
       data-snap={snap}
       data-testid="vehicle-detail-sheet"
       style={sheetVisibleStyle(visible)}
-      className="mobile-sheet bg-surface shadow-float ring-border absolute inset-x-0 bottom-0 z-20 flex flex-col rounded-t-lg ring-1"
+      className="mobile-sheet bg-surface shadow-float ring-border absolute inset-x-0 bottom-0 z-panel flex flex-col rounded-t-lg ring-1"
     >
       <h2 className="sr-only">Vehicle details for {plate}</h2>
       <div
         data-testid="detail-sheet-header"
-        className="h-sheet-peek border-border bg-surface relative z-10 flex shrink-0 touch-none flex-col border-b px-3 pt-2"
+        className="h-sheet-peek border-border bg-surface relative z-map-controls flex shrink-0 touch-none flex-col border-b px-3 pt-2"
         onPointerDown={handlers.onPointerDown}
         onPointerMove={handlers.onPointerMove}
         onPointerUp={handlers.onPointerUp}

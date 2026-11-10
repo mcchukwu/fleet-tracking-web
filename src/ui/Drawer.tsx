@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { IconButton } from "./IconButton";
 import { cn } from "./cn";
+import { ContentPortal } from "./LayerPortal";
 
 export interface DrawerProps {
   open: boolean;
@@ -10,7 +11,7 @@ export interface DrawerProps {
   title: ReactNode;
   headerAside?: ReactNode;
   actions?: ReactNode;
-  /** The map panel floats inside the map; a page panel is fixed to the viewport. */
+  /** The map panel floats inside the map; a page panel floats in the content area. */
   placement?: "map" | "page";
   closeLabel?: string;
   titleClassName?: string;
@@ -63,8 +64,10 @@ export function Drawer({
       if (event.key !== "Escape" || event.defaultPrevented) return;
       const active = document.activeElement;
       // A modal opened from the drawer owns Escape; it must not close the panel.
-      if (active instanceof HTMLElement && active.closest('[role="dialog"]')) return;
-      if (!(active instanceof Node) || !panelRef.current?.contains(active)) return;
+      if (active instanceof HTMLElement && active.closest('[role="dialog"]'))
+        return;
+      if (!(active instanceof Node) || !panelRef.current?.contains(active))
+        return;
       event.preventDefault();
       event.stopPropagation();
       onClose();
@@ -76,9 +79,10 @@ export function Drawer({
   if (!open) return null;
 
   const resolvedCloseLabel =
-    closeLabel ?? (placement === "map" ? "Close vehicle details" : "Close details");
+    closeLabel ??
+    (placement === "map" ? "Close vehicle details" : "Close details");
 
-  return (
+  const panel = (
     <aside
       ref={panelRef}
       aria-label={label}
@@ -86,19 +90,19 @@ export function Drawer({
       data-testid="drawer"
       data-placement={placement}
       className={cn(
-        "z-30 flex flex-col overflow-hidden border border-border bg-surface text-text shadow-float",
+        "z-drawer border-border bg-surface text-text shadow-float flex flex-col overflow-hidden border",
         placement === "map"
-          ? "absolute bottom-3 right-3 top-3 w-drawer max-w-full rounded-lg"
-          : "fixed inset-x-0 bottom-0 top-1/4 rounded-t-lg md:inset-x-auto md:bottom-3 md:right-3 md:top-topbar-offset md:w-drawer md:max-w-full md:rounded-lg",
+          ? "w-drawer absolute top-3 right-3 bottom-3 max-w-full rounded-lg"
+          : "md:w-drawer pointer-events-auto absolute inset-x-0 top-1/4 bottom-0 rounded-t-lg md:inset-x-auto md:top-3 md:right-3 md:bottom-3 md:max-w-full md:rounded-lg",
         className,
       )}
     >
-      <div className="flex h-topbar shrink-0 items-center justify-between gap-2 border-b border-border px-4">
+      <div className="h-topbar border-border flex shrink-0 items-center justify-between gap-2 border-b px-4">
         <div className="flex min-w-0 items-center gap-2">
           <h2
             id={titleId}
             className={cn(
-              "truncate text-md font-medium text-text",
+              "text-md text-text truncate font-medium",
               titleClassName ?? "font-mono",
             )}
           >
@@ -114,11 +118,13 @@ export function Drawer({
         />
       </div>
       {actions ? (
-        <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-border px-3 py-2">
+        <div className="border-border flex shrink-0 flex-wrap items-center gap-1 border-b px-3 py-2">
           {actions}
         </div>
       ) : null}
       <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
     </aside>
   );
+
+  return placement === "page" ? <ContentPortal>{panel}</ContentPortal> : panel;
 }

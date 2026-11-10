@@ -294,7 +294,7 @@ export function StyleGuidePage() {
 
   return (
     <div className="bg-bg text-text min-h-screen">
-      <header className="border-border bg-surface sticky top-0 z-40 border-b">
+      <header className="border-border bg-surface sticky top-0 z-topbar border-b">
         <div className="h-topbar mx-auto flex max-w-screen-2xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <span className="hidden sm:inline-flex">

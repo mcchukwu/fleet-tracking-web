@@ -2,6 +2,7 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { Check } from "lucide-react";
 import type { ComponentPropsWithoutRef } from "react";
 import { cn } from "./cn";
+import { LayerPortal } from "./LayerPortal";
 
 export const DropdownMenu = DropdownMenuPrimitive.Root;
 export const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
@@ -16,7 +17,7 @@ function ItemIndicator() {
   return (
     <DropdownMenuPrimitive.ItemIndicator
       data-testid="menu-item-indicator"
-      className="ml-auto flex size-4 shrink-0 items-center justify-center text-accent-fg"
+      className="text-accent-fg ml-auto flex size-4 shrink-0 items-center justify-center"
     >
       <Check aria-hidden="true" className="size-4" strokeWidth={2} />
     </DropdownMenuPrimitive.ItemIndicator>
@@ -26,25 +27,22 @@ function ItemIndicator() {
 export function DropdownMenuContent({
   className,
   sideOffset = 6,
-  container,
   children,
   ...props
-}: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content> & {
-  container?: HTMLElement | null;
-}) {
+}: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>) {
   return (
-    <DropdownMenuPrimitive.Portal container={container ?? undefined}>
+    <LayerPortal layer="popover">
       <DropdownMenuPrimitive.Content
         sideOffset={sideOffset}
         className={cn(
-          "z-menu min-w-40 animate-fade-in rounded-md border border-border bg-surface p-1 shadow-menu",
+          "animate-fade-in border-border bg-surface shadow-menu min-w-40 rounded-md border p-1",
           className,
         )}
         {...props}
       >
         {children}
       </DropdownMenuPrimitive.Content>
-    </DropdownMenuPrimitive.Portal>
+    </LayerPortal>
   );
 }
 
@@ -52,7 +50,12 @@ export function DropdownMenuItem({
   className,
   ...props
 }: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item>) {
-  return <DropdownMenuPrimitive.Item className={cn(itemStyles, className)} {...props} />;
+  return (
+    <DropdownMenuPrimitive.Item
+      className={cn(itemStyles, className)}
+      {...props}
+    />
+  );
 }
 
 export function DropdownMenuRadioItem({
@@ -64,7 +67,10 @@ export function DropdownMenuRadioItem({
   showIndicator?: boolean;
 }) {
   return (
-    <DropdownMenuPrimitive.RadioItem className={cn(itemStyles, className)} {...props}>
+    <DropdownMenuPrimitive.RadioItem
+      className={cn(itemStyles, className)}
+      {...props}
+    >
       {children}
       {showIndicator ? <ItemIndicator /> : null}
     </DropdownMenuPrimitive.RadioItem>
@@ -80,7 +86,10 @@ export function DropdownMenuCheckboxItem({
   showIndicator?: boolean;
 }) {
   return (
-    <DropdownMenuPrimitive.CheckboxItem className={cn(itemStyles, className)} {...props}>
+    <DropdownMenuPrimitive.CheckboxItem
+      className={cn(itemStyles, className)}
+      {...props}
+    >
       {children}
       {showIndicator ? <ItemIndicator /> : null}
     </DropdownMenuPrimitive.CheckboxItem>
@@ -94,7 +103,7 @@ export function DropdownMenuLabel({
 }: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Label>) {
   return (
     <DropdownMenuPrimitive.Label
-      className={cn("px-2 py-1 text-xs text-muted", className)}
+      className={cn("text-muted px-2 py-1 text-xs", className)}
       {...props}
     >
       {children}
@@ -119,29 +128,30 @@ export function DropdownMenuSubTrigger({
 
 export function DropdownMenuSubContent({
   className,
-  container,
   children,
   ...props
-}: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent> & {
-  container?: HTMLElement | null;
-}) {
+}: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent>) {
   return (
-    <DropdownMenuPrimitive.Portal container={container ?? undefined}>
+    <LayerPortal layer="popover">
       <DropdownMenuPrimitive.SubContent
         className={cn(
-          "z-menu min-w-40 animate-fade-in rounded-md border border-border bg-surface p-1 shadow-menu",
+          "animate-fade-in border-border bg-surface shadow-menu min-w-40 rounded-md border p-1",
           className,
         )}
         {...props}
       >
         {children}
       </DropdownMenuPrimitive.SubContent>
-    </DropdownMenuPrimitive.Portal>
+    </LayerPortal>
   );
 }
 
 export function DropdownMenuSeparator({
   className,
 }: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Separator>) {
-  return <DropdownMenuPrimitive.Separator className={cn("my-1 h-px bg-border", className)} />;
+  return (
+    <DropdownMenuPrimitive.Separator
+      className={cn("bg-border my-1 h-px", className)}
+    />
+  );
 }

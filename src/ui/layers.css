@@ -1,0 +1,65 @@
+/*
+ * The single layer scale. Every stacking order in the console comes from one of
+ * these variables through the named utility; no component may invent a number.
+ * z-index only orders elements inside one stacking context, so the content area
+ * is isolated and the overlay root owns the layers above the shell.
+ */
+:root {
+  --layer-map: 0;
+  --layer-map-controls: 10;
+  --layer-panel: 20;
+  --layer-drawer: 30;
+  --layer-topbar: 40;
+  --layer-dialog: 60;
+  --layer-popover: 70;
+  --layer-toast: 80;
+  --layer-tooltip: 90;
+}
+
+@utility z-map {
+  z-index: var(--layer-map);
+}
+
+@utility z-map-controls {
+  z-index: var(--layer-map-controls);
+}
+
+@utility z-panel {
+  z-index: var(--layer-panel);
+}
+
+@utility z-drawer {
+  z-index: var(--layer-drawer);
+}
+
+@utility z-topbar {
+  z-index: var(--layer-topbar);
+}
+
+@utility z-dialog {
+  z-index: var(--layer-dialog);
+}
+
+@utility z-popover {
+  z-index: var(--layer-popover);
+}
+
+@utility z-toast {
+  z-index: var(--layer-toast);
+}
+
+@utility z-tooltip {
+  z-index: var(--layer-tooltip);
+}
+
+@layer components {
+  .layer-portal {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .layer-portal > * {
+    pointer-events: auto;
+  }
+}

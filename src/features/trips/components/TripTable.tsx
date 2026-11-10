@@ -212,7 +212,7 @@ export function TripTable({
   cancelled = false,
 }: TripTableProps) {
   "use no memo";
-  const [scroller, setScroller] = useState<HTMLDivElement | null>(null);
+  const [scroller, setScroller] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
     if (scroller) scrollToTop(scroller);

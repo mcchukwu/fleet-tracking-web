@@ -67,11 +67,11 @@ export function MobileVehicleSheet({
       aria-label="Vehicles"
       data-snap={snap}
       style={sheetVisibleStyle(visible)}
-      className="mobile-sheet bg-surface shadow-float ring-border absolute inset-x-0 bottom-0 z-20 flex flex-col rounded-t-lg ring-1"
+      className="mobile-sheet bg-surface shadow-float ring-border absolute inset-x-0 bottom-0 z-panel flex flex-col rounded-t-lg ring-1"
     >
       <div
         data-testid="sheet-header"
-        className="h-sheet-peek border-border bg-surface relative z-10 flex shrink-0 touch-none flex-col border-b px-3"
+        className="h-sheet-peek border-border bg-surface relative z-map-controls flex shrink-0 touch-none flex-col border-b px-3"
         onPointerDown={handlers.onPointerDown}
         onPointerMove={handlers.onPointerMove}
         onPointerUp={handlers.onPointerUp}

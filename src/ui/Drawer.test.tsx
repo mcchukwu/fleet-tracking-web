@@ -32,7 +32,9 @@ describe("Drawer", () => {
     const user = userEvent.setup();
     render(<Harness />);
 
-    await user.click(screen.getByRole("button", { name: "Open vehicle details" }));
+    await user.click(
+      screen.getByRole("button", { name: "Open vehicle details" }),
+    );
 
     const panel = screen.getByRole("complementary", {
       name: "Vehicle details for LSD-100-AA",
@@ -50,12 +52,18 @@ describe("Drawer", () => {
     const onReturn = vi.fn();
     render(<Harness onReturn={onReturn} />);
 
-    await user.click(screen.getByRole("button", { name: "Open vehicle details" }));
+    await user.click(
+      screen.getByRole("button", { name: "Open vehicle details" }),
+    );
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Close vehicle details" })).toHaveFocus();
+      expect(
+        screen.getByRole("button", { name: "Close vehicle details" }),
+      ).toHaveFocus();
     });
 
-    await user.click(screen.getByRole("button", { name: "Close vehicle details" }));
+    await user.click(
+      screen.getByRole("button", { name: "Close vehicle details" }),
+    );
     expect(onReturn).toHaveBeenCalledTimes(1);
   });
 
@@ -69,12 +77,16 @@ describe("Drawer", () => {
       </div>,
     );
 
-    await user.click(screen.getByRole("button", { name: "Open vehicle details" }));
+    await user.click(
+      screen.getByRole("button", { name: "Open vehicle details" }),
+    );
     await user.keyboard("{Escape}");
 
     await waitFor(() => {
       expect(
-        screen.queryByRole("complementary", { name: "Vehicle details for LSD-100-AA" }),
+        screen.queryByRole("complementary", {
+          name: "Vehicle details for LSD-100-AA",
+        }),
       ).not.toBeInTheDocument();
     });
     expect(onParentKeyDown).not.toHaveBeenCalled();
@@ -104,9 +116,11 @@ describe("Drawer", () => {
 
     const panel = screen.getByRole("complementary", { name: "Alert details" });
     expect(panel).toHaveAttribute("data-placement", "page");
-    expect(panel).toHaveClass("fixed", "top-1/4", "rounded-t-lg");
-    expect(panel).toHaveClass("md:top-topbar-offset", "md:rounded-lg");
-    expect(screen.getByRole("button", { name: "Close alert details" })).toHaveFocus();
+    expect(panel).toHaveClass("absolute", "top-1/4", "rounded-t-lg");
+    expect(panel).toHaveClass("md:top-3", "md:rounded-lg");
+    expect(
+      screen.getByRole("button", { name: "Close alert details" }),
+    ).toHaveFocus();
 
     await user.keyboard("{Escape}");
     expect(onClose).toHaveBeenCalledTimes(1);

@@ -44,14 +44,14 @@ export function VehicleRow({ row, height, selected, onSelect, onHover }: Vehicle
         type="button"
         aria-pressed={selected}
         aria-label={`Select ${row.plate}`}
-        className="absolute inset-0 z-0 w-full rounded-none focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring"
+        className="absolute inset-0 w-full rounded-none focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring"
         onClick={() => onSelect(row.key)}
         onPointerEnter={() => onHover(row.key)}
         onPointerLeave={() => onHover(null)}
         onFocus={() => onHover(row.key)}
         onBlur={() => onHover(null)}
       />
-      <div className="pointer-events-none relative z-10 flex h-full flex-col justify-center gap-0.5 px-3">
+      <div className="pointer-events-none relative flex h-full flex-col justify-center gap-0.5 px-3">
         <div className="flex min-w-0 items-center gap-2">
           <StatusPill status={row.status} />
           <span data-row-inline-action className="pointer-events-auto inline-flex shrink-0">

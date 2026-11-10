@@ -39,7 +39,7 @@ export function TopBar({ onOpenMenu, onOpenShortcuts }: TopBarProps) {
           : "online";
 
   return (
-    <header className="z-40 shrink-0 border-b border-border bg-surface">
+    <header className="z-topbar shrink-0 border-b border-border bg-surface">
       <BrandBar className="gap-2">
         <Link
           to="/map"

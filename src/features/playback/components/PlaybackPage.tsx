@@ -355,7 +355,7 @@ export function PlaybackPage() {
         />
 
         {headerVehicle ? (
-          <div ref={headerRef} className="pointer-events-none absolute inset-x-3 top-3 z-20">
+          <div ref={headerRef} className="pointer-events-none absolute inset-x-3 top-3 z-panel">
             <PlaybackOptions
               vehicle={headerVehicle}
               offline={offline}
@@ -388,7 +388,7 @@ export function PlaybackPage() {
         )}
 
         {!vehicleId ? (
-          <div className="absolute inset-0 z-10 flex items-start justify-center overflow-y-auto p-4 pt-16">
+          <div className="absolute inset-0 z-map-controls flex items-start justify-center overflow-y-auto p-4 pt-16">
             <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-4 shadow-float">
               <h2 className="text-md font-medium text-text">Choose a vehicle</h2>
               <p className="mt-1 text-sm text-muted">Search by plate or IMEI.</p>
@@ -399,7 +399,7 @@ export function PlaybackPage() {
           </div>
         ) : null}
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-panel flex flex-col">
           {overlay ? (
             <div className="pointer-events-auto flex justify-center px-3 pb-2">
               <div className="w-full max-w-md">{overlay}</div>

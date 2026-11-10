@@ -11,6 +11,7 @@ import {
 } from "react";
 import { cn } from "./cn";
 import { IconButton } from "./IconButton";
+import { LayerPortal } from "./LayerPortal";
 
 export type ToastTone = "success" | "info" | "error";
 
@@ -92,70 +93,85 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         key={items.length === 0 ? "idle" : "active"}
         swipeDirection="right"
       >
-        {items.map((item) => {
-          const Icon = toneIcon[item.tone];
-          return (
-            <ToastPrimitive.Root
-              key={item.id}
-              open={item.open}
-              duration={item.tone === "error" ? Infinity : 4_000}
-              type={item.tone === "error" || item.assertive ? "foreground" : "background"}
-              onOpenChange={(open) => {
-                if (!open) {
-                  // Radix parks focus on the viewport when a toast closes and then
-                  // never resumes its pause, so every later toast would stay open.
-                  const active = document.activeElement;
-                  if (active instanceof HTMLElement && viewportRef.current?.contains(active)) {
-                    active.blur();
-                  }
-                  dismiss(item.id);
+        <LayerPortal layer="toast">
+          {items.map((item) => {
+            const Icon = toneIcon[item.tone];
+            return (
+              <ToastPrimitive.Root
+                key={item.id}
+                open={item.open}
+                duration={item.tone === "error" ? Infinity : 4_000}
+                type={
+                  item.tone === "error" || item.assertive
+                    ? "foreground"
+                    : "background"
                 }
-              }}
-              className="flex w-11/12 max-w-panel items-start gap-2 rounded-lg border border-border bg-surface p-3 shadow-float data-[state=open]:animate-fade-in"
-            >
-              <Icon
-                aria-hidden="true"
-                className={cn("mt-0.5 size-4 shrink-0", toneText[item.tone])}
-                strokeWidth={1.5}
-              />
-              <div className="min-w-0 flex-1">
-                <ToastPrimitive.Title className="text-sm font-medium text-text">
-                  {item.title}
-                </ToastPrimitive.Title>
-                {item.description ? (
-                  <ToastPrimitive.Description className="text-xs text-muted">
-                    {item.description}
-                  </ToastPrimitive.Description>
-                ) : null}
-              </div>
-              {item.action ? (
-                <ToastPrimitive.Action
-                  altText={item.action.label}
-                  asChild
-                  onClick={item.action.onClick}
-                >
-                  <button
-                    type="button"
-                    className="h-touch shrink-0 rounded-md px-2 text-sm font-medium text-accent-fg hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus-ring md:h-control-sm"
-                  >
-                    {item.action.label}
-                  </button>
-                </ToastPrimitive.Action>
-              ) : null}
-              <ToastPrimitive.Close asChild>
-                <IconButton
-                  label="Dismiss"
-                  size="sm"
-                  icon={<X aria-hidden="true" className="size-icon-sm" strokeWidth={1.5} />}
+                onOpenChange={(open) => {
+                  if (!open) {
+                    // Radix parks focus on the viewport when a toast closes and then
+                    // never resumes its pause, so every later toast would stay open.
+                    const active = document.activeElement;
+                    if (
+                      active instanceof HTMLElement &&
+                      viewportRef.current?.contains(active)
+                    ) {
+                      active.blur();
+                    }
+                    dismiss(item.id);
+                  }
+                }}
+                className="max-w-panel border-border bg-surface shadow-float data-[state=open]:animate-fade-in flex w-11/12 items-start gap-2 rounded-lg border p-3"
+              >
+                <Icon
+                  aria-hidden="true"
+                  className={cn("mt-0.5 size-4 shrink-0", toneText[item.tone])}
+                  strokeWidth={1.5}
                 />
-              </ToastPrimitive.Close>
-            </ToastPrimitive.Root>
-          );
-        })}
-        <ToastPrimitive.Viewport
-          ref={viewportRef}
-          className="fixed bottom-4 right-4 z-toast flex w-11/12 max-w-panel flex-col gap-2 outline-none"
-        />
+                <div className="min-w-0 flex-1">
+                  <ToastPrimitive.Title className="text-text text-sm font-medium">
+                    {item.title}
+                  </ToastPrimitive.Title>
+                  {item.description ? (
+                    <ToastPrimitive.Description className="text-muted text-xs">
+                      {item.description}
+                    </ToastPrimitive.Description>
+                  ) : null}
+                </div>
+                {item.action ? (
+                  <ToastPrimitive.Action
+                    altText={item.action.label}
+                    asChild
+                    onClick={item.action.onClick}
+                  >
+                    <button
+                      type="button"
+                      className="h-touch text-accent-fg hover:bg-surface-2 focus-visible:outline-focus-ring md:h-control-sm shrink-0 rounded-md px-2 text-sm font-medium focus-visible:outline-2"
+                    >
+                      {item.action.label}
+                    </button>
+                  </ToastPrimitive.Action>
+                ) : null}
+                <ToastPrimitive.Close asChild>
+                  <IconButton
+                    label="Dismiss"
+                    size="sm"
+                    icon={
+                      <X
+                        aria-hidden="true"
+                        className="size-icon-sm"
+                        strokeWidth={1.5}
+                      />
+                    }
+                  />
+                </ToastPrimitive.Close>
+              </ToastPrimitive.Root>
+            );
+          })}
+          <ToastPrimitive.Viewport
+            ref={viewportRef}
+            className="max-w-panel fixed right-4 bottom-4 flex w-11/12 flex-col gap-2 outline-none"
+          />
+        </LayerPortal>
       </ToastPrimitive.Provider>
     </ToastContext.Provider>
   );

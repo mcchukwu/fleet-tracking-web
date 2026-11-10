@@ -273,7 +273,7 @@ export function PlaybackScrubber({
             onMouseDown={(event) => {
               if (!disabled) event.preventDefault();
             }}
-            className="accent-accent relative z-20 h-full w-full cursor-pointer touch-none appearance-none bg-transparent disabled:cursor-not-allowed disabled:opacity-60"
+            className="accent-accent relative z-panel h-full w-full cursor-pointer touch-none appearance-none bg-transparent disabled:cursor-not-allowed disabled:opacity-60"
           />
         </div>
       </div>
