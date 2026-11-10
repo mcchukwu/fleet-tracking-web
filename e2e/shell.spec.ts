@@ -100,17 +100,40 @@ test.describe("app shell", () => {
     await expect(page.getByRole("navigation", { name: "Main" })).toHaveCount(0);
   });
 
-  test("the reconnecting banner never covers the user menu", { tag: "@theme" }, async ({ page }) => {
-    await page.routeWebSocket(/\/api\/v1\/live\/ws$/, (socket) => {
-      void socket.close();
+  test("the reconnecting banner is in flow and never covers the user menu", { tag: "@theme" }, async ({ page }) => {
+    await page.goto("/map?map=fake");
+    await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
+
+    await page.evaluate(() => {
+      window.__FLEET_TEST_CONNECTION__?.({
+        network: "online",
+        socket: "reconnecting",
+        socketDownAt: Date.now() - 11_000,
+      });
     });
 
-    await page.goto("/map");
-    await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
     const banner = page
       .getByRole("status")
       .filter({ hasText: "Reconnecting to live updates…" });
-    await expect(banner).toHaveText("Reconnecting to live updates…", { timeout: 20_000 });
+    await expect(banner).toHaveText("Reconnecting to live updates…");
+
+    const flow = await page.evaluate(() => {
+      const bannerElement = document.querySelector<HTMLElement>(
+        '[data-testid="banner-region"]',
+      );
+      const content = document.querySelector<HTMLElement>(
+        '[data-testid="content-area"]',
+      );
+      if (!bannerElement || !content) return null;
+      return {
+        bannerBottom: bannerElement.getBoundingClientRect().bottom,
+        contentTop: content.getBoundingClientRect().top,
+        bannerZ: getComputedStyle(bannerElement).zIndex,
+      };
+    });
+    expect(flow).not.toBeNull();
+    expect(flow?.bannerBottom ?? 0).toBeLessThanOrEqual((flow?.contentTop ?? 0) + 1);
+    expect(flow?.bannerZ).toBe("auto");
 
     await page.getByRole("button", { name: "Account menu for Demo Dispatcher" }).click();
     const menu = page.getByRole("menu");
@@ -119,39 +142,37 @@ test.describe("app shell", () => {
     await expect(menu.getByText("dispatcher@demo.ftb")).toBeVisible();
 
     const layering = await page.evaluate(() => {
-      const bannerElement = document.querySelector(".z-banner");
       const menuElement = document.querySelector('[role="menu"]');
-      if (!bannerElement || !menuElement) return null;
-      const bannerBox = bannerElement.getBoundingClientRect();
+      if (!menuElement) return null;
       const menuBox = menuElement.getBoundingClientRect();
-      const overlaps =
-        bannerBox.left < menuBox.right &&
-        bannerBox.right > menuBox.left &&
-        bannerBox.top < menuBox.bottom &&
-        bannerBox.bottom > menuBox.top;
-      const point = {
-        x: menuBox.left + menuBox.width / 2,
-        y: Math.max(menuBox.top, bannerBox.top) + 4,
-      };
-      const hit = document.elementFromPoint(point.x, point.y);
+      const inset = 2;
+      const points = [
+        { x: menuBox.left + inset, y: menuBox.top + inset },
+        { x: menuBox.right - inset, y: menuBox.top + inset },
+        { x: menuBox.left + inset, y: menuBox.bottom - inset },
+        { x: menuBox.right - inset, y: menuBox.bottom - inset },
+      ];
       return {
-        overlaps,
-        menuOnTop: hit !== null && menuElement.contains(hit),
         inViewport:
           menuBox.left >= 0 &&
           menuBox.top >= 0 &&
           menuBox.right <= window.innerWidth &&
           menuBox.bottom <= window.innerHeight,
-        bannerZ: Number(getComputedStyle(bannerElement).zIndex),
-        menuZ: Number(getComputedStyle(menuElement).zIndex),
+        corners: points.map((point) => {
+          const hit = document.elementFromPoint(point.x, point.y);
+          return hit !== null && menuElement.contains(hit);
+        }),
       };
     });
 
     expect(layering).not.toBeNull();
-    expect(layering?.overlaps, "the menu must overlap the banner area").toBe(true);
-    expect(layering?.menuOnTop, "the banner must paint behind the menu").toBe(true);
     expect(layering?.inViewport, "the menu must be fully inside the viewport").toBe(true);
-    expect(layering?.bannerZ).toBeLessThan(layering?.menuZ ?? 0);
+    expect(layering?.corners, "every menu corner belongs to the menu").toEqual([
+      true,
+      true,
+      true,
+      true,
+    ]);
 
     await captureForReview(page, "01-shell-banner-menu");
   });
