@@ -44,18 +44,24 @@ export function Banner({
     <output
       aria-live="polite"
       className={cn(
-        "z-banner flex min-h-8 w-full items-center gap-2 border-b px-4 py-1 text-xs",
+        "flex min-h-8 w-full items-center gap-2 border-b px-4 py-1 text-xs",
         toneStyles[tone],
         className,
       )}
     >
-      {icon ?? <Icon aria-hidden="true" className="size-4 shrink-0" strokeWidth={1.5} />}
+      {icon ?? (
+        <Icon
+          aria-hidden="true"
+          className="size-4 shrink-0"
+          strokeWidth={1.5}
+        />
+      )}
       <p className="min-w-0 flex-1">{message}</p>
       {action ? (
         <button
           type="button"
           onClick={action.onClick}
-          className="h-touch shrink-0 rounded-md px-2 font-medium underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-focus-ring md:h-control-sm"
+          className="h-touch focus-visible:outline-focus-ring md:h-control-sm shrink-0 rounded-md px-2 font-medium underline-offset-4 hover:underline focus-visible:outline-2"
         >
           {action.label}
         </button>
@@ -65,7 +71,9 @@ export function Banner({
           label="Dismiss"
           size="sm"
           onClick={onDismiss}
-          icon={<X aria-hidden="true" className="size-icon-sm" strokeWidth={1.5} />}
+          icon={
+            <X aria-hidden="true" className="size-icon-sm" strokeWidth={1.5} />
+          }
         />
       ) : null}
     </output>

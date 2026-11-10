@@ -1042,25 +1042,12 @@ export function StyleGuidePage() {
         <Section
           id="banners"
           title="Banners"
-          description="One 32px slot below the top bar, priority offline, reconnecting, error storm, update. Never a second banner."
+          description="One banner in flow below the top bar, highest priority only: session expired, offline, unavailable or storm, reconnecting, update. The region collapses to zero when empty."
         >
-          <div className="space-y-2">
-            <Banner
-              tone="neutral"
-              message="You're offline. Showing data from 14:02. Changes are disabled."
-            />
-            <Banner tone="warning" message="Reconnecting to live updates…" />
-            <Banner
-              tone="info"
-              message="A new version is available."
-              action={{ label: "Reload", onClick: () => undefined }}
-            />
-            <Banner
-              tone="warning"
-              message="We're having trouble reaching the server. Retrying…"
-              action={{ label: "Open System", onClick: () => undefined }}
-            />
-          </div>
+          <Banner
+            tone="neutral"
+            message="You're offline. Showing data from 14:02. Changes are disabled."
+          />
         </Section>
 
         <Section

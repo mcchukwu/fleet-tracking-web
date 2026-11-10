@@ -1,9 +1,15 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useAuthStore } from "../../../auth/store";
 import { useErrorStorm } from "../../../errors/global";
 import { formatClockTime } from "../../../lib/format";
-import { useConnection, useConnectionStore, type SocketState } from "../../../stores/connection";
+import {
+  useConnection,
+  useConnectionStore,
+  type SocketState,
+} from "../../../stores/connection";
 import { Banner } from "../../../ui/Banner";
+import { highestPriorityBanner, type BannerKind } from "./bannerPriority";
 
 function useUpdateAvailable(): boolean {
   const [available, setAvailable] = useState(false);
@@ -75,15 +81,35 @@ function useReconnectPhase(
 
 export function GlobalBanners() {
   const { network, socket, socketDownAt, lastDataAt } = useConnection();
-  const { phase, hide: hideReconnect } = useReconnectPhase(socket, socketDownAt);
+  const { phase, hide: hideReconnect } = useReconnectPhase(
+    socket,
+    socketDownAt,
+  );
   const retryLive = useConnectionStore((state) => state.retryLive);
   const storm = useErrorStorm();
   const update = useUpdateAvailable();
+  const expired = useAuthStore((state) => state.status === "expired");
   const navigate = useNavigate();
 
-  if (network === "offline") {
+  const present: BannerKind[] = [];
+  if (expired) present.push("session-expired");
+  if (network === "offline") present.push("offline");
+  if (socket === "reconnecting" && phase === "unavailable")
+    present.push("unavailable");
+  if (storm) present.push("storm");
+  if (socket === "reconnecting" && phase === "reconnecting")
+    present.push("reconnecting");
+  if (update) present.push("update");
+  const kind = highestPriorityBanner(present);
+
+  let banner = null;
+  if (kind === "session-expired") {
+    banner = (
+      <Banner tone="danger" message="Your session expired. Sign in again." />
+    );
+  } else if (kind === "offline") {
     const time = formatClockTime(lastDataAt);
-    return (
+    banner = (
       <Banner
         tone="neutral"
         message={
@@ -93,10 +119,8 @@ export function GlobalBanners() {
         }
       />
     );
-  }
-
-  if (socket === "reconnecting" && phase === "unavailable") {
-    return (
+  } else if (kind === "unavailable") {
+    banner = (
       <Banner
         tone="warning"
         message={
@@ -113,24 +137,21 @@ export function GlobalBanners() {
         }}
       />
     );
-  }
-
-  if (socket === "reconnecting" && phase === "reconnecting") {
-    return <Banner tone="warning" message="Reconnecting to live updates…" />;
-  }
-
-  if (storm) {
-    return (
+  } else if (kind === "storm") {
+    banner = (
       <Banner
         tone="warning"
         message="We're having trouble reaching the server. Retrying…"
-        action={{ label: "Open System", onClick: () => void navigate({ to: "/system" }) }}
+        action={{
+          label: "Open System",
+          onClick: () => void navigate({ to: "/system" }),
+        }}
       />
     );
-  }
-
-  if (update) {
-    return (
+  } else if (kind === "reconnecting") {
+    banner = <Banner tone="warning" message="Reconnecting to live updates…" />;
+  } else if (kind === "update") {
+    banner = (
       <Banner
         tone="info"
         message="A new version is available."
@@ -139,5 +160,14 @@ export function GlobalBanners() {
     );
   }
 
-  return null;
+  return (
+    <div
+      data-testid="banner-region"
+      data-visible={kind === null ? "false" : "true"}
+      data-banner-kind={kind ?? undefined}
+      className="banner-region shrink-0"
+    >
+      <div>{banner}</div>
+    </div>
+  );
 }

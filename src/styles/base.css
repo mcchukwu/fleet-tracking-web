@@ -149,10 +149,7 @@
 
   .mobile-sheet {
     height: var(--sheet-visible, var(--spacing-sheet-peek));
-    max-height: min(
-      calc(100dvh - var(--spacing-topbar) - var(--spacing-sheet-strip)),
-      calc(100% - var(--spacing-sheet-strip))
-    );
+    max-height: calc(100% - var(--spacing-sheet-strip));
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
@@ -184,20 +181,25 @@
     transition: none;
   }
 
-  .z-menu {
-    z-index: 50;
+  .banner-region {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows var(--motion-slow) var(--ease-slow);
   }
 
-  .z-dialog {
-    z-index: 60;
+  .banner-region[data-visible="true"] {
+    grid-template-rows: 1fr;
   }
 
-  .z-toast {
-    z-index: 70;
+  .banner-region > * {
+    min-height: 0;
+    overflow: hidden;
   }
 
-  .z-banner {
-    z-index: 35;
+  @media (prefers-reduced-motion: reduce) {
+    .banner-region {
+      transition: none;
+    }
   }
 
   .text-stat {
