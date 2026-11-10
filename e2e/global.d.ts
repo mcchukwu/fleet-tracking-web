@@ -71,6 +71,12 @@ declare global {
         bounds: { south: number; west: number; north: number; east: number };
       };
     } | null;
+    __FLEET_TEST_CONNECTION__?: (patch: {
+      network?: "online" | "offline";
+      socket?: "live" | "reconnecting" | "down";
+      socketDownAt?: number | null;
+    }) => void;
+    __FLEET_TEST_STORM__?: (active: boolean) => void;
     __STYLE_TEST__?: { streets: number; satellite: number };
     __FLEET_MOCK_WRITES__?: Array<{ method: string; url: string; body: unknown }>;
   }

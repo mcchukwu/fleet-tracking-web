@@ -19,6 +19,12 @@ export interface ConnectionState {
 
 const noRetry = () => undefined;
 let retryTarget: () => void = noRetry;
+let frozen = false;
+
+/** Dev-and-mock only: keeps a simulated connection state while the socket runs. */
+export function freezeConnection(value: boolean): void {
+  frozen = value;
+}
 
 export const useConnectionStore = create<ConnectionState>((set) => ({
   network: typeof navigator === "undefined" || navigator.onLine ? "online" : "offline",
@@ -32,9 +38,13 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
   setRetryLive: (retry) => {
     retryTarget = retry ?? noRetry;
   },
-  setNetwork: (network) => set({ network }),
+  setNetwork: (network) => {
+    if (frozen) return;
+    set({ network });
+  },
   setSocket: (socket) =>
     set((state) => {
+      if (frozen) return state;
       if (socket === state.socket) return state;
       if (socket === "live") return { socket, socketDownAt: null };
       return { socket, socketDownAt: state.socketDownAt ?? Date.now() };
@@ -44,6 +54,7 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
 
 export function resetConnection(): void {
   retryTarget = noRetry;
+  frozen = false;
   useConnectionStore.setState({
     network: typeof navigator === "undefined" || navigator.onLine ? "online" : "offline",
     socket: "down",

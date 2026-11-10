@@ -49,7 +49,10 @@ export interface RouterContext {
   queryClient: QueryClient;
 }
 
-async function requireUser(context: RouterContext, href: string): Promise<User> {
+async function requireUser(
+  context: RouterContext,
+  href: string,
+): Promise<User> {
   const user = await ensureSession(context.queryClient);
   if (!user) {
     throw redirect({ to: "/login", search: { redirect: href } });
@@ -81,9 +84,14 @@ function RouteError({ error, reset }: ErrorComponentProps) {
         : undefined;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-bg p-6 text-text">
+    <main className="bg-bg text-text flex min-h-screen items-center justify-center p-6">
       <h1 className="sr-only">Something went wrong</h1>
-      <ErrorState error={normalized} blocking onRetry={retry} onAction={action} />
+      <ErrorState
+        error={normalized}
+        blocking
+        onRetry={retry}
+        onAction={action}
+      />
     </main>
   );
 }
@@ -95,7 +103,9 @@ function requireCapability(user: User, capability: Capability): void {
 }
 
 function RouteBoundary({ children }: { children: ReactNode }) {
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
   return (
     <ErrorBoundary level="route" resetKeys={[pathname]}>
       {children}
@@ -117,13 +127,13 @@ function RootLayout() {
 function ForbiddenPage() {
   useDocumentTitle("Forbidden");
   return (
-    <div className="mx-auto flex max-w-content flex-col items-center px-4 py-10 text-text sm:px-6">
+    <div className="max-w-content text-text mx-auto flex flex-col items-center px-4 py-10 sm:px-6">
       <h1 className="sr-only">Forbidden</h1>
       <ForbiddenState
         action={
           <Link
             to="/map"
-            className="inline-flex h-touch items-center text-sm font-medium text-accent-fg underline-offset-4 hover:underline md:h-control-md"
+            className="h-touch text-accent-fg md:h-control-md inline-flex items-center text-sm font-medium underline-offset-4 hover:underline"
           >
             Back to the map
           </Link>
@@ -240,7 +250,10 @@ const systemRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/system",
   beforeLoad: ({ context }) => requireCapability(context.user, "read"),
-  component: placeholder("System health", "The system health screen ships in Slice 11."),
+  component: placeholder(
+    "System health",
+    "The system health screen ships in Slice 11.",
+  ),
 });
 
 const auditRoute = createRoute({
@@ -270,7 +283,18 @@ const devRoutes = import.meta.env.DEV
       createRoute({
         getParentRoute: () => appRoute,
         path: "/dev/faults",
-        component: lazyRouteComponent(() => import("../dev/FaultLab"), "FaultLab"),
+        component: lazyRouteComponent(
+          () => import("../dev/FaultLab"),
+          "FaultLab",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => appRoute,
+        path: "/dev/layers",
+        component: lazyRouteComponent(
+          () => import("../dev/LayerStack"),
+          "LayerStack",
+        ),
       }),
     ]
   : [];
