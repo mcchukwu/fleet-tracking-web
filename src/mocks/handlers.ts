@@ -523,7 +523,16 @@ export const handlers = [
           })),
         });
       }
-      return HttpResponse.json({ data: freshenVehicles(state.vehicles) });
+      const vehicles = freshenVehicles(state.vehicles);
+      const [first] = vehicles;
+      if (pageParams?.get("labels") === "long" && first) {
+        vehicles[0] = {
+          ...first,
+          plate: "LAGOS-DISTRICT-HEAVY-TANKER-0042",
+          driver_name: "Chukwuemeka Oluwasegun-Adebayo",
+        };
+      }
+      return HttpResponse.json({ data: vehicles });
     });
   }),
 

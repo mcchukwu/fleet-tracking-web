@@ -8,10 +8,6 @@ vi.mock("./PlaybackScrubber", () => ({
   PlaybackScrubber: () => <div data-testid="scrubber" />,
 }));
 
-vi.mock("./PlaybackEventsMenu", () => ({
-  PlaybackEventsMenu: () => <button type="button">Events (0)</button>,
-}));
-
 const fromMs = Date.parse("2026-11-08T14:00:00Z");
 const toMs = Date.parse("2026-11-08T16:00:00Z");
 const cursor: Cursor = {
@@ -28,14 +24,8 @@ function renderControls(overrides: Record<string, unknown> = {}) {
     onStep: vi.fn(),
     onSeek: vi.fn(),
     onSpeedChange: vi.fn(),
-    onPreset: vi.fn(),
-    onCustomRange: vi.fn(),
-    onResolution: vi.fn(),
-    onFit: vi.fn(),
-    onJump: vi.fn(),
     onRetry: vi.fn(),
     onCancel: vi.fn(),
-    onEventsRetry: vi.fn(),
   };
   render(
     <PlaybackControls
@@ -45,9 +35,6 @@ function renderControls(overrides: Record<string, unknown> = {}) {
       playing={false}
       speed={1}
       cursor={cursor}
-      preset="2h"
-      resolution="30s"
-      responseResolution="30s"
       pointCount={240}
       gaps={[{ startIndex: 10, startMs: fromMs + 30 * 60_000, endMs: fromMs + 45 * 60_000 }]}
       events={[]}
@@ -55,14 +42,8 @@ function renderControls(overrides: Record<string, unknown> = {}) {
       onStep={handlers.onStep}
       onSeek={handlers.onSeek}
       onSpeedChange={handlers.onSpeedChange}
-      onPreset={handlers.onPreset}
-      onCustomRange={handlers.onCustomRange}
-      onResolution={handlers.onResolution}
-      onFit={handlers.onFit}
-      onJump={handlers.onJump}
       onRetry={handlers.onRetry}
       onCancel={handlers.onCancel}
-      onEventsRetry={handlers.onEventsRetry}
       {...overrides}
     />,
   );
@@ -70,10 +51,9 @@ function renderControls(overrides: Record<string, unknown> = {}) {
 }
 
 describe("PlaybackControls", () => {
-  it("drives transport, speed, range, resolution and fit", async () => {
+  it("drives transport and speed", async () => {
     const handlers = renderControls();
-    expect(screen.getByText("52 km/h")).toBeVisible();
-    expect(screen.getByText("95° E")).toBeVisible();
+    expect(screen.getByRole("group", { name: "Transport" })).toBeVisible();
 
     await userEvent.click(screen.getByRole("button", { name: "Play" }));
     expect(handlers.onToggle).toHaveBeenCalledTimes(1);
@@ -83,17 +63,15 @@ describe("PlaybackControls", () => {
 
     await userEvent.selectOptions(screen.getByLabelText("Playback speed"), "4");
     expect(handlers.onSpeedChange).toHaveBeenCalledWith(4);
+  });
 
-    await userEvent.selectOptions(screen.getByLabelText("Range"), "30m");
-    expect(handlers.onPreset).toHaveBeenCalledWith("30m");
-    await userEvent.selectOptions(screen.getByLabelText("Range"), "custom");
-    expect(handlers.onCustomRange).toHaveBeenCalled();
-
-    await userEvent.selectOptions(screen.getByLabelText("Resolution"), "auto");
-    expect(handlers.onResolution).toHaveBeenCalledWith("auto");
-
-    await userEvent.click(screen.getByRole("button", { name: "Fit route" }));
-    expect(handlers.onFit).toHaveBeenCalled();
+  it("shows the current readout with fixed widths", () => {
+    renderControls();
+    const readout = screen.getByTestId("playback-readout");
+    expect(readout).toHaveTextContent("52 km/h");
+    expect(readout).toHaveTextContent("95° E");
+    expect(screen.getByText("52 km/h")).toHaveClass("min-w-16");
+    expect(screen.getByText("95° E")).toHaveClass("min-w-14");
   });
 
   it("keeps the speed name inside the trigger, with no stacked label", () => {
@@ -103,16 +81,9 @@ describe("PlaybackControls", () => {
     expect(screen.getByText("Playback speed")).toHaveClass("sr-only");
   });
 
-  it("shows the response resolution, point count and gap label", () => {
+  it("shows the gap label", () => {
     renderControls({ responseResolution: "raw" });
-    expect(screen.getByText("Resolution: raw")).toBeVisible();
-    expect(screen.getByText("240 points")).toBeVisible();
     expect(screen.getByText(/No data .* to .*/)).toBeVisible();
-  });
-
-  it("does not claim a response resolution before one exists", () => {
-    renderControls({ responseResolution: null });
-    expect(screen.getByText("Resolution: —")).toBeVisible();
   });
 
   it("delays the control skeleton for 200ms while loading", async () => {

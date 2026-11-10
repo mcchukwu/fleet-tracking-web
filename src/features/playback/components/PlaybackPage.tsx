@@ -34,7 +34,7 @@ import { ChangeVehicleDialog } from "./ChangeVehicleDialog";
 import { CustomRangeDialog } from "./CustomRangeDialog";
 import { GapAnnouncer } from "./GapAnnouncer";
 import { PlaybackControls } from "./PlaybackControls";
-import { PlaybackHeader } from "./PlaybackHeader";
+import { PlaybackOptions } from "./PlaybackOptions";
 import { PlaybackMap } from "./PlaybackMap";
 import { PlaybackStates } from "./PlaybackStates";
 import { VehiclePicker } from "./VehiclePicker";
@@ -99,12 +99,12 @@ export function PlaybackPage() {
   const headerRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<HTMLElement>(null);
   const focusedVehicle = useRef<string | null>(null);
-  const changeTriggerRef = useRef<HTMLElement | null>(null);
-  const rangeTriggerRef = useRef<HTMLElement | null>(null);
+  const changeTriggerRef = useRef<HTMLButtonElement>(null);
+  const rangeTriggerRef = useRef<HTMLButtonElement>(null);
 
   const offline = network === "offline";
   const defaulting = !from || !to;
-  const requestEnabled = Boolean(vehicleId) && range.valid && !defaulting;
+  const requestEnabled = Boolean(vehicleId) && range.valid && !defaulting && !offline;
 
   const history = useVehicleHistory(
     vehicleId ?? undefined,
@@ -251,10 +251,6 @@ export function PlaybackPage() {
     void history.refetch();
   }, [history]);
 
-  const rememberFocus = (ref: { current: HTMLElement | null }) => {
-    ref.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  };
-
   const restoreFocus = (ref: { current: HTMLElement | null }) => {
     requestAnimationFrame(() => {
       const target = ref.current;
@@ -263,7 +259,6 @@ export function PlaybackPage() {
   };
 
   const openChangeVehicle = () => {
-    rememberFocus(changeTriggerRef);
     setChangeOpen(true);
   };
 
@@ -273,7 +268,6 @@ export function PlaybackPage() {
   };
 
   const openCustomRange = () => {
-    rememberFocus(rangeTriggerRef);
     setCustomOpen(true);
   };
 
@@ -361,13 +355,32 @@ export function PlaybackPage() {
         />
 
         {headerVehicle ? (
-          <div ref={headerRef} className="pointer-events-none absolute inset-x-3 top-3 z-20 flex">
-            <PlaybackHeader
+          <div ref={headerRef} className="pointer-events-none absolute inset-x-3 top-3 z-20">
+            <PlaybackOptions
               vehicle={headerVehicle}
               offline={offline}
               savedAt={history.dataUpdatedAt}
+              preset={preset}
+              resolution={resolution}
+              responseResolution={history.data?.resolution ?? null}
+              pointCount={points.length}
+              cursor={clock.cursor}
+              events={timeline}
+              includeDate={crossDay}
+              eventsError={eventsError}
+              onPreset={(id) => {
+                const option = presetRange(presetMs(id));
+                setRange(option.from, option.to);
+              }}
+              onCustomRange={openCustomRange}
+              onResolution={setResolution}
+              onFit={camera.fit}
+              onJump={clock.seek}
+              onEventsRetry={() => void eventsQuery.refetch()}
               onChangeVehicle={openChangeVehicle}
-              className="pointer-events-auto w-full max-w-lg"
+              changeTriggerRef={changeTriggerRef}
+              rangeTriggerRef={rangeTriggerRef}
+              className="pointer-events-auto"
             />
           </div>
         ) : (
@@ -386,53 +399,40 @@ export function PlaybackPage() {
           </div>
         ) : null}
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-1 p-2">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col">
           {overlay ? (
-            <div className="pointer-events-auto w-full max-w-md">{overlay}</div>
-          ) : null}
-          <div className="flex w-full flex-col items-end gap-1">
-            <div className="pointer-events-none pr-1">
-              <MapAttribution styleId="standard" attribution={null} />
+            <div className="pointer-events-auto flex justify-center px-3 pb-2">
+              <div className="w-full max-w-md">{overlay}</div>
             </div>
-            {vehicleId && !defaulting && range.valid ? (
-              <PlaybackControls
-                controlsRef={controlsRef}
-                fromMs={fromMs}
-                toMs={toMs}
-                playheadMs={clock.playheadMs}
-                playing={clock.playing}
-                speed={clock.speed}
-                cursor={clock.cursor}
-                preset={preset}
-                resolution={resolution}
-                responseResolution={history.data?.resolution ?? null}
-                pointCount={points.length}
-                gaps={gapResult.gaps}
-                events={timeline}
-                loading={history.isPending && !cached}
-                refreshing={history.isFetching && cached}
-                error={cached ? historyError : null}
-                eventsError={eventsError}
-                disabled={cancelled}
-                onToggle={clock.toggle}
-                onStep={clock.step}
-                onSeek={clock.seek}
-                onSpeedChange={clock.setSpeed}
-                onPreset={(id) => {
-                  const option = presetRange(presetMs(id));
-                  setRange(option.from, option.to);
-                }}
-                onCustomRange={openCustomRange}
-                onResolution={setResolution}
-                onFit={camera.fit}
-                onJump={clock.seek}
-                onRetry={retryHistory}
-                onCancel={cancel}
-                onEventsRetry={() => void eventsQuery.refetch()}
-                className="pointer-events-auto w-full"
-              />
-            ) : null}
+          ) : null}
+          <div className="pointer-events-none flex justify-end px-3 pb-1">
+            <MapAttribution styleId="standard" attribution={null} />
           </div>
+          {vehicleId && !defaulting && range.valid ? (
+            <PlaybackControls
+              controlsRef={controlsRef}
+              fromMs={fromMs}
+              toMs={toMs}
+              playheadMs={clock.playheadMs}
+              playing={clock.playing}
+              speed={clock.speed}
+              cursor={clock.cursor}
+              pointCount={points.length}
+              gaps={gapResult.gaps}
+              events={timeline}
+              loading={history.isPending && !cached}
+              refreshing={history.isFetching && cached}
+              error={cached ? historyError : null}
+              disabled={cancelled}
+              onToggle={clock.toggle}
+              onStep={clock.step}
+              onSeek={clock.seek}
+              onSpeedChange={clock.setSpeed}
+              onRetry={retryHistory}
+              onCancel={cancel}
+              className="pointer-events-auto"
+            />
+          ) : null}
         </div>
 
         {vehicleId ? (

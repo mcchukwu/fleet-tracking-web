@@ -79,7 +79,8 @@ test.describe("playback", () => {
     await expect(page).toHaveURL(new RegExp(`vehicle=${VEHICLE}`));
     await waitForPoints(page);
 
-    await page.getByLabel("Range").selectOption("30m");
+    await page.getByLabel("Range").click();
+    await page.getByRole("menuitem", { name: "Last 30 minutes" }).click();
     await expect(page).toHaveURL(/resolution=30s/);
     const times = await page.evaluate(() => {
       const params = new URLSearchParams(window.location.search);
@@ -103,7 +104,8 @@ test.describe("playback", () => {
     });
     await waitForPoints(page);
 
-    await page.getByLabel("Range").selectOption("custom");
+    await page.getByLabel("Range").click();
+    await page.getByRole("menuitem", { name: "Custom…" }).click();
     await expect(
       page.getByRole("dialog", { name: "Custom range" }),
     ).toBeVisible();
@@ -130,14 +132,16 @@ test.describe("playback", () => {
     await expect(change).toBeFocused();
 
     const range = page.getByLabel("Range");
-    await range.selectOption("custom");
+    await range.click();
+    await page.getByRole("menuitem", { name: "Custom…" }).click();
     const rangeDialog = page.getByRole("dialog", { name: "Custom range" });
     await expect(rangeDialog).toBeVisible();
     await rangeDialog.getByRole("button", { name: "Cancel" }).click();
     await expect(rangeDialog).toBeHidden();
     await expect(range).toBeFocused();
 
-    await range.selectOption("custom");
+    await range.click();
+    await page.getByRole("menuitem", { name: "Custom…" }).click();
     await page.keyboard.press("Escape");
     await expect(rangeDialog).toBeHidden();
     await expect(range).toBeFocused();
@@ -250,7 +254,8 @@ test.describe("playback", () => {
     expect((await playback(page))?.pointCount ?? 0).toBe(points);
     await captureForReview(page, "05-playback-offline");
 
-    await page.getByLabel("Range").selectOption("24h");
+    await page.getByLabel("Range").click();
+    await page.getByRole("menuitem", { name: "Last 24 hours" }).click();
     await expect(page.getByText("Not available offline")).toBeVisible({
       timeout: 10_000,
     });
@@ -321,7 +326,7 @@ test.describe("playback", () => {
     expect(bandBox?.height ?? 0).toBeGreaterThanOrEqual(
       (viewport?.width ?? 1440) < 768 ? 44 : 28,
     );
-    if ((viewport?.width ?? 1440) < 1024) {
+    if ((viewport?.width ?? 1440) < 768) {
       await expectTouchTargets(page, 44);
     }
     await captureForReview(page, "05-playback-controls");

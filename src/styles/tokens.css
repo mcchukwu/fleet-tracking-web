@@ -290,6 +290,11 @@
   max-height: 60vh;
 }
 
+/* The playback events menu keeps a 12px viewport inset below 344px wide. */
+@utility w-events-menu {
+  width: min(320px, calc(100vw - 24px));
+}
+
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
