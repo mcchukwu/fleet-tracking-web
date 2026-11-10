@@ -144,6 +144,58 @@ const tableStates: Array<{ id: TableState; label: string }> = [
 
 type VehicleRow = (typeof vehicles)[number];
 
+const UNKNOWN_BADGE_VALUE =
+  "unmapped_status_returned_by_a_newer_server_build_12345678901";
+
+const unknownBadgeLabels = {
+  status: `Unknown status: ${UNKNOWN_BADGE_VALUE}`,
+  severity: `Unknown severity: ${UNKNOWN_BADGE_VALUE}`,
+  type: `Unknown type: ${UNKNOWN_BADGE_VALUE}`,
+  trip: `Unknown status: ${UNKNOWN_BADGE_VALUE}`,
+} as const;
+
+type UnknownBadgeRow = { id: string };
+
+const unknownBadgeRows: UnknownBadgeRow[] = [{ id: "unknown" }];
+
+function unknownBadgeColumns(): DataTableColumn<UnknownBadgeRow>[] {
+  return [
+    {
+      id: "status",
+      header: "Status",
+      width: 120,
+      align: "left",
+      title: () => unknownBadgeLabels.status,
+      cell: () => <Badge tone="neutral">{unknownBadgeLabels.status}</Badge>,
+    },
+    {
+      id: "severity",
+      header: "Severity",
+      width: 120,
+      align: "left",
+      title: () => unknownBadgeLabels.severity,
+      cell: () => <Badge tone="neutral">{unknownBadgeLabels.severity}</Badge>,
+    },
+    {
+      id: "type",
+      header: "Alert type",
+      width: 160,
+      align: "left",
+      title: () => unknownBadgeLabels.type,
+      cell: () => <Badge tone="neutral">{unknownBadgeLabels.type}</Badge>,
+    },
+    {
+      id: "trip",
+      header: "Trip status",
+      width: 120,
+      align: "left",
+      title: () => unknownBadgeLabels.trip,
+      cell: () => <Badge tone="neutral">{unknownBadgeLabels.trip}</Badge>,
+    },
+  ];
+}
+
+
 function vehicleColumns(pending: boolean): DataTableColumn<VehicleRow>[] {
   return [
     {
@@ -661,6 +713,21 @@ export function StyleGuidePage() {
               />
             </div>
           ) : null}
+        </Section>
+
+        <Section
+          id="badge-overflow"
+          title="Long values in cells"
+          description="A badge never overflows its cell. Long unknown values ellipsize inside the badge and the cell tooltip keeps the full text."
+        >
+          <div className="h-40">
+            <DataTable
+              label="Unknown values in cells"
+              columns={unknownBadgeColumns()}
+              rows={unknownBadgeRows}
+              rowKey={(row) => row.id}
+            />
+          </div>
         </Section>
 
         <Section

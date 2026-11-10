@@ -144,7 +144,7 @@ function AlertStatusCell({ alert }: { alert: Alert }) {
       className="inline-flex max-w-full flex-nowrap items-center gap-1 whitespace-nowrap"
       title={statusLabel}
     >
-      <span className="shrink-0">
+      <span className="min-w-0">
         {isAlertStatus(alert.status) ? (
           <AlertStatusBadge status={alert.status} />
         ) : (

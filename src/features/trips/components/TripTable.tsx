@@ -315,7 +315,7 @@ export function TripTable({
           isTripStatus(row.trip.status) ? (
             <TripStatusBadge status={row.trip.status} />
           ) : (
-            <Badge tone="neutral" className="max-w-full overflow-hidden">
+            <Badge tone="neutral">
               Unknown status: {row.trip.status}
             </Badge>
           ),

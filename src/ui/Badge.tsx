@@ -223,7 +223,7 @@ export function TripStatusBadge({ status }: { status: TripStatus }) {
 }
 
 const badge = cva(
-  "inline-flex h-status items-center whitespace-nowrap rounded-sm px-2 text-xs font-medium",
+  "inline-flex h-status max-w-full min-w-0 items-center whitespace-nowrap rounded-sm px-2 text-xs font-medium",
   {
     variants: {
       tone: {
@@ -244,5 +244,11 @@ export interface BadgeProps extends VariantProps<typeof badge> {
 }
 
 export function Badge({ tone, children, className }: BadgeProps) {
-  return <span className={cn(badge({ tone }), className)}>{children}</span>;
+  return (
+    <span className={cn(badge({ tone }), className)}>
+      <span data-badge-label className="min-w-0 truncate">
+        {children}
+      </span>
+    </span>
+  );
 }
