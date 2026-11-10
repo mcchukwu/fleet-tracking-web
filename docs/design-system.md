@@ -469,7 +469,11 @@ Each component lists its anatomy and its rules. All come from shadcn primitives 
 - Native controls are restyled: the checkbox uses the accent fill and check, and the selected select option uses `--accent`. Do not leave browser-default blue in the UI.
 - Textareas do not expose the native resize handle. Keep a fixed minimum height and let the layout own the height; auto-grow only when a flow genuinely needs it.
 - Native select popup hover/focus is browser-controlled. The selected option is styled with `option:checked`; a fully custom listbox is the only way to control every popup state.
-- Search input: leading search icon, `/` hint badge, clear button when non-empty, 150ms debounce.
+- **SearchField** (`src/ui/SearchField.tsx`) is the only search-shaped control. Every picker and the plate/IMEI search use it, so their height, icon, ring and placeholder cannot drift apart:
+  - 44px tall on touch and `md:h-control-md` (32px) from `md`, `--surface` fill, 1px `--border-strong`, `--radius-md`, `text-base`, placeholder `--text-subtle`.
+  - The leading 16px Lucide `Search` icon sits in a flex-centred `inset-y-0 left-4` slot inside the same relatively positioned control as the input; the input clears it with `pl-10`. The optional trailing slot (clear button, `/` hint, combobox chevron) sits at `right-3`; the input clears it with `pr-14`. Each icon's vertical centre equals the input's, because both are centred in the control the input moves with, never against an ancestor.
+  - Focus is the shared `--accent` border plus a 1px inset `--focus-ring` ring. The control never grows or shifts.
+  - `SearchInput` adds the 150ms debounce, the clear button and the `/` hint on top of `SearchField`. `Combobox` composes the same field with a chevron trailing slot.
 - Compact exception: the mobile sheet header may use a visually hidden label for the search field because the row has no space for a second label line. The magnifier and placeholder remain, and the accessible name is still `Search vehicles`.
 
 ### 10.3 Table
@@ -529,7 +533,9 @@ Bottom-right, 4s, one line plus an optional action. Success and info auto-dismis
 ### 10.9 Tooltip, menu, tabs, select, combobox
 
 - Standard Radix behaviour. Tooltip delay 400ms, content `text-xs`, never the only way to reach information. Menus 32px items, `--shadow-menu`. Tabs use an underline indicator in `--accent`, 36px height.
-- `Combobox` is the searchable single-select for long, changing lists (for example active drivers). It uses the ARIA 1.2 combobox/listbox pattern: a labelled input owns the keyboard, `aria-expanded`/`aria-controls`/`aria-activedescendant` are wired, options show a second line with the disambiguating detail (phone and licence for duplicated names), filtering ignores case, spaces and hyphens, and the list resets on blur. Options are 44px on touch. A plate or IMEI option renders its primary line in the mono font. Loading, error, empty and disabled states are explicit; the disabled reason stays visible.
+- `Combobox` is the searchable single-select for long, changing lists (for example active drivers). It uses the ARIA 1.2 combobox/listbox pattern: a labelled input owns the keyboard, `aria-expanded`/`aria-controls`/`aria-activedescendant`/`aria-haspopup` are wired, options show a second line with the disambiguating detail (phone and licence for duplicated names), filtering ignores case, spaces and hyphens, and the list resets on blur. Options are 44px on touch. A plate or IMEI option renders its primary line in the mono font. Loading, error, empty and disabled states are explicit; the disabled reason stays visible.
+- The combobox list is an overlay in the popover layer, never in the dialog's flow. Opening it must not change the input's or the dialog's bounding box. It is `position: fixed`, anchored 4px below the input, at least 240px wide and as wide as the input (clamped to the visual viewport), with a maximum height from `visualViewport` and its own scrollport. It flips above the input when the space below is short, and it is capped by the dialog's close button and footer, so neither is ever covered and both stay hit-testable — also with the software keyboard open. Every picker uses this behaviour; there is no per-dialog opt-in.
+- Keyboard: `ArrowUp`/`ArrowDown`/`Home`/`End` move `aria-activedescendant` and scroll the active option into view, `Enter` selects, the first `Escape` closes only the list and keeps focus in the input, and the second closes the dialog. Focus never leaves the input while the list is open.
 
 ### 10.10 Map controls
 
