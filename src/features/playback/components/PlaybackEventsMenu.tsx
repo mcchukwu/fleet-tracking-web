@@ -1,3 +1,4 @@
+import { CalendarClock } from "lucide-react";
 import { formatPlaybackTime } from "../../../lib/format";
 import { Button } from "../../../ui/Button";
 import { SeverityBadge } from "../../../ui/Badge";
@@ -7,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../../../ui/DropdownMenu";
+import { Tooltip } from "../../../ui/Tooltip";
 import type { PlaybackEvent } from "../lib/events";
 
 export interface PlaybackEventsMenuProps {
@@ -16,39 +18,59 @@ export interface PlaybackEventsMenuProps {
   disabledReason?: string;
 }
 
+const triggerClassName = "w-touch justify-center px-0 md:w-auto md:px-3";
+
 export function PlaybackEventsMenu({
   events,
   onJump,
   includeDate = false,
   disabledReason = "No events in this range.",
 }: PlaybackEventsMenuProps) {
-  if (events.length === 0) {
+  const count = events.length;
+  const label = `Events (${count})`;
+  const trigger = (
+    <>
+      <CalendarClock aria-hidden="true" className="size-4" strokeWidth={1.5} />
+      <span className="hidden md:inline">{label}</span>
+    </>
+  );
+
+  if (count === 0) {
     return (
-      <div className="flex flex-col items-start">
+      <Tooltip label={disabledReason}>
         <Button
           size="md"
           variant="ghost"
           disabled
           aria-disabled="true"
-          className="shrink-0 px-2 text-xs md:px-3"
+          aria-label={label}
+          title={disabledReason}
+          className={triggerClassName}
         >
-          Events (0)
+          {trigger}
         </Button>
-        <span className="px-2 text-xs text-muted md:px-3">{disabledReason}</span>
-      </div>
+      </Tooltip>
     );
   }
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button size="md" variant="ghost" className="shrink-0 px-2 text-xs md:px-3">
-          Events ({events.length})
-        </Button>
-      </DropdownMenuTrigger>
+      <Tooltip label={label}>
+        <DropdownMenuTrigger asChild>
+          <Button
+            size="md"
+            variant="ghost"
+            aria-label={label}
+            className={triggerClassName}
+          >
+            {trigger}
+          </Button>
+        </DropdownMenuTrigger>
+      </Tooltip>
       <DropdownMenuContent
         align="end"
-        className="flex max-h-menu w-80 flex-col gap-0.5 overflow-y-auto"
+        collisionPadding={12}
+        className="w-events-menu flex max-h-menu flex-col gap-0.5 overflow-y-auto"
       >
         {events.map((event) => (
           <DropdownMenuItem

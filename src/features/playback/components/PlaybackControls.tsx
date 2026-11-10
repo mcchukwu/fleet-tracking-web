@@ -1,4 +1,4 @@
-import { Maximize2, Pause, Play, SkipBack, SkipForward } from "lucide-react";
+import { Pause, Play, SkipBack, SkipForward } from "lucide-react";
 import type { Ref } from "react";
 import type { AppError } from "../../../errors/types";
 import { ErrorState } from "../../../errors/ErrorState";
@@ -6,13 +6,11 @@ import { SlowNotice } from "../../../errors/SlowNotice";
 import {
   MISSING,
   formatHeading,
-  formatPlaybackDuration,
   formatPlaybackTime,
   formatSpeed,
   spansLocalDays,
 } from "../../../lib/format";
 import { useDelayedFlag } from "../../../lib/useDelayedFlag";
-import { Button } from "../../../ui/Button";
 import { IconButton } from "../../../ui/IconButton";
 import { Select } from "../../../ui/Select";
 import { Skeleton } from "../../../ui/StatePanel";
@@ -22,20 +20,8 @@ import { gapLabel, type Cursor, type RouteGap } from "../lib/history";
 import {
   MAX_VISIBLE_GAP_LABELS,
   PLAYBACK_SPEEDS,
-  RANGE_PRESETS,
-  RESOLUTION_OPTIONS,
-  type RangePresetId,
-  type ResolutionSetting,
 } from "../lib/constants";
-import { PlaybackEventsMenu } from "./PlaybackEventsMenu";
 import { PlaybackScrubber } from "./PlaybackScrubber";
-
-const resolutionLabels: Record<ResolutionSetting, string> = {
-  auto: "Auto",
-  raw: "Raw",
-  "30s": "30s",
-  "5m": "5m",
-};
 
 export interface PlaybackControlsProps {
   fromMs: number;
@@ -44,48 +30,35 @@ export interface PlaybackControlsProps {
   playing: boolean;
   speed: number;
   cursor: Cursor;
-  preset: RangePresetId | null;
-  resolution: ResolutionSetting;
-  responseResolution: string | null;
   pointCount: number;
   gaps: readonly RouteGap[];
   events: readonly PlaybackEvent[];
   loading?: boolean;
   refreshing?: boolean;
   error?: AppError | null;
-  eventsError?: AppError | null;
   disabled?: boolean;
   onToggle: () => void;
   onStep: (direction: -1 | 1) => void;
   onSeek: (timeMs: number) => void;
   onSpeedChange: (speed: number) => void;
-  onPreset: (preset: RangePresetId) => void;
-  onCustomRange: () => void;
-  onResolution: (resolution: ResolutionSetting) => void;
-  onFit: () => void;
-  onJump: (timeMs: number) => void;
   onRetry: () => void;
   onCancel: () => void;
-  onEventsRetry: () => void;
   controlsRef?: Ref<HTMLElement>;
   className?: string;
 }
 
 function ControlsSkeleton() {
   return (
-    <div data-testid="playback-controls-skeleton" aria-busy="true" className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-end gap-2">
-        <Skeleton className="h-4 w-16" />
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="ml-auto h-8 w-20" />
-      </div>
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
-        <div className="order-2 flex items-center gap-4 md:order-1">
-          <Skeleton className="h-8 w-24" />
-          <Skeleton className="h-8 w-24" />
-          <Skeleton className="h-8 w-20" />
+    <div data-testid="playback-controls-skeleton" aria-busy="true" className="flex flex-col gap-2">
+      <Skeleton className="h-16 w-full md:order-3 md:h-13 md:flex-1" />
+      <div className="flex items-center justify-center gap-4 md:contents">
+        <div className="order-2 flex items-center gap-2 md:order-1">
+          <Skeleton className="h-8 w-8" />
+          <Skeleton className="h-8 w-8" />
+          <Skeleton className="h-8 w-8" />
         </div>
-        <Skeleton className="order-1 h-16 w-full md:order-2 md:h-13 md:flex-1" />
+        <Skeleton className="order-2 hidden h-5 w-24 md:order-2 md:block" />
+        <Skeleton className="order-3 h-8 w-21 md:order-4 md:w-32" />
       </div>
     </div>
   );
@@ -98,29 +71,19 @@ export function PlaybackControls({
   playing,
   speed,
   cursor,
-  preset,
-  resolution,
-  responseResolution,
   pointCount,
   gaps,
   events,
   loading = false,
   refreshing = false,
   error = null,
-  eventsError = null,
   disabled = false,
   onToggle,
   onStep,
   onSeek,
   onSpeedChange,
-  onPreset,
-  onCustomRange,
-  onResolution,
-  onFit,
-  onJump,
   onRetry,
   onCancel,
-  onEventsRetry,
   controlsRef,
   className,
 }: PlaybackControlsProps) {
@@ -132,11 +95,6 @@ export function PlaybackControls({
   const time = (ms: number) => formatPlaybackTime(new Date(ms).toISOString(), crossDay);
   const formatter = (ms: number) => time(ms).replace(/:\d{2}$/, "");
   const skeletonVisible = useDelayedFlag(loading);
-  const eventsDisabledReason = eventsError
-    ? eventsError.kind === "forbidden"
-      ? "You don't have access to events"
-      : "Events unavailable"
-    : undefined;
 
   return (
     <section
@@ -144,7 +102,7 @@ export function PlaybackControls({
       aria-label="Playback controls"
       tabIndex={-1}
       className={cn(
-        "rounded-lg border border-border bg-surface p-3 text-text shadow-float",
+        "border-t border-border bg-surface px-3 py-2 text-text",
         className,
       )}
     >
@@ -158,73 +116,22 @@ export function PlaybackControls({
       ) : (
         <>
           {refreshing ? <SlowNotice onRetry={onRetry} onCancel={onCancel} /> : null}
-        <div data-testid="playback-controls-body" className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-end gap-2">
-            <Select
-              label="Range"
-              value={preset ?? "custom"}
-              onChange={(event) => {
-                const value = event.target.value;
-                if (value === "custom") {
-                  event.currentTarget.focus();
-                  onCustomRange();
-                } else {
-                  onPreset(value as RangePresetId);
-                }
-              }}
-              className="w-36"
-            >
-              {RANGE_PRESETS.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-              <option value="custom">Custom…</option>
-            </Select>
-            <Select
-              label="Resolution"
-              value={resolution}
-              onChange={(event) => onResolution(event.target.value as ResolutionSetting)}
-              className="w-28"
-            >
-              {RESOLUTION_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {resolutionLabels[option]}
-                </option>
-              ))}
-            </Select>
-            <span className="text-xs text-muted">Resolution: {responseResolution ?? MISSING}</span>
-            <span className="text-xs text-muted">
-              {formatPlaybackDuration(toMs - fromMs)}
-            </span>
-            <div className="ml-auto flex items-center gap-3 text-sm">
-              <span className="min-w-16 text-right tabular-nums">
-                {formatSpeed(inGap ? null : cursor.speedKph)}
-              </span>
-              <span className="min-w-14 tabular-nums">
-                {inGap ? MISSING : formatHeading(cursor.headingDeg)}
-              </span>
-              <span className="min-w-16 text-right text-xs tabular-nums text-muted">
-                {pointCount} points
-              </span>
-            </div>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={onFit}
+          <div data-testid="playback-controls-body" className="flex flex-col gap-2 md:flex-row md:items-end md:gap-4">
+            <PlaybackScrubber
+              fromMs={fromMs}
+              toMs={toMs}
+              playheadMs={playheadMs}
+              gaps={gaps}
+              events={events}
+              onSeek={onSeek}
               disabled={unavailable}
-              aria-label="Fit route"
-            >
-              <Maximize2 aria-hidden="true" className="size-4" strokeWidth={1.5} />
-              Fit route
-            </Button>
-          </div>
-
-          <div className="flex flex-col gap-3 md:flex-row md:items-end md:gap-4">
-            <div className="order-2 flex items-center gap-4 md:order-1">
+              includeDate={crossDay}
+              className="order-1 w-full md:order-3 md:min-w-0 md:flex-1"
+            />
+            <div className="order-2 flex flex-nowrap items-center justify-center gap-4 md:contents">
               <fieldset
                 aria-label="Transport"
-                className="m-0 flex shrink-0 items-center gap-2 border-0 p-0"
+                className="m-0 flex shrink-0 items-center gap-2 border-0 p-0 md:order-1"
               >
                 <IconButton
                   size="md"
@@ -255,67 +162,47 @@ export function PlaybackControls({
                   icon={<SkipForward aria-hidden="true" className="size-4" strokeWidth={1.5} />}
                 />
               </fieldset>
-              <Select
-                label="Playback speed"
-                labelPlacement="inline"
-                compact
-                aria-label="Playback speed"
-                value={String(speed)}
-                onChange={(event) => onSpeedChange(Number(event.target.value))}
-                className="w-21 text-xs md:w-32"
+              <div
+                data-testid="playback-readout"
+                className="hidden shrink-0 items-center gap-3 text-sm md:order-2 md:flex"
               >
-                {PLAYBACK_SPEEDS.map((option) => (
-                  <option key={option} value={option}>
-                    Speed {option}×
-                  </option>
-                ))}
-              </Select>
-              <PlaybackEventsMenu
-                events={events}
-                onJump={onJump}
-                includeDate={crossDay}
-                disabledReason={eventsDisabledReason}
-              />
+                <span className="min-w-16 text-right tabular-nums">
+                  {formatSpeed(inGap ? null : cursor.speedKph)}
+                </span>
+                <span className="min-w-14 tabular-nums">
+                  {inGap ? MISSING : formatHeading(cursor.headingDeg)}
+                </span>
+              </div>
+              <div className="order-3 shrink-0 md:order-4">
+                <Select
+                  label="Playback speed"
+                  labelPlacement="inline"
+                  compact
+                  aria-label="Playback speed"
+                  value={String(speed)}
+                  onChange={(event) => onSpeedChange(Number(event.target.value))}
+                  className="w-21 text-xs md:w-32"
+                >
+                  {PLAYBACK_SPEEDS.map((option) => (
+                    <option key={option} value={option}>
+                      Speed {option}×
+                    </option>
+                  ))}
+                </Select>
+              </div>
             </div>
-            <PlaybackScrubber
-              fromMs={fromMs}
-              toMs={toMs}
-              playheadMs={playheadMs}
-              gaps={gaps}
-              events={events}
-              onSeek={onSeek}
-              disabled={unavailable}
-              includeDate={crossDay}
-              className="order-1 w-full md:order-2 md:min-w-0 md:flex-1"
-            />
           </div>
 
           {error ? <ErrorState error={error} compact onRetry={onRetry} /> : null}
 
-          {eventsError ? (
-            <div className="flex items-center justify-between gap-2 text-xs text-muted">
-              <span>
-                {eventsError.kind === "forbidden"
-                  ? "You don't have access to events"
-                  : "Events unavailable"}
-              </span>
-              {eventsError.kind === "forbidden" ? null : (
-                <Button size="sm" variant="ghost" onClick={onEventsRetry}>
-                  Retry
-                </Button>
-              )}
-            </div>
-          ) : null}
-
           {gaps.length > 0 ? (
-            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
               {visibleGaps.map((gap) => (
                 <span key={`${gap.startMs}-${gap.endMs}`}>{gapLabel(gap, formatter)}</span>
               ))}
               {hiddenGaps > 0 ? <span>{hiddenGaps} more gaps</span> : null}
             </div>
           ) : null}
-        </div>
         </>
       )}
     </section>

@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { PlaybackEventsMenu } from "./PlaybackEventsMenu";
+import { TooltipProvider } from "../../../ui/Tooltip";
 import type { PlaybackEvent } from "../lib/events";
 
 const events: PlaybackEvent[] = [
@@ -29,10 +30,14 @@ const events: PlaybackEvent[] = [
   },
 ];
 
+function renderMenu(ui: React.ReactElement) {
+  return render(<TooltipProvider>{ui}</TooltipProvider>);
+}
+
 describe("PlaybackEventsMenu", () => {
   it("lists events chronologically with severity and jumps on selection", async () => {
     const onJump = vi.fn();
-    render(<PlaybackEventsMenu events={events} onJump={onJump} />);
+    renderMenu(<PlaybackEventsMenu events={events} onJump={onJump} />);
 
     await userEvent.click(screen.getByRole("button", { name: "Events (2)" }));
     expect(screen.getByText("Entered Lekki Depot")).toBeVisible();
@@ -43,17 +48,16 @@ describe("PlaybackEventsMenu", () => {
   });
 
   it("disables the menu with the reason when there are no events", () => {
-    render(
+    renderMenu(
       <PlaybackEventsMenu
         events={[]}
         onJump={() => undefined}
         disabledReason="No events in this range."
       />,
     );
-    expect(screen.getByRole("button", { name: "Events (0)" })).toHaveAttribute(
-      "aria-disabled",
-      "true",
-    );
-    expect(screen.getByText("No events in this range.")).toBeVisible();
+    const trigger = screen.getByRole("button", { name: "Events (0)" });
+    expect(trigger).toBeDisabled();
+    expect(trigger).toHaveAttribute("aria-disabled", "true");
+    expect(trigger).toHaveAttribute("title", "No events in this range.");
   });
 });

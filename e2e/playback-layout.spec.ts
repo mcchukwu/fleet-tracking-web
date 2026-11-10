@@ -1,16 +1,23 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { captureForReview, expectNoOverlap } from "./helpers";
+import {
+  captureForReview,
+  expectNoHorizontalScroll,
+  expectNoOverlap,
+  expectTouchTargets,
+} from "./helpers";
 
 const VEHICLE = "4324a768-9b14-4223-a299-eb8da4d8d309";
 const VIEWPORTS = [
-  { width: 1440, height: 900 },
-  { width: 1024, height: 768 },
-  { width: 768, height: 1024 },
-  { width: 390, height: 844 },
+  { width: 320, height: 568 },
   { width: 360, height: 640 },
+  { width: 390, height: 844 },
+  { width: 412, height: 915 },
+  { width: 768, height: 1024 },
+  { width: 1440, height: 900 },
 ] as const;
-const EVENT_COUNTS = [1, 5, 40] as const;
+const EVENT_COUNTS = [0, 5, 40] as const;
+const LABELS = ["normal", "long"] as const;
 
 interface Measured {
   x: number;
@@ -35,55 +42,354 @@ async function measure(locator: Locator): Promise<Measured> {
   };
 }
 
-async function style(locator: Locator) {
-  return locator.evaluate((element) => {
-    const value = window.getComputedStyle(element);
-    return {
-      paddingTop: Number.parseFloat(value.paddingTop),
-      paddingRight: Number.parseFloat(value.paddingRight),
-      paddingBottom: Number.parseFloat(value.paddingBottom),
-      paddingLeft: Number.parseFloat(value.paddingLeft),
-      borderRadius: Number.parseFloat(value.borderTopLeftRadius),
-      overflowY: value.overflowY,
-      fontVariantNumeric: value.fontVariantNumeric,
-      minWidth: Number.parseFloat(value.minWidth),
-      outlineWidth: Number.parseFloat(value.outlineWidth),
-      backgroundColor: value.backgroundColor,
-      color: value.color,
-    };
-  });
+async function style(locator: Locator, property: keyof CSSStyleDeclaration) {
+  return locator.evaluate(
+    (element, name) =>
+      (window.getComputedStyle(element) as unknown as Record<string, string>)[name],
+    property as string,
+  );
 }
 
-async function gotoPlayback(page: Page, events: number): Promise<void> {
-  await page.goto(`/playback?map=fake&vehicle=${VEHICLE}&events=${events}`);
-  await expect(
-    page.getByRole("region", { name: "Playback controls" }),
-  ).toBeVisible();
+async function gotoPlayback(
+  page: Page,
+  events: number,
+  labels: (typeof LABELS)[number] = "normal",
+): Promise<void> {
+  const labelsParam = labels === "long" ? "&labels=long" : "";
+  await page.goto(
+    `/playback?map=fake&vehicle=${VEHICLE}&events=${events}${labelsParam}`,
+  );
+  await expect(page.getByRole("region", { name: "Playback controls" })).toBeVisible();
   await expect
     .poll(
-      () =>
-        page.evaluate(() => window.__FLEET_DEBUG__?.playback?.pointCount ?? 0),
+      () => page.evaluate(() => window.__FLEET_DEBUG__?.playback?.pointCount ?? 0),
       { timeout: 15_000 },
     )
     .toBeGreaterThan(0);
 }
 
-function expectAligned(
-  items: Array<{ name: string; box: Measured }>,
-  expectedHeight: number,
-): void {
-  const bottom = items[0]?.box.bottom;
-  expect(bottom, "no measured controls").toBeDefined();
-  for (const { name, box } of items) {
-    expect(
-      Math.abs(box.height - expectedHeight),
-      `${name} height`,
-    ).toBeLessThanOrEqual(0.5);
-    expect(
-      Math.abs(box.bottom - (bottom ?? 0)),
-      `${name} bottom`,
-    ).toBeLessThanOrEqual(0.5);
-  }
+function controls(page: Page): Locator[] {
+  return [
+    page.getByRole("link", { name: "Back to map" }),
+    page.getByRole("button", { name: "Change vehicle" }),
+    page.getByLabel("Range"),
+    page.getByRole("button", { name: /^Events \(/ }),
+    page.getByRole("button", { name: "Fit route" }),
+    page.getByLabel("Resolution"),
+    page.getByRole("button", { name: "Step back one position" }),
+    page.getByRole("button", { name: /^(Play|Pause)$/ }),
+    page.getByRole("button", { name: "Step forward one position" }),
+    page.getByLabel("Playback speed"),
+  ];
+}
+
+for (const viewport of VIEWPORTS) {
+  test.describe(`playback mobile layout ${viewport.width}x${viewport.height}`, () => {
+    test.use({ viewport: { width: viewport.width, height: viewport.height } });
+    const mobile = viewport.width < 768;
+
+    test("never overflows and keeps every control inside the 12px inset", async ({
+      page,
+    }) => {
+      for (const labels of LABELS) {
+        for (const count of EVENT_COUNTS) {
+          await gotoPlayback(page, count, labels);
+          await expectNoHorizontalScroll(page);
+          for (const control of controls(page)) {
+            const box = await measure(control);
+            expect(
+              box.right,
+              `control "${await control.getAttribute("aria-label")}" crosses the right inset with events=${count} labels=${labels}`,
+            ).toBeLessThanOrEqual(viewport.width - 12 + 0.5);
+            expect(box.x).toBeGreaterThanOrEqual(-0.5);
+          }
+          const options = await measure(page.getByTestId("playback-options"));
+          expect(options.right).toBeLessThanOrEqual(viewport.width - 12 + 0.5);
+          const scrollWidth = await page.evaluate(
+            () => document.documentElement.scrollWidth,
+          );
+          expect(scrollWidth).toBeLessThanOrEqual(viewport.width);
+        }
+      }
+    });
+
+    test("regroups the top options and keeps the tools at the right edge", async ({
+      page,
+    }) => {
+      await gotoPlayback(page, 5);
+      const back = page.getByRole("link", { name: "Back to map" });
+      const vehicle = page.getByRole("button", { name: "Change vehicle" });
+      const range = page.getByLabel("Range");
+      const events = page.getByRole("button", { name: /^Events \(/ });
+      const fit = page.getByRole("button", { name: "Fit route" });
+      const info = page.getByTestId("playback-options-info");
+      const infoText = page.getByTestId("playback-options-info-text");
+
+      expect((await measure(back)).height).toBeGreaterThanOrEqual(mobile ? 44 : 32);
+      const vehicleBox = await measure(vehicle);
+      const rangeBox = await measure(range);
+      const eventsBox = await measure(events);
+      const fitBox = await measure(fit);
+      const height = mobile ? 44 : 32;
+
+      for (const [name, box] of [
+        ["vehicle", vehicleBox],
+        ["range", rangeBox],
+        ["events", eventsBox],
+        ["fit", fitBox],
+      ] as const) {
+        expect(Math.abs(box.height - height), `${name} height`).toBeLessThanOrEqual(0.5);
+        expect(box.right, `${name} right inset`).toBeLessThanOrEqual(
+          viewport.width - 12 + 0.5,
+        );
+      }
+      expect(Math.abs(vehicleBox.bottom - rangeBox.bottom)).toBeLessThanOrEqual(0.5);
+      expect(rangeBox.x).toBeGreaterThanOrEqual(vehicleBox.right - 0.5);
+      expect(rangeBox.right).toBeLessThanOrEqual(eventsBox.x + 0.5);
+      expect(Math.abs(fitBox.x - eventsBox.right - 8)).toBeLessThanOrEqual(0.5);
+      expect(Math.abs(fitBox.right - (viewport.width - 12))).toBeLessThanOrEqual(0.5);
+      expect(Math.abs(eventsBox.y - fitBox.y)).toBeLessThanOrEqual(0.5);
+
+      const eventsLabel = events.getByText(/^Events \(\d+\)$/);
+      const fitLabel = fit.getByText("Fit route");
+      if (mobile) {
+        await expect(eventsLabel).toBeHidden();
+        await expect(fitLabel).toBeHidden();
+        expect(eventsBox.width).toBeCloseTo(44, 0);
+        expect(fitBox.width).toBeCloseTo(44, 0);
+      } else {
+        await expect(eventsLabel).toBeVisible();
+        await expect(fitLabel).toBeVisible();
+      }
+
+      await expect(info).toContainText("Resolution:");
+      await expect(info).toContainText(" points");
+      expect(await style(infoText, "textOverflow")).toBe("ellipsis");
+      expect(await style(infoText, "whiteSpace")).toBe("nowrap");
+      expect((await measure(infoText)).height).toBeLessThanOrEqual(20);
+      await captureForReview(page, "05-playback-mobile-options");
+    });
+
+    test("truncates a long plate before the tools move", async ({ page }) => {
+      await gotoPlayback(page, 5, "long");
+      const vehicle = page.getByRole("button", { name: "Change vehicle" });
+      const plate = vehicle.locator("span").first();
+      const events = page.getByRole("button", { name: /^Events \(/ });
+      const vehicleBox = await measure(vehicle);
+      const eventsBox = await measure(events);
+
+      expect(await style(plate, "textOverflow")).toBe("ellipsis");
+      expect(vehicleBox.right).toBeLessThanOrEqual(eventsBox.x);
+      if (viewport.width <= 412) {
+        const truncates = await plate.evaluate(
+          (element) => element.scrollWidth > element.clientWidth + 1,
+        );
+        expect(truncates, "the long plate truncates").toBe(true);
+      }
+      await expectNoHorizontalScroll(page);
+    });
+
+    test("keeps one bar on desktop and two centred rows on mobile", async ({
+      page,
+    }) => {
+      await gotoPlayback(page, 5);
+      const transport = page.getByRole("group", { name: "Transport" });
+      const transportButtons = transport.getByRole("button");
+      const back = transportButtons.nth(0);
+      const toggle = transportButtons.nth(1);
+      const forward = transportButtons.nth(2);
+      const speed = page.getByLabel("Playback speed");
+      const slider = page.getByRole("slider", { name: "Playback position" });
+      const scrubber = page.getByTestId("playback-scrubber");
+      const current = page.getByTestId("playback-current-time");
+      const lane = page.getByTestId("playback-event-band");
+      const readout = page.getByTestId("playback-readout");
+
+      const backBox = await measure(back);
+      const toggleBox = await measure(toggle);
+      const forwardBox = await measure(forward);
+      const speedBox = await measure(speed);
+      const scrubberBox = await measure(scrubber);
+      const laneBox = await measure(lane);
+      const currentBox = await measure(current);
+      const height = mobile ? 44 : 32;
+
+      expect(Math.abs(toggleBox.x - backBox.right - 8), "back to toggle").toBeLessThanOrEqual(0.5);
+      expect(Math.abs(forwardBox.x - toggleBox.right - 8), "toggle to forward").toBeLessThanOrEqual(0.5);
+      expect(laneBox.height).toBeGreaterThanOrEqual(mobile ? 44 : 28);
+      expect(await style(current, "minWidth")).not.toBe("0px");
+      expect(await style(current, "fontVariantNumeric")).toContain("tabular-nums");
+
+      if (mobile) {
+        expect(Math.abs(scrubberBox.x - 12)).toBeLessThanOrEqual(0.5);
+        expect(Math.abs(scrubberBox.right - (viewport.width - 12))).toBeLessThanOrEqual(0.5);
+        expect(Math.abs(scrubberBox.height - (height + laneBox.height))).toBeLessThanOrEqual(0.5);
+        expect(Math.abs(toggleBox.height - height)).toBeLessThanOrEqual(0.5);
+        expect(Math.abs(speedBox.height - height)).toBeLessThanOrEqual(0.5);
+        expect(Math.abs(speedBox.bottom - toggleBox.bottom)).toBeLessThanOrEqual(0.5);
+        expect(Math.abs(speedBox.x - forwardBox.right - 16)).toBeLessThanOrEqual(0.5);
+        expect(toggleBox.y).toBeGreaterThanOrEqual(scrubberBox.bottom - 0.5);
+        const centre = (backBox.x + speedBox.right) / 2;
+        expect(Math.abs(centre - viewport.width / 2)).toBeLessThanOrEqual(1);
+        expect(await style(page.getByTestId("playback-controls-body"), "flexWrap")).toBe("nowrap");
+        await expectTouchTargets(page, 44);
+      } else {
+        const readoutBox = await measure(readout);
+        const items = [backBox, readoutBox, scrubberBox, speedBox];
+        const bottom = items[0]?.bottom ?? 0;
+        for (const item of items) {
+          expect(Math.abs(item.bottom - bottom), "one bottom line").toBeLessThanOrEqual(0.5);
+        }
+        expect(backBox.right).toBeLessThanOrEqual(readoutBox.x + 0.5);
+        expect(readoutBox.right).toBeLessThanOrEqual(scrubberBox.x + 0.5);
+        expect(scrubberBox.right).toBeLessThanOrEqual(speedBox.x + 0.5);
+        expect(Math.abs(scrubberBox.height - (height + laneBox.height))).toBeLessThanOrEqual(0.5);
+        expect(await style(readout, "display")).toBe("flex");
+      }
+
+      await slider.focus();
+      const start = await measure(slider);
+      const middleValue = await slider.evaluate((element) => {
+        const input = element as HTMLInputElement;
+        return String(Math.round((Number(input.min) + Number(input.max)) / 2));
+      });
+      await slider.fill(middleValue);
+      const middle = await measure(slider);
+      await page.keyboard.press("End");
+      const end = await measure(slider);
+      expect(Math.abs(middle.x - start.x)).toBeLessThanOrEqual(0.5);
+      expect(Math.abs(end.x - start.x)).toBeLessThanOrEqual(0.5);
+      expect(Math.abs(middle.width - start.width)).toBeLessThanOrEqual(0.5);
+      expect(Math.abs(end.width - start.width)).toBeLessThanOrEqual(0.5);
+      expect(currentBox.width).toBeGreaterThan(0);
+      await captureForReview(page, "05-playback-mobile-bar");
+    });
+
+    test("opens the events menu anchored inside the viewport", async ({ page }) => {
+      for (const count of EVENT_COUNTS) {
+        await gotoPlayback(page, count);
+        const trigger = page.getByRole("button", { name: /^Events \(/ });
+        if (count === 0) {
+          await expect(trigger).toBeDisabled();
+          await expect(page.getByRole("menu")).toHaveCount(0);
+          continue;
+        }
+        const triggerBox = await measure(trigger);
+        await trigger.click();
+        const menu = page.getByRole("menu");
+        await expect(menu).toBeVisible();
+        const items = page.getByRole("menuitem");
+        await expect(items).toHaveCount(count);
+        const menuBox = await measure(menu);
+        const expectedWidth = Math.min(320, viewport.width - 24);
+        expect(Math.abs(menuBox.width - expectedWidth)).toBeLessThanOrEqual(1);
+        expect(menuBox.x).toBeGreaterThanOrEqual(12 - 0.5);
+        expect(menuBox.right).toBeLessThanOrEqual(viewport.width - 12 + 0.5);
+        expect(menuBox.y).toBeGreaterThanOrEqual(12 - 0.5);
+        expect(menuBox.x).toBeLessThanOrEqual(triggerBox.right);
+        expect(menuBox.right).toBeGreaterThanOrEqual(triggerBox.x);
+        expect(menuBox.height).toBeLessThanOrEqual(viewport.height * 0.6 + 0.5);
+        expect(await style(menu, "overflowY")).toMatch(/auto|scroll/);
+        if (count === 40) {
+          expect(
+            await menu.evaluate((element) => element.scrollHeight > element.clientHeight),
+          ).toBe(true);
+        }
+
+        const first = items.first();
+        const firstBox = await measure(first);
+        expect(firstBox.height).toBeGreaterThanOrEqual(40);
+        expect(await style(first, "paddingTop")).toBe("8px");
+        expect(await style(first, "paddingLeft")).toBe("12px");
+        expect(await style(first, "borderRadius")).toBe("4px");
+        expect(firstBox.x - menuBox.x).toBeGreaterThanOrEqual(4);
+        expect(menuBox.right - firstBox.right).toBeGreaterThanOrEqual(4);
+        const lines = first.locator(":scope > span");
+        await expect(lines).toHaveCount(2);
+        expect(await style(lines.nth(1), "fontVariantNumeric")).toContain("tabular-nums");
+        const badge = first.getByText(/^(Low|Medium|High|Critical)$/);
+        await expect(badge).toBeVisible();
+        const badgeBox = await measure(badge);
+        expect(firstBox.right - badgeBox.right).toBeCloseTo(12, 0);
+        if (count > 1) {
+          const secondBox = await measure(items.nth(1));
+          expect(secondBox.y - firstBox.bottom).toBeCloseTo(2, 0);
+          await items.nth(1).hover();
+          expect(await style(items.nth(1), "backgroundColor")).not.toBe("rgba(0, 0, 0, 0)");
+          await page.mouse.move(0, 0);
+        }
+        await page.keyboard.press("ArrowDown");
+        await expect
+          .poll(async () => style(first, "backgroundColor"))
+          .not.toBe("rgba(0, 0, 0, 0)");
+        expect(Number.parseFloat(await style(first, "outlineWidth"))).toBeGreaterThanOrEqual(2);
+        await expectNoHorizontalScroll(page);
+        await page.keyboard.press("Escape");
+        await expect(menu).toBeHidden();
+      }
+    });
+
+    if (mobile) {
+      test("seeks by pointer and picks the nearest event on the lane", async ({ page }) => {
+        await gotoPlayback(page, 40);
+        const slider = page.getByRole("slider", { name: "Playback position" });
+        const sliderBox = await measure(slider);
+        const lane = page.getByTestId("playback-event-band");
+        const laneBox = await measure(lane);
+        expect(laneBox.bottom).toBeLessThanOrEqual(sliderBox.y + 0.5);
+        expect(laneBox.height).toBeGreaterThanOrEqual(44);
+
+        const markers = page.getByTestId("playback-event-marker");
+        await expect(markers).toHaveCount(40);
+        for (const marker of await markers.all()) {
+          const box = await measure(marker);
+          expect(box.width).toBeGreaterThanOrEqual(44);
+          expect(box.height).toBeGreaterThanOrEqual(44);
+        }
+
+        const before = await measure(markers.nth(20));
+        const after = await measure(markers.nth(21));
+        const clickX = (before.x + before.width / 2 + after.x + after.width / 2) / 2;
+        const clickY = sliderBox.y + sliderBox.height / 2;
+        await page.mouse.click(clickX, clickY);
+        const state = await slider.evaluate((element) => {
+          const input = element as HTMLInputElement;
+          return {
+            min: Number(input.min),
+            max: Number(input.max),
+            step: Number(input.step),
+            value: Number(input.value),
+          };
+        });
+        const raw =
+          state.min +
+          ((clickX - sliderBox.x) / sliderBox.width) * (state.max - state.min);
+        const expected = Math.min(
+          state.max,
+          Math.max(
+            state.min,
+            state.min + Math.round((raw - state.min) / state.step) * state.step,
+          ),
+        );
+        expect(Math.abs(state.value - expected)).toBeLessThanOrEqual(state.step);
+
+        const laneClickY = laneBox.y + laneBox.height / 2;
+        const laneClickX = (before.x + before.width / 2 + after.x + after.width / 2) / 2;
+        await page.mouse.move(laneClickX, laneClickY);
+        const earlierLabel = (await markers.nth(20).getAttribute("aria-label")) ?? "";
+        const preview = earlierLabel
+          .slice(0, earlierLabel.lastIndexOf(" at "))
+          .replace(/\s*\((?:low|medium|high|critical)\)$/, "");
+        await expect(page.getByTestId("playback-current-time")).toContainText(preview);
+        await page.mouse.click(laneClickX, laneClickY);
+        const valueText =
+          (await slider.getAttribute("aria-valuetext")) ?? "";
+        const expectedTime = earlierLabel.slice(earlierLabel.lastIndexOf(" at ") + 4);
+        expect(valueText).toContain(expectedTime);
+        await captureForReview(page, "05-playback-mobile-pointer");
+      });
+    }
+  });
 }
 
 for (const viewport of [
@@ -101,9 +407,7 @@ for (const viewport of [
       );
       await expect(
         page.getByText("Something went wrong on our side"),
-      ).toBeVisible({
-        timeout: 15_000,
-      });
+      ).toBeVisible({ timeout: 15_000 });
       await expect(page.getByTestId("map-attribution")).toBeVisible();
       const retry = page.getByRole("button", { name: "Retry" }).first();
       await expect(retry).toBeVisible();
@@ -130,364 +434,16 @@ for (const viewport of [
   });
 }
 
-for (const viewport of VIEWPORTS) {
-  test.describe(`playback layout ${viewport.width}x${viewport.height}`, () => {
-    test.use({ viewport: { width: viewport.width, height: viewport.height } });
+test.describe("playback map area 360x640", () => {
+  test.use({ viewport: { width: 360, height: 640 } });
 
-    test("keeps one control height, one bottom line and a stable scrubber", async ({
-      page,
-    }) => {
-      const mobile = viewport.width < 768;
-      const expectedHeight = mobile ? 44 : 32;
-      const laneHeight = mobile ? 44 : 28;
-      await gotoPlayback(page, 5);
-
-      const transport = page.getByRole("group", { name: "Transport" });
-      const transportButtons = transport.getByRole("button");
-      await expect(transportButtons).toHaveCount(3);
-      const back = transportButtons.nth(0);
-      const toggle = transportButtons.nth(1);
-      const forward = transportButtons.nth(2);
-      const speed = page.getByLabel("Playback speed");
-      const events = page.getByRole("button", { name: /^Events \(/ });
-      const slider = page.getByRole("slider", { name: "Playback position" });
-      const scrubber = page.getByTestId("playback-scrubber");
-      const currentTime = page.getByTestId("playback-current-time");
-
-      await expect(speed).toHaveAccessibleName("Playback speed");
-      await expect(speed).toHaveValue(/\d+/);
-      expect(
-        await speed.evaluate(
-          (element) =>
-            (element as HTMLSelectElement).selectedOptions[0]?.textContent,
-        ),
-      ).toMatch(/^Speed \d+×$/);
-      expect((await style(speed)).paddingLeft).toBeGreaterThan(0);
-
-      const speedWrapper = speed.locator("xpath=../..");
-      await expect
-        .poll(async () => {
-          const wrapper = await measure(speedWrapper);
-          const control = await measure(speed);
-          return Math.abs(wrapper.height - control.height);
-        })
-        .toBeLessThanOrEqual(0.5);
-
-      const backBox = await measure(back);
-      const toggleBox = await measure(toggle);
-      const forwardBox = await measure(forward);
-      const speedBox = await measure(speed);
-      const eventsBox = await measure(events);
-      const scrubberBox = await measure(scrubber);
-      const laneBox = await measure(page.getByTestId("playback-event-band"));
-      expect(laneBox.height).toBeGreaterThanOrEqual(laneHeight);
-
-      expect(toggleBox.x - backBox.right).toBeCloseTo(8, 0);
-      expect(forwardBox.x - toggleBox.right).toBeCloseTo(8, 0);
-      expect(speedBox.x - forwardBox.right).toBeCloseTo(16, 0);
-      expect(eventsBox.x - speedBox.right).toBeCloseTo(16, 0);
-      for (const [name, box] of [
-        ["back", backBox],
-        ["toggle", toggleBox],
-        ["forward", forwardBox],
-      ] as const) {
-        expect(
-          Math.abs(box.width - expectedHeight),
-          `${name} target width`,
-        ).toBeLessThanOrEqual(0.5);
-      }
-      const clipped = await Promise.all(
-        [speed, events].map((control) =>
-          control.evaluate(
-            (element) => element.scrollWidth > element.clientWidth + 1,
-          ),
-        ),
-      );
-      expect(clipped, "speed or events label is clipped").toEqual([
-        false,
-        false,
-      ]);
-
-      if (mobile) {
-        expectAligned(
-          [
-            { name: "transport back", box: backBox },
-            { name: "transport toggle", box: toggleBox },
-            { name: "transport forward", box: forwardBox },
-            { name: "speed", box: speedBox },
-            { name: "events", box: eventsBox },
-          ],
-          expectedHeight,
-        );
-        expect(scrubberBox.bottom).toBeLessThanOrEqual(backBox.y);
-        expect(
-          Math.abs(scrubberBox.height - (expectedHeight + laneHeight)),
-        ).toBeLessThanOrEqual(0.5);
-        const body = await measure(page.getByTestId("playback-controls-body"));
-        expect(Math.abs(scrubberBox.x - body.x)).toBeLessThanOrEqual(0.5);
-        expect(Math.abs(scrubberBox.width - body.width)).toBeLessThanOrEqual(
-          0.5,
-        );
-      } else {
-        expectAligned(
-          [
-            { name: "transport back", box: backBox },
-            { name: "transport toggle", box: toggleBox },
-            { name: "transport forward", box: forwardBox },
-            { name: "speed", box: speedBox },
-            { name: "events", box: eventsBox },
-          ],
-          expectedHeight,
-        );
-        expect(
-          Math.abs(scrubberBox.height - (expectedHeight + laneHeight)),
-        ).toBeLessThanOrEqual(0.5);
-        expect(
-          Math.abs(scrubberBox.bottom - backBox.bottom),
-        ).toBeLessThanOrEqual(0.5);
-      }
-
-      const timeStyle = await style(currentTime);
-      expect(timeStyle.minWidth).toBeGreaterThan(0);
-      expect(timeStyle.fontVariantNumeric).toContain("tabular-nums");
-
-      await slider.focus();
-      const start = await measure(slider);
-      const middleValue = await slider.evaluate((element) => {
-        const input = element as HTMLInputElement;
-        return String(Math.round((Number(input.min) + Number(input.max)) / 2));
-      });
-      await slider.fill(middleValue);
-      await expect
-        .poll(async () => (await measure(slider)).x)
-        .toBeCloseTo(start.x, 0);
-      const middle = await measure(slider);
-      await page.keyboard.press("End");
-      await expect
-        .poll(async () => (await measure(slider)).x)
-        .toBeCloseTo(start.x, 0);
-      const end = await measure(slider);
-
-      expect(Math.abs(middle.x - start.x)).toBeLessThanOrEqual(0.5);
-      expect(Math.abs(end.x - start.x)).toBeLessThanOrEqual(0.5);
-      expect(Math.abs(middle.width - start.width)).toBeLessThanOrEqual(0.5);
-      expect(Math.abs(end.width - start.width)).toBeLessThanOrEqual(0.5);
-      await captureForReview(page, "05-playback-layout-bar");
-    });
-
-    test("lays out the events menu without clipping or touching", async ({
-      page,
-    }) => {
-      for (const count of EVENT_COUNTS) {
-        await gotoPlayback(page, count);
-        await page.getByRole("button", { name: /^Events \(/ }).click();
-        const menu = page.getByRole("menu");
-        await expect(menu).toBeVisible();
-        const items = page.getByRole("menuitem");
-        await expect(items).toHaveCount(count);
-
-        await captureForReview(page, `05-playback-layout-events-${count}`);
-        const menuBox = await measure(menu);
-        const menuStyle = await style(menu);
-        expect(menuBox.width).toBeGreaterThanOrEqual(320);
-        expect(menuBox.height).toBeLessThanOrEqual(viewport.height * 0.6 + 0.5);
-        expect(["auto", "scroll"]).toContain(menuStyle.overflowY);
-        expect(menuStyle.paddingTop).toBe(4);
-        expect(menuStyle.paddingRight).toBe(4);
-        expect(menuStyle.paddingBottom).toBe(4);
-        expect(menuStyle.paddingLeft).toBe(4);
-        if (count === 40) {
-          const scrolls = await menu.evaluate(
-            (element) => element.scrollHeight > element.clientHeight,
-          );
-          expect(scrolls, "40-event menu scrolls").toBe(true);
-        }
-
-        const first = items.first();
-        const firstBox = await measure(first);
-        const itemStyle = await style(first);
-        expect(firstBox.height).toBeGreaterThanOrEqual(40);
-        expect(itemStyle.paddingTop).toBe(8);
-        expect(itemStyle.paddingRight).toBe(12);
-        expect(itemStyle.paddingBottom).toBe(8);
-        expect(itemStyle.paddingLeft).toBe(12);
-        expect(itemStyle.borderRadius).toBe(4);
-        expect(firstBox.x - menuBox.x).toBeGreaterThanOrEqual(4);
-        expect(menuBox.right - firstBox.right).toBeGreaterThanOrEqual(4);
-
-        if (count > 1) {
-          const secondBox = await measure(items.nth(1));
-          expect(secondBox.y - firstBox.bottom).toBeCloseTo(2, 0);
-        }
-
-        const lines = first.locator(":scope > span");
-        await expect(lines).toHaveCount(2);
-        const labelStyle = await style(lines.nth(0));
-        const timeStyle = await style(lines.nth(1));
-        expect(timeStyle.color).not.toBe(labelStyle.color);
-        expect(timeStyle.fontVariantNumeric).toContain("tabular-nums");
-
-        const badge = first.getByText(/^(Low|Medium|High|Critical)$/);
-        await expect(badge).toBeVisible();
-        const badgeBox = await measure(badge);
-        expect(firstBox.right - badgeBox.right).toBeCloseTo(12, 0);
-
-        if (count > 1) {
-          await items.nth(1).hover();
-          const hovered = await style(items.nth(1));
-          expect(hovered.backgroundColor).not.toBe("rgba(0, 0, 0, 0)");
-          await page.mouse.move(0, 0);
-        }
-
-        await page.keyboard.press("ArrowDown");
-        await expect
-          .poll(async () => (await style(first)).backgroundColor)
-          .not.toBe("rgba(0, 0, 0, 0)");
-        const focused = await style(first);
-        expect(focused.outlineWidth).toBeGreaterThanOrEqual(2);
-        expect(firstBox.x - menuBox.x).toBeGreaterThanOrEqual(
-          focused.outlineWidth,
-        );
-
-        await page.keyboard.press("Escape");
-        await expect(menu).toBeHidden();
-      }
-    });
-  });
-}
-
-for (const viewport of [
-  { width: 390, height: 844 },
-  { width: 360, height: 640 },
-] as const) {
-  test.describe(`playback scrubber pointer ${viewport.width}x${viewport.height}`, () => {
-    test.use({ viewport: { width: viewport.width, height: viewport.height } });
-
-    for (const count of [5, 40, 60] as const) {
-      test(`seeks on the track with ${count} events`, async ({ page }) => {
-        await gotoPlayback(page, count);
-        const slider = page.getByRole("slider", { name: "Playback position" });
-        const band = page.getByTestId("playback-event-band");
-        const sliderBox = await measure(slider);
-        const bandBox = await measure(band);
-
-        expect(bandBox.bottom).toBeLessThanOrEqual(sliderBox.y + 0.5);
-        expect(bandBox.height).toBeGreaterThanOrEqual(44);
-
-        const markers = page.getByTestId("playback-event-marker");
-        await expect(markers).toHaveCount(count);
-        for (const marker of await markers.all()) {
-          const box = await measure(marker);
-          expect(box.width).toBeGreaterThanOrEqual(44);
-          expect(box.height).toBeGreaterThanOrEqual(44);
-          expect(box.bottom).toBeLessThanOrEqual(sliderBox.y + 0.5);
-        }
-
-        const points = Array.from({ length: 21 }, (_, index) => ({
-          x: sliderBox.x + 1 + ((sliderBox.width - 2) * index) / 20,
-          y: sliderBox.y + sliderBox.height / 2,
-        }));
-        const hits = await slider.evaluate(
-          (element, samples) =>
-            samples.map(
-              ({ x, y }) => document.elementFromPoint(x, y) === element,
-            ),
-          points,
-        );
-        expect(hits).toEqual(Array.from({ length: 21 }, () => true));
-
-        const pairIndex = Math.floor(count / 2);
-        const before = await measure(markers.nth(pairIndex));
-        const after = await measure(markers.nth(pairIndex + 1));
-        const clickX =
-          (before.x + before.width / 2 + after.x + after.width / 2) / 2;
-        const clickY = sliderBox.y + sliderBox.height / 2;
-        await page.mouse.click(clickX, clickY);
-
-        const state = await slider.evaluate((element) => {
-          const input = element as HTMLInputElement;
-          return {
-            min: Number(input.min),
-            max: Number(input.max),
-            step: Number(input.step),
-            value: Number(input.value),
-          };
-        });
-        const expectedRaw =
-          state.min +
-          ((clickX - sliderBox.x) / sliderBox.width) * (state.max - state.min);
-        const expected = Math.min(
-          state.max,
-          Math.max(
-            state.min,
-            state.min +
-              Math.round((expectedRaw - state.min) / state.step) * state.step,
-          ),
-        );
-        expect(Math.abs(state.value - expected)).toBeLessThanOrEqual(
-          state.step,
-        );
-
-        const expectedTime = await page.evaluate(
-          (ms) =>
-            new Intl.DateTimeFormat("en-GB", {
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-              hour12: false,
-            }).format(new Date(ms)),
-          state.value,
-        );
-        await expect(page.getByTestId("playback-current-time")).toContainText(
-          expectedTime,
-        );
-        await captureForReview(page, `05-playback-pointer-${count}`);
-      });
-    }
-  });
-}
-
-for (const count of [5, 40, 60] as const) {
-  test(`the event lane picks the nearest event out of ${count}`, async ({
+  test("keeps at least 40% of the viewport visible between the bars", async ({
     page,
   }) => {
-    await gotoPlayback(page, count);
-    const markers = page.getByTestId("playback-event-marker");
-    await expect(markers).toHaveCount(count);
-    const index = Math.floor(count / 2);
-    const earlier = markers.nth(index);
-    const later = markers.nth(index + 1);
-    const earlierLabel = (await earlier.getAttribute("aria-label")) ?? "";
-    const expectedTime = earlierLabel.slice(
-      earlierLabel.lastIndexOf(" at ") + 4,
-    );
-    const previewLabel = earlierLabel
-      .slice(0, earlierLabel.lastIndexOf(" at "))
-      .replace(/\s*\((?:low|medium|high|critical)\)$/, "");
-
-    const earlierBox = await measure(earlier);
-    const laterBox = await measure(later);
-    const laneBox = await measure(page.getByTestId("playback-event-band"));
-    const viewport = page.viewportSize();
-    expect(laneBox.height).toBeGreaterThanOrEqual(
-      (viewport?.width ?? 1440) < 768 ? 44 : 28,
-    );
-
-    const clickX =
-      (earlierBox.x + earlierBox.width / 2 + laterBox.x + laterBox.width / 2) /
-      2;
-    const clickY = laneBox.y + laneBox.height / 2;
-    await page.mouse.move(clickX, clickY);
-    await expect(page.getByTestId("playback-current-time")).toContainText(
-      previewLabel,
-    );
-    await page.mouse.click(clickX, clickY);
-
-    const valueText =
-      (await page
-        .getByRole("slider", { name: "Playback position" })
-        .getAttribute("aria-valuetext")) ?? "";
-    expect(valueText).toContain(expectedTime);
-    await captureForReview(page, `05-playback-lane-${count}`);
+    await gotoPlayback(page, 40, "long");
+    const options = await measure(page.getByTestId("playback-options"));
+    const bar = await measure(page.getByRole("region", { name: "Playback controls" }));
+    const visible = bar.y - options.bottom;
+    expect(visible).toBeGreaterThanOrEqual(640 * 0.4);
   });
-}
+});
