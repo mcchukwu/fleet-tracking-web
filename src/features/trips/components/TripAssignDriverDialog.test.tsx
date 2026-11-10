@@ -30,6 +30,7 @@ const mocks = vi.hoisted(() => ({
     ],
     isPending: false,
     error: null as unknown,
+    refetch: vi.fn(),
   },
 }));
 
@@ -77,6 +78,7 @@ describe("TripAssignDriverDialog", () => {
     mocks.transition.mockReset();
     mocks.pending = false;
     mocks.error = null;
+    mocks.reset.mockReset();
     mocks.drivers = {
       data: [
         {
@@ -98,6 +100,7 @@ describe("TripAssignDriverDialog", () => {
       ],
       isPending: false,
       error: null,
+      refetch: vi.fn(),
     };
   });
 
@@ -127,7 +130,7 @@ describe("TripAssignDriverDialog", () => {
   });
 
   it("shows the no-driver reason", () => {
-    mocks.drivers = { data: [], isPending: false, error: null };
+    mocks.drivers = { data: [], isPending: false, error: null, refetch: vi.fn() };
     renderDialog();
     expect(
       screen.getByText("No active drivers are available. Add one before assigning this trip."),
@@ -153,5 +156,43 @@ describe("TripAssignDriverDialog", () => {
 
     expect(screen.getByText("It wasn't saved.")).toBeVisible();
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("offers a retry when the driver list fails", async () => {
+    mocks.drivers = {
+      data: [],
+      isPending: false,
+      error: {
+        kind: "network",
+        retryable: true,
+        outcome: "failed",
+        context: { route: "/trips" },
+        at: 0,
+      },
+      refetch: vi.fn(),
+    };
+    const user = userEvent.setup();
+    renderDialog();
+
+    await user.click(screen.getByRole("button", { name: "Retry drivers" }));
+    expect(mocks.drivers.refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("clears the selection and write error when reopened", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    const { rerender } = render(
+      <TripAssignDriverDialog open trip={trip} onClose={onClose} />,
+    );
+
+    await user.click(screen.getByLabelText("Driver"));
+    await user.click(screen.getByRole("option", { name: /Adebayo Okafor/ }));
+
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(mocks.reset).toHaveBeenCalled();
+
+    rerender(<TripAssignDriverDialog open={false} trip={trip} onClose={onClose} />);
+    rerender(<TripAssignDriverDialog open trip={trip} onClose={onClose} />);
+    expect(screen.getByRole("button", { name: "Assign driver" })).toBeDisabled();
   });
 });

@@ -63,7 +63,13 @@ describe("TripTable", () => {
     });
 
     expect(screen.getByText("2.0 km")).toBeVisible();
-    expect(screen.getByText("Unknown status: diverted")).toBeVisible();
+    const fallback = screen.getByText("Unknown status: diverted");
+    expect(fallback).toBeVisible();
+    expect(fallback.closest("td")).toHaveAttribute("title", "Unknown status: diverted");
+    expect(fallback.closest("td")?.querySelector("[data-cell-content]")).toHaveAttribute(
+      "data-truncate",
+      "true",
+    );
   });
 
   it("opens the row and fires the next action", async () => {
@@ -99,11 +105,49 @@ describe("TripTable", () => {
             onLoadMore={vi.fn()}
             emptyReason="no-loaded-matches"
             onClearFilters={vi.fn()}
+            hasLoadedRows
           />
         </ToastProvider>
       </TooltipProvider>,
     );
     expect(screen.getByText("No trips match in the loaded trips")).toBeVisible();
+  });
+
+  it("shows the filtered empty state when cached rows do not match offline", () => {
+    renderTable({
+      trips: [],
+      state: "empty",
+      emptyReason: "no-results",
+      offline: true,
+      hasLoadedRows: true,
+    });
+    expect(screen.getByText("No trips match")).toBeVisible();
+    expect(screen.queryByText("No trips available offline")).not.toBeInTheDocument();
+  });
+
+  it("shows the offline empty state only when nothing is cached", () => {
+    renderTable({
+      trips: [],
+      state: "empty",
+      emptyReason: "no-data",
+      offline: true,
+      hasLoadedRows: false,
+    });
+    expect(screen.getByText("No trips available offline")).toBeVisible();
+  });
+
+  it("dims the pending row", () => {
+    renderTable({ pendingId: "trip-1" });
+    const row = screen.getByRole("button", { name: /Open trip to Ibadan Customer/ }).closest("tr");
+    expect(row?.className).toContain("opacity-60");
+  });
+
+  it("disables Load more offline", () => {
+    renderTable({ hasMore: true, offline: true });
+    expect(screen.getByRole("button", { name: "Load more" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
   });
 
   it("explains a cancelled load and offers Retry", () => {

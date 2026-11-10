@@ -105,6 +105,13 @@ export function TripCreateDialog({
     description: driverDescription(driver),
   }));
   const copy = write.error ? tripWriteCopy(write.error, "create") : null;
+  const vehicleError =
+    [snapshot.error ? "Couldn't load vehicles." : null, errors.vehicle_id?.message]
+      .filter(Boolean)
+      .join(" ") || undefined;
+  const driverError = driversQuery.error
+    ? "Couldn't load drivers. The trip can still be created."
+    : undefined;
 
   return (
     <>
@@ -153,14 +160,16 @@ export function TripCreateDialog({
               value={vehicleId || null}
               onChange={(id) => setValue("vehicle_id", id, { shouldDirty: true, shouldValidate: true })}
               loading={snapshot.isPending}
-              error={snapshot.error ? "Couldn't load vehicles. Try again." : undefined}
+              error={vehicleError}
               emptyMessage="No vehicles"
               placeholder="Search by plate, depot or IMEI"
             />
-            {errors.vehicle_id?.message ? (
-              <p className="text-danger text-xs sm:col-span-2" role="alert">
-                {errors.vehicle_id.message}
-              </p>
+            {snapshot.error ? (
+              <div className="flex justify-end sm:col-span-2">
+                <Button size="sm" variant="ghost" onClick={() => void snapshot.refetch()}>
+                  Retry vehicles
+                </Button>
+              </div>
             ) : null}
 
             <Combobox
@@ -170,10 +179,17 @@ export function TripCreateDialog({
               value={driverId || null}
               onChange={(id) => setValue("driver_id", id, { shouldDirty: true })}
               loading={driversQuery.isPending}
-              error={driversQuery.error ? "Couldn't load drivers. The trip can still be created." : undefined}
+              error={driverError}
               emptyMessage="No active drivers"
               placeholder="Search by name, phone or licence"
             />
+            {driversQuery.error ? (
+              <div className="flex justify-end sm:col-span-2">
+                <Button size="sm" variant="ghost" onClick={() => void driversQuery.refetch()}>
+                  Retry drivers
+                </Button>
+              </div>
+            ) : null}
 
             <Input
               label="Origin"

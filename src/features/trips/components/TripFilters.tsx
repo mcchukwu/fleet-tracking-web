@@ -1,7 +1,11 @@
 import { RotateCcw } from "lucide-react";
 import type { TripStatus } from "../../../api/types";
-import { tripStatusLabels, tripStatusOptions } from "../../../lib/status";
-import { tripSortOptions, type TripSort } from "../../../lib/trips";
+import {
+  isTripStatus,
+  tripStatusLabels,
+  tripStatusOptions,
+} from "../../../lib/status";
+import { isTripSort, tripSortOptions, type TripSort } from "../../../lib/trips";
 import { Button } from "../../../ui/Button";
 import { SearchInput } from "../../../ui/SearchInput";
 import { Select } from "../../../ui/Select";
@@ -35,9 +39,10 @@ export function TripFilters({ values, onChange, onReset, className }: TripFilter
         <Select
           label="Status"
           value={values.status ?? ""}
-          onChange={(event) =>
-            onChange({ status: (event.target.value as TripStatus) || null })
-          }
+          onChange={(event) => {
+            const value = event.target.value;
+            onChange({ status: isTripStatus(value) ? value : null });
+          }}
         >
           <option value="">All statuses</option>
           {tripStatusOptions.map((status) => (
@@ -50,7 +55,10 @@ export function TripFilters({ values, onChange, onReset, className }: TripFilter
         <Select
           label="Sort"
           value={values.sort}
-          onChange={(event) => onChange({ sort: event.target.value as TripSort })}
+          onChange={(event) => {
+            const value = event.target.value;
+            onChange({ sort: isTripSort(value) ? value : "status" });
+          }}
         >
           {tripSortOptions.map((sort) => (
             <option key={sort} value={sort}>

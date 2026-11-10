@@ -120,7 +120,8 @@ function TripOpenButton({ trip, onOpen }: TripOpenButtonProps) {
 function TripTableSkeleton() {
   return (
     <output aria-busy="true" aria-label="Loading trips" className="block">
-      <div className="border-border overflow-x-auto rounded-lg border">
+      {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- A scrollable region must be keyboard reachable (axe scrollable-region-focusable). */}
+      <div className="border-border overflow-x-auto rounded-lg border" tabIndex={0}>
         <table
           className="w-full table-fixed border-collapse text-sm"
           style={tableMinWidth(TABLE_MIN_WIDTH)}
@@ -148,7 +149,7 @@ function TripTableSkeleton() {
           </thead>
           <tbody>
             {Array.from({ length: 6 }).map((_, rowIndex) => (
-              <tr key={rowIndex} className="h-row border-border border-b last:border-0">
+              <tr key={rowIndex} className="h-row border-border border-b">
                 {COLUMN_ORDER.map(([id]) => (
                   <td key={id} className="px-3 py-0">
                     <Skeleton className="h-3 w-full max-w-24" />
@@ -178,6 +179,7 @@ export interface TripTableProps {
   onLoadMore: () => void;
   emptyReason: TripEmptyReason | null;
   onClearFilters: () => void;
+  hasLoadedRows?: boolean;
   actionError?: TripActionError | null;
   staleLabel?: string;
   forbiddenAction?: ReactNode;
@@ -201,6 +203,7 @@ export function TripTable({
   onLoadMore,
   emptyReason,
   onClearFilters,
+  hasLoadedRows = trips.length > 0,
   actionError = null,
   staleLabel,
   forbiddenAction,
@@ -306,12 +309,15 @@ export function TripTable({
         header: "Status",
         width: COLUMN_WIDTHS.status,
         align: "left",
-        truncate: false,
+        title: (row) =>
+          isTripStatus(row.trip.status) ? null : `Unknown status: ${row.trip.status}`,
         cell: (row) =>
           isTripStatus(row.trip.status) ? (
             <TripStatusBadge status={row.trip.status} />
           ) : (
-            <Badge tone="neutral">Unknown status: {row.trip.status}</Badge>
+            <Badge tone="neutral" className="max-w-full overflow-hidden">
+              Unknown status: {row.trip.status}
+            </Badge>
           ),
       },
       {
@@ -386,7 +392,7 @@ export function TripTable({
         </Button>
       }
     />
-  ) : offline ? (
+  ) : offline && !hasLoadedRows ? (
     <EmptyState
       title="No trips available offline"
       description="Reconnect to load the trip list."
@@ -396,7 +402,12 @@ export function TripTable({
       title="No trips match in the loaded trips"
       description="Load more to search older trips."
       action={
-        <Button size="sm" onClick={onLoadMore} loading={loadingMore}>
+        <Button
+          size="sm"
+          onClick={onLoadMore}
+          loading={loadingMore}
+          {...(offline ? { disabledReason: "You're offline." } : {})}
+        >
           Load more
         </Button>
       }
@@ -449,7 +460,10 @@ export function TripTable({
                 row.kind === "trip"
                   ? {
                       "data-trip-row": row.trip.id,
-                      className: "cursor-pointer",
+                      className: cn(
+                        "cursor-pointer",
+                        pendingId === row.trip.id && "opacity-60",
+                      ),
                       onClick: (event) => {
                         if ((event.target as HTMLElement).closest("button, a")) return;
                         onOpen(row.trip.id);
@@ -491,7 +505,12 @@ export function TripTable({
 
           {hasMore ? (
             <div className="flex shrink-0 justify-center py-3">
-              <Button size="sm" onClick={onLoadMore} loading={loadingMore}>
+              <Button
+                size="sm"
+                onClick={onLoadMore}
+                loading={loadingMore}
+                {...(offline ? { disabledReason: "You're offline." } : {})}
+              >
                 Load more
               </Button>
             </div>

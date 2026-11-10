@@ -155,6 +155,9 @@ describe("trip empty reasons", () => {
       tripEmptyReason({ loadedCount: 0, visibleCount: 0, hasMore: false, filtered: false }),
     ).toBe("no-data");
     expect(
+      tripEmptyReason({ loadedCount: 0, visibleCount: 0, hasMore: false, filtered: true }),
+    ).toBe("no-results");
+    expect(
       tripEmptyReason({ loadedCount: 10, visibleCount: 0, hasMore: false, filtered: true }),
     ).toBe("no-results");
     expect(

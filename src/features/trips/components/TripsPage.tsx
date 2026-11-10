@@ -6,7 +6,7 @@ import type { TripsSearch } from "../../../app/search";
 import { useCan } from "../../../auth/useCan";
 import { normalize } from "../../../errors/normalize";
 import type { AppError } from "../../../errors/types";
-import { formatClockTime } from "../../../lib/format";
+import { formatClockTime, formatCount } from "../../../lib/format";
 import {
   transitionPayload,
   tripEmptyReason,
@@ -66,10 +66,15 @@ function TripsPageContent() {
   );
 
   const [createOpen, setCreateOpen] = useState(false);
-  const [assignTrip, setAssignTrip] = useState<Trip | null>(null);
+  const [createScrollReset, setCreateScrollReset] = useState(0);
+  const [assignTrip, setAssignTrip] = useState<{
+    trip: Trip;
+    origin: "row" | "detail";
+  } | null>(null);
   const [confirm, setConfirm] = useState<{
     trip: Trip;
     action: Extract<TripAction, "complete" | "cancel">;
+    origin: "row" | "detail";
   } | null>(null);
   const [pendingTripId, setPendingTripId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<{
@@ -119,7 +124,7 @@ function TripsPageContent() {
       ? "loading"
       : closedError
         ? "error"
-        : offline && feed.trips.length > 0
+        : offline && trips.length > 0
           ? "stale"
           : trips.length === 0
             ? "empty"
@@ -208,6 +213,7 @@ function TripsPageContent() {
 
   function afterCreate(): void {
     updateSearch({ status: undefined, q: undefined, trip: undefined });
+    setCreateScrollReset((value) => value + 1);
     setTimeout(() => createRef.current?.focus(), 0);
   }
 
@@ -235,11 +241,11 @@ function TripsPageContent() {
 
   function handleAction(trip: Trip, action: TripAction, origin: "row" | "detail"): void {
     if (action === "assign" && !trip.driver_id) {
-      setAssignTrip(trip);
+      setAssignTrip({ trip, origin });
       return;
     }
     if (action === "complete" || action === "cancel") {
-      setConfirm({ trip, action });
+      setConfirm({ trip, action, origin });
       return;
     }
     void runAction(trip, action, origin);
@@ -265,7 +271,7 @@ function TripsPageContent() {
         <div className="flex flex-col gap-1">
           <h1 className="text-text text-lg font-semibold">Trips</h1>
           <p className="text-muted text-sm">
-            <span className="tabular-nums">{feed.loadedCount}</span> loaded
+            <span className="tabular-nums">{formatCount(feed.loadedCount)}</span> loaded
           </p>
         </div>
         <Button
@@ -296,6 +302,7 @@ function TripsPageContent() {
         onLoadMore={feed.loadMore}
         emptyReason={emptyReason}
         onClearFilters={resetFilters}
+        hasLoadedRows={feed.loadedCount > 0}
         actionError={rowActionError}
         {...(offline && feed.dataUpdatedAt
           ? { staleLabel: formatClockTime(feed.dataUpdatedAt) }
@@ -310,7 +317,7 @@ function TripsPageContent() {
             Go back
           </Link>
         }
-        resetKey={JSON.stringify(filters)}
+        resetKey={`${JSON.stringify(filters)}:${createScrollReset}`}
       />
 
       <TripCreateDialog
@@ -321,14 +328,14 @@ function TripsPageContent() {
       />
 
       <TripAssignDriverDialog
-        key={assignTrip?.id ?? "none"}
+        key={assignTrip?.trip.id ?? "none"}
         open={assignTrip !== null}
-        trip={assignTrip}
+        trip={assignTrip?.trip ?? null}
         onClose={() => setAssignTrip(null)}
         onFinished={() => {
-          const id = assignTrip?.id;
+          const current = assignTrip;
           setAssignTrip(null);
-          if (id) focusAfterAction(id, "row");
+          if (current) focusAfterAction(current.trip.id, current.origin);
         }}
       />
 
@@ -338,9 +345,9 @@ function TripsPageContent() {
         action={confirm?.action ?? "complete"}
         onClose={() => setConfirm(null)}
         onFinished={() => {
-          const id = confirm?.trip.id;
+          const current = confirm;
           setConfirm(null);
-          if (id) focusAfterAction(id, "row");
+          if (current) focusAfterAction(current.trip.id, current.origin);
         }}
       />
 

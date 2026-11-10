@@ -34,8 +34,8 @@ export interface TripNextAction {
 }
 
 export function tripStatusRank(status: string): number {
-  const rank = OPERATIONAL_ORDER.indexOf(status as TripStatus);
-  return rank === -1 ? OPERATIONAL_ORDER.length : rank;
+  if (!isTripStatus(status)) return OPERATIONAL_ORDER.length;
+  return OPERATIONAL_ORDER.indexOf(status);
 }
 
 /** Invalid transitions are never offered; unknown statuses offer nothing. */
@@ -144,10 +144,9 @@ export interface TripEmptyInput {
 }
 
 export function tripEmptyReason(input: TripEmptyInput): TripEmptyReason | null {
-  if (input.loadedCount === 0) return "no-data";
   if (input.visibleCount > 0) return null;
-  if (!input.filtered) return null;
-  return input.hasMore ? "no-loaded-matches" : "no-results";
+  if (input.filtered) return input.hasMore ? "no-loaded-matches" : "no-results";
+  return input.loadedCount === 0 ? "no-data" : null;
 }
 
 /**

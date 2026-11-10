@@ -63,9 +63,15 @@ vi.mock("./TripTable", () => ({
     trips: Trip[];
     state: string;
     disabledReason?: string;
+    resetKey?: string;
     onOpen: (id: string) => void;
   }) => (
-    <div data-testid="trip-table" data-state={props.state} data-disabled={props.disabledReason ?? ""}>
+    <div
+      data-testid="trip-table"
+      data-state={props.state}
+      data-disabled={props.disabledReason ?? ""}
+      data-reset-key={props.resetKey ?? ""}
+    >
       <span data-testid="loaded">{props.trips.length}</span>
       {props.trips[0] ? (
         <button type="button" onClick={() => props.onOpen(props.trips[0]?.id ?? "")}>
@@ -190,6 +196,7 @@ describe("TripsPage", () => {
     const user = userEvent.setup();
     mocks.search = { status: "planned", q: "lsd" };
     renderPage();
+    const before = screen.getByTestId("trip-table").getAttribute("data-reset-key");
 
     await user.click(screen.getByRole("button", { name: "Create trip" }));
     await user.click(screen.getByTestId("trip-created"));
@@ -201,6 +208,13 @@ describe("TripsPage", () => {
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "Create trip" })).toHaveFocus(),
     );
+    expect(screen.getByTestId("trip-table").getAttribute("data-reset-key")).not.toBe(before);
+  });
+
+  it("formats the loaded count", () => {
+    mocks.feed = { ...mocks.feed, loadedCount: 1234 };
+    renderPage();
+    expect(screen.getByText("1,234")).toBeVisible();
   });
 
   it("opens a trip through the URL", async () => {

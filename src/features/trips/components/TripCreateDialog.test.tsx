@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
     ],
     isPending: false,
     error: null as unknown,
+    refetch: vi.fn(),
   },
   drivers: {
     data: [
@@ -35,6 +36,7 @@ const mocks = vi.hoisted(() => ({
     ],
     isPending: false,
     error: null as unknown,
+    refetch: vi.fn(),
   },
 }));
 
@@ -79,6 +81,10 @@ describe("TripCreateDialog", () => {
     mocks.create.mockReset();
     mocks.error = null;
     mocks.pending = false;
+    mocks.snapshot.error = null;
+    mocks.snapshot.refetch.mockReset();
+    mocks.drivers.error = null;
+    mocks.drivers.refetch.mockReset();
   });
 
   it("validates the required fields", async () => {
@@ -90,6 +96,36 @@ describe("TripCreateDialog", () => {
     expect(screen.getByText("Enter an origin.")).toBeVisible();
     expect(screen.getByText("Enter a destination.")).toBeVisible();
     expect(mocks.create).not.toHaveBeenCalled();
+
+    const vehicle = screen.getByLabelText("Vehicle");
+    const message = screen.getByText("Choose a vehicle.");
+    expect(vehicle).toHaveAttribute("aria-invalid", "true");
+    expect(vehicle.getAttribute("aria-describedby")).toContain(message.id);
+  });
+
+  it("offers retry actions when the vehicle and driver lists fail", async () => {
+    mocks.snapshot.error = {
+      kind: "network",
+      retryable: true,
+      outcome: "failed",
+      context: { route: "/trips" },
+      at: 0,
+    };
+    mocks.drivers.error = {
+      kind: "network",
+      retryable: true,
+      outcome: "failed",
+      context: { route: "/trips" },
+      at: 0,
+    };
+    const user = userEvent.setup();
+    renderDialog();
+
+    await user.click(screen.getByRole("button", { name: "Retry vehicles" }));
+    expect(mocks.snapshot.refetch).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole("button", { name: "Retry drivers" }));
+    expect(mocks.drivers.refetch).toHaveBeenCalledTimes(1);
   });
 
   it("submits the vehicle, driver and trimmed route without a status", async () => {

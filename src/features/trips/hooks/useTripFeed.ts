@@ -50,20 +50,22 @@ export function useTripFeed(filters: TripServerFilters): TripFeedController {
   const signature = JSON.stringify(filters);
   const signatureRef = useRef(signature);
   const inFlightPage = useRef(false);
+  const dataUpdatedAt = query.dataUpdatedAt;
 
   useEffect(() => {
     const reset = signatureRef.current !== signature;
     signatureRef.current = signature;
-    if (reset || incoming.length > 0) setCancelled(false);
-  }, [incoming, signature]);
+    if (reset || incoming.length > 0 || dataUpdatedAt > 0) setCancelled(false);
+  }, [incoming, signature, dataUpdatedAt]);
 
   const loadMore = useCallback(() => {
+    if (!online) return;
     if (inFlightPage.current || !query.hasNextPage || query.isFetchingNextPage) return;
     inFlightPage.current = true;
     void query.fetchNextPage().finally(() => {
       inFlightPage.current = false;
     });
-  }, [query]);
+  }, [online, query]);
 
   const refetch = useCallback(() => {
     void query.refetch();

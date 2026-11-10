@@ -25,6 +25,7 @@ export function TripAssignDriverDialog({
 }: TripAssignDriverDialogProps) {
   const driversQuery = useDrivers();
   const write = useTripWrite();
+  const { reset: resetWrite } = write;
   const [driverId, setDriverId] = useState<string | null>(null);
   const errorRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
@@ -46,6 +47,12 @@ export function TripAssignDriverDialog({
     description: driverDescription(driver),
   }));
 
+  function close(): void {
+    setDriverId(null);
+    resetWrite();
+    onClose();
+  }
+
   async function submit(): Promise<void> {
     if (!trip || !driverId || write.pending) return;
     const outcome = await write.transition(
@@ -55,7 +62,7 @@ export function TripAssignDriverDialog({
     );
     if (outcome.status === "done" || outcome.status === "gone" || outcome.status === "conflict") {
       onFinished?.();
-      onClose();
+      close();
     }
   }
 
@@ -65,13 +72,13 @@ export function TripAssignDriverDialog({
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        if (!next && !write.pending) onClose();
+        if (!next && !write.pending) close();
       }}
       title={trip ? `Assign a driver to ${trip.plate}` : "Assign a driver"}
       description="Choose an active driver, then assign the trip."
       footer={
         <>
-          <Button ref={cancelRef} onClick={onClose} disabled={write.pending}>
+          <Button ref={cancelRef} onClick={close} disabled={write.pending}>
             Cancel
           </Button>
           <Button
@@ -107,10 +114,17 @@ export function TripAssignDriverDialog({
         value={driverId}
         onChange={setDriverId}
         loading={driversQuery.isPending}
-        error={driversQuery.error ? "Couldn't load drivers. Try again." : undefined}
+        error={driversQuery.error ? "Couldn't load drivers." : undefined}
         emptyMessage="No active drivers"
         placeholder="Search by name, phone or licence"
       />
+      {driversQuery.error ? (
+        <div className="mt-2 flex justify-end">
+          <Button size="sm" variant="ghost" onClick={() => void driversQuery.refetch()}>
+            Retry drivers
+          </Button>
+        </div>
+      ) : null}
     </Dialog>
   );
 }

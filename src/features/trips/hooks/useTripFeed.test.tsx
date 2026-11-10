@@ -50,6 +50,8 @@ describe("useTripFeed", () => {
   beforeEach(() => {
     mocks.query.fetchNextPage.mockReset();
     mocks.query.refetch.mockReset();
+    mocks.query.isPending = false;
+    mocks.query.dataUpdatedAt = 0;
     mocks.query.data = { pages: [[trip(1), trip(2)], [trip(3)]] };
     mocks.query.hasNextPage = true;
     useConnectionStore.setState({ network: "online" });
@@ -98,6 +100,35 @@ describe("useTripFeed", () => {
     await waitFor(() => expect(result.current.cancelled).toBe(true));
     expect(result.current.isLoading).toBe(false);
     mocks.query.isPending = false;
+  });
+
+  it("clears cancelled after a successful data update", async () => {
+    mocks.query.isPending = true;
+    const queryClient = new QueryClient();
+    vi.spyOn(queryClient, "cancelQueries").mockResolvedValue(undefined);
+    const { result, rerender } = renderHook(() => useTripFeed({ status: "active" }), {
+      wrapper: wrapper(queryClient),
+    });
+
+    act(() => result.current.cancel());
+    await waitFor(() => expect(result.current.cancelled).toBe(true));
+
+    mocks.query.isPending = false;
+    mocks.query.data = { pages: [[]] };
+    mocks.query.dataUpdatedAt = Date.now();
+    rerender();
+
+    await waitFor(() => expect(result.current.cancelled).toBe(false));
+  });
+
+  it("does not request another page while offline", () => {
+    useConnectionStore.setState({ network: "offline" });
+    const { result } = renderHook(() => useTripFeed({}), {
+      wrapper: wrapper(new QueryClient()),
+    });
+
+    act(() => result.current.loadMore());
+    expect(mocks.query.fetchNextPage).not.toHaveBeenCalled();
   });
 });
 
