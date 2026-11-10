@@ -1,6 +1,15 @@
 import { ChevronDown, CircleAlert, Search } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+} from "react";
 import { cn } from "./cn";
+import { LayerPortal } from "./LayerPortal";
 /* oxlint-disable jsx-a11y/no-noninteractive-element-to-interactive-role, jsx-a11y/prefer-tag-over-role, jsx-a11y/click-events-have-key-events -- ARIA 1.2 combobox/listbox: the input owns the keyboard and aria-activedescendant; list options are pointer shortcuts. */
 
 export interface ComboboxItem {
@@ -25,8 +34,6 @@ export interface ComboboxProps {
   disabledReason?: string;
   placeholder?: string;
   initialFocus?: boolean;
-  /** Keep the list out of flow so an enclosing dialog footer cannot move under the pointer. */
-  overlay?: boolean;
   className?: string;
 }
 
@@ -37,7 +44,72 @@ function normalize(value: string): string {
 function matches(item: ComboboxItem, query: string): boolean {
   const normalized = normalize(query);
   if (!normalized) return true;
-  return normalize(`${item.label} ${item.description ?? ""}`).includes(normalized);
+  return normalize(`${item.label} ${item.description ?? ""}`).includes(
+    normalized,
+  );
+}
+
+const LIST_MAX_HEIGHT = 256;
+const LIST_GAP = 4;
+const VIEWPORT_MARGIN = 8;
+
+interface ListBoxPosition {
+  top: number | null;
+  bottom: number | null;
+  left: number;
+  width: number;
+  maxHeight: number;
+}
+
+function measureListBox(input: HTMLInputElement): ListBoxPosition {
+  const rect = input.getBoundingClientRect();
+  const dialogFooter = input
+    .closest('[role="dialog"]')
+    ?.querySelector<HTMLElement>("[data-dialog-footer]");
+  const footerTop = dialogFooter?.getBoundingClientRect().top;
+  const belowLimit =
+    footerTop === undefined
+      ? window.innerHeight - VIEWPORT_MARGIN
+      : footerTop - VIEWPORT_MARGIN;
+  const below = belowLimit - rect.bottom;
+  const above = rect.top - VIEWPORT_MARGIN;
+  const openAbove = below < 120 && above > below;
+  const maxHeight = Math.max(
+    80,
+    Math.min(LIST_MAX_HEIGHT, openAbove ? above : below),
+  );
+  const width = Math.min(rect.width, window.innerWidth - VIEWPORT_MARGIN * 2);
+  const left = Math.min(
+    Math.max(VIEWPORT_MARGIN, rect.left),
+    window.innerWidth - VIEWPORT_MARGIN - width,
+  );
+  return openAbove
+    ? {
+        top: null,
+        bottom: window.innerHeight - rect.top + LIST_GAP,
+        left,
+        width,
+        maxHeight,
+      }
+    : {
+        top: rect.bottom + LIST_GAP,
+        bottom: null,
+        left,
+        width,
+        maxHeight,
+      };
+}
+
+function listStyle(box: ListBoxPosition): CSSProperties {
+  return {
+    position: "fixed",
+    pointerEvents: "auto",
+    top: box.top ?? "auto",
+    bottom: box.bottom ?? "auto",
+    left: box.left,
+    width: box.width,
+    maxHeight: box.maxHeight,
+  };
 }
 
 export function Combobox({
@@ -53,7 +125,6 @@ export function Combobox({
   disabledReason,
   placeholder = "Search",
   initialFocus = false,
-  overlay = false,
   className,
 }: ComboboxProps) {
   const listId = useId();
@@ -62,20 +133,41 @@ export function Combobox({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [listBox, setListBox] = useState<ListBoxPosition | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const skipAutoOpen = useRef(initialFocus);
 
   useEffect(() => {
     if (initialFocus) inputRef.current?.focus();
   }, [initialFocus]);
 
+  useEffect(() => {
+    if (!open) return;
+    const input = inputRef.current;
+    if (!input) return;
+    const update = () => setListBox(measureListBox(input));
+    update();
+    window.addEventListener("resize", update);
+    document.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      document.removeEventListener("scroll", update, true);
+    };
+  }, [open]);
+
   const selected = items.find((item) => item.id === value) ?? null;
   const display = selected?.label ?? selectedLabel ?? "";
-  const filtered = useMemo(() => items.filter((item) => matches(item, query)), [items, query]);
-  const activeIndexClamped = filtered.length === 0 ? 0 : Math.min(activeIndex, filtered.length - 1);
+  const filtered = useMemo(
+    () => items.filter((item) => matches(item, query)),
+    [items, query],
+  );
+  const activeIndexClamped =
+    filtered.length === 0 ? 0 : Math.min(activeIndex, filtered.length - 1);
 
   function openList(): void {
     if (disabled) return;
+    setListBox(null);
     setOpen(true);
     setQuery("");
     setActiveIndex(0);
@@ -147,16 +239,17 @@ export function Combobox({
       ref={containerRef}
       className={cn("flex flex-col gap-1", className)}
       onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) closeList();
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+          closeList();
       }}
     >
-      <label htmlFor={inputId} className="text-sm font-medium text-text">
+      <label htmlFor={inputId} className="text-text text-sm font-medium">
         {label}
       </label>
       <div className="relative">
         <Search
           aria-hidden="true"
-          className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle"
+          className="text-subtle pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
           strokeWidth={1.5}
         />
         <input
@@ -182,60 +275,71 @@ export function Combobox({
             if (!open) setOpen(true);
             setActiveIndex(0);
           }}
-          onFocus={openList}
+          onFocus={() => {
+            if (skipAutoOpen.current) {
+              skipAutoOpen.current = false;
+              return;
+            }
+            openList();
+          }}
           onClick={() => {
             if (!open) openList();
           }}
           onKeyDown={onKeyDown}
           className={cn(
-            "h-touch w-full rounded-md border border-border-strong bg-surface pl-9 pr-9 text-base text-text transition-colors duration-100 placeholder:text-subtle focus-visible:border-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus-ring/30 disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-muted md:h-control-md",
+            "h-touch border-border-strong bg-surface text-text placeholder:text-subtle focus-visible:border-accent focus-visible:ring-focus-ring/30 disabled:bg-surface-2 disabled:text-muted md:h-control-md w-full rounded-md border pr-9 pl-9 text-base transition-colors duration-100 focus-visible:ring-1 focus-visible:outline-none focus-visible:ring-inset disabled:cursor-not-allowed",
             error ? "border-danger" : undefined,
           )}
         />
         <ChevronDown
           aria-hidden="true"
           className={cn(
-            "pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-subtle transition-transform duration-100",
+            "text-subtle pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 transition-transform duration-100",
             open ? "rotate-180" : undefined,
           )}
           strokeWidth={1.5}
         />
-        {open ? (
-          <ul
-            id={listId}
-            role="listbox"
-            aria-label={label}
-            className={cn(
-              "z-menu max-h-64 overflow-y-auto rounded-md border border-border bg-surface p-1 shadow-menu",
-              overlay ? "absolute inset-x-0 top-full mt-1" : undefined,
-            )}
-          >
-          {filtered.map((item, index) => {
-            const isActive = index === activeIndexClamped;
-            const isSelected = item.id === value;
-            return (
-              <li
-                key={item.id}
-                id={`${listId}-${item.id}`}
-                role="option"
-                aria-selected={isSelected}
-                onMouseDown={(event) => event.preventDefault()}
-                onMouseEnter={() => setActiveIndex(index)}
-                onClick={() => select(item)}
-                className={cn(
-                  "flex min-h-touch cursor-pointer flex-col justify-center rounded-sm px-3 py-1 text-sm md:min-h-control-md",
-                  isActive ? "bg-surface-2" : undefined,
-                  isSelected ? "text-accent-fg" : "text-text",
-                )}
-              >
-                <span className={cn("font-medium", item.labelClassName)}>{item.label}</span>
-                {item.description ? (
-                  <span className="text-xs text-muted">{item.description}</span>
-                ) : null}
-              </li>
-            );
-          })}
-          </ul>
+        {open && listBox ? (
+          <LayerPortal layer="popover">
+            <ul
+              id={listId}
+              role="listbox"
+              aria-label={label}
+              data-combobox-list
+              style={listStyle(listBox)}
+              className="border-border bg-surface shadow-menu overflow-y-auto rounded-md border p-1"
+            >
+              {filtered.map((item, index) => {
+                const isActive = index === activeIndexClamped;
+                const isSelected = item.id === value;
+                return (
+                  <li
+                    key={item.id}
+                    id={`${listId}-${item.id}`}
+                    role="option"
+                    aria-selected={isSelected}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onMouseEnter={() => setActiveIndex(index)}
+                    onClick={() => select(item)}
+                    className={cn(
+                      "min-h-touch md:min-h-control-md flex cursor-pointer flex-col justify-center rounded-sm px-3 py-1 text-sm",
+                      isActive ? "bg-surface-2" : undefined,
+                      isSelected ? "text-accent-fg" : "text-text",
+                    )}
+                  >
+                    <span className={cn("font-medium", item.labelClassName)}>
+                      {item.label}
+                    </span>
+                    {item.description ? (
+                      <span className="text-muted text-xs">
+                        {item.description}
+                      </span>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          </LayerPortal>
         ) : null}
       </div>
 
@@ -249,14 +353,18 @@ export function Combobox({
           )}
         >
           {error ? (
-            <CircleAlert aria-hidden="true" className="size-3" strokeWidth={1.5} />
+            <CircleAlert
+              aria-hidden="true"
+              className="size-3"
+              strokeWidth={1.5}
+            />
           ) : null}
           {statusMessage}
         </p>
       ) : null}
 
       {disabled && disabledReason ? (
-        <p id={hintId} className="text-xs text-muted">
+        <p id={hintId} className="text-muted text-xs">
           {disabledReason}
         </p>
       ) : null}

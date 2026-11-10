@@ -32,7 +32,6 @@ export function ChangeVehicleDialog({
       <VehiclePicker
         value={value}
         initialFocus
-        overlay
         onChange={(id) => {
           onChange(id);
           onClose();

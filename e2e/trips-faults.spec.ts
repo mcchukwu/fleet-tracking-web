@@ -42,7 +42,7 @@ function unexpectedConsole(errors: string[]): string[] {
 async function fillCreate(page: Page): Promise<void> {
   const create = page.getByRole("dialog").filter({ hasText: "Create trip" });
   await create.getByLabel("Vehicle").click();
-  await create.getByRole("option", { name: /LSD-100-AA/ }).first().click();
+  await page.getByRole("option", { name: /LSD-100-AA/ }).first().click();
   await create.getByLabel("Origin").fill("Refinery Gate");
   await create.getByLabel("Destination").fill("Ibadan Customer");
   await create.getByRole("button", { name: "Create trip" }).click();

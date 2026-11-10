@@ -219,7 +219,7 @@ test.describe("vehicle drawer", () => {
     const driver = dialog.getByRole("combobox", { name: "Driver" });
     await driver.click();
     await driver.fill("08031000002");
-    await dialog.getByText("08031000002 · LIC-01002").click();
+    await page.getByRole("option", { name: /08031000002/ }).click();
     await expect(dialog.getByRole("button", { name: "Assign driver" })).toBeEnabled();
     await dialog.getByRole("button", { name: "Assign driver" }).click();
 

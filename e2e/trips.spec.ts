@@ -40,7 +40,7 @@ test.describe("trips", () => {
     const create = page.getByRole("dialog").filter({ hasText: "Create trip" });
     await expect(create).toBeVisible();
     await create.getByLabel("Vehicle").click();
-    await create.getByRole("option", { name: /LSD-100-AA/ }).first().click();
+    await page.getByRole("option", { name: /LSD-100-AA/ }).first().click();
     await create.getByLabel("Origin").fill("Refinery Gate");
     await create.getByLabel("Destination").fill("Ibadan Customer");
     await captureForReview(page, "06-trips-create");
@@ -67,7 +67,7 @@ test.describe("trips", () => {
     await expect(assign).toBeVisible();
     await expectNoAxeViolations(page);
     await assign.getByLabel("Driver").click();
-    await assign.getByRole("option", { name: /Chinedu Musa/ }).first().click();
+    await page.getByRole("option", { name: /Chinedu Musa/ }).first().click();
     await captureForReview(page, "06-trips-assign");
     await assign.getByRole("button", { name: "Assign driver" }).click();
 

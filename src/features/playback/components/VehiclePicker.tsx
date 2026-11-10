@@ -15,7 +15,6 @@ export interface VehiclePickerProps {
   onChange: (id: string) => void;
   onBack?: () => void;
   initialFocus?: boolean;
-  overlay?: boolean;
   className?: string;
 }
 
@@ -23,7 +22,9 @@ function toItems(vehicles: readonly SnapshotVehicle[]): ComboboxItem[] {
   return vehicles.map((vehicle) => ({
     id: vehicle.id,
     label: vehicle.plate,
-    description: [vehicle.external_id, vehicle.depot].filter(Boolean).join(" · "),
+    description: [vehicle.external_id, vehicle.depot]
+      .filter(Boolean)
+      .join(" · "),
     labelClassName: "font-mono",
   }));
 }
@@ -32,7 +33,7 @@ function VehiclePickerSkeleton() {
   return (
     <div aria-label="Loading vehicles" className="flex flex-col gap-3 p-4">
       <Skeleton className="h-4 w-24" />
-      <Skeleton className="h-touch w-full md:h-control-md" />
+      <Skeleton className="h-touch md:h-control-md w-full" />
       <Skeleton className="h-3 w-2/3" />
       <Skeleton className="h-3 w-1/2" />
     </div>
@@ -44,7 +45,6 @@ export function VehiclePicker({
   onChange,
   onBack,
   initialFocus = false,
-  overlay = false,
   className,
 }: VehiclePickerProps) {
   const snapshot = useLiveSnapshot();
@@ -55,7 +55,9 @@ export function VehiclePicker({
 
   if (rows.length === 0 && offline) {
     return (
-      <div className={cn("rounded-lg border border-border bg-surface", className)}>
+      <div
+        className={cn("border-border bg-surface rounded-lg border", className)}
+      >
         <EmptyState
           title="Not available offline"
           description="Vehicles aren't available offline."
@@ -77,7 +79,9 @@ export function VehiclePicker({
       action: "load vehicles",
     });
     return (
-      <div className={cn("rounded-lg border border-border bg-surface", className)}>
+      <div
+        className={cn("border-border bg-surface rounded-lg border", className)}
+      >
         {error.kind === "forbidden" ? (
           <ForbiddenState
             action={
@@ -98,7 +102,7 @@ export function VehiclePicker({
   if (showSkeleton) {
     return (
       <div
-        className={cn("rounded-lg border border-border bg-surface", className)}
+        className={cn("border-border bg-surface rounded-lg border", className)}
         aria-busy="true"
       >
         <VehiclePickerSkeleton />
@@ -108,7 +112,9 @@ export function VehiclePicker({
 
   if (rows.length === 0) {
     return (
-      <div className={cn("rounded-lg border border-border bg-surface", className)}>
+      <div
+        className={cn("border-border bg-surface rounded-lg border", className)}
+      >
         <EmptyState
           title="No vehicles yet"
           description="Vehicles appear here when they report."
@@ -133,7 +139,6 @@ export function VehiclePicker({
       placeholder="Search by plate or IMEI"
       emptyMessage="No vehicles match"
       initialFocus={initialFocus}
-      overlay={overlay}
       className={className}
     />
   );
