@@ -272,7 +272,7 @@ Shell and dialog sizes are tokens: `--spacing-touch: 44px`, `--spacing-rail-expa
 
 - Navigation is a 56px icon rail with tooltips, expandable to 200px. Active item uses `accent-soft` background and `accent-fg` text.
 - Non-map screens (alerts, trips, drivers, reports, audit) use a standard page layout: page title row, filter row, content. Max content width 1440px, left-aligned.
-- Floating panels sit 12px from the viewport edge, are opaque, have `--radius-lg`, one border, and `--shadow-float`.
+- Floating panels sit 12px from the **content area** edge, are opaque, have `--radius-lg`, one border, and `--shadow-float`. The content area starts below the top bar and the in-flow banner region, so a banner pushes every panel, drawer, sheet, control and attribution down with it.
 - Panels are collapsible with `[`. The map must never be covered by more than 60% of its area at 1440px width.
 
 ### 5.3 Breakpoints
@@ -310,9 +310,27 @@ At `lg`–`xl` the vehicle drawer hides the left panel without changing the save
 - Elevation is expressed by **border first, shadow second**. Only floating panels, menus, popovers, dialogs and toasts have a shadow. Inline content (tables, forms, stat blocks) has a border and no shadow.
 - No nested cards. A card inside a card is a layout mistake; use a divider.
 
-### Z-index scale
+### Layer model
 
-`map 0` · `map controls 10` · `floating panels 20` · `drawer 30` · `connection banner 35` · `sticky headers 40` · `menus and popovers 50` · `dialogs 60` · `toasts 70`. Menus, popovers, dialogs and toasts always render above the connection banner.
+z-index only orders elements inside one stacking context. The console therefore has one scale, defined as CSS variables in `src/ui/layers.css` and used only through named utilities; a numeric or arbitrary z-index elsewhere is a guard failure.
+
+| Layer | Utility | Value | Where it applies |
+|---|---|---|---|
+| Map | `z-map` | 0 | the map surface |
+| Map controls | `z-map-controls` | 10 | map controls, attribution, map-level notices |
+| Panel | `z-panel` | 20 | the vehicle panel, KPI strip, bottom sheet, floating page panels |
+| Drawer | `z-drawer` | 30 | the vehicle drawer and the page drawer |
+| Top bar | `z-topbar` | 40 | shell chrome and page sticky headers |
+| Dialog | `z-dialog` | 60 | modal dialogs and their backdrop |
+| Popover | `z-popover` | 70 | menus, selects, comboboxes, the user menu |
+| Toast | `z-toast` | 80 | the toast viewport |
+| Tooltip | `z-tooltip` | 90 | tooltips |
+
+The content area is `position: relative; isolation: isolate`, so its internal layers (map, controls, panels, drawer) can never paint above the top bar or an overlay, whatever number a component uses. The top bar is in the same shell stacking context but is not positioned against the viewport.
+
+Every overlay above the shell renders through `LayerPortal` into one `#overlay-root`, with one container per layer. Popovers sit above dialogs deliberately: a menu, select or combobox opened inside a dialog must cover the dialog’s content and footer. A banner has no z-index because it is in normal flow, above the content area and below the top bar in document order.
+
+The overlay root is outside the content area, so a modal dialog’s backdrop covers the map, drawer, sheet and banner. Overlay layers stay exposed to assistive technology while a dialog is open; the dialog, not the layer stack, owns modality.
 
 ---
 
@@ -330,6 +348,7 @@ Motion communicates a change of information, never decoration.
 - Marker movement: interpolate linearly between two position updates over the observed update interval, capped at 2s. No easing, no bounce. If an update is older than 10s, snap instead of gliding.
 - New alert: the alert badge pulses twice (a 600ms ring), then stays static.
 - Tables never animate layout. Skeletons use a gentle opacity pulse, never a shimmer; reduced motion disables it. Use the 2px indeterminate top bar for route or page loading, not a full-page spinner.
+- The shell banner region is the one intentional layout animation: its grid track grows from `0fr` to `1fr` over `--motion-slow`, because overlays anchored to the content area must reflow with it. Reduced motion disables it.
 - `@media (prefers-reduced-motion: reduce)`: remove all transitions except opacity, disable marker interpolation and pulses.
 
 ---
@@ -548,14 +567,15 @@ Every list, table, panel and map layer implements all five. Build them with the 
 | **Forbidden** | `You don't have access to this.` plus a link back. Role gating is enforced by the API; the UI never relies on hiding alone. |
 | **Pending** | Keep the previous row visible at reduced opacity and put a spinner in the existing action slot. Do not add text or columns that move the layout. Apply the server result on success; on error, restore the row and announce the error. |
 
-Global banner states (below the top bar, 32px, dismissible only when resolved):
+Global banners live below the top bar **in normal flow**, in one region that collapses to zero height when no banner is present. Only the highest-priority banner shows at a time, in this order:
 
-- **Offline:** `You're offline. Showing data from 14:02. Changes are disabled.` Neutral background, wifi-off icon.
-- **Reconnecting:** `Reconnecting to live updates…` amber.
-- **Live updates unavailable (after 60s):** `Live updates are unavailable. Showing data from 14:02.` with a `Retry now` button; warning tone. Automatic attempts continue at the 30s backoff cap, and the data on screen stays usable.
-- **Session expired:** `Your session expired. Sign in again.` with a `Sign in` button; this is the only blocking banner. Slice 1 implements it as a blocking dialog instead of a banner so the unsaved route and form state stay visible behind it.
-- **Error storm:** `We're having trouble reaching the server. Retrying…` with an `Open System` link, warning tone. One banner only; regions switch to the compact error state while it is up.
-- **Update available:** `A new version is available.` with a `Reload` button, info tone. Never reload mid-view without the click.
+1. **Session expired:** `Your session expired. Sign in again.` Danger tone. The blocking re-sign-in dialog is the action; the banner states the reason behind it.
+2. **Offline:** `You're offline. Showing data from 14:02. Changes are disabled.` Neutral background, wifi-off icon.
+3. **Live updates unavailable (after 60s) or error storm:** `Live updates are unavailable. Showing data from 14:02.` with `Retry now`, or `We're having trouble reaching the server. Retrying…` with `Open System`. Warning tone. Automatic attempts continue at the 30s backoff cap.
+4. **Reconnecting:** `Reconnecting to live updates…` warning tone.
+5. **Update available:** `A new version is available.` with `Reload`, info tone. Never reload mid-view without the click.
+
+The banner region shrinks the content area by exactly the banner’s height, so the map, drawer, sheet, panels, controls and attribution always start at or below the banner. The region animates its grid track with `--motion-slow`; reduced motion disables the animation. Nothing may be fixed to the viewport inside the map screen.
 
 ---
 

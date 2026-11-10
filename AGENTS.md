@@ -23,6 +23,7 @@ Frontend handoff only. Never copy backend source.
 - Features use `<FleetMap>` and MapAdapter. Only `src/map/providers/*` imports map SDKs (A8).
 - Features live in `src/features/<name>/{api,components,hooks}`; shared UI in `src/ui`. No cross-feature imports.
 - Use design tokens, `src/lib/format.ts` and `useCan()`. No arbitrary Tailwind values.
+- Layering uses only the named utilities in `src/ui/layers.css`; numeric or arbitrary z-index is forbidden. Overlays render through `LayerPortal`, and the map shell is positioned against the isolated content area, never the viewport.
 - Data-backed panels handle loading, empty, error (with retry) and stale states.
 - Status = colour + icon + label. Numbers use tabular figures. All interactions must be keyboard accessible with visible focus.
 - Mutations are pessimistic, show pending state, prevent double submissions, invalidate affected queries and follow `docs/error-handling.md`. Never auto-retry mutations.
