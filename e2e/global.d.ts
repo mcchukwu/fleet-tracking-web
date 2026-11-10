@@ -77,6 +77,16 @@ declare global {
       socketDownAt?: number | null;
     }) => void;
     __FLEET_TEST_STORM__?: (active: boolean) => void;
+    __FLEET_TEST_VISUAL_VIEWPORT__?: {
+      width: number;
+      height: number;
+      offsetTop: number;
+      offsetLeft: number;
+      scale: number;
+      addEventListener: (type: string, listener: EventListener) => void;
+      removeEventListener: (type: string, listener: EventListener) => void;
+      dispatchEvent: (event: Event) => boolean;
+    };
     __STYLE_TEST__?: { streets: number; satellite: number };
     __FLEET_MOCK_WRITES__?: Array<{ method: string; url: string; body: unknown }>;
   }

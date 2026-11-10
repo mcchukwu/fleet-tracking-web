@@ -296,6 +296,14 @@ const devRoutes = import.meta.env.DEV
           "LayerStack",
         ),
       }),
+      createRoute({
+        getParentRoute: () => appRoute,
+        path: "/dev/combobox",
+        component: lazyRouteComponent(
+          () => import("../dev/ComboboxLab"),
+          "ComboboxLab",
+        ),
+      }),
     ]
   : [];
 

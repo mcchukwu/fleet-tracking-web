@@ -422,3 +422,78 @@ export async function expectStableColumns(
     }
   }
 }
+
+interface FakeVisualViewport {
+  width: number;
+  height: number;
+  offsetTop: number;
+  offsetLeft: number;
+  scale: number;
+  addEventListener: (type: string, listener: EventListener) => void;
+  removeEventListener: (type: string, listener: EventListener) => void;
+  dispatchEvent: (event: Event) => boolean;
+}
+
+/**
+ * Emulates the visual viewport shrinking when the software keyboard opens.
+ * The layout viewport, and therefore the dialog, must not change.
+ */
+export async function emulateSoftwareKeyboard(
+  page: Page,
+  height: number,
+): Promise<void> {
+  await page.evaluate((keyboard) => {
+    const real = window.visualViewport;
+    const listeners: EventListener[] = [];
+    const fake: FakeVisualViewport = {
+      width: real?.width ?? window.innerWidth,
+      height: window.innerHeight - keyboard,
+      offsetTop: 0,
+      offsetLeft: 0,
+      scale: 1,
+      addEventListener: (type, listener) => {
+        if (type === "resize" || type === "scroll") listeners.push(listener);
+      },
+      removeEventListener: (type, listener) => {
+        if (type !== "resize" && type !== "scroll") return;
+        const index = listeners.indexOf(listener);
+        if (index >= 0) listeners.splice(index, 1);
+      },
+      dispatchEvent: (event) => {
+        for (const listener of listeners) listener(event);
+        return true;
+      },
+    };
+    Object.defineProperty(window, "visualViewport", {
+      configurable: true,
+      value: fake,
+    });
+    Object.defineProperty(window, "__FLEET_TEST_VISUAL_VIEWPORT__", {
+      configurable: true,
+      value: fake,
+    });
+    fake.dispatchEvent(new Event("resize"));
+  }, height);
+}
+
+/**
+ * Pans the emulated visual viewport the way a mobile browser does to reveal
+ * the focused field. Used when the picker sits low on a long page.
+ */
+export async function revealInVisualViewport(
+  locator: Locator,
+): Promise<void> {
+  await locator.evaluate((element) => {
+    const viewport = window.__FLEET_TEST_VISUAL_VIEWPORT__;
+    if (!viewport) return;
+    const rect = element.getBoundingClientRect();
+    let offset = viewport.offsetTop;
+    if (rect.bottom > offset + viewport.height - 8) {
+      offset = rect.bottom - viewport.height + 8;
+    }
+    if (rect.top < offset + 8) offset = Math.max(0, rect.top - 8);
+    if (offset === viewport.offsetTop) return;
+    viewport.offsetTop = offset;
+    viewport.dispatchEvent(new Event("resize"));
+  });
+}
