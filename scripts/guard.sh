@@ -17,6 +17,10 @@ check "inline style"              'style=\{\{'
 check "direct web storage"        '\b(localStorage|sessionStorage)\b'
 check "gradient"                  'gradient'
 check "default export"            '^export default'
+zout=$(rg -n --no-heading \
+      --glob '!**/*.test.*' --glob '!**/__fixtures__/**' --glob '!src/ui/layers.css' \
+      '\bz-(\[[^]]*\]|[0-9]+)\b|z-index\s*:|zIndex\s*:' "$target" | rg -v 'guard-ignore')
+if [ -n "$zout" ]; then echo "GUARD FAIL: numeric or arbitrary z-index outside src/ui/layers.css"; echo "$zout"; fail=1; fi
 sdk=$(rg -n --no-heading --glob '!src/map/providers/**' --glob '!**/*.test.*' \
       "from ['\"](maplibre-gl|pmtiles|terra-draw|@googlemaps/)|google\.maps\." "$target" | rg -v 'guard-ignore')
 if [ -n "$sdk" ]; then echo "GUARD FAIL: map SDK used outside src/map/providers"; echo "$sdk"; fail=1; fi

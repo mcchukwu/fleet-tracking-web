@@ -14,7 +14,7 @@ describe("design guard", () => {
   it("fails on a deliberately bad sample", () => {
     writeFileSync(
       join(directory, "sample.tsx"),
-      'export const Bad = () => <div className="bg-zinc-100 p-[13px]" />;\nexport default Bad;\n',
+      'export const Bad = () => <div className="bg-zinc-100 p-[13px] z-50" />;\nexport default Bad;\n',
     );
     const result = spawnSync("bash", ["scripts/guard.sh", directory], {
       cwd: process.cwd(),
@@ -24,6 +24,9 @@ describe("design guard", () => {
     expect(result.stdout).toContain("GUARD FAIL: arbitrary Tailwind value");
     expect(result.stdout).toContain("GUARD FAIL: raw palette class");
     expect(result.stdout).toContain("GUARD FAIL: default export");
+    expect(result.stdout).toContain(
+      "GUARD FAIL: numeric or arbitrary z-index outside src/ui/layers.css",
+    );
   });
 
   it("passes on the repository source", () => {
