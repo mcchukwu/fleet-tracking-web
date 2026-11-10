@@ -227,7 +227,7 @@ test.describe("alerts faults", () => {
     await expectNoAxeViolations(page);
   });
 
-  test("the pending acknowledge state passes axe", async ({ page }) => {
+  test("the pending acknowledge state passes axe", { tag: "@theme" }, async ({ page }) => {
     test.setTimeout(30_000);
     await page.goto("/alerts?map=fake");
     await expect(page.getByLabel("Copy plate LSD-102-AA").first()).toBeVisible();

@@ -16,7 +16,7 @@ async function startSignedIn(page: Page): Promise<void> {
   await page.evaluate(() => localStorage.removeItem("fleet.mockAuth"));
 }
 
-test.describe("brand", () => {
+test.describe("brand", { tag: "@theme" }, () => {
   test("the login lockup sits exactly where the app top bar lockup sits", async ({ page }) => {
     test.skip((page.viewportSize()?.width ?? 0) < 1440, "desktop reference viewport");
 

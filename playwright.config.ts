@@ -1,8 +1,13 @@
+import { availableParallelism } from "node:os";
 import { defineConfig, devices } from "@playwright/test";
 
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_PATH;
 const port = Number(process.env.PLAYWRIGHT_PORT ?? 4173);
 const review = process.env.REVIEW === "1";
+const isCI = Boolean(process.env.CI);
+const localWorkers =
+  Number(process.env.PLAYWRIGHT_WORKERS) ||
+  Math.max(1, availableParallelism() - 1);
 const launchOptions = executablePath
   ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
   : {};
@@ -10,9 +15,9 @@ const launchOptions = executablePath
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
-  forbidOnly: Boolean(process.env.CI),
-  retries: process.env.CI ? 2 : 0,
-  workers: 1,
+  forbidOnly: isCI,
+  retries: isCI ? 1 : 0,
+  ...(isCI ? {} : { workers: localWorkers }),
   reporter: [["list"], ["html", { open: "never" }]],
   outputDir: "test-results/artifacts",
   use: {
@@ -24,6 +29,9 @@ export default defineConfig({
     ...(["desktop", "mobile"] as const).flatMap((device) =>
       (["light", "dark"] as const).map((theme) => ({
         name: `${device}-${theme}`,
+        // The light projects run everything; the dark projects run only the
+        // tagged visual and theme set, so @theme tests still run in both themes.
+        grep: theme === "dark" ? /@theme/ : undefined,
         use: {
           ...devices["Desktop Chrome"],
           viewport:

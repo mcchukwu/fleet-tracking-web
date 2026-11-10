@@ -302,7 +302,7 @@ test.describe("playback", () => {
     await captureForReview(page, "05-playback-real-route");
   });
 
-  test("keeps the header and controls apart on both viewports", async ({
+  test("keeps the header and controls apart on both viewports", { tag: "@theme" }, async ({
     page,
   }) => {
     await gotoPlayback(page, `vehicle=${VEHICLE}`);

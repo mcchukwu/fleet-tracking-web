@@ -19,7 +19,7 @@ async function gotoTrips(page: Page, search = ""): Promise<void> {
   await expect(page.getByRole("columnheader", { name: "Vehicle" })).toBeVisible();
 }
 
-test.describe("trips layout", () => {
+test.describe("trips layout", { tag: "@theme" }, () => {
   test("keeps one fixed column geometry and 36px rows", async ({ page }) => {
     await gotoTrips(page);
     await page.locator('[data-row="data"]').first().waitFor();

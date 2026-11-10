@@ -185,7 +185,7 @@ test.describe("vehicle drawer faults", () => {
     await expect(page.getByText("Still working…")).toBeVisible({ timeout: 6_000 });
   });
 
-  test("the drawer is axe clean in its empty and stale states", async ({ page }) => {
+  test("the drawer is axe clean in its empty and stale states", { tag: "@theme" }, async ({ page }) => {
     await page.goto(`/map?map=fake&v=${VEHICLE_2}`);
     await expect(drawer(page)).toBeVisible();
     await expectNoAxeViolations(page);

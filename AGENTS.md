@@ -39,3 +39,12 @@ Never guess API behaviour. Verify against staging and record findings in `docs/d
 - Use `e2e/helpers` for layout/accessibility assertions and `window.__FLEET_DEBUG__` for map facts.
 - Report pending human visual review. Never claim visual approval from images you cannot inspect.
 - No TODOs at completion.
+
+## Test tiers (agent-playbook.md A9)
+- T0 `npm run check` at every checkpoint and after every fix.
+- T1 `npm run e2e:fast -- <spec paths>` while building: desktop-light plus mobile-dark, only the specs the change touches. The tag split means a purely functional spec runs on desktop-light; T2 adds mobile.
+- T2 `npm run e2e:slice -- <spec paths>` at the end of a slice: the slice's specs on all four projects.
+- T3 `npm run e2e` is the full gate for merges and shared-code changes. Agent sessions do not run it unless a prompt asks.
+- Functional tests are untagged and run on the light projects only. Tests whose purpose is screenshots, contrast, accents or axe carry `{ tag: "@theme" }` and run in both themes: the light projects run the whole suite, the dark projects run only the tagged set. Never delete a test to make the suite faster; put it in the correct tier.
+- `npm run e2e:review` follows the same split: functional specs supply light screenshots, `@theme` specs supply dark screenshots.
+- Locally Playwright uses `workers = CPU cores - 1` and `retries: 0`; CI uses one retry. On a memory-constrained machine override with `PLAYWRIGHT_WORKERS=<n>`.

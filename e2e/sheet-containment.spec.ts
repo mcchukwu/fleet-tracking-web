@@ -88,7 +88,7 @@ async function readGeometry(page: Page) {
   });
 }
 
-test.describe("mobile sheet containment", () => {
+test.describe("mobile sheet containment", { tag: "@theme" }, () => {
   for (const viewport of VIEWPORTS) {
     test(`the drawer stays in the viewport at ${viewport.width}x${viewport.height}`, async ({
       page,

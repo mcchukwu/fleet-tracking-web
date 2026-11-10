@@ -384,7 +384,7 @@ test.describe("alerts", () => {
     await expect(enabled).toBeDisabled();
   });
 
-  test("the detail panel starts below the top bar on desktop", async ({
+  test("the detail panel starts below the top bar on desktop", { tag: "@theme" }, async ({
     page,
   }) => {
     test.skip(isMobile(page), "desktop-only layout");
@@ -397,7 +397,7 @@ test.describe("alerts", () => {
     expect(box.y).toBeLessThanOrEqual(61);
   });
 
-  test("the detail is a top-quarter sheet on mobile and leaves the title visible", async ({
+  test("the detail is a top-quarter sheet on mobile and leaves the title visible", { tag: "@theme" }, async ({
     page,
   }) => {
     test.skip(!isMobile(page), "mobile-only layout");

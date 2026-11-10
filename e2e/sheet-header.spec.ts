@@ -264,7 +264,7 @@ async function gotoMap(page: Page): Promise<void> {
   await page.getByRole("button", { name: /Showing \d+ of \d+/ }).waitFor();
 }
 
-test.describe("mobile sheet header layout", () => {
+test.describe("mobile sheet header layout", { tag: "@theme" }, () => {
   for (const viewport of VIEWPORTS) {
     test(`header and list align at ${viewport.width}x${viewport.height}`, async ({
       page,

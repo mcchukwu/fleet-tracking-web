@@ -27,7 +27,7 @@ async function signIn(page: Page, email = "dispatcher@demo.ftb", password = PASS
 }
 
 test.describe("login", () => {
-  test("an anonymous deep link opens sign in and keeps the target", async ({ page, theme }) => {
+  test("an anonymous deep link opens sign in and keeps the target", { tag: "@theme" }, async ({ page, theme }) => {
     await startAnonymous(page);
     await page.goto("/map?v=4324a768-9b14-4223-a299-eb8da4d8d309&status=moving");
 

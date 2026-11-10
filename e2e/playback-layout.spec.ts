@@ -90,7 +90,7 @@ for (const viewport of [
   { width: 390, height: 844 },
   { width: 360, height: 640 },
 ] as const) {
-  test.describe(`playback states ${viewport.width}x${viewport.height}`, () => {
+  test.describe(`playback states ${viewport.width}x${viewport.height}`, { tag: "@theme" }, () => {
     test.use({ viewport: { width: viewport.width, height: viewport.height } });
 
     test("keeps state actions clear of the control bar and always shows attribution", async ({
@@ -131,7 +131,7 @@ for (const viewport of [
 }
 
 for (const viewport of VIEWPORTS) {
-  test.describe(`playback layout ${viewport.width}x${viewport.height}`, () => {
+  test.describe(`playback layout ${viewport.width}x${viewport.height}`, { tag: "@theme" }, () => {
     test.use({ viewport: { width: viewport.width, height: viewport.height } });
 
     test("keeps one control height, one bottom line and a stable scrubber", async ({
@@ -360,7 +360,7 @@ for (const viewport of [
   { width: 390, height: 844 },
   { width: 360, height: 640 },
 ] as const) {
-  test.describe(`playback scrubber pointer ${viewport.width}x${viewport.height}`, () => {
+  test.describe(`playback scrubber pointer ${viewport.width}x${viewport.height}`, { tag: "@theme" }, () => {
     test.use({ viewport: { width: viewport.width, height: viewport.height } });
 
     for (const count of [5, 40, 60] as const) {
@@ -448,7 +448,7 @@ for (const viewport of [
 }
 
 for (const count of [5, 40, 60] as const) {
-  test(`the event lane picks the nearest event out of ${count}`, async ({
+  test(`the event lane picks the nearest event out of ${count}`, { tag: "@theme" }, async ({
     page,
   }) => {
     await gotoPlayback(page, count);

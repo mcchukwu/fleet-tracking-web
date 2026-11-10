@@ -120,7 +120,7 @@ async function tableGeometry(page: Page) {
   });
 }
 
-test.describe("alerts table layout", () => {
+test.describe("alerts table layout", { tag: "@theme" }, () => {
   test("keeps a full plate and trip id whole", async ({ page }) => {
     await openAlerts(page);
     await page.getByLabel("Search plate").fill("LSD-101-AA");

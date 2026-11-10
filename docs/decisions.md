@@ -521,3 +521,9 @@ Trips exposed a 1px row-height drift in the shared `DataTable`: the last data ro
 Trade-off: the last row now draws a divider above the table's rounded border; the alternative was a per-table geometry exception that would break as soon as the last virtual row mounted.
 
 The row-open plate button and the copy control also keep a 44px mobile target with symmetric negative margins, so the vehicle cell and the actions cell share the same 36px row geometry.
+
+## 2026-11-10: Test tiers split the theme matrix
+
+Playwright keeps four projects. Functional tests are untagged and run on `desktop-light` and `mobile-light`, so they still run only in the light theme. Visual and theme tests carry the native `@theme` tag (`{ tag: "@theme" }`); the light projects run the whole suite, so those tests still run in light, and the dark projects (`desktop-dark`, `mobile-dark`) run only the tagged set. The tagged set is the A9 set: screenshots, contrast, accents and axe. Locally Playwright uses CPU cores minus one workers and zero retries; CI uses one retry. `PLAYWRIGHT_WORKERS` overrides the local count when memory, not CPU, is the limit. The full gate stays `npm run e2e` (T3), with `e2e:fast` (T1) and `e2e:slice` (T2) for the build loop.
+
+Trade-off: a functional test no longer runs in dark, while every tagged visual test still runs in both themes because the light projects keep the full set. Dark visual coverage comes from the `@theme` set. The split removes 338 of 948 selections (948 to 610) without deleting a test.

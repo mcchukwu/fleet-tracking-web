@@ -136,7 +136,7 @@ async function debugMap(page: Page) {
   return page.evaluate(() => window.__FLEET_DEBUG__?.map ?? null);
 }
 
-test.describe("MapTiler styles (real adapter)", () => {
+test.describe("MapTiler styles (real adapter)", { tag: "@theme" }, () => {
   test("switches to Streets without losing the camera, selection or layers", async ({ page }) => {
     await installStyleMock(page);
     await page.emulateMedia({ reducedMotion: "reduce" });
@@ -208,7 +208,7 @@ test.describe("MapTiler styles (real adapter)", () => {
   });
 });
 
-test.describe("MapTiler review screenshots", () => {
+test.describe("MapTiler review screenshots", { tag: "@theme" }, () => {
   test.skip(process.env.REVIEW !== "1", "human review only");
 
   test("Lagos on Satellite and Streets", async ({ page }) => {

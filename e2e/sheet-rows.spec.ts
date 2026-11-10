@@ -413,7 +413,7 @@ async function gotoFleet(page: Page, fleet: number): Promise<void> {
   }, fleet);
 }
 
-test.describe("mobile sheet rows and attribution", () => {
+test.describe("mobile sheet rows and attribution", { tag: "@theme" }, () => {
   for (const viewport of VIEWPORTS) {
     test(`rows line up at ${viewport.width}x${viewport.height}`, async ({
       page,

@@ -83,7 +83,7 @@ test.describe("map controls", () => {
     await captureForReview(page, "02b-map-controls-desktop");
   });
 
-  test("desktop controls never overlap the KPI, panel or attribution", async ({ page }) => {
+  test("desktop controls never overlap the KPI, panel or attribution", { tag: "@theme" }, async ({ page }) => {
     test.skip(isMobile(page), "desktop-only layout");
     await gotoMap(page);
 
@@ -371,7 +371,7 @@ test.describe("map controls", () => {
     await expect.poll(async () => (await debugMap(page))?.baseStyle).toBe("satellite");
   });
 
-  test("logo, credit, controls and sheet never collide for any style", async ({ page }) => {
+  test("logo, credit, controls and sheet never collide for any style", { tag: "@theme" }, async ({ page }) => {
     for (const label of ["Map", "Streets", "Satellite"] as const) {
       await gotoMap(page);
       await page.getByRole("button", { name: "Map style" }).click();
@@ -422,7 +422,7 @@ test.describe("map controls", () => {
     }
   });
 
-  test("appearance changes theme and accent without closing the menu", async ({ page, theme }) => {
+  test("appearance changes theme and accent without closing the menu", { tag: "@theme" }, async ({ page, theme }) => {
     await gotoMap(page);
     const stack = controls(page).locator("div").first();
     const userMenu = page.getByRole("button", { name: "Account menu for Demo Dispatcher" });

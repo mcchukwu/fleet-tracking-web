@@ -100,7 +100,7 @@ test.describe("app shell", () => {
     await expect(page.getByRole("navigation", { name: "Main" })).toHaveCount(0);
   });
 
-  test("the reconnecting banner never covers the user menu", async ({ page }) => {
+  test("the reconnecting banner never covers the user menu", { tag: "@theme" }, async ({ page }) => {
     await page.routeWebSocket(/\/api\/v1\/live\/ws$/, (socket) => {
       void socket.close();
     });
@@ -156,7 +156,7 @@ test.describe("app shell", () => {
     await captureForReview(page, "01-shell-banner-menu");
   });
 
-  test("the appearance section switches the resolved theme", async ({ page }) => {
+  test("the appearance section switches the resolved theme", { tag: "@theme" }, async ({ page }) => {
     await page.goto("/map");
 
     await page.getByRole("button", { name: "Account menu for Demo Dispatcher" }).click();
@@ -174,7 +174,7 @@ test.describe("app shell", () => {
     await captureForReview(page, "01-shell-appearance");
   });
 
-  test("the accent persists and the top bar has no theme control", async ({ page }) => {
+  test("the accent persists and the top bar has no theme control", { tag: "@theme" }, async ({ page }) => {
     await page.goto("/map");
     const header = page.locator("header").first();
     await expect(header.getByRole("group", { name: "Colour theme" })).toHaveCount(0);

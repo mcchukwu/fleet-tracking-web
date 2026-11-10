@@ -161,7 +161,7 @@ test.describe("vehicle drawer", () => {
     expect(writes.at(-1)?.body).toEqual({ sim_number: "892340000000001" });
   });
 
-  test("the detail sheet keeps its header on a 360x640 screen", async ({ page }) => {
+  test("the detail sheet keeps its header on a 360x640 screen", { tag: "@theme" }, async ({ page }) => {
     test.skip(!isMobile(page), "mobile only");
     await page.setViewportSize({ width: 360, height: 640 });
     await gotoDrawer(page);
@@ -275,7 +275,7 @@ test.describe("vehicle drawer", () => {
     ).toBeVisible();
   });
 
-  test("the mobile detail sheet snaps, contains its header and returns the list", async ({
+  test("the mobile detail sheet snaps, contains its header and returns the list", { tag: "@theme" }, async ({
     page,
   }) => {
     test.skip(!isMobile(page), "mobile-only sheet");

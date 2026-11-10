@@ -8,7 +8,7 @@ import {
 } from "./helpers";
 
 test.describe("foundation smoke", () => {
-  test("styleguide renders in the project theme", async ({ page, theme }) => {
+  test("styleguide renders in the project theme", { tag: "@theme" }, async ({ page, theme }) => {
     const errors: string[] = [];
     page.on("console", (message) => {
       if (message.type() === "error") errors.push(message.text());
@@ -27,7 +27,7 @@ test.describe("foundation smoke", () => {
     expect(errors).toEqual([]);
   });
 
-  test("the styleguide captures the shell primitives and every accent", async ({ page }) => {
+  test("the styleguide captures the shell primitives and every accent", { tag: "@theme" }, async ({ page }) => {
     await page.goto("/styleguide");
 
     for (const [id, name] of [
@@ -61,7 +61,7 @@ test.describe("foundation smoke", () => {
     await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
   });
 
-  test("the map route renders the live map shell", async ({ page, theme }) => {
+  test("the map route renders the live map shell", { tag: "@theme" }, async ({ page, theme }) => {
     await page.goto("/map");
     await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
     await expect(page).toHaveTitle(/Map · Fleet Console$/);
