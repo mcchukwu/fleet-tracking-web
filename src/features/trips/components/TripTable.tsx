@@ -448,6 +448,7 @@ export function TripTable({
               rowProps={(row) =>
                 row.kind === "trip"
                   ? {
+                      "data-trip-row": row.trip.id,
                       className: "cursor-pointer",
                       onClick: (event) => {
                         if ((event.target as HTMLElement).closest("button, a")) return;

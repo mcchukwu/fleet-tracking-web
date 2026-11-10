@@ -76,12 +76,14 @@ test.describe("trips", () => {
 
     const assigned = row(page, "LSD-100-AA", "Assigned");
     await expect(assigned).toBeVisible();
+    await expect(assigned.getByRole("button", { name: "Start LSD-100-AA" })).toBeFocused();
     await assigned.getByRole("button", { name: "Start LSD-100-AA" }).click();
     await expect(page.getByText("Trip started.").first()).toBeVisible();
     write = await lastWrite(page);
     expect(write?.body).toEqual({ status: "active" });
 
     const active = row(page, "LSD-100-AA", "Active");
+    await expect(active.getByRole("button", { name: "Complete LSD-100-AA" })).toBeFocused();
     await active.getByRole("button", { name: "Complete LSD-100-AA" }).click();
     const confirm = page.getByRole("dialog").filter({ hasText: "Complete trip" });
     await expect(confirm).toBeVisible();
@@ -95,6 +97,9 @@ test.describe("trips", () => {
 
     const completed = row(page, "LSD-100-AA", "Completed").first();
     await expect(completed).toContainText("12.4 km");
+    await expect(
+      completed.getByRole("button", { name: /Open trip to .* for LSD-100-AA/ }),
+    ).toBeFocused();
   });
 
   test("round-trips the status, search and order through the URL", async ({ page }) => {

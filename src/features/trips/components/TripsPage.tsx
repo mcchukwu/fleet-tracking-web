@@ -176,6 +176,28 @@ function TripsPageContent() {
     }, 0);
   }
 
+  function focusAfterAction(tripId: string, origin: "row" | "detail"): void {
+    setTimeout(() => {
+      const scope =
+        origin === "detail"
+          ? document.querySelector<HTMLElement>('[data-testid="drawer"]')
+          : document.querySelector<HTMLElement>(
+              `[data-trip-row="${CSS.escape(tripId)}"]`,
+            );
+      if (!scope) {
+        document
+          .querySelector<HTMLElement>('[data-testid="trips-page"] [data-create-trip]')
+          ?.focus();
+        return;
+      }
+      const action = scope.querySelector<HTMLElement>(
+        "[data-trip-action],[data-detail-action]",
+      );
+      const fallback = scope.querySelector<HTMLElement>("[data-trip-id],button");
+      (action ?? fallback)?.focus();
+    }, 0);
+  }
+
   function openTrip(id: string): void {
     updateSearch({ trip: id }, false);
   }
@@ -195,6 +217,7 @@ function TripsPageContent() {
     setActionError(null);
     const outcome = await write.transition(trip, transitionPayload(action), action);
     setPendingTripId(null);
+    if (outcome.status === "done") focusAfterAction(trip.id, origin);
     if (outcome.status === "error") {
       const copy = tripWriteCopy(outcome.error, "change");
       setActionError({
@@ -302,7 +325,11 @@ function TripsPageContent() {
         open={assignTrip !== null}
         trip={assignTrip}
         onClose={() => setAssignTrip(null)}
-        onFinished={() => setAssignTrip(null)}
+        onFinished={() => {
+          const id = assignTrip?.id;
+          setAssignTrip(null);
+          if (id) focusAfterAction(id, "row");
+        }}
       />
 
       <TripConfirmDialog
@@ -310,7 +337,11 @@ function TripsPageContent() {
         trip={confirm?.trip ?? null}
         action={confirm?.action ?? "complete"}
         onClose={() => setConfirm(null)}
-        onFinished={() => setConfirm(null)}
+        onFinished={() => {
+          const id = confirm?.trip.id;
+          setConfirm(null);
+          if (id) focusAfterAction(id, "row");
+        }}
       />
 
       {selectedId ? (

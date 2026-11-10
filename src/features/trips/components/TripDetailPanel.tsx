@@ -163,6 +163,7 @@ function ResolvedTripDetail({
               variant="secondary"
               loading={pending}
               {...(reason ? { disabledReason: reason } : {})}
+              data-detail-action
               onClick={() => onAction(next.action)}
             >
               {next.label}
@@ -175,6 +176,7 @@ function ResolvedTripDetail({
               className="text-danger hover:bg-alert-bg"
               disabled={pending}
               {...(reason ? { disabledReason: reason } : {})}
+              data-detail-action
               onClick={() => onAction("cancel")}
             >
               Cancel

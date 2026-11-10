@@ -31,6 +31,7 @@ export function TripRowActions({
           className="-my-1.5 md:my-0"
           loading={pending}
           {...(reason ? { disabledReason: reason } : {})}
+          data-trip-action
           onClick={() => onAction(next.action)}
           aria-label={`${next.label} ${trip.plate}`}
         >
@@ -44,6 +45,7 @@ export function TripRowActions({
           className="-my-1.5 text-danger hover:bg-alert-bg disabled:opacity-50 md:my-0"
           disabled={pending}
           {...(reason ? { disabledReason: reason } : {})}
+          data-trip-action
           onClick={() => onAction("cancel")}
           aria-label={`Cancel trip for ${trip.plate}`}
         >
