@@ -73,6 +73,32 @@ describe("Combobox", () => {
     expect(input).toHaveValue("Adebayo Okafor");
   });
 
+  it("closes the list on the first Escape and keeps focus in the input", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    const input = screen.getByRole("combobox", { name: "Driver" });
+
+    await user.click(input);
+    await user.keyboard("{ArrowDown}");
+    expect(screen.getByRole("listbox")).toBeVisible();
+
+    await user.keyboard("{Escape}");
+    expect(input).toHaveAttribute("aria-expanded", "false");
+    expect(document.activeElement).toBe(input);
+    expect(input).toHaveValue("Adebayo Okafor");
+  });
+
+  it("keeps focus in the input when an option is clicked", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    const input = screen.getByRole("combobox", { name: "Driver" });
+
+    await user.click(input);
+    await user.click(screen.getByRole("option", { name: /Chinedu Musa/ }));
+    expect(input).toHaveValue("Chinedu Musa");
+    expect(document.activeElement).toBe(input);
+  });
+
   it("shows the empty message when nothing matches", async () => {
     const user = userEvent.setup();
     render(<Harness />);

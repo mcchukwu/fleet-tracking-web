@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Search, X } from "lucide-react";
-import { Input } from "./Input";
+import { X } from "lucide-react";
 import { IconButton } from "./IconButton";
+import { SearchField } from "./SearchField";
 import { useDebouncedCallback } from "../lib/useDebouncedCallback";
 
 interface SearchInputProps {
@@ -34,8 +34,10 @@ export function SearchInput({
     emit(next);
   }
 
+  const hasTrailing = draft.length > 0 || !compact;
+
   return (
-    <Input
+    <SearchField
       type="search"
       name="vehicle-search"
       label={label}
@@ -43,20 +45,29 @@ export function SearchInput({
       placeholder={placeholder}
       value={draft}
       onChange={(event) => update(event.target.value)}
-      leadingIcon={<Search className="size-4" strokeWidth={1.5} />}
       trailing={
-        <>
-          {draft ? (
-            <IconButton
-              label="Clear search"
-              size="sm"
-              icon={<X aria-hidden="true" className="size-icon-sm" strokeWidth={1.5} />}
-              onClick={() => update("")}
-            />
-          ) : compact ? null : (
-            <kbd className="rounded-sm border border-border bg-surface-2 px-1 font-mono text-xs text-muted">/</kbd>
-          )}
-        </>
+        hasTrailing ? (
+          <>
+            {draft ? (
+              <IconButton
+                label="Clear search"
+                size="sm"
+                icon={
+                  <X
+                    aria-hidden="true"
+                    className="size-icon-sm"
+                    strokeWidth={1.5}
+                  />
+                }
+                onClick={() => update("")}
+              />
+            ) : (
+              <kbd className="border-border bg-surface-2 text-muted rounded-sm border px-1 font-mono text-xs">
+                /
+              </kbd>
+            )}
+          </>
+        ) : undefined
       }
     />
   );
