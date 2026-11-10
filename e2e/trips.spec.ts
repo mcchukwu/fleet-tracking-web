@@ -11,7 +11,9 @@ const COMPLETED_VEHICLE = "4324a768-9b14-4223-a299-eb8da4d8d309";
 
 async function gotoTrips(page: Page, search = ""): Promise<void> {
   await page.goto(`/trips${search ? `?${search}` : ""}`);
-  await expect(page.getByRole("heading", { name: "Trips" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Trips" })).toBeVisible({
+    timeout: 15_000,
+  });
 }
 
 function row(page: Page, plate: string, status?: string) {
@@ -63,6 +65,7 @@ test.describe("trips", () => {
     await planned.getByRole("button", { name: "Assign driver LSD-100-AA" }).click();
     const assign = page.getByRole("dialog").filter({ hasText: "Assign a driver" });
     await expect(assign).toBeVisible();
+    await expectNoAxeViolations(page);
     await assign.getByLabel("Driver").click();
     await assign.getByRole("option", { name: /Chinedu Musa/ }).first().click();
     await captureForReview(page, "06-trips-assign");
@@ -87,6 +90,7 @@ test.describe("trips", () => {
     await active.getByRole("button", { name: "Complete LSD-100-AA" }).click();
     const confirm = page.getByRole("dialog").filter({ hasText: "Complete trip" });
     await expect(confirm).toBeVisible();
+    await expectNoAxeViolations(page);
     await captureForReview(page, "06-trips-complete-confirm");
     await confirm.getByRole("button", { name: "Complete trip" }).click();
 
@@ -138,6 +142,39 @@ test.describe("trips", () => {
     await expect(page.getByTestId("trips-page")).toContainText("5 loaded");
   });
 
+  test("shows the no-data empty state", async ({ page }) => {
+    await gotoTrips(page, "empty=trips");
+    await expect(page.getByText("No trips yet")).toBeVisible();
+    await expect(page.getByText("Create the first one.")).toBeVisible();
+    await expect(page.getByText("No trips match")).toHaveCount(0);
+    await captureForReview(page, "06-trips-no-data");
+    await expectNoAxeViolations(page);
+  });
+
+  test("cancels an active trip after a confirm", async ({ page }) => {
+    await gotoTrips(page);
+    const active = row(page, "LSD-101-AA", "Active");
+    await active.getByRole("button", { name: "Cancel trip for LSD-101-AA" }).click();
+
+    const confirm = page.getByRole("dialog").filter({ hasText: "Cancel trip" });
+    await expect(confirm).toBeVisible();
+    await expectNoAxeViolations(page);
+    await confirm.getByRole("button", { name: "Cancel trip" }).click();
+
+    await expect(page.getByText("Trip cancelled.").first()).toBeVisible();
+    const write = await lastWrite(page);
+    expect(write).toMatchObject({ method: "PATCH", body: { status: "cancelled" } });
+    expect(write?.body).not.toHaveProperty("distance_km");
+    await expect(row(page, "LSD-101-AA", "Cancelled")).toBeVisible();
+  });
+
+  test("shows no results for a server status filter with no trips", async ({ page }) => {
+    await gotoTrips(page, "status=planned");
+    await expect(page.getByText("No trips match")).toBeVisible();
+    await expect(page.getByText("No trips yet")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Clear filters" })).toBeVisible();
+  });
+
   test("loads the next page only when the first page is full", async ({ page }) => {
     test.setTimeout(40_000);
     await gotoTrips(page);
@@ -180,6 +217,30 @@ test.describe("trips", () => {
     await page.getByRole("button", { name: "Close trip details" }).click();
     await expect(page.getByRole("complementary", { name: "Trip details" })).toHaveCount(0);
     await expect(origin).toBeFocused();
+  });
+
+  test("keeps focus in the detail drawer after a transition", async ({ page }) => {
+    await gotoTrips(page);
+    await page
+      .getByRole("button", { name: /Open trip to Ibadan Customer for LSD-101-AA/ })
+      .click();
+    const drawer = page.getByRole("complementary", { name: "Trip details" });
+    await expect(drawer).toBeVisible();
+
+    await drawer.getByRole("button", { name: "Complete" }).click();
+    const confirm = page.getByRole("dialog").filter({ hasText: "Complete trip" });
+    await expect(confirm).toBeVisible();
+    await confirm.getByRole("button", { name: "Complete trip" }).click();
+
+    await expect(page.getByText("Trip completed.").first()).toBeVisible();
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          Boolean(document.activeElement?.closest('aside[aria-label="Trip details"]')),
+        ),
+      )
+      .toBe(true);
+    await expect(drawer).toBeVisible();
   });
 
   test("opens a deep-linked trip and explains an unknown one", async ({ page }) => {

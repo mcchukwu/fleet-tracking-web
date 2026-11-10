@@ -565,7 +565,10 @@ export const handlers = [
     }
     return withFault("trips", request, () => {
       const url = new URL(request.url);
-      if (url.searchParams.get("empty") === "trips") {
+      const pageEmpty =
+        typeof window !== "undefined" &&
+        new URLSearchParams(window.location.search).get("empty") === "trips";
+      if (url.searchParams.get("empty") === "trips" || pageEmpty) {
         return HttpResponse.json({ data: [] });
       }
       const status = url.searchParams.get("status");
