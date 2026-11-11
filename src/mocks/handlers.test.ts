@@ -937,3 +937,48 @@ describe("mock reports", () => {
     expect(huge.alerts_by_type[0]?.count).toBe(1_284_933);
   });
 });
+
+describe("mock system health scenarios", () => {
+  it("serves the default healthy payload, then resets the scenario", async () => {
+    let body = (await (await fetch(`${API}/system/health`)).json()) as {
+      dependencies: Record<string, boolean>;
+      ingest: { queue_length: number };
+    };
+    expect(body.dependencies.redis).toBe(true);
+    expect(body.ingest.queue_length).toBe(0);
+
+    localStorage.setItem("fleet.mockSystem", "dependency-down"); // guard-ignore: test-only mock scenario.
+    body = (await (await fetch(`${API}/system/health`)).json()) as typeof body;
+    expect(body.dependencies.redis).toBe(false);
+
+    localStorage.setItem("fleet.mockSystem", "queue-full"); // guard-ignore: test-only mock scenario.
+    body = (await (await fetch(`${API}/system/health`)).json()) as typeof body;
+    expect(body.ingest.queue_length).toBe(20_000);
+
+    resetMockState();
+    localStorage.removeItem("fleet.mockSystem"); // guard-ignore: test-only mock scenario.
+    body = (await (await fetch(`${API}/system/health`)).json()) as typeof body;
+    expect(body.dependencies.redis).toBe(true);
+    expect(body.ingest.queue_length).toBe(0);
+  });
+
+  it("raises counters on every rising request and resets with the mock state", async () => {
+    localStorage.setItem("fleet.mockSystem", "rising"); // guard-ignore: test-only mock scenario.
+    const first = (await (await fetch(`${API}/system/health`)).json()) as {
+      ingest: { dropped: number; received: number };
+    };
+    const second = (await (await fetch(`${API}/system/health`)).json()) as {
+      ingest: { dropped: number; received: number };
+    };
+    expect(first.ingest.dropped).toBe(0);
+    expect(second.ingest.dropped).toBe(3);
+    expect(second.ingest.received - first.ingest.received).toBe(100);
+
+    resetMockState();
+    const afterReset = (await (await fetch(`${API}/system/health`)).json()) as {
+      ingest: { dropped: number };
+    };
+    expect(afterReset.ingest.dropped).toBe(0);
+    localStorage.removeItem("fleet.mockSystem"); // guard-ignore: test-only mock scenario.
+  });
+});

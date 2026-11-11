@@ -13,6 +13,7 @@ import {
   formatPercent,
   formatPlaybackTime,
   formatRangeLabel,
+  formatRate,
   formatRelativeTime,
   formatSpeed,
   formatTimeTooltip,
@@ -135,6 +136,18 @@ describe("playback formatting", () => {
     expect(formatBytes(10 * 1024 * 1024)).toBe("10 MB");
     expect(formatBytes(null)).toBe(MISSING);
     expect(formatBytes(-1)).toBe(MISSING);
+  });
+
+  it("formats a per-second rate without pretending to be precise", () => {
+    expect(formatRate(0)).toBe("0/s");
+    expect(formatRate(0.049)).toBe("<0.1/s");
+    expect(formatRate(1.24)).toBe("1.2/s");
+    expect(formatRate(9.96)).toBe("10/s");
+    expect(formatRate(16.7)).toBe("17/s");
+    expect(formatRate(-1)).toBe(MISSING);
+    expect(formatRate(null)).toBe(MISSING);
+    expect(formatRate(Number.NaN)).toBe(MISSING);
+    expect(formatRate(Number.POSITIVE_INFINITY)).toBe(MISSING);
   });
 
   it("formats durations in hours, minutes and days", () => {

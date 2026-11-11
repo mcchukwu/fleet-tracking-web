@@ -19,6 +19,36 @@ export const systemHealthFixture = {
   vehicles: 25,
 };
 
+// Mock-only scenarios for the system health screen; shapes match the staging probe.
+export const systemHealthDependencyDownFixture = {
+  ...systemHealthFixture,
+  dependencies: { postgres: true, redis: false },
+};
+
+export const systemHealthQueueFullFixture = {
+  ...systemHealthFixture,
+  ingest: {
+    ...systemHealthFixture.ingest,
+    queue_length: systemHealthFixture.ingest.queue_capacity,
+  },
+};
+
+/** Rising counters: `step` is the zero-based request number for this page. */
+export function systemHealthRisingFixture(step: number) {
+  const n = Math.max(0, step);
+  return {
+    ...systemHealthFixture,
+    ingest: {
+      ...systemHealthFixture.ingest,
+      coldpath_queue_positions: n,
+      dropped: n * 3,
+      queue_length: n * 5,
+      received: systemHealthFixture.ingest.received + n * 100,
+      redis_errors: n,
+    },
+  };
+}
+
 export const auditResponseFixture = {
   data: [
     {

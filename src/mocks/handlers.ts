@@ -33,7 +33,10 @@ import {
   reportSummaryLargeFixture,
   reportSummaryNoBreakdownFixture,
   reportSummaryZeroFixture,
+  systemHealthDependencyDownFixture,
   systemHealthFixture,
+  systemHealthQueueFullFixture,
+  systemHealthRisingFixture,
 } from "./fixtures/untyped";
 import { vehiclesFixture } from "./fixtures/vehicles";
 import { perfVehicles } from "./perf";
@@ -126,6 +129,7 @@ let state = createState();
 export function resetMockState(userEmail = "dispatcher@demo.ftb"): void {
   state = createState();
   state.user = demoUsers[userEmail] ?? state.user;
+  systemHealthRequests = 0;
 }
 
 export function mockCurrentUser(): User {
@@ -169,6 +173,8 @@ const MOCK_SESSION_KEY = "fleet.mockSession";
 const MOCK_ROLE_KEY = "fleet.mockRole";
 const MOCK_AUTH_KEY = "fleet.mockAuth";
 const MOCK_REPORTS_KEY = "fleet.mockReports";
+const MOCK_SYSTEM_KEY = "fleet.mockSystem";
+let systemHealthRequests = 0;
 const DEFAULT_EMAIL = "dispatcher@demo.ftb";
 
 function resolveUser(): User | null {
@@ -198,6 +204,17 @@ function clearOverride(key: string): void {
   } catch {
     // The mock keeps working without persistence.
   }
+}
+
+function systemHealthForScenario() {
+  const scenario = readOverride(MOCK_SYSTEM_KEY);
+  if (scenario === "dependency-down") return systemHealthDependencyDownFixture;
+  if (scenario === "queue-full") return systemHealthQueueFullFixture;
+  if (scenario === "rising") {
+    systemHealthRequests += 1;
+    return systemHealthRisingFixture(systemHealthRequests - 1);
+  }
+  return systemHealthFixture;
 }
 
 function reportSummaryForScenario() {
@@ -1255,7 +1272,7 @@ export const handlers = [
   }),
 
   http.get(`${API}/system/health`, ({ request }) =>
-    withFault("system-health", request, () => HttpResponse.json(systemHealthFixture)),
+    withFault("system-health", request, () => HttpResponse.json(systemHealthForScenario())),
   ),
 
   http.get(`${API}/audit`, ({ request }) => {

@@ -13,6 +13,15 @@ export function formatCount(value: number | null | undefined): string {
   return formatNumber(value);
 }
 
+/** Per-second rates stay readable: one decimal below 10/s, integers above. */
+export function formatRate(perSecond: number | null | undefined): string {
+  if (!isNumber(perSecond) || perSecond <= 0) return perSecond === 0 ? "0/s" : MISSING;
+  if (perSecond < 0.1) return "<0.1/s";
+  const rounded =
+    perSecond >= 10 ? Math.round(perSecond) : Math.round(perSecond * 10) / 10;
+  return `${rounded}/s`;
+}
+
 export function formatSpeed(kph: number | null | undefined): string {
   if (!isNumber(kph)) return MISSING;
   return `${Math.round(kph)} km/h`;

@@ -78,6 +78,35 @@ describe("contract schemas", () => {
     }
   });
 
+  it("accepts a dependency or ingest key the client does not know yet", () => {
+    const parsed = systemHealthSchema.safeParse({
+      ...systemHealthFixture,
+      dependencies: { postgres: true, postgres_replica: true },
+      ingest: { ...systemHealthFixture.ingest, future_counter: 3 },
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.dependencies.postgres_replica).toBe(true);
+    }
+  });
+
+  it("rejects a missing or wrongly typed core health field", () => {
+    const { vehicles: _vehicles, ...withoutVehicles } = systemHealthFixture;
+    expect(systemHealthSchema.safeParse(withoutVehicles).success).toBe(false);
+    expect(
+      systemHealthSchema.safeParse({
+        ...systemHealthFixture,
+        ingest: { ...systemHealthFixture.ingest, received: "many" },
+      }).success,
+    ).toBe(false);
+    expect(
+      systemHealthSchema.safeParse({
+        ...systemHealthFixture,
+        dependencies: { postgres: "up" },
+      }).success,
+    ).toBe(false);
+  });
+
   it("parses the observed audit payload", () => {
     const parsed = auditResponseSchema.safeParse(auditResponseFixture);
     expect(parsed.success).toBe(true);
