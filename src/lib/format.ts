@@ -24,6 +24,21 @@ export function formatDistance(km: number | null | undefined): string {
   return `${rounded} km`;
 }
 
+const byteUnits = ["KB", "MB", "GB", "TB"] as const;
+
+export function formatBytes(bytes: number | null | undefined): string {
+  if (!isNumber(bytes) || bytes < 0) return MISSING;
+  if (bytes < 1024) return `${Math.round(bytes)} B`;
+  let value = bytes / 1024;
+  let unit = 0;
+  while (value >= 1024 && unit < byteUnits.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  const rounded = value >= 10 ? Math.round(value) : Math.round(value * 10) / 10;
+  return `${rounded} ${byteUnits[unit]}`;
+}
+
 const compass = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
 
 export function formatHeading(degrees: number | null | undefined): string {

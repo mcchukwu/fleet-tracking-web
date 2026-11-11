@@ -1,4 +1,5 @@
 import { http, HttpResponse } from "msw";
+import Papa from "papaparse";
 import { z } from "zod";
 import { can } from "../auth/roles";
 import type {
@@ -26,7 +27,6 @@ import { generateHistory, historyFixture } from "./fixtures/history";
 import { tripsFixture } from "./fixtures/trips";
 import {
   auditResponseFixture,
-  importResultFixture,
   reportSummaryFixture,
   systemHealthFixture,
 } from "./fixtures/untyped";
@@ -275,6 +275,169 @@ function badRequest(): Response {
 
 function forbidden(): Response {
   return HttpResponse.json({ error: { code: "forbidden", message: "forbidden" } }, { status: 403 });
+}
+
+interface MockImportRow {
+  line: number;
+  cells: Record<string, string>;
+}
+
+function parseMockCsv(text: string): {
+  headers: string[];
+  rows: MockImportRow[];
+  errorCount: number;
+} {
+  const parsed = Papa.parse<string[]>(text, {
+    header: false,
+    delimiter: ",",
+    skipEmptyLines: "greedy",
+  });
+  const [headerRow = [], ...body] = parsed.data.map((row) =>
+    row.map((cell) => String(cell ?? "").trim()),
+  );
+  const headers = headerRow.map((value) => value.toLowerCase());
+  const rows: MockImportRow[] = [];
+  body.forEach((cells, index) => {
+    if (cells.every((cell) => cell === "")) return;
+    const record: Record<string, string> = {};
+    headers.forEach((header, column) => {
+      if (header) record[header] = cells[column] ?? "";
+    });
+    rows.push({ line: index + 2, cells: record });
+  });
+  return { headers, rows, errorCount: parsed.errors.length };
+}
+
+function mockVehicleId(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `import-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+export type MockImportOutcome =
+  | { ok: false; code: "invalid_csv"; message: string }
+  | {
+      ok: true;
+      result: {
+        job_id: string;
+        total: number;
+        imported: number;
+        failed: number;
+        errors: Array<{ row: number; message: string }> | null;
+      };
+    };
+
+/** The import handler's real behavior, split out so jsdom tests can exercise it
+ * without Node's Request/formData adapter, which jsdom's File cannot satisfy. */
+export function applyMockImport(text: string): MockImportOutcome {
+  const parsed = parseMockCsv(text);
+  if (text.trim() === "" || parsed.errorCount > 0 || parsed.headers.every((h) => h === "")) {
+    return { ok: false, code: "invalid_csv", message: "could not read the header row" };
+  }
+  if (!parsed.headers.includes("imei")) {
+    return { ok: false, code: "invalid_csv", message: "the header must include imei" };
+  }
+
+  const errors: Array<{ row: number; message: string }> = [];
+  const affectedDrivers = new Set<string>();
+  let imported = 0;
+
+  for (const row of parsed.rows) {
+    const imei = row.cells.imei ?? "";
+    const yearText = row.cells.year ?? "";
+    if (!imei) {
+      errors.push({ row: row.line, message: "imei is required" });
+      continue;
+    }
+    if (yearText !== "" && !/^\d{4}$/.test(yearText)) {
+      errors.push({ row: row.line, message: "year must be a number" });
+      continue;
+    }
+
+    const existing = state.vehicles.find(
+      (vehicle) => vehicle.external_id === imei,
+    );
+    const plate = row.cells.plate || existing?.plate || imei;
+    const fields = {
+      plate,
+      vehicle_type: row.cells.vehicle_type || existing?.vehicle_type || "",
+      make: row.cells.make || existing?.make || "",
+      model: row.cells.model || existing?.model || "",
+      ...(yearText !== ""
+        ? { year: Number(yearText) }
+        : existing?.year !== undefined
+          ? { year: existing.year }
+          : {}),
+      colour: row.cells.colour || existing?.colour || "",
+      depot: row.cells.depot || existing?.depot || "",
+      department: row.cells.department || existing?.department || "",
+    };
+
+    let vehicle: Vehicle;
+    if (existing) {
+      Object.assign(existing, fields);
+      vehicle = existing;
+    } else {
+      vehicle = {
+        id: mockVehicleId(),
+        external_id: imei,
+        ...fields,
+        status: "active",
+        online: false,
+      };
+      state.vehicles.push(vehicle);
+    }
+
+    const driverName = row.cells.driver_name ?? "";
+    if (driverName) {
+      const driverPhone = row.cells.driver_phone ?? "";
+      const driverLicence = row.cells.driver_licence ?? "";
+      let driver = state.drivers.find(
+        (item) => item.name.toLowerCase() === driverName.toLowerCase(),
+      );
+      if (!driver) {
+        driver = {
+          id: mockVehicleId(),
+          name: driverName,
+          phone: driverPhone,
+          licence: driverLicence,
+          status: "active",
+          vehicles: 0,
+        };
+        state.drivers.push(driver);
+      } else {
+        if (driverPhone) driver.phone = driverPhone;
+        if (driverLicence) driver.licence = driverLicence;
+      }
+      vehicle.driver_id = driver.id;
+      vehicle.driver_name = driver.name;
+      vehicle.driver_phone = driver.phone;
+      affectedDrivers.add(driver.id);
+    }
+
+    imported += 1;
+  }
+
+  for (const driver of state.drivers) {
+    if (!affectedDrivers.has(driver.id)) continue;
+    driver.vehicles = state.vehicles.filter(
+      (vehicle) => vehicle.driver_id === driver.id,
+    ).length;
+  }
+
+  const total = parsed.rows.length;
+  const failed = total - imported;
+  const capped = errors.slice(0, 100);
+  return {
+    ok: true,
+    result: {
+      job_id: mockVehicleId(),
+      total,
+      imported,
+      failed,
+      errors: capped.length > 0 ? capped : null,
+    },
+  };
 }
 
 export const handlers = [
@@ -1086,9 +1249,39 @@ export const handlers = [
     });
   }),
 
-  http.post(`${API}/import/vehicles`, ({ request }) => {
-    return withFault("import", request, () =>
-      HttpResponse.json({ ...importResultFixture, job_id: `job-${Date.now()}` }),
-    );
+  http.post(`${API}/import/vehicles`, async ({ request }) => {
+    return withFault("import", request, async () => {
+      const user = resolveUser();
+      if (!user || !can(user.role, "mutate")) return forbidden();
+
+      let file: File | null = null;
+      try {
+        const form = await request.formData();
+        const value = form.get("file");
+        if (value instanceof File) file = value;
+      } catch {
+        file = null;
+      }
+      if (!file) {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "invalid_request",
+              message: "expected a multipart file field named file",
+            },
+          },
+          { status: 400 },
+        );
+      }
+
+      const outcome = applyMockImport(await file.text());
+      if (!outcome.ok) {
+        return HttpResponse.json(
+          { error: { code: outcome.code, message: outcome.message } },
+          { status: 400 },
+        );
+      }
+      return HttpResponse.json(outcome.result);
+    });
   }),
 ];

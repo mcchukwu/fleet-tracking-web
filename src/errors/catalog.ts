@@ -24,6 +24,7 @@ const safeServerCodes = new Set([
   "conflict",
   "in_use",
   "invalid_credentials",
+  "invalid_csv",
   "invalid_geometry",
   "invalid_input",
   "invalid_kind",
@@ -198,6 +199,15 @@ export function errorCopy(error: AppError, hints: CopyHints = {}): ErrorCopy {
   }
 
   if (error.kind === "validation") {
+    if (error.code === "invalid_csv") {
+      return {
+        ...copy,
+        title: "Couldn't read this file",
+        detail:
+          safeMessage(error) ?? "Check the CSV header row and try again.",
+        action: "none",
+      };
+    }
     return { ...copy, detail: safeMessage(error) ?? copy.detail };
   }
 

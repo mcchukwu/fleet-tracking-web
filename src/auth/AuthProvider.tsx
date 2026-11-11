@@ -1,6 +1,9 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/instance";
+import { normalize } from "../errors/normalize";
+import { recordError } from "../errors/report";
+import { clearImportHistory } from "../lib/importHistory";
 import { useAuthStore } from "./store";
 
 export function handleSessionExpired(): void {
@@ -28,8 +31,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const previousUserId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (previousUserId.current !== null && userId !== null && previousUserId.current !== userId) {
+    const previous = previousUserId.current;
+    if (previous !== null && previous !== userId) {
       queryClient.clear();
+      void clearImportHistory().catch((cause: unknown) => {
+        recordError(
+          normalize(cause, {
+            action: "clear import history",
+            resource: "import history",
+          }),
+        );
+      });
     }
     if (userId !== null) previousUserId.current = userId;
   }, [userId, queryClient]);

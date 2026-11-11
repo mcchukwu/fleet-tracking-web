@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   MISSING,
   formatAgeSeconds,
+  formatBytes,
   formatCoordinates,
   formatCount,
   formatDistance,
@@ -111,6 +112,17 @@ describe("playback formatting", () => {
         Date.parse(iso(2026, 11, 9, 2, 0)),
       ),
     ).toBe(true);
+  });
+
+  it("formats file sizes with binary units and one decimal below 10", () => {
+    expect(formatBytes(0)).toBe("0 B");
+    expect(formatBytes(512)).toBe("512 B");
+    expect(formatBytes(1024)).toBe("1 KB");
+    expect(formatBytes(1536)).toBe("1.5 KB");
+    expect(formatBytes(2_621_440)).toBe("2.5 MB");
+    expect(formatBytes(10 * 1024 * 1024)).toBe("10 MB");
+    expect(formatBytes(null)).toBe(MISSING);
+    expect(formatBytes(-1)).toBe(MISSING);
   });
 
   it("formats durations in hours, minutes and days", () => {

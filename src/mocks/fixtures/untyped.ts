@@ -42,15 +42,39 @@ export const auditResponseFixture = {
   ],
 };
 
-// Provisional: shape taken from the OpenAPI `type: object` response; replace with a
-// captured staging payload before Slice 9 depends on it.
-export const importResultFixture = {
-  job_id: "job-2026-11-03-001",
+// Captured against staging on 2026-11-11 with dispatcher@demo.ftb.
+export const importCleanFixture = {
+  job_id: "job-2026-11-11-clean",
+  total: 2,
+  imported: 2,
+  failed: 0,
+  errors: null,
+};
+
+export const importPartialFixture = {
+  job_id: "job-2026-11-11-partial",
   total: 12,
   imported: 11,
   failed: 1,
   errors: [{ row: 7, message: "IMEI already exists" }],
 };
+
+export const importCappedFixture = {
+  job_id: "job-2026-11-11-capped",
+  total: 110,
+  imported: 5,
+  failed: 105,
+  errors: Array.from({ length: 100 }, (_, index) => ({
+    row: index + 2,
+    message: `Row ${index + 2} has an invalid year`,
+  })),
+};
+
+export const invalidCsvErrorFixture = {
+  error: { code: "invalid_csv", message: "the header must include imei" },
+};
+
+export const importResultFixture = importPartialFixture;
 
 export const reportSummaryFixture = {
   active_trips: 4,

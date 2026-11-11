@@ -4,6 +4,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider, handleSessionExpired } from "./AuthProvider";
 import { useAuthStore } from "./store";
 
+const mocks = vi.hoisted(() => ({
+  clearImportHistory: vi.fn(),
+}));
+
+vi.mock("../lib/importHistory", () => ({
+  clearImportHistory: mocks.clearImportHistory,
+}));
+
 const user = {
   id: "user-1",
   tenant_id: "tenant-demo",
@@ -14,6 +22,8 @@ const user = {
 
 beforeEach(() => {
   useAuthStore.setState({ user: null, csrfToken: null, status: "unknown" });
+  mocks.clearImportHistory.mockReset();
+  mocks.clearImportHistory.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -62,5 +72,59 @@ describe("AuthProvider", () => {
 
     expect(useAuthStore.getState().status).toBe("expired");
     expect(cancel).toHaveBeenCalledTimes(1);
+  });
+
+  it("clears this device's import history on logout", () => {
+    useAuthStore.getState().setSession(user, "token");
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <AuthProvider>
+          <div />
+        </AuthProvider>
+      </QueryClientProvider>,
+    );
+
+    act(() => {
+      useAuthStore.getState().clear();
+    });
+
+    expect(mocks.clearImportHistory).toHaveBeenCalledTimes(1);
+  });
+
+  it("clears import history when a different user signs in", () => {
+    useAuthStore.getState().setSession(user, "token");
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <AuthProvider>
+          <div />
+        </AuthProvider>
+      </QueryClientProvider>,
+    );
+
+    act(() => {
+      useAuthStore.getState().setSession(
+        { ...user, id: "user-2", email: "admin@demo.ftb", role: "admin" },
+        "token-2",
+      );
+    });
+
+    expect(mocks.clearImportHistory).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps import history across a same-user session refresh", () => {
+    useAuthStore.getState().setSession(user, "token");
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <AuthProvider>
+          <div />
+        </AuthProvider>
+      </QueryClientProvider>,
+    );
+
+    act(() => {
+      useAuthStore.getState().setSession({ ...user, name: "Renamed" }, "token-2");
+    });
+
+    expect(mocks.clearImportHistory).not.toHaveBeenCalled();
   });
 });

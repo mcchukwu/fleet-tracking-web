@@ -13,7 +13,13 @@ import {
   importResultSchema,
   toGeofenceKind,
 } from "./schemas";
-import { systemHealthFixture, auditResponseFixture, importResultFixture } from "../mocks/fixtures/untyped";
+import {
+  systemHealthFixture,
+  auditResponseFixture,
+  importCleanFixture,
+  importCappedFixture,
+  importResultFixture,
+} from "../mocks/fixtures/untyped";
 import {
   handoffAlertFrame,
   malformedLiveFrames,
@@ -84,6 +90,13 @@ describe("contract schemas", () => {
     expect(
       importResultSchema.safeParse({ ...importResultFixture, errors: null }).success,
     ).toBe(true);
+  });
+
+  it("accepts the captured clean and capped import responses", () => {
+    expect(importResultSchema.parse(importCleanFixture).errors).toBeNull();
+    const capped = importResultSchema.parse(importCappedFixture);
+    expect(capped.failed).toBe(105);
+    expect(capped.errors).toHaveLength(100);
   });
 
   it("salvages valid snapshot rows and drops invalid ones", () => {

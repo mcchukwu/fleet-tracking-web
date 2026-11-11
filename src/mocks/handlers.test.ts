@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { appendMockAlert, freshenVehicles, resetMockState } from "./handlers";
+import { appendMockAlert, applyMockImport, freshenVehicles, resetMockState } from "./handlers";
 import { vehiclesFixture } from "./fixtures/vehicles";
 import { alertsFixture } from "./fixtures/alerts";
 import { perfVehicles } from "./perf";
@@ -49,6 +49,93 @@ describe("mock data helpers", () => {
     expect(alert.status).toBe("open");
     expect(alert.plate).toBe("LSD-101-AA");
     expect(Date.now() - Date.parse(alert.occurred_at)).toBeLessThan(5_000);
+  });
+});
+
+describe("mock import", () => {
+  it("imports rows, returns null errors and makes the vehicle searchable", async () => {
+    const outcome = applyMockImport(
+      "imei,plate,make,year\npreview-clean-1,LSD-900-AA,Volvo,2021",
+    );
+    expect(outcome).toMatchObject({
+      ok: true,
+      result: { total: 1, imported: 1, failed: 0, errors: null },
+    });
+
+    const list = (await (await fetch(`${API}/vehicles?q=preview-clean-1`)).json()) as {
+      data: Array<{ plate: string }>;
+    };
+    expect(list.data).toHaveLength(1);
+    expect(list.data[0]?.plate).toBe("LSD-900-AA");
+  });
+
+  it("rejects a missing imei header with the real invalid_csv code", () => {
+    expect(applyMockImport("plate,make\nLSD-910-AA,Volvo")).toEqual({
+      ok: false,
+      code: "invalid_csv",
+      message: "the header must include imei",
+    });
+  });
+
+  it("rejects an empty file", () => {
+    expect(applyMockImport("")).toEqual({
+      ok: false,
+      code: "invalid_csv",
+      message: "could not read the header row",
+    });
+  });
+
+  it("reports row errors with the header line counted", () => {
+    expect(
+      applyMockImport(
+        "imei,plate,year\npreview-bad-1,LSD-911-AA,not-a-year\npreview-bad-2,LSD-912-AA,2020",
+      ),
+    ).toMatchObject({
+      ok: true,
+      result: {
+        total: 2,
+        imported: 1,
+        failed: 1,
+        errors: [{ row: 2, message: "year must be a number" }],
+      },
+    });
+  });
+
+  it("creates the named driver and links it to the vehicle", async () => {
+    applyMockImport(
+      "imei,plate,driver_name,driver_phone\npreview-driver-1,LSD-913-AA,Import Driver,08030000000",
+    );
+    const drivers = (await (await fetch(`${API}/drivers`)).json()) as {
+      data: Array<{ name: string; phone: string }>;
+    };
+    const created = drivers.data.find((driver) => driver.name === "Import Driver");
+    expect(created?.phone).toBe("08030000000");
+  });
+
+  it("forbids a viewer and rejects a request without a file field", async () => {
+    localStorage.setItem("fleet.mockRole", "viewer"); // guard-ignore: test-only mock role override.
+    resetMockState();
+    const form = new FormData();
+    form.append("file", new File(["imei\nviewer-row"], "vehicles.csv"));
+    expect(
+      (
+        await fetch(`${API}/import/vehicles`, {
+          method: "POST",
+          body: form,
+        })
+      ).status,
+    ).toBe(403);
+
+    localStorage.removeItem("fleet.mockRole"); // guard-ignore: test-only mock role override.
+    resetMockState();
+    const missing = await fetch(`${API}/import/vehicles`, {
+      method: "POST",
+      body: "",
+    });
+    expect(missing.status).toBe(400);
+    await expect(missing.json()).resolves.toMatchObject({
+      error: { code: "invalid_request" },
+    });
   });
 });
 

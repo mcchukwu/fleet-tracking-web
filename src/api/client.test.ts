@@ -182,6 +182,39 @@ describe("api client", () => {
     ).resolves.toMatchObject({ imported: 1 });
   });
 
+  it("accepts a clean import response with null errors", async () => {
+    const client = new FleetApiClient(
+      "",
+      fetcherOf(jsonResponse({ job_id: "j", total: 2, imported: 2, failed: 0, errors: null })),
+    );
+    await expect(
+      client.importVehicles(new File(["imei\n1\n2"], "vehicles.csv", { type: "text/csv" })),
+    ).resolves.toMatchObject({ failed: 0, errors: null });
+  });
+
+  it("marks an unanswered upload as an unknown outcome", async () => {
+    vi.useFakeTimers();
+    const fetcher = vi.fn(
+      (_input: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            reject(new DOMException("aborted", "AbortError"));
+          });
+        }),
+    ) as unknown as typeof fetch;
+    const client = new FleetApiClient("", fetcher);
+    const request = caught(
+      client.importVehicles(
+        new File(["imei\n1"], "vehicles.csv", { type: "text/csv" }),
+        { timeoutMs: 50 },
+      ),
+    );
+    await vi.advanceTimersByTimeAsync(60);
+    const error = await request;
+    expect(error.kind).toBe("timeout");
+    expect(error.outcome).toBe("unknown");
+  });
+
   it("parses alert rules and drops malformed rows", async () => {
     const client = new FleetApiClient(
       "",

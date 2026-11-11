@@ -62,6 +62,7 @@ describe("error catalog", () => {
     expect(isSafeServerCode("invalid_kind")).toBe(true);
     expect(isSafeServerCode("invalid_range")).toBe(true);
     expect(isSafeServerCode("invalid_status")).toBe(true);
+    expect(isSafeServerCode("invalid_csv")).toBe(true);
     expect(isSafeServerCode("internal")).toBe(false);
     const safe = errorCopy(error({ kind: "conflict", code: "in_use", serverMessage: "It has events." }));
     expect(safe.detail).toBe("It has events.");
@@ -69,6 +70,20 @@ describe("error catalog", () => {
     expect(status.detail).toBe("status must be active or inactive");
     const unsafe = errorCopy(error({ kind: "server", serverMessage: "panic: nil pointer" }));
     expect(unsafe.detail).not.toContain("panic");
+  });
+
+  it("gives invalid_csv file copy instead of the form-validation headline", () => {
+    const copy = errorCopy(
+      error({
+        kind: "validation",
+        status: 400,
+        code: "invalid_csv",
+        serverMessage: "the header must include imei",
+      }),
+    );
+    expect(copy.title).toBe("Couldn't read this file");
+    expect(copy.detail).toBe("the header must include imei");
+    expect(copy.action).toBe("none");
   });
 
   it("asks the user to check before retrying when a write outcome is unknown", () => {
