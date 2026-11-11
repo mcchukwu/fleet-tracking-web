@@ -8,6 +8,7 @@ import {
   parseSnapshot,
   parseTrips,
   parseVehicleEventsResponse,
+  parseReportSummary,
   parseVehicleResponse,
   systemHealthSchema,
   importResultSchema,
@@ -398,5 +399,73 @@ describe("trip parser", () => {
     expect(() => parseTrips({ data: [{ nope: true }] })).toThrow(/trip row/i);
     expect(parseTrips({ data: [] })).toEqual({ trips: [], rejected: 0 });
     expect(() => parseTrips({ data: null })).toThrow(/envelope/i);
+  });
+});
+
+describe("report summary", () => {
+  const valid = {
+    active_trips: 4,
+    alerts: 66,
+    alerts_by_type: [
+      { key: "geofence_exit", count: 31 },
+      { key: "geofence_enter", count: 28 },
+      { key: "route_deviation", count: 7 },
+    ],
+    completed_trips: 1,
+    distance_km: 10917.07,
+    from: "2026-10-27T08:13:42.114639496Z",
+    open_alerts: 45,
+    to: "2026-11-03T08:13:42.114639496Z",
+    trips: 5,
+    vehicles: 25,
+  };
+
+  it("accepts the real payload and keeps an unknown alert key", () => {
+    const result = parseReportSummary({
+      ...valid,
+      alerts_by_type: [{ key: "solar_flare", count: 2 }],
+    });
+    expect(result.summary.alerts_by_type).toEqual([{ key: "solar_flare", count: 2 }]);
+    expect(result.rejectedChartRows).toBe(0);
+  });
+
+  it("accepts a payload without the from/to echo", () => {
+    const { from: _from, to: _to, ...withoutEcho } = valid;
+    expect(parseReportSummary(withoutEcho).summary.from).toBeUndefined();
+  });
+
+  it("accepts zeros and an empty breakdown", () => {
+    const result = parseReportSummary({
+      ...valid,
+      trips: 0,
+      completed_trips: 0,
+      active_trips: 0,
+      alerts: 0,
+      open_alerts: 0,
+      distance_km: 0,
+      alerts_by_type: [],
+    });
+    expect(result.summary.alerts_by_type).toEqual([]);
+  });
+
+  it("drops a malformed chart row and still parses the summary", () => {
+    const result = parseReportSummary({
+      ...valid,
+      alerts_by_type: [{ key: "speeding", count: 3 }, { key: 4 }, null, { count: 2 }],
+    });
+    expect(result.summary.alerts_by_type).toEqual([{ key: "speeding", count: 3 }]);
+    expect(result.rejectedChartRows).toBe(3);
+  });
+
+  it("treats a missing breakdown as no rows", () => {
+    const { alerts_by_type: _rows, ...withoutRows } = valid;
+    expect(parseReportSummary(withoutRows).summary.alerts_by_type).toEqual([]);
+  });
+
+  it("rejects a malformed core number as a contract error", () => {
+    expect(() => parseReportSummary({ ...valid, trips: "many" })).toThrow(
+      "Report summary did not match the expected shape",
+    );
+    expect(() => parseReportSummary({ data: [] })).toThrow();
   });
 });

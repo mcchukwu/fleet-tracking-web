@@ -209,8 +209,9 @@ export interface GeofenceInput {
 export type GeofenceUpdate = Partial<Pick<GeofenceInput, "name" | "kind" | "geometry">>;
 
 export interface ReportSummary {
-  from: string;
-  to: string;
+  // Echoed by the server when supplied; absent from openapi.yaml, so optional.
+  from?: string;
+  to?: string;
   vehicles: number;
   trips: number;
   completed_trips: number;

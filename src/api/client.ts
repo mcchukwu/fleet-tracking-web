@@ -19,6 +19,7 @@ import {
   parseAlertRules,
   parseAlerts,
   parseGeofences,
+  parseReportSummary,
   parseSnapshot,
   parseTrips,
   parseVehicleEventsResponse,
@@ -36,7 +37,6 @@ import type {
   HistoryRange,
   ImportResult,
   LoginResponse,
-  ReportSummary,
   TripFilters,
   TripInput,
   TripUpdate,
@@ -425,13 +425,16 @@ export class FleetApiClient {
     return this.request<void>("PATCH", `/drivers/${id}`, update, options);
   }
 
-  reportSummary(from: string, to: string, options: RequestOptions = {}) {
-    return this.request<ReportSummary>(
+  async reportSummary(from: string, to: string, options: RequestOptions = {}) {
+    const payload = await this.request<unknown>(
       "GET",
       `/reports/summary${queryString({ from, to })}`,
       undefined,
       options,
     );
+    const result = this.parse(payload, "/reports/summary", parseReportSummary);
+    this.noteRejectedRows("/reports/summary", result.rejectedChartRows);
+    return result.summary;
   }
 
   systemHealth(options: RequestOptions = {}): Promise<SystemHealth> {

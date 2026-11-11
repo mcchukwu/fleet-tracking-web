@@ -26,8 +26,10 @@ import {
 import { Banner } from "../../ui/Banner";
 import { BrandLogo } from "../../ui/BrandLogo";
 import { Button } from "../../ui/Button";
+import { validateDatetimeRange } from "../../lib/datetime";
 import { Checkbox } from "../../ui/Checkbox";
 import { Combobox } from "../../ui/Combobox";
+import { DateRangeDialog } from "../../ui/DateRangeDialog";
 import { Dialog } from "../../ui/Dialog";
 import { Drawer } from "../../ui/Drawer";
 import {
@@ -289,6 +291,7 @@ export function StyleGuidePage() {
   const [pageDrawerOpen, setPageDrawerOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [blockingOpen, setBlockingOpen] = useState(false);
+  const [rangeOpen, setRangeOpen] = useState(false);
   const [tableState, setTableState] = useState<TableState>("default");
   const { toast } = useToast();
 
@@ -915,6 +918,7 @@ export function StyleGuidePage() {
             <Button onClick={() => setBlockingOpen(true)}>
               Open blocking dialog
             </Button>
+            <Button onClick={() => setRangeOpen(true)}>Open custom range</Button>
           </div>
 
           <Dialog
@@ -937,6 +941,27 @@ export function StyleGuidePage() {
               name="dialog-driver"
             />
           </Dialog>
+
+          <DateRangeDialog
+            open={rangeOpen}
+            from="2026-11-01T00:00:00Z"
+            to="2026-11-08T00:00:00Z"
+            validate={(startIso, endIso) => {
+              const result = validateDatetimeRange(startIso, endIso);
+              if (!result.valid) return result;
+              if (result.toMs - result.fromMs > 30 * 86_400_000) {
+                return {
+                  valid: false,
+                  reason: "too_long",
+                  message: "Choose a range of 30 days or less.",
+                  field: "both",
+                };
+              }
+              return result;
+            }}
+            onApply={() => setRangeOpen(false)}
+            onClose={() => setRangeOpen(false)}
+          />
 
           <Dialog
             open={blockingOpen}

@@ -111,6 +111,38 @@ export function formatRelativeTime(iso: string, now: number, timeZone?: string):
   return formatAbsoluteTime(iso, timeZone);
 }
 
+export function formatPercent(fraction: number | null | undefined): string {
+  if (!isNumber(fraction) || fraction < 0 || fraction > 1) return MISSING;
+  return new Intl.NumberFormat("en-GB", {
+    style: "percent",
+    maximumFractionDigits: 0,
+  }).format(fraction);
+}
+
+export function formatRangeLabel(from: string, to: string): string {
+  const start = dateOf(from);
+  const end = dateOf(to);
+  if (!start || !end) return MISSING;
+  const time = (date: Date): string =>
+    new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(date);
+  const day = (date: Date, withYear: boolean): string =>
+    new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "short",
+      ...(withYear ? { year: "numeric" } : {}),
+    }).format(date);
+
+  const crossYear = start.getFullYear() !== end.getFullYear();
+  if (!crossYear && localDay(start) === localDay(end)) {
+    return `${day(start, false)}, ${time(start)} – ${time(end)}`;
+  }
+  return `${day(start, crossYear)}, ${time(start)} – ${day(end, crossYear)}, ${time(end)}`;
+}
+
 export function formatClockTime(timestamp: number | null | undefined): string {
   if (!isNumber(timestamp)) return MISSING;
   return new Intl.DateTimeFormat("en-GB", {

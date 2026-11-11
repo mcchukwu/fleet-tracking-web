@@ -11,6 +11,7 @@ import type {
   Geofence,
   GeofenceKind,
   Point,
+  ReportSummary,
   SnapshotVehicle,
   Trip,
   TripStatus,
@@ -314,6 +315,65 @@ export const historyResponseSchema = z.object({
     .transform((value) => value ?? ([] as Point[])),
   resolution: z.string(),
 });
+
+const reportSummaryRowSchema = z.object({
+  vehicles: z.number(),
+  trips: z.number(),
+  completed_trips: z.number(),
+  active_trips: z.number(),
+  alerts: z.number(),
+  open_alerts: z.number(),
+  distance_km: z.number(),
+  // Echo metadata: present in reality, absent from openapi.yaml, never required.
+  from: z.string().optional(),
+  to: z.string().optional(),
+  alerts_by_type: z.array(z.unknown()).optional().default([]),
+});
+
+const reportChartRowSchema = z.object({
+  key: z.string().min(1),
+  count: z.number().min(0),
+});
+
+export type ReportSummaryParseResult = {
+  summary: ReportSummary;
+  rejectedChartRows: number;
+};
+
+/**
+ * `alerts_by_type` rows are tolerant: one malformed row must not blank a
+ * report. The seven core numbers are strict; a malformed one is a contract error.
+ */
+export function parseReportSummary(payload: unknown): ReportSummaryParseResult {
+  const parsed = reportSummaryRowSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw new ContractError("Report summary did not match the expected shape");
+  }
+
+  const rows: Array<{ key: string; count: number }> = [];
+  let rejectedChartRows = 0;
+  for (const row of parsed.data.alerts_by_type) {
+    const chartRow = reportChartRowSchema.safeParse(row);
+    if (chartRow.success) rows.push(chartRow.data);
+    else rejectedChartRows += 1;
+  }
+
+  return {
+    summary: {
+      vehicles: parsed.data.vehicles,
+      trips: parsed.data.trips,
+      completed_trips: parsed.data.completed_trips,
+      active_trips: parsed.data.active_trips,
+      alerts: parsed.data.alerts,
+      open_alerts: parsed.data.open_alerts,
+      distance_km: parsed.data.distance_km,
+      alerts_by_type: rows,
+      ...(parsed.data.from !== undefined ? { from: parsed.data.from } : {}),
+      ...(parsed.data.to !== undefined ? { to: parsed.data.to } : {}),
+    },
+    rejectedChartRows,
+  };
+}
 
 export const auditEntrySchema = z.object({
   id: z.union([z.number(), z.string()]),

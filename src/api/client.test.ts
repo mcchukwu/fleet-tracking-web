@@ -250,3 +250,72 @@ describe("api client", () => {
     expect((await caught(client.history("v"))).kind).toBe("contract");
   });
 });
+
+describe("report summary", () => {
+  const summary = {
+    active_trips: 4,
+    alerts: 66,
+    alerts_by_type: [{ key: "speeding", count: 4 }],
+    completed_trips: 1,
+    distance_km: 10917.07,
+    open_alerts: 45,
+    trips: 5,
+    vehicles: 25,
+  };
+
+  it("sends both ends exactly and validates the response", async () => {
+    const fetcher = vi.fn(() =>
+      Promise.resolve(jsonResponse({ ...summary, from: "a", to: "b" })),
+    ) as unknown as typeof fetch;
+    const client = new FleetApiClient("", fetcher);
+    const result = await client.reportSummary(
+      "2026-11-08T10:00:00Z",
+      "2026-11-08T12:00:00Z",
+    );
+    expect(result.trips).toBe(5);
+    expect(fetcher).toHaveBeenCalledWith(
+      "/api/v1/reports/summary?from=2026-11-08T10%3A00%3A00Z&to=2026-11-08T12%3A00%3A00Z",
+      expect.objectContaining({ method: "GET" }),
+    );
+  });
+
+  it("turns a malformed core number into a contract error", async () => {
+    const client = new FleetApiClient(
+      "",
+      fetcherOf(jsonResponse({ ...summary, distance_km: null })),
+    );
+    expect((await caught(client.reportSummary("a", "b"))).kind).toBe("contract");
+  });
+
+  it("keeps the summary when one chart row is malformed", async () => {
+    const client = new FleetApiClient(
+      "",
+      fetcherOf(
+        jsonResponse({
+          ...summary,
+          alerts_by_type: [{ key: "speeding", count: 4 }, { key: null, count: "many" }],
+        }),
+      ),
+    );
+    const result = await client.reportSummary("a", "b");
+    expect(result.alerts_by_type).toEqual([{ key: "speeding", count: 4 }]);
+  });
+
+  it("honours a caller abort", async () => {
+    const fetcher = vi.fn(
+      (_input: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            reject(new DOMException("aborted", "AbortError"));
+          });
+        }),
+    ) as unknown as typeof fetch;
+    const client = new FleetApiClient("", fetcher);
+    const controller = new AbortController();
+    const request = caught(
+      client.reportSummary("a", "b", { signal: controller.signal }),
+    );
+    controller.abort();
+    expect((await request).kind).toBe("aborted");
+  });
+});

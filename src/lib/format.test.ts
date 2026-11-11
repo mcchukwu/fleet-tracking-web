@@ -9,7 +9,9 @@ import {
   formatHeading,
   formatPlaybackDuration,
   formatPlaybackRange,
+  formatPercent,
   formatPlaybackTime,
+  formatRangeLabel,
   formatRelativeTime,
   formatSpeed,
   formatTimeTooltip,
@@ -131,5 +133,42 @@ describe("playback formatting", () => {
     expect(formatPlaybackDuration(90 * 60_000)).toBe("1h 30m");
     expect(formatPlaybackDuration(7 * 86_400_000)).toBe("7d");
     expect(formatPlaybackDuration(-1)).toBe(MISSING);
+  });
+});
+
+describe("report formatting", () => {
+  const iso = (y: number, m: number, d: number, h: number, min: number) =>
+    new Date(y, m - 1, d, h, min).toISOString();
+
+  it("formats a fraction as a whole percentage", () => {
+    expect(formatPercent(0)).toBe("0%");
+    expect(formatPercent(0.125)).toBe("13%");
+    expect(formatPercent(0.5)).toBe("50%");
+    expect(formatPercent(1)).toBe("100%");
+    expect(formatPercent(Number.NaN)).toBe(MISSING);
+    expect(formatPercent(Number.POSITIVE_INFINITY)).toBe(MISSING);
+    expect(formatPercent(-0.1)).toBe(MISSING);
+  });
+
+  it("formats a same-day range once", () => {
+    expect(formatRangeLabel(iso(2026, 11, 8, 14, 0), iso(2026, 11, 8, 16, 0))).toBe(
+      "8 Nov, 14:00 – 16:00",
+    );
+  });
+
+  it("includes both days within one year", () => {
+    expect(formatRangeLabel(iso(2026, 11, 8, 22, 0), iso(2026, 11, 9, 2, 0))).toBe(
+      "8 Nov, 22:00 – 9 Nov, 02:00",
+    );
+  });
+
+  it("adds the year only when the endpoints differ by year", () => {
+    expect(
+      formatRangeLabel(iso(2026, 12, 31, 22, 0), iso(2027, 1, 1, 2, 0)),
+    ).toBe("31 Dec 2026, 22:00 – 1 Jan 2027, 02:00");
+  });
+
+  it("returns the missing value for an invalid endpoint", () => {
+    expect(formatRangeLabel("not-a-date", iso(2026, 11, 8, 16, 0))).toBe(MISSING);
   });
 });

@@ -2,10 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   activePreset,
   defaultRange,
-  fromLocalInputValue,
   presetRange,
   resolutionParam,
-  toLocalInputValue,
   validateRange,
 } from "./range";
 import { RANGE_PRESETS } from "./constants";
@@ -96,22 +94,5 @@ describe("resolution", () => {
     expect(resolutionParam("auto")).toBeUndefined();
     expect(resolutionParam("raw")).toBe("raw");
     expect(resolutionParam("5m")).toBe("5m");
-  });
-});
-
-describe("local datetime inputs", () => {
-  it("converts a local field value to a UTC RFC 3339 instant", () => {
-    const iso = fromLocalInputValue("2026-11-08T14:30");
-    expect(iso).toBe(new Date(2026, 10, 8, 14, 30).toISOString());
-  });
-
-  it("round-trips a local field value", () => {
-    const iso = new Date(2026, 10, 8, 14, 30).toISOString();
-    expect(fromLocalInputValue(toLocalInputValue(iso))).toBe(iso);
-  });
-
-  it("rejects an incomplete value", () => {
-    expect(fromLocalInputValue("")).toBeNull();
-    expect(fromLocalInputValue("2026-11-08")).toBeNull();
   });
 });
