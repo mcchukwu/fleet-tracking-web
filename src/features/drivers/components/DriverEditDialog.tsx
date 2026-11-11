@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useRef, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import type { Driver, DriverUpdate } from "../../../api/types";
 import { InlineError } from "../../../errors/InlineError";
 import { SlowNotice } from "../../../errors/SlowNotice";
@@ -39,6 +39,7 @@ export function DriverEditDialog({
   onClose,
   onRefresh,
 }: DriverEditDialogProps) {
+  "use no memo";
   const write = useDriverWrite();
   const { reset: resetWrite } = write;
   const [confirmDiscard, setConfirmDiscard] = useState(false);
@@ -49,7 +50,6 @@ export function DriverEditDialog({
     register,
     handleSubmit,
     reset,
-    control,
     formState: { errors, isDirty },
   } = useForm<DriverEditFormValues>({
     resolver: zodResolver(driverEditFormSchema),
@@ -57,26 +57,11 @@ export function DriverEditDialog({
     defaultValues: driver ? toDriverEditFormValues(driver) : emptyDriverEditForm,
   });
 
-  const currentName = useWatch({ control, name: "name" });
-  const currentPhone = useWatch({ control, name: "phone" });
-  const currentLicence = useWatch({ control, name: "licence" });
-  const currentStatus = useWatch({ control, name: "status" });
-
   useEffect(() => {
     if (!open || !driver) return;
     reset(toDriverEditFormValues(driver));
     resetWrite();
   }, [open, driver, reset, resetWrite]);
-
-  const liveUpdate: DriverUpdate =
-    driver === null
-      ? {}
-      : diffDriver(driver, {
-          name: currentName ?? driver.name,
-          phone: currentPhone ?? driver.phone,
-          licence: currentLicence ?? driver.licence,
-          status: currentStatus ?? driver.status,
-        });
 
   useEffect(() => {
     if (write.error) errorRef.current?.focus();
@@ -84,7 +69,7 @@ export function DriverEditDialog({
 
   function requestClose(): void {
     if (write.pending) return;
-    if (isDirty && hasChanges(liveUpdate)) {
+    if (isDirty) {
       setConfirmDiscard(true);
       return;
     }
@@ -94,7 +79,7 @@ export function DriverEditDialog({
   async function save(update: DriverUpdate): Promise<void> {
     if (!driver) return;
     const outcome = await write.update(driver, update);
-    if (outcome.status === "done" || outcome.status === "gone") {
+    if (outcome.status === "done") {
       onSaved();
       onClose();
     }
@@ -112,7 +97,7 @@ export function DriverEditDialog({
   }
 
   const copy = write.error ? driverWriteCopy(write.error, "update") : null;
-  const changed = hasChanges(liveUpdate);
+  const changed = isDirty;
 
   return (
     <>

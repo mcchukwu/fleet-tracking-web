@@ -45,9 +45,8 @@ export function DriverDeactivateDialog({
   async function confirm(): Promise<void> {
     if (!driver || write.pending) return;
     const outcome = await write.update(driver, update);
-    if (outcome.status === "done" || outcome.status === "gone") {
+    if (outcome.status === "done") {
       onFinished();
-      return;
     }
   }
 

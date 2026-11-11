@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useLayoutEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 export type OverlayLayer = "dialog" | "popover" | "toast" | "tooltip";
@@ -79,25 +79,35 @@ export function isPortalledPopoverTarget(target: EventTarget | null): boolean {
 }
 
 const CONTENT_OVERLAY_ID = "content-overlay-root";
+const CONTENT_OVERLAY_FALLBACK_ID = "content-overlay-fallback";
 
 /**
  * The page drawer's containing block: the shell content area, so a banner in
  * flow above it can never be covered by a viewport-fixed panel.
+ *
+ * The shell root must be looked up after commit: a route can render its drawer
+ * in the very first commit, before the shell's root is in the DOM, and a
+ * body-level fallback would put the drawer over the top bar.
  */
 export function contentOverlayRoot(): HTMLElement {
   const existing = document.getElementById(CONTENT_OVERLAY_ID);
   if (existing) return existing;
+  const fallback = document.getElementById(CONTENT_OVERLAY_FALLBACK_ID);
+  if (fallback) return fallback;
   const container = document.createElement("div");
-  container.id = CONTENT_OVERLAY_ID;
+  container.id = CONTENT_OVERLAY_FALLBACK_ID;
   container.className = "pointer-events-none absolute inset-0 z-drawer";
   document.body.appendChild(container);
   return container;
 }
 
 export function ContentPortal({ children }: { children: ReactNode }) {
-  const [container] = useState<HTMLElement | null>(() =>
-    typeof document === "undefined" ? null : contentOverlayRoot(),
-  );
+  const [container, setContainer] = useState<HTMLElement | null>(null);
+
+  useLayoutEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- the shell root exists only after commit.
+    setContainer(contentOverlayRoot());
+  }, []);
 
   return container ? createPortal(children, container) : null;
 }

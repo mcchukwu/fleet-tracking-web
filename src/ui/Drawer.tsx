@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useRef, type ReactNode } from "react";
 import { IconButton } from "./IconButton";
 import { cn } from "./cn";
 import { ContentPortal } from "./LayerPortal";
@@ -49,6 +49,16 @@ export function Drawer({
   useEffect(() => {
     returnRef.current = returnFocus;
   }, [returnFocus]);
+
+  // A page drawer is portalled after the shell's content root exists, so the
+  // close button can mount after the open effect has run.
+  const setCloseRef = useCallback(
+    (node: HTMLButtonElement | null) => {
+      closeRef.current = node;
+      if (node && open) node.focus();
+    },
+    [open],
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -111,7 +121,7 @@ export function Drawer({
           {headerAside}
         </div>
         <IconButton
-          ref={closeRef}
+          ref={setCloseRef}
           label={resolvedCloseLabel}
           icon={<X aria-hidden="true" className="size-4" strokeWidth={1.5} />}
           onClick={onClose}

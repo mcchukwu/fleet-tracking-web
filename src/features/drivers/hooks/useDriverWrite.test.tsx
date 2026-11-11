@@ -131,6 +131,7 @@ describe("useDriverWrite", () => {
     const outcome = await act(() => result.current.update(driver, { phone: "" }));
     expect(outcome).toEqual({ status: "gone" });
     expect(invalidate).toHaveBeenCalled();
+    expect(result.current.error?.kind).toBe("not_found");
   });
 
   it("returns the error for a failed update", async () => {

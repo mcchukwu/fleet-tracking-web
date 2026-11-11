@@ -30,6 +30,7 @@ export function DriverCreateDialog({
   onCreated,
   onClose,
 }: DriverCreateDialogProps) {
+  "use no memo";
   const write = useDriverWrite();
   const { reset: resetWrite } = write;
   const [confirmDiscard, setConfirmDiscard] = useState(false);

@@ -50,6 +50,13 @@ function updateToast(update: DriverUpdate): string {
   return "Driver updated.";
 }
 
+/** Status changes need their own dedupe key, or activate and deactivate collapse. */
+function updateToastKey(driver: Driver, update: DriverUpdate): string {
+  return update.status
+    ? `driver-status:${driver.id}:${update.status}`
+    : `driver-updated:${driver.id}`;
+}
+
 export function useDriverWrite(): DriverWriteController {
   const queryClient = useQueryClient();
   const createMutation = useCreateDriver();
@@ -132,24 +139,19 @@ export function useDriverWrite(): DriverWriteController {
         );
 
         if (result.status === "success") {
-          toast({ title: updateToast(update), tone: "success", key: `driver-updated:${driver.id}` });
+          toast({ title: updateToast(update), tone: "success", key: updateToastKey(driver, update) });
           return { status: "done", reconciled: false };
         }
         if (result.status === "reconciled") {
           await invalidateAll();
-          toast({ title: updateToast(update), tone: "success", key: `driver-updated:${driver.id}` });
+          toast({ title: updateToast(update), tone: "success", key: updateToastKey(driver, update) });
           return { status: "done", reconciled: true };
         }
 
         const failure = result.error;
         if (failure.kind === "not_found") {
+          // Keep the error visible: the form offers Refresh and stays open.
           await invalidateAll();
-          reset();
-          toast({
-            title: "This driver no longer exists. We've refreshed the list.",
-            tone: "info",
-            key: `driver-gone:${driver.id}`,
-          });
           return { status: "gone" };
         }
         return { status: "error", error: failure };
@@ -157,7 +159,7 @@ export function useDriverWrite(): DriverWriteController {
         inFlight.current = false;
       }
     },
-    [invalidateAll, reset, run, toast, updateMutation],
+    [invalidateAll, run, toast, updateMutation],
   );
 
   return { create, update, pending, error, reset };
