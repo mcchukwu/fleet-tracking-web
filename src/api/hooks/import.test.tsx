@@ -60,6 +60,21 @@ describe("useImportVehicles", () => {
     expect(roots).toHaveLength(6);
   });
 
+  it("resolves the upload before background invalidations settle", async () => {
+    mocks.importVehicles.mockResolvedValue(result);
+    const queryClient = new QueryClient();
+    vi.spyOn(queryClient, "invalidateQueries").mockReturnValue(
+      new Promise<void>(() => undefined),
+    );
+    const { result: hook } = renderHook(() => useImportVehicles(), {
+      wrapper: wrapper(queryClient),
+    });
+
+    await expect(
+      hook.current.mutateAsync({ file: new File(["imei\n1"], "vehicles.csv") }),
+    ).resolves.toEqual(result);
+  });
+
   it("does not invalidate anything when the upload fails", async () => {
     mocks.importVehicles.mockRejectedValue(new Error("boom"));
     const queryClient = new QueryClient();

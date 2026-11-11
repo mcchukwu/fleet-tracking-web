@@ -15,6 +15,10 @@ const validCsv = `imei,plate,vehicle_type,make,model,year,colour,depot
 layout-import-1,LSD-990-AA,truck,Volvo,FH,2021,White,Lagos
 layout-import-2,LSD-991-AA,van,Ford,Transit,2022,Blue,Ibadan`;
 
+function isMobile(page: Page): boolean {
+  return (page.viewportSize()?.width ?? 1440) < 1024;
+}
+
 async function gotoImport(page: Page): Promise<void> {
   await page.goto("/import");
   await expect(page.getByRole("heading", { name: "Import", level: 1 })).toBeVisible({
@@ -95,6 +99,42 @@ test.describe("import layout", () => {
       await expectTouchTargets(page, 44, '[data-testid="import-file-input"]');
     }
     await captureForReview(page, "09-import-partial");
+  });
+
+  test("holds the preview, result and recent rows at 360px", async ({ page }) => {
+    test.skip(!isMobile(page), "mobile-only layout");
+    await page.setViewportSize({ width: 360, height: 640 });
+    await gotoImport(page);
+    await expectNoHorizontalScroll(page);
+
+    await uploadCsv(page, validCsv);
+    await expect(page.getByTestId("import-preview")).toBeVisible();
+    await expectStableColumns(
+      page.getByTestId("import-preview").locator("[data-data-table]"),
+      36,
+    );
+    await expectNoHorizontalScroll(page);
+
+    await page.getByRole("button", { name: "Upload file" }).click();
+    await expect(page.getByTestId("import-result")).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByTestId("import-recent-list")).toBeVisible();
+
+    const heights = await page
+      .locator("[data-recent-import]")
+      .evaluateAll((elements) =>
+        elements.map((element) => Math.round(element.getBoundingClientRect().height)),
+      );
+    expect(heights.length).toBeGreaterThan(0);
+    for (const height of heights) expect(Math.abs(height - 56)).toBeLessThanOrEqual(1);
+
+    await expectNoHorizontalScroll(page);
+    await expectTabularNums(
+      page.getByTestId("import-recent").locator(".tabular-nums").first(),
+    );
+    await expectNoAxeViolations(page);
+    await captureForReview(page, "09-import-layout-360");
   });
 
   test("the failure notice stays readable in both themes", { tag: "@theme" }, async ({

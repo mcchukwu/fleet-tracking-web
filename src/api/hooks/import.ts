@@ -13,8 +13,8 @@ export function useImportVehicles() {
   return useMutation({
     mutationFn: ({ file, signal }: ImportVariables) =>
       api.importVehicles(file, signal ? { signal } : {}),
-    onSuccess: async () => {
-      await Promise.all([
+    onSuccess: () => {
+      void Promise.all([
         queryClient.invalidateQueries({ queryKey: ["vehicles"] }),
         queryClient.invalidateQueries({ queryKey: ["vehicle"] }),
         queryClient.invalidateQueries({ queryKey: queryKeys.liveSnapshot }),
