@@ -66,6 +66,37 @@ export function runAdapterContract(name: string, options: AdapterContractOptions
       adapter.destroy();
     });
 
+    it("starts drawing asynchronously and cancels back to no geometry", async () => {
+      const adapter = options.create();
+      await adapter.mount(document.createElement("div"), {
+        theme: "light",
+        tokens: contractTokens,
+        bounds: { south: 6, west: 3, north: 7, east: 4 },
+      });
+      const draw = adapter.draw;
+      if (!adapter.capabilities.drawing || !draw) {
+        expect(adapter.capabilities.drawing).toBe(false);
+        expect(draw).toBeUndefined();
+        adapter.destroy();
+        return;
+      }
+
+      const changes: unknown[] = [];
+      const unsubscribe = draw.onChange((geometry) => changes.push(geometry));
+      await draw.start("depot", [
+        [3.4, 6.4],
+        [3.5, 6.4],
+        [3.5, 6.5],
+      ]);
+      expect(draw.getGeometry()).not.toBeNull();
+
+      draw.cancel();
+      expect(draw.getGeometry()).toBeNull();
+      expect(changes[changes.length - 1]).toBeNull();
+      unsubscribe();
+      adapter.destroy();
+    });
+
     it("mounts, emits ready and reports a viewport", async () => {
       const adapter = options.create();
       const ready = vi.fn();

@@ -5,6 +5,7 @@ import type { LngLat, MapGeofence, MapTokens, MapVehicle } from "../../types";
 export const SOURCE_IDS = {
   vehicles: "fleet-vehicles",
   geofences: "fleet-geofences",
+  draw: "fleet-geofence-draw",
   route: "fleet-route",
   routePoints: "fleet-route-points",
 } as const;
@@ -13,11 +14,14 @@ export const LAYER_IDS = {
   geofenceFill: "fleet-geofence-fill",
   geofenceHatch: "fleet-geofence-hatch",
   geofenceHalo: "fleet-geofence-halo",
+  geofenceSelectedHalo: "fleet-geofence-selected-halo",
   geofenceLineDepot: "fleet-geofence-line-depot",
   geofenceLineCustomer: "fleet-geofence-line-customer",
   geofenceLineRestricted: "fleet-geofence-line-restricted",
   geofenceLineOther: "fleet-geofence-line-other",
   geofenceLabel: "fleet-geofence-label",
+  drawFill: "fleet-geofence-draw-fill",
+  drawLine: "fleet-geofence-draw-line",
   routeHalo: "fleet-route-halo",
   routeGap: "fleet-route-gap",
   routeLine: "fleet-route-line",
@@ -334,6 +338,18 @@ export function geofenceLayers(tokens: MapTokens, options: LayerOptions = {}): L
           },
         ]
       : []),
+    {
+      id: LAYER_IDS.geofenceSelectedHalo,
+      type: "line",
+      source: SOURCE_IDS.geofences,
+      filter: ["==", ["get", "highlighted"], true],
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: {
+        "line-color": tokens.colors.accent,
+        "line-width": tokens.geofence.strokeWidth + 4,
+        "line-opacity": 0.45,
+      },
+    },
     geofenceLine(
       LAYER_IDS.geofenceLineDepot,
       "depot",
@@ -576,4 +592,54 @@ export function geofenceCollection(geofences: readonly MapGeofence[]): FeatureCo
       geometry: { type: "Polygon", coordinates: geofence.rings },
     })),
   };
+}
+
+const DRAW_FEATURE_ID = "fleet-geofence-draw";
+
+export function drawCollection(
+  polygon: { type: "Polygon"; coordinates: number[][][] } | null,
+): FeatureCollection<Polygon> {
+  if (!polygon || polygon.coordinates.length === 0) {
+    return { type: "FeatureCollection", features: [] };
+  }
+  return {
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        id: DRAW_FEATURE_ID,
+        properties: { role: DRAW_FEATURE_ID },
+        geometry: {
+          type: "Polygon",
+          coordinates: polygon.coordinates as Polygon["coordinates"],
+        },
+      },
+    ],
+  };
+}
+
+/** The unsaved polygon overlay: 12% accent fill and a dashed accent stroke. */
+export function drawLayers(tokens: MapTokens): LayerSpecification[] {
+  return [
+    {
+      id: LAYER_IDS.drawFill,
+      type: "fill",
+      source: SOURCE_IDS.draw,
+      paint: {
+        "fill-color": tokens.colors.accent,
+        "fill-opacity": 0.12,
+      },
+    },
+    {
+      id: LAYER_IDS.drawLine,
+      type: "line",
+      source: SOURCE_IDS.draw,
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: {
+        "line-color": tokens.colors.accent,
+        "line-width": 2,
+        "line-dasharray": [2, 2],
+      },
+    },
+  ];
 }

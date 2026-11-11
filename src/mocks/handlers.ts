@@ -20,6 +20,8 @@ import {
   vehicleEventsForCount,
 } from "./fixtures/events";
 import { geofencesFixture } from "./fixtures/geofences";
+import { validateRing } from "../features/geofences/lib/geometry";
+import { isGeofenceKind } from "../features/geofences/lib/kinds";
 import { generateHistory, historyFixture } from "./fixtures/history";
 import { tripsFixture } from "./fixtures/trips";
 import {
@@ -221,11 +223,19 @@ const tripUpdateSchema = z.object({
   status: z.enum(tripStatuses).optional(),
   driver_id: z.string().min(1).optional(),
 });
-const geofenceInputSchema = z.object({
-  name: z.string(),
-  kind: z.enum(["depot", "customer", "restricted", "other"]).optional(),
-  geometry: z.object({ type: z.literal("Polygon"), coordinates: z.array(z.array(z.array(z.number()))) }),
-});
+const GEOFENCE_WITH_EVENTS = "00000000-0000-0000-0000-000000000201";
+
+function parseGeofenceGeometry(value: unknown): Geofence["geometry"] | null {
+  if (typeof value !== "object" || value === null) return null;
+  const candidate = value as { type?: unknown; coordinates?: unknown };
+  if (candidate.type !== "Polygon" || !Array.isArray(candidate.coordinates)) return null;
+  const ring = candidate.coordinates[0];
+  if (!Array.isArray(ring)) return null;
+  const validated = validateRing(ring);
+  if (!validated.ok) return null;
+  return { type: "Polygon", coordinates: [validated.ring] };
+}
+
 const driverInputSchema = z.object({
   name: z.string().optional(),
   phone: z.string().optional(),
@@ -795,57 +805,158 @@ export const handlers = [
       const first = state.geofences[0];
       return HttpResponse.json({ data: first ? [{ ...first, kind: "solar" }] : [] });
     }
-    return withFault("geofences", request, () => HttpResponse.json({ data: state.geofences }));
+    return withFault("geofences", request, () => {
+      const url = new URL(request.url);
+      const pageEmpty =
+        typeof window !== "undefined" &&
+        new URLSearchParams(window.location.search).get("empty") === "geofences";
+      if (url.searchParams.get("empty") === "geofences" || pageEmpty) {
+        return HttpResponse.json({ data: [] });
+      }
+      // Staging ignores q, limit and offset; the mock mirrors that.
+      return HttpResponse.json({ data: state.geofences });
+    });
   }),
 
   http.post(`${API}/geofences`, async ({ request }) => {
     return withFault("geofences", request, async () => {
-      const parsed = geofenceInputSchema.safeParse(await readJson(request));
-      if (!parsed.success) return badRequest();
+      const user = resolveUser();
+      if (!user || !can(user.role, "mutate")) return forbidden();
+      const raw = await readJson(request);
+      const body = typeof raw === "object" && raw !== null ? (raw as Record<string, unknown>) : {};
+      if (typeof body.name !== "string" || body.name.trim() === "" || body.geometry === undefined) {
+        return HttpResponse.json(
+          { error: { code: "invalid_request", message: "name and geometry are required" } },
+          { status: 400 },
+        );
+      }
+      if (body.kind !== undefined && !(typeof body.kind === "string" && isGeofenceKind(body.kind))) {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "invalid_kind",
+              message: "kind must be depot, customer, restricted or other",
+            },
+          },
+          { status: 400 },
+        );
+      }
+      const geometry = parseGeofenceGeometry(body.geometry);
+      if (!geometry) {
+        return HttpResponse.json(
+          { error: { code: "invalid_geometry", message: "geometry must be a valid polygon" } },
+          { status: 400 },
+        );
+      }
+      recordMockWrite("POST", `${API}/geofences`, body);
       const id = `geofence-${state.geofences.length + 1}`;
+      const kind: Geofence["kind"] =
+        typeof body.kind === "string" && isGeofenceKind(body.kind) ? body.kind : "other";
       state.geofences = [
         ...state.geofences,
         {
           id,
-          name: parsed.data.name,
-          kind: parsed.data.kind ?? "other",
-          geometry: parsed.data.geometry,
+          name: body.name,
+          kind,
+          geometry,
         },
       ];
-      return HttpResponse.json({ id });
+      return HttpResponse.json({ id }, { status: 201 });
     });
   }),
 
   http.patch(`${API}/geofences/:id`, async ({ params, request }) => {
     return withFault("geofences", request, async () => {
+      const user = resolveUser();
+      if (!user || !can(user.role, "mutate")) return forbidden();
       const geofence = state.geofences.find((item) => item.id === params.id);
       if (!geofence) {
-        return HttpResponse.json({ error: { code: "not_found", message: "not found" } }, { status: 404 });
+        return HttpResponse.json(
+          { error: { code: "not_found", message: "geofence not found" } },
+          { status: 404 },
+        );
       }
-      const parsed = geofenceInputSchema.partial().safeParse(await readJson(request));
-      if (!parsed.success) return badRequest();
-      Object.assign(geofence, parsed.data);
+      const raw = await readJson(request);
+      const body = typeof raw === "object" && raw !== null ? (raw as Record<string, unknown>) : {};
+      if (body.name === undefined && body.kind === undefined && body.geometry === undefined) {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "invalid_request",
+              message: "name, geometry or kind is required",
+            },
+          },
+          { status: 400 },
+        );
+      }
+      if (body.name !== undefined && (typeof body.name !== "string" || body.name.trim() === "")) {
+        return HttpResponse.json(
+          { error: { code: "invalid_request", message: "name and geometry are required" } },
+          { status: 400 },
+        );
+      }
+      if (body.kind !== undefined && !(typeof body.kind === "string" && isGeofenceKind(body.kind))) {
+        return HttpResponse.json(
+          {
+            error: {
+              code: "invalid_kind",
+              message: "kind must be depot, customer, restricted or other",
+            },
+          },
+          { status: 400 },
+        );
+      }
+      if (body.geometry !== undefined) {
+        const geometry = parseGeofenceGeometry(body.geometry);
+        if (!geometry) {
+          const shaped =
+            typeof body.geometry === "object" &&
+            body.geometry !== null &&
+            (body.geometry as { type?: unknown }).type === "Polygon";
+          // The real server reports a missing geofence for an invalid ring and
+          // a bad request for a wrong geometry type; mirror both.
+          return shaped
+            ? HttpResponse.json(
+                { error: { code: "not_found", message: "geofence not found" } },
+                { status: 404 },
+              )
+            : HttpResponse.json(
+                { error: { code: "invalid_geometry", message: "could not update geofence" } },
+                { status: 400 },
+              );
+        }
+        geofence.geometry = geometry;
+      }
+      recordMockWrite("PATCH", `${API}/geofences/${String(params.id)}`, body);
+      if (typeof body.name === "string") geofence.name = body.name;
+      if (typeof body.kind === "string" && isGeofenceKind(body.kind)) geofence.kind = body.kind;
       return new HttpResponse(null, { status: 204 });
     });
   }),
 
   http.delete(`${API}/geofences/:id`, ({ params, request }) => {
     return withFault("geofences", request, () => {
+      const user = resolveUser();
+      if (!user || !can(user.role, "mutate")) return forbidden();
       const geofence = state.geofences.find((item) => item.id === params.id);
       if (!geofence) {
-        return HttpResponse.json({ error: { code: "not_found", message: "not found" } }, { status: 404 });
+        return HttpResponse.json(
+          { error: { code: "not_found", message: "geofence not found" } },
+          { status: 404 },
+        );
       }
-      if (geofence.kind === "restricted") {
+      if (geofence.id === GEOFENCE_WITH_EVENTS) {
         return HttpResponse.json(
           {
             error: {
-              code: "geofence_has_events",
-              message: "This geofence has recorded events and can't be deleted.",
+              code: "in_use",
+              message: "geofence has events and cannot be deleted",
             },
           },
           { status: 409 },
         );
       }
+      recordMockWrite("DELETE", `${API}/geofences/${String(params.id)}`, null);
       state.geofences = state.geofences.filter((item) => item.id !== params.id);
       return new HttpResponse(null, { status: 204 });
     });

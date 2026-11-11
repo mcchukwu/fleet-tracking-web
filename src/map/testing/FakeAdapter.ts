@@ -1,6 +1,7 @@
 import { availableMapStyles } from "../config";
 import type {
   Bounds,
+  DrawController,
   LngLat,
   MapAdapter,
   MapCapabilities,
@@ -15,7 +16,9 @@ import type {
   Padding,
   Viewport,
 } from "../types";
+import type { GeofenceKind, Polygon } from "../../api/types";
 import { MapError } from "../../errors/types";
+import { repairRing } from "../geofences";
 
 export const FAKE_MAPTILER_ATTRIBUTION = "© MapTiler © OpenStreetMap contributors";
 
@@ -50,6 +53,160 @@ export interface FakeAdapterOptions {
   styles?: readonly MapStyleId[];
 }
 
+function polygonFromRing(ring: readonly LngLat[]): Polygon | null {
+  const repaired = repairRing(ring);
+  return repaired ? { type: "Polygon", coordinates: [repaired] } : null;
+}
+
+function isTypingTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    (target.matches("input, select, textarea") || target.isContentEditable === true)
+  );
+}
+
+/** Deterministic drawing controller: clicks add vertices, keys close, remove and cancel. */
+class FakeDrawController implements DrawController {
+  private active = false;
+  private vertices: LngLat[] = [];
+  private geometry: Polygon | null = null;
+  private readonly listeners = new Set<(geometry: Polygon | null) => void>();
+  private readonly getElement: () => HTMLElement | null;
+  private readonly getViewport: () => Viewport;
+
+  constructor(getElement: () => HTMLElement | null, getViewport: () => Viewport) {
+    this.getElement = getElement;
+    this.getViewport = getViewport;
+  }
+
+  async start(_kind: GeofenceKind, ring?: LngLat[]): Promise<void> {
+    this.active = true;
+    this.vertices = ring ? [...ring] : [];
+    this.geometry = ring ? polygonFromRing(ring) : null;
+    this.getElement()?.addEventListener("click", this.handleClick);
+    this.getElement()?.addEventListener("keydown", this.handleKey);
+    this.emit(this.geometry);
+  }
+
+  stop(): void {
+    this.active = false;
+    this.detach();
+  }
+
+  cancel(): void {
+    this.active = false;
+    this.vertices = [];
+    this.geometry = null;
+    this.detach();
+    this.emit(null);
+  }
+
+  getGeometry(): Polygon | null {
+    return this.geometry;
+  }
+
+  onChange(listener: (geometry: Polygon | null) => void): () => void {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  /** Test seam: add a vertex without a browser click. */
+  testAddVertex(point: LngLat): void {
+    if (!this.active) return;
+    this.vertices.push(point);
+  }
+
+  /** Test seam for the edit flow: replace the working ring. */
+  testSetRing(ring: readonly LngLat[]): void {
+    const polygon = polygonFromRing(ring);
+    if (!polygon) return;
+    this.vertices = [...ring];
+    this.geometry = polygon;
+    this.emit(polygon);
+  }
+
+  dispose(): void {
+    this.active = false;
+    this.detach();
+    this.listeners.clear();
+  }
+
+  private close(): boolean {
+    const polygon = polygonFromRing(this.vertices);
+    if (!polygon) return false;
+    this.geometry = polygon;
+    this.emit(polygon);
+    return true;
+  }
+
+  private emit(geometry: Polygon | null): void {
+    for (const listener of this.listeners) listener(geometry);
+  }
+
+  private readonly handleKey = (event: KeyboardEvent): void => {
+    if (!this.active || isTypingTarget(event.target)) return;
+    if (event.key === "Enter") {
+      if (this.close()) event.preventDefault();
+      return;
+    }
+    if (event.key === "Backspace") {
+      event.preventDefault();
+      this.vertices.pop();
+      if (this.vertices.length < 3) {
+        this.geometry = null;
+        this.emit(null);
+      }
+      return;
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      this.cancel();
+    }
+  };
+
+  private readonly handleClick = (event: MouseEvent): void => {
+    if (!this.active) return;
+    const element = this.getElement();
+    if (!element) return;
+    const rect = element.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+
+    const first = this.vertices[0];
+    if (first && this.vertices.length >= 3 && this.nearFirst(event, rect, first)) {
+      this.close();
+      return;
+    }
+    this.vertices.push(this.toLngLat(event, rect));
+  };
+
+  private nearFirst(event: MouseEvent, rect: DOMRect, first: LngLat): boolean {
+    const { bounds } = this.getViewport();
+    const width = bounds.east - bounds.west;
+    const height = bounds.north - bounds.south;
+    if (width === 0 || height === 0) return false;
+    const x = rect.left + ((first[0] - bounds.west) / width) * rect.width;
+    const y = rect.top + ((bounds.north - first[1]) / height) * rect.height;
+    return Math.hypot(event.clientX - x, event.clientY - y) <= 12;
+  }
+
+  private toLngLat(event: MouseEvent, rect: DOMRect): LngLat {
+    const { bounds } = this.getViewport();
+    const x = (event.clientX - rect.left) / rect.width;
+    const y = (event.clientY - rect.top) / rect.height;
+    return [
+      bounds.west + x * (bounds.east - bounds.west),
+      bounds.north - y * (bounds.north - bounds.south),
+    ];
+  }
+
+  private detach(): void {
+    this.getElement()?.removeEventListener("click", this.handleClick);
+    this.getElement()?.removeEventListener("keydown", this.handleKey);
+  }
+}
+
 export class FakeAdapter implements MapAdapter {
   readonly id = "fake";
   readonly capabilities: MapCapabilities;
@@ -57,7 +214,7 @@ export class FakeAdapter implements MapAdapter {
   constructor(options: FakeAdapterOptions = {}) {
     this.capabilities = {
       offline: true,
-      drawing: false,
+      drawing: true,
       clustering: "emulated",
       comfortableVehicleCount: 5_000,
       styles: options.styles ?? availableMapStyles,
@@ -76,14 +233,25 @@ export class FakeAdapter implements MapAdapter {
   viewport: Viewport = { center: [0, 0], zoom: 2, bearing: 0, bounds: WORLD };
   mountCount = 0;
   destroyCount = 0;
+  element: HTMLElement | null = null;
   private clusterMaxZoom = 10;
   private clusterRadius = 22;
+  private controller: FakeDrawController | null = null;
+
+  get draw(): DrawController {
+    this.controller ??= new FakeDrawController(
+      () => this.element,
+      () => this.viewport,
+    );
+    return this.controller;
+  }
 
   private readonly listeners = new Map<keyof MapEvents, Set<(payload: never) => void>>();
 
-  mount(_element: HTMLElement, options: MountOptions): Promise<void> {
+  mount(element: HTMLElement, options: MountOptions): Promise<void> {
     this.mounted = true;
     this.mountCount += 1;
+    this.element = element;
     this.theme = options.theme;
     this.tokens = options.tokens;
     this.baseStyle = options.baseStyle ?? "standard";
@@ -106,7 +274,10 @@ export class FakeAdapter implements MapAdapter {
   }
 
   destroy(): void {
+    this.controller?.dispose();
+    this.controller = null;
     this.mounted = false;
+    this.element = null;
     this.destroyCount += 1;
   }
 

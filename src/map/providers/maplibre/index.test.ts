@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { StyleSpecification } from "maplibre-gl";
 import { contractTokens, runAdapterContract } from "../../testing/adapter-contract";
-import type { MapStyleId, MapVehicle } from "../../types";
+import type { LngLat, MapStyleId, MapTokens, MapVehicle } from "../../types";
+import type { Polygon } from "../../../api/types";
+import type { TerraDrawController } from "./draw";
 
 const holder = vi.hoisted(() => {
   type Listener = (event: unknown) => void;
@@ -230,12 +232,42 @@ function defaultLoader(
   return Promise.resolve(fakeStyle(id, theme));
 }
 
+function fakeDrawFactory(): TerraDrawController {
+  let geometry: Polygon | null = null;
+  const listeners = new Set<(value: Polygon | null) => void>();
+  const emit = (value: Polygon | null) => {
+    for (const listener of listeners) listener(value);
+  };
+  return {
+    async start(_kind, ring?: LngLat[]): Promise<void> {
+      geometry = ring ? { type: "Polygon", coordinates: [[...ring, ring[0] ?? [0, 0]]] } : null;
+      emit(geometry);
+    },
+    stop(): void {},
+    cancel(): void {
+      geometry = null;
+      emit(null);
+    },
+    getGeometry: () => geometry,
+    onChange(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    setTokens(): void {},
+    restart(): void {},
+    dispose(): void {
+      listeners.clear();
+    },
+  };
+}
+
 function createAdapter(
   options: Parameters<typeof createMapLibreAdapter>[0] = {},
 ) {
   return createMapLibreAdapter({
     mapTiler: { apiKey: "test-key" },
     loadStyle: defaultLoader,
+    drawFactory: fakeDrawFactory,
     ...options,
   });
 }
@@ -281,17 +313,23 @@ afterEach(() => {
 });
 
 runAdapterContract("MapLibre", {
-  create: () => createMapLibreAdapter({ mapTiler: null, styles: ["standard"], loadStyle: defaultLoader }),
+  create: () =>
+    createMapLibreAdapter({
+      mapTiler: null,
+      styles: ["standard"],
+      loadStyle: defaultLoader,
+      drawFactory: fakeDrawFactory,
+    }),
 });
 
 describe("MapLibre adapter", () => {
   it("declares honest capabilities for this slice", () => {
     const adapter = createMapLibreAdapter({ mapTiler: null, styles: ["standard"], loadStyle: defaultLoader });
     expect(adapter.capabilities.offline).toBe(false);
-    expect(adapter.capabilities.drawing).toBe(false);
+    expect(adapter.capabilities.drawing).toBe(true);
     expect(adapter.capabilities.styles).toEqual(["standard"]);
     expect(adapter.getStyleState()).toMatchObject({ style: "standard", status: "ready" });
-    expect(adapter.draw).toBeUndefined();
+    expect(adapter.draw).toBeDefined();
   });
 
   it("does not install a native navigation control", async () => {
@@ -352,8 +390,9 @@ describe("MapLibre adapter", () => {
     expect(swapped.sources?.[SOURCE_IDS.vehicles]).toBeDefined();
     expect(swapped.layers?.some((layer) => layer.id === LAYER_IDS.vehicleCircle)).toBe(true);
     expect(instance.layers.has(LAYER_IDS.vehicleHalo)).toBe(true);
-    expect(instance.sources.size).toBe(4);
+    expect(instance.sources.size).toBe(5);
     expect(instance.sources.has(SOURCE_IDS.routePoints)).toBe(true);
+    expect(instance.sources.has(SOURCE_IDS.draw)).toBe(true);
     expect(instance.zoom).toBe(12);
     expect(instance.bearing).toBe(45);
     const data = instance.sources.get(SOURCE_IDS.vehicles)?.data as {
@@ -627,8 +666,9 @@ describe("MapLibre adapter", () => {
 
     expect(instance.styles).toHaveLength(1);
     expect((instance.styles[0] as { name: string }).name).toBe("standard-dark");
-    expect(instance.sources.size).toBe(4);
+    expect(instance.sources.size).toBe(5);
     expect(instance.sources.has(SOURCE_IDS.routePoints)).toBe(true);
+    expect(instance.sources.has(SOURCE_IDS.draw)).toBe(true);
     adapter.destroy();
   });
 
@@ -784,5 +824,54 @@ describe("MapLibre adapter", () => {
     adapter.destroy();
     adapter.destroy();
     expect(map().removed).toBe(1);
+  });
+
+  it("delegates start and cancel to the injected draw controller", async () => {
+    const controller = fakeDrawFactory();
+    const start = vi.spyOn(controller, "start");
+    const cancel = vi.spyOn(controller, "cancel");
+    const adapter = createAdapter({ drawFactory: () => controller });
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+
+    const ring: LngLat[] = [
+      [3.4, 6.4],
+      [3.5, 6.4],
+      [3.5, 6.5],
+    ];
+    await adapter.draw?.start("depot", ring);
+    expect(start).toHaveBeenCalledWith("depot", ring);
+
+    adapter.draw?.cancel();
+    expect(cancel).toHaveBeenCalled();
+    adapter.destroy();
+  });
+
+  it("refreshes draw tokens on a theme change and disposes on destroy", async () => {
+    const controller = fakeDrawFactory();
+    const setTokens = vi.spyOn(controller, "setTokens");
+    const dispose = vi.spyOn(controller, "dispose");
+    const adapter = createAdapter({ drawFactory: () => controller });
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+
+    const dark: MapTokens = { ...contractTokens, colors: { ...contractTokens.colors, surface: "dark" } };
+    adapter.setTheme("dark", dark);
+    expect(setTokens).toHaveBeenCalledWith(dark);
+
+    adapter.destroy();
+    expect(dispose).toHaveBeenCalled();
+  });
+
+  it("restarts drawing after a style swap", async () => {
+    const controller = fakeDrawFactory();
+    const restart = vi.spyOn(controller, "restart");
+    const adapter = createAdapter({
+      styles: ["standard", "streets"],
+      drawFactory: () => controller,
+    });
+    await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
+
+    adapter.setBaseStyle("streets");
+    await vi.waitFor(() => expect(restart).toHaveBeenCalled());
+    adapter.destroy();
   });
 });

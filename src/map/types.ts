@@ -132,8 +132,12 @@ export interface MapTokens {
 }
 
 export interface DrawController {
-  start(kind: GeofenceKind, ring?: LngLat[]): void;
+  /** Starts a draw session; resolves after the library and polygon mode are ready. */
+  start(kind: GeofenceKind, ring?: LngLat[]): Promise<void>;
+  /** Commits the current geometry and leaves draw mode. */
   stop(): void;
+  /** Discards the geometry, emits `null` and leaves draw mode. */
+  cancel(): void;
   getGeometry(): Polygon | null;
   onChange(listener: (geometry: Polygon | null) => void): () => void;
 }

@@ -5,6 +5,7 @@ import { alertsFixture } from "./fixtures/alerts";
 import { perfVehicles } from "./perf";
 import { tripsFixture } from "./fixtures/trips";
 import { driversFixture } from "./fixtures/drivers";
+import { geofencesFixture } from "./fixtures/geofences";
 
 const API = `${window.location.origin}/api/v1`;
 const vehicleId = vehiclesFixture[0]?.id ?? "";
@@ -583,5 +584,216 @@ describe("mock drivers", () => {
       data: Array<{ driver_id?: string }>;
     };
     expect(snapshot.data.some((vehicle) => vehicle.driver_id === driverId)).toBe(true);
+  });
+});
+
+const squareRing = [
+  [3.4, 6.4],
+  [3.5, 6.4],
+  [3.5, 6.5],
+  [3.4, 6.4],
+];
+
+async function postGeofence(body: unknown): Promise<Response> {
+  return fetch(`${API}/geofences`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+async function patchGeofence(id: string, body: unknown): Promise<Response> {
+  return fetch(`${API}/geofences/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+async function deleteGeofence(id: string): Promise<Response> {
+  return fetch(`${API}/geofences/${id}`, { method: "DELETE" });
+}
+
+describe("mock geofences", () => {
+  it("returns the whole tenant and ignores every query parameter", async () => {
+    resetMockState();
+    const response = await fetch(`${API}/geofences?q=Refinery&limit=1&offset=2`);
+    const payload = (await response.json()) as { data: Array<{ id: string }> };
+    expect(payload.data.map((row) => row.id)).toEqual(geofencesFixture.map((row) => row.id));
+  });
+
+  it("supports the empty flag and the unknown-kind shape", async () => {
+    resetMockState();
+    const empty = await fetch(`${API}/geofences?empty=geofences`);
+    await expect(empty.json()).resolves.toEqual({ data: [] });
+
+    const unknown = await fetch(`${API}/geofences?fault=geofences%3Aunknown_enum`);
+    const payload = (await unknown.json()) as { data: Array<{ kind: string }> };
+    expect(payload.data[0]?.kind).toBe("solar");
+  });
+
+  it("creates with a default kind of other and records the write", async () => {
+    resetMockState();
+    window.__FLEET_MOCK_WRITES__ = [];
+    const response = await postGeofence({
+      name: "  New Gate ",
+      geometry: { type: "Polygon", coordinates: [squareRing] },
+    });
+    expect(response.status).toBe(201);
+    const payload = (await response.json()) as { id: string };
+    expect(payload.id).toBeTruthy();
+    expect(window.__FLEET_MOCK_WRITES__?.[0]).toMatchObject({
+      method: "POST",
+      url: "/api/v1/geofences",
+    });
+
+    const list = (await (await fetch(`${API}/geofences`)).json()) as {
+      data: Array<{ id: string; name: string; kind: string }>;
+    };
+    const row = list.data.find((item) => item.id === payload.id);
+    expect(row).toMatchObject({ name: "  New Gate ", kind: "other" });
+  });
+
+  it("rejects a blank name, an unknown kind and an invalid ring", async () => {
+    resetMockState();
+    const blank = await postGeofence({
+      name: "   ",
+      geometry: { type: "Polygon", coordinates: [squareRing] },
+    });
+    expect(blank.status).toBe(400);
+    await expect(blank.json()).resolves.toMatchObject({
+      error: { code: "invalid_request", message: "name and geometry are required" },
+    });
+
+    const kind = await postGeofence({
+      name: "Gate",
+      kind: "solar",
+      geometry: { type: "Polygon", coordinates: [squareRing] },
+    });
+    expect(kind.status).toBe(400);
+    await expect(kind.json()).resolves.toMatchObject({
+      error: { code: "invalid_kind" },
+    });
+
+    const bowTie = await postGeofence({
+      name: "Gate",
+      geometry: {
+        type: "Polygon",
+        coordinates: [
+          [
+            [3.4, 6.4],
+            [3.5, 6.5],
+            [3.5, 6.4],
+            [3.4, 6.5],
+          ],
+        ],
+      },
+    });
+    expect(bowTie.status).toBe(400);
+    await expect(bowTie.json()).resolves.toMatchObject({
+      error: { code: "invalid_geometry", message: "geometry must be a valid polygon" },
+    });
+  });
+
+  it("patches only the supplied fields and rejects an empty body", async () => {
+    resetMockState();
+    const id = geofencesFixture[1]?.id ?? "";
+    const nameOnly = await patchGeofence(id, { name: "Ibadan Gate" });
+    expect(nameOnly.status).toBe(204);
+
+    const list = (await (await fetch(`${API}/geofences`)).json()) as {
+      data: Array<{ id: string; name: string; kind: string }>;
+    };
+    expect(list.data.find((row) => row.id === id)).toMatchObject({
+      name: "Ibadan Gate",
+      kind: "customer",
+    });
+
+    const empty = await patchGeofence(id, {});
+    expect(empty.status).toBe(400);
+    await expect(empty.json()).resolves.toMatchObject({
+      error: { code: "invalid_request", message: "name, geometry or kind is required" },
+    });
+  });
+
+  it("mirrors the invalid-PATCH-geometry quirk and the missing-geofence error", async () => {
+    resetMockState();
+    const id = geofencesFixture[2]?.id ?? "";
+    const invalidRing = await patchGeofence(id, {
+      geometry: {
+        type: "Polygon",
+        coordinates: [
+          [
+            [3.4, 6.4],
+            [3.5, 6.5],
+            [3.5, 6.4],
+            [3.4, 6.5],
+          ],
+        ],
+      },
+    });
+    expect(invalidRing.status).toBe(404);
+    await expect(invalidRing.json()).resolves.toMatchObject({
+      error: { code: "not_found", message: "geofence not found" },
+    });
+
+    const line = await patchGeofence(id, {
+      geometry: { type: "LineString", coordinates: squareRing },
+    });
+    expect(line.status).toBe(400);
+    await expect(line.json()).resolves.toMatchObject({
+      error: { code: "invalid_geometry", message: "could not update geofence" },
+    });
+
+    const missing = await patchGeofence("does-not-exist", { name: "Gate" });
+    expect(missing.status).toBe(404);
+    await expect(missing.json()).resolves.toMatchObject({
+      error: { code: "not_found", message: "geofence not found" },
+    });
+  });
+
+  it("deletes a free geofence and refuses one with events", async () => {
+    resetMockState();
+    const free = geofencesFixture[1]?.id ?? "";
+    const response = await deleteGeofence(free);
+    expect(response.status).toBe(204);
+    const list = (await (await fetch(`${API}/geofences`)).json()) as {
+      data: Array<{ id: string }>;
+    };
+    expect(list.data.some((row) => row.id === free)).toBe(false);
+
+    const refinery = "00000000-0000-0000-0000-000000000201";
+    const blocked = await deleteGeofence(refinery);
+    expect(blocked.status).toBe(409);
+    await expect(blocked.json()).resolves.toMatchObject({
+      error: {
+        code: "in_use",
+        message: "geofence has events and cannot be deleted",
+      },
+    });
+
+    const missing = await deleteGeofence("does-not-exist");
+    expect(missing.status).toBe(404);
+  });
+
+  it("forbids viewer and security writes and allows a dispatcher", async () => {
+    for (const role of ["viewer", "security"]) {
+      localStorage.setItem("fleet.mockRole", role); // guard-ignore: test-only mock role override.
+      resetMockState();
+      const create = await postGeofence({
+        name: "Gate",
+        geometry: { type: "Polygon", coordinates: [squareRing] },
+      });
+      expect(create.status).toBe(403);
+      expect((await deleteGeofence(geofencesFixture[1]?.id ?? "")).status).toBe(403);
+    }
+
+    localStorage.setItem("fleet.mockRole", "dispatcher"); // guard-ignore: test-only mock role override.
+    resetMockState();
+    const create = await postGeofence({
+      name: "Gate",
+      geometry: { type: "Polygon", coordinates: [squareRing] },
+    });
+    expect(create.status).toBe(201);
   });
 });

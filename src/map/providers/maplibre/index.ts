@@ -9,6 +9,7 @@ import {
 } from "../../config";
 import type {
   Bounds,
+  DrawController,
   LngLat,
   MapAdapter,
   MapCapabilities,
@@ -27,6 +28,8 @@ import type {
 import { installImages } from "./images";
 import { glideDuration, glideProgress, lerpPosition } from "./interpolate";
 import {
+  drawCollection,
+  drawLayers,
   emptyCollection,
   geofenceCollection,
   geofenceLayers,
@@ -37,6 +40,11 @@ import {
   vehicleLayers,
   type VehicleFeatureCache,
 } from "./layers";
+import {
+  createTerraDrawController,
+  type DrawContext,
+  type TerraDrawController,
+} from "./draw";
 import { routeLineCollection, routePointCollection } from "../../route";
 import {
   createMap,
@@ -95,12 +103,15 @@ export interface MapLibreAdapterOptions {
   mapTiler?: MapTilerConfig | null;
   /** Test seam: lets unit tests avoid the network. */
   loadStyle?: StyleLoader;
+  /** Test seam: lets unit tests avoid the real Terra Draw library. */
+  drawFactory?: (context: DrawContext) => TerraDrawController;
 }
 
 export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): MapAdapter {
   const styles = options.styles ?? availableMapStyles;
   const mapTiler = options.mapTiler === undefined ? mapTilerConfig : options.mapTiler;
   const loadStyle = options.loadStyle ?? loadBaseStyle;
+  const drawFactory = options.drawFactory ?? createTerraDrawController;
   let map: MapLibreMap | null = null;
   let theme: "light" | "dark" = "light";
   let tokens: MapTokens | null = null;
@@ -138,12 +149,26 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
   let contextCanvas: HTMLCanvasElement | null = null;
   let contextLostHandler: ((event: Event) => void) | null = null;
   const featureCache: VehicleFeatureCache = { features: new Map() };
+  let drawController: TerraDrawController | null = null;
+
+  function ensureDrawController(): TerraDrawController {
+    if (drawController) return drawController;
+    const controller = drawFactory({
+      getMap: () => map,
+      getTokens: () => tokens,
+    });
+    controller.onChange((polygon) => {
+      applyData(SOURCE_IDS.draw, drawCollection(polygon));
+    });
+    drawController = controller;
+    return controller;
+  }
 
   const listeners = new Map<keyof MapEvents, Set<(payload: never) => void>>();
 
   const capabilities: MapCapabilities = {
     offline: false,
-    drawing: false,
+    drawing: true,
     clustering: "native",
     // Measured 2026-11-05: a 5,000-vehicle target produced a 348 ms longest
     // pan task in Chromium, so the comfort budget stays well below that.
@@ -256,6 +281,7 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
     if (!map) return;
     setVehicleData();
     applyData(SOURCE_IDS.geofences, geofenceCollection(geofences));
+    applyData(SOURCE_IDS.draw, drawCollection(drawController?.getGeometry() ?? null));
     setRouteLine(route);
     setRoutePoints(route);
   }
@@ -291,6 +317,7 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
     const imagery = baseStyle === "satellite";
     for (const layer of [
       ...geofenceLayers(tokens, { imagery }),
+      ...drawLayers(tokens),
       ...routeLayers(tokens, { imagery }),
       ...vehicleLayers(tokens, { imagery }),
     ]) {
@@ -329,6 +356,9 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
     if (!map.getSource(SOURCE_IDS.geofences)) {
       map.addSource(SOURCE_IDS.geofences, { type: "geojson", data: emptyCollection() });
     }
+    if (!map.getSource(SOURCE_IDS.draw)) {
+      map.addSource(SOURCE_IDS.draw, { type: "geojson", data: emptyCollection() });
+    }
     if (!map.getSource(SOURCE_IDS.route)) {
       map.addSource(SOURCE_IDS.route, { type: "geojson", data: emptyCollection() });
     }
@@ -360,6 +390,10 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
           data: vehicleCollection(vehicleTargets, displayed, featureCache),
         },
         [SOURCE_IDS.geofences]: { type: "geojson", data: geofenceCollection(geofences) },
+        [SOURCE_IDS.draw]: {
+          type: "geojson",
+          data: drawCollection(drawController?.getGeometry() ?? null),
+        },
         [SOURCE_IDS.route]: {
           type: "geojson",
           data: routeLineCollection(route?.points ?? [], route?.gapAfterIndex ?? []),
@@ -372,6 +406,7 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
       layers: [
         ...base.layers,
         ...geofenceLayers(tokens, { imagery }),
+        ...drawLayers(tokens),
         ...routeLayers(tokens, { imagery }),
         ...vehicleLayers(tokens, { imagery }),
       ],
@@ -587,6 +622,7 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
       if (map !== instance || generation !== styleGeneration) return;
       applyGlyphs(instance, "standard");
       installLayers();
+      drawController?.restart();
       emitStyle({
         style: "standard",
         status: "ready",
@@ -630,6 +666,7 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
       currentAttribution = isMapTilerStyleId(id) ? loaded.attribution : [];
       applyGlyphs(instance, id);
       installLayers();
+      drawController?.restart();
       emitStyle({
         style: id,
         status: "ready",
@@ -721,6 +758,7 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
       if (map !== instance || !tokens) return;
       applyGlyphs(instance, baseStyle);
       installLayers();
+      ensureDrawController();
 
       styleState = {
         style: baseStyle,
@@ -739,6 +777,8 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
       cancelStyleTimer();
       styleAbort?.abort();
       styleAbort = null;
+      drawController?.dispose();
+      drawController = null;
       if (contextCanvas && contextLostHandler) {
         contextCanvas.removeEventListener("webglcontextlost", contextLostHandler);
       }
@@ -763,6 +803,7 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
 
     setTheme(nextTheme: "light" | "dark", nextTokens: MapTokens): void {
       tokens = nextTokens;
+      drawController?.setTokens(nextTokens);
       if (!map) {
         theme = nextTheme;
         return;
@@ -884,6 +925,10 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
 
     getStyleState(): MapStyleState {
       return { ...styleState };
+    },
+
+    get draw(): DrawController {
+      return ensureDrawController();
     },
 
     getViewport(): Viewport {

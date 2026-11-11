@@ -3,6 +3,8 @@ import { contractTokens } from "../../testing/adapter-contract";
 import type { MapTokens } from "../../types";
 import {
   LAYER_IDS,
+  drawCollection,
+  drawLayers,
   geofenceLayers,
   routeLayers,
   vehicleLayers,
@@ -84,6 +86,49 @@ describe("imagery halos", () => {
     const layers = vehicleLayers(tokens, { imagery: true });
     expect(paintOf(layers, LAYER_IDS.clusterHalo)["circle-color"]).toBe("halo-token");
     expect(paintOf(layers, LAYER_IDS.clusterCount)["text-halo-width"]).toBe(2);
+  });
+});
+
+describe("geofence selection and drawing", () => {
+  it("puts an accent halo beneath the kind stroke for the highlighted polygon only", () => {
+    const layers = geofenceLayers(tokens);
+    const haloIndex = layers.findIndex((layer) => layer.id === LAYER_IDS.geofenceSelectedHalo);
+    const strokeIndex = layers.findIndex((layer) => layer.id === LAYER_IDS.geofenceLineDepot);
+    expect(haloIndex).toBeGreaterThanOrEqual(0);
+    expect(haloIndex).toBeLessThan(strokeIndex);
+
+    const halo = layers[haloIndex] as { filter?: unknown };
+    expect(halo.filter).toEqual(["==", ["get", "highlighted"], true]);
+    const paint = paintOf(layers, LAYER_IDS.geofenceSelectedHalo);
+    expect(paint["line-color"]).toBe(tokens.colors.accent);
+    expect(paint["line-width"]).toBe(tokens.geofence.strokeWidth + 4);
+  });
+
+  it("draws the unsaved polygon with a 12% accent fill and a dashed accent stroke", () => {
+    const layers = drawLayers(tokens);
+    expect(layerIds(layers)).toEqual([LAYER_IDS.drawFill, LAYER_IDS.drawLine]);
+
+    const fill = paintOf(layers, LAYER_IDS.drawFill);
+    expect(fill["fill-color"]).toBe(tokens.colors.accent);
+    expect(fill["fill-opacity"]).toBe(0.12);
+
+    const line = paintOf(layers, LAYER_IDS.drawLine);
+    expect(line["line-color"]).toBe(tokens.colors.accent);
+    expect(line["line-width"]).toBe(2);
+    expect(line["line-dasharray"]).toEqual([2, 2]);
+  });
+
+  it("turns the unsaved geometry into one feature, or an empty collection", () => {
+    expect(drawCollection(null)).toEqual({ type: "FeatureCollection", features: [] });
+    const collection = drawCollection({
+      type: "Polygon",
+      coordinates: [[[3.4, 6.4], [3.5, 6.4], [3.5, 6.5], [3.4, 6.4]]],
+    });
+    expect(collection.features).toHaveLength(1);
+    expect(collection.features[0]?.geometry).toEqual({
+      type: "Polygon",
+      coordinates: [[[3.4, 6.4], [3.5, 6.4], [3.5, 6.5], [3.4, 6.4]]],
+    });
   });
 });
 
