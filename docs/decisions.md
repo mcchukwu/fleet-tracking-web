@@ -559,3 +559,29 @@ The combobox list is portalled into the popover layer and measured in fixed coor
 The first `Escape` closes only the list. Radix listens for Escape with a capture listener on the document, so the combobox stops the event at the window in the capture phase while the list is open; the second Escape then reaches the dialog. Focus stays in the input throughout.
 
 Trade-off: in a compact dialog the input sits between the title row and the footer, so the list can be short (about 40–60px on a 360px viewport) and scrolls. The alternative was to cover the close or footer buttons, which the invariant forbids. `e2e/measure/combobox.ts` is the diagnostic; `e2e/combobox-layout.spec.ts` enforces the geometry at 1440x900, 390x844 and 360x640 with the keyboard emulated, with 3, 25 and 500 options, and `e2e/combobox-pickers.spec.ts` proves the invariant for the Playback, assign-driver and edit-vehicle dialogs.
+
+## 2026-11-11: Drivers are a client-filtered, client-sorted list
+
+`GET /drivers` returns the whole tenant in `{ data: [] }` and ignores `status`, `q`, `limit` and `offset` (verified on staging with dispatcher, viewer and security roles). The page therefore fetches once, filters by name/phone/licence and administrative status in memory, and sorts by name, then phone, then licence with `localeCompare`. The server's duplicate-name tie order is unspecified, so the client sort is what stops rows swapping between refetches. Trade-off: a tenant with thousands of drivers needs a server filter and paging, which this slice does not build; the client filter keeps typing instant and works offline.
+
+## 2026-11-11: Driver status is an open string, and empty contact fields are `""`
+
+Staging returns only `active` and `inactive`, but the parser keeps any non-empty status so one future enum cannot blank the list; the badge and the drawer fall back to `Unknown status: {value}`, and the edit form keeps an unknown current status selectable so a phone change does not force a status change. `phone` and `licence` arrive as `""` when omitted, never `null`; the parser normalises missing/null to `""` and the UI renders `—`. `vehicles` is required by the parser because every staging row has it; a missing count rejects that row rather than rendering a false zero.
+
+## 2026-11-11: The driver drawer joins assignments from the live snapshot
+
+There is no `GET /drivers/{id}` and no driver detail endpoint, so `?driver=` resolves from the full list and an unknown id is a client-side not-found state. The table's "Vehicles" column uses the server's `Driver.vehicles`; the drawer lists snapshot vehicles by `driver_id` because that is the only source with plate and depot. `SnapshotVehicle` now carries `driver_id`, which staging already returns but the previous parser dropped. When the two counts differ, the drawer shows both and labels the list as the current snapshot instead of presenting a stale join as the server's count.
+
+## 2026-11-11: Driver writes are pessimistic and diff-only; deactivation keeps assignments
+
+Create sends only `{name, phone?, licence?}`, omitting blank optional fields; the server trims and defaults the omitted ones to `""`. Edit sends only changed fields, and a cleared phone or licence is sent as `""` because the server treats that as an explicit clear; an unchanged form never sends the empty body staging rejects with `no fields to update`. Deactivating a driver with assigned vehicles asks for confirmation and names the count, but the API allows the change and keeps the assignments, so the confirm is a client guard against accidental loss of availability, not a server rule. There is no delete endpoint; the UI offers no delete action.
+
+An edit `404` keeps the form open with the error and a Refresh action while the list refetches, so the operator can see that the driver is gone; an unknown outcome reconciles against a fresh list before anything is reported. A rename or phone change is denormalised into snapshot vehicles immediately (verified on staging and restored afterwards), so an update invalidates `["drivers"]`, `["live-snapshot"]`, `["vehicle"]`, `["vehicles"]` and `["trips"]`. Create invalidates only `["drivers"]`. The list refetches on mount and window focus but does not poll: drivers are administrative state, and a background interval would add traffic without a live requirement.
+
+## 2026-11-11: React Hook Form components opt out of the React Compiler
+
+The Vite build compiles components with `babel-plugin-react-compiler`. In the browser, a form whose only reactive read of `formState`/`useWatch` came from the compiler-memoized render never re-rendered: the status select showed the new value while `isDirty` stayed false and Save remained disabled. The same component passed in Vitest because the test pipeline does not run the compiler. Both Driver dialogs now start with `"use no memo"`, which the compiler treats as an opt-out; other react-hook-form components should do the same until the upstream interaction is fixed. Trade-off: those components lose compiler memoisation, which is negligible for a dialog.
+
+## 2026-11-11: The page drawer resolves its content root after commit
+
+`ContentPortal` used to resolve `#content-overlay-root` in a `useState` initializer. A route that opened a page drawer on its first commit (a `?driver=` deep link) ran before the shell had committed its content area, so the portal fell back to a body-level container. The drawer then painted over the top bar and the close button was unreachable behind the account menu. The portal now looks the root up in a layout effect after commit and only uses a body fallback when no shell exists (component tests). The Drawer focuses its close button from a ref callback as well as the open effect, because the panel can now mount one commit later.
