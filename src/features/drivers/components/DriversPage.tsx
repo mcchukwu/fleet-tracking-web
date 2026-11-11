@@ -86,15 +86,20 @@ function DriversPageContent() {
           : null;
 
   const lookup: DriverLookupState =
-    selectedId === null
+    selectedId === null || selectedDriver
       ? "ready"
-      : selectedDriver
-        ? "ready"
-        : feed.isLoading
-          ? "loading"
+      : feed.isLoading
+        ? "loading"
+        : offline
+          ? "offline"
           : feed.error
             ? "error"
             : "not-found";
+
+  const staleLabel =
+    feed.drivers.length > 0 && (offline || state === "error") && feed.dataUpdatedAt
+      ? formatClockTime(feed.dataUpdatedAt)
+      : undefined;
 
   const createReason = !canMutate
     ? "Your role can't create drivers."
@@ -164,6 +169,14 @@ function DriversPageContent() {
     setTimeout(() => createRef.current?.focus(), 0);
   }
 
+  /** After a 404 refresh, close the stale form if the row is gone from the list. */
+  async function refreshEditTarget(): Promise<void> {
+    const rows = await feed.refetch();
+    if (rows && editDriver && !rows.some((driver) => driver.id === editDriver.id)) {
+      setEditDriver(null);
+    }
+  }
+
   return (
     <div
       data-testid="drivers-page"
@@ -201,15 +214,13 @@ function DriversPageContent() {
         drivers={visible}
         state={state}
         error={closedError}
-        onRetry={feed.refetch}
+        onRetry={() => void feed.refetch()}
         onCancelLoading={feed.cancel}
         onOpen={openDriver}
         emptyReason={emptyReason}
         onClearFilters={resetFilters}
         hasDrivers={feed.drivers.length > 0}
-        {...(offline && feed.dataUpdatedAt
-          ? { staleLabel: formatClockTime(feed.dataUpdatedAt) }
-          : {})}
+        {...(staleLabel ? { staleLabel } : {})}
         offline={offline}
         cancelled={feed.cancelled}
         forbiddenAction={
@@ -238,7 +249,7 @@ function DriversPageContent() {
         {...(editReason ? { disabledReason: editReason } : {})}
         onSaved={focusDrawerAction}
         onClose={() => setEditDriver(null)}
-        onRefresh={feed.refetch}
+        onRefresh={() => void refreshEditTarget()}
       />
 
       {selectedId ? (
@@ -252,7 +263,7 @@ function DriversPageContent() {
             if (selectedDriver) setEditDriver(selectedDriver);
           }}
           onClose={closeDriver}
-          onRetryLookup={feed.refetch}
+          onRetryLookup={() => void feed.refetch()}
           returnFocus={() => focusRow(selectedId)}
         />
       ) : null}

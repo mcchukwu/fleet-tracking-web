@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   search: {} as Record<string, unknown>,
   canMutate: true,
+  network: "online",
   feed: {
     drivers: [] as Driver[],
     isLoading: false,
@@ -33,7 +34,7 @@ vi.mock("../../../auth/useCan", () => ({
 }));
 
 vi.mock("../../../stores/connection", () => ({
-  useConnection: () => ({ network: "online" }),
+  useConnection: () => ({ network: mocks.network }),
 }));
 
 vi.mock("../hooks/useDriverFeed", () => ({
@@ -66,10 +67,14 @@ vi.mock("./DriverDrawer", () => ({
   DriverDrawer: (props: {
     driver: Driver | null;
     lookup: string;
+    onEdit: () => void;
     onClose: () => void;
   }) => (
     <div data-testid="driver-drawer" data-lookup={props.lookup}>
       {props.driver?.name ?? "none"}
+      <button type="button" onClick={props.onEdit}>
+        Edit first driver
+      </button>
       <button type="button" onClick={props.onClose}>
         Close driver details
       </button>
@@ -91,7 +96,15 @@ vi.mock("./DriverCreateDialog", () => ({
 }));
 
 vi.mock("./DriverEditDialog", () => ({
-  DriverEditDialog: () => <div data-testid="edit-dialog" />,
+  DriverEditDialog: (props: { open: boolean; driver: Driver | null; onRefresh: () => void }) =>
+    props.open ? (
+      <div data-testid="edit-dialog">
+        {props.driver?.name}
+        <button type="button" onClick={props.onRefresh}>
+          Refresh driver list
+        </button>
+      </div>
+    ) : null,
 }));
 
 const drivers: Driver[] = [
@@ -124,6 +137,7 @@ function renderPage() {
 beforeEach(() => {
   mocks.search = {};
   mocks.canMutate = true;
+  mocks.network = "online";
   mocks.feed = {
     drivers,
     isLoading: false,
@@ -175,6 +189,39 @@ describe("DriversPage", () => {
     mocks.search = { driver: "does-not-exist" };
     renderPage();
     expect(screen.getByTestId("driver-drawer")).toHaveAttribute("data-lookup", "not-found");
+  });
+
+  it("closes a stale edit form when a refresh drops the driver", async () => {
+    const user = userEvent.setup();
+    mocks.search = { driver: "driver-1" };
+    mocks.feed = {
+      ...mocks.feed,
+      refetch: vi.fn().mockResolvedValue(drivers.filter((driver) => driver.id !== "driver-1")),
+    };
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "Edit first driver" }));
+    expect(screen.getByTestId("edit-dialog")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Refresh driver list" }));
+    await waitFor(() => expect(screen.queryByTestId("edit-dialog")).not.toBeInTheDocument());
+  });
+
+  it("keeps an unresolved deep link neutral while offline", () => {
+    mocks.network = "offline";
+    mocks.search = { driver: "does-not-exist" };
+    mocks.feed = {
+      ...mocks.feed,
+      drivers: [],
+      error: {
+        kind: "network",
+        retryable: false,
+        outcome: "failed",
+        context: { route: "/drivers" },
+        at: 0,
+      },
+    };
+    renderPage();
+    expect(screen.getByTestId("driver-drawer")).toHaveAttribute("data-lookup", "offline");
   });
 
   it("clears filters, resets the scroll and returns focus after a create", async () => {

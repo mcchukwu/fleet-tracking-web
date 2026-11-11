@@ -174,6 +174,15 @@ describe("DriverDrawer", () => {
     expect(screen.getByRole("button", { name: "Retry" })).toBeVisible();
   });
 
+  it("never claims a driver was removed when the list is unavailable offline", () => {
+    const onClose = vi.fn();
+    renderDrawer({ driver: null, lookup: "offline", offline: true, onClose });
+    expect(screen.getByText("This driver isn't available offline")).toBeVisible();
+    expect(screen.queryByText("Driver not found")).not.toBeInTheDocument();
+    screen.getByRole("button", { name: "Back to drivers" }).click();
+    expect(onClose).toHaveBeenCalled();
+  });
+
   it("keeps the driver fields when the snapshot fails", () => {
     mocks.snapshot = {
       ...mocks.snapshot,

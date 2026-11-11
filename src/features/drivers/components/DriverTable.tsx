@@ -145,7 +145,6 @@ export function DriverTable({
         header: "Phone",
         width: COLUMN_WIDTHS.phone,
         align: "left",
-        truncate: false,
         title: (driver) => (driver.phone ? driver.phone : MISSING),
         cell: (driver) =>
           isDialablePhone(driver.phone) ? (
@@ -241,7 +240,7 @@ export function DriverTable({
       className="flex min-h-0 flex-1 flex-col"
     >
       {state === "error" && drivers.length === 0 ? null : (
-        <div className={cn("flex min-h-0 flex-1 flex-col", offline && "opacity-80")}>
+        <div className={cn("flex min-h-0 flex-1 flex-col", (offline || state === "error") && "opacity-80")}>
           <DataTable
             label="Drivers"
             columns={columns}

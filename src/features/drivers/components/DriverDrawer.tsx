@@ -15,7 +15,7 @@ import { Skeleton } from "../../../ui/StatePanel";
 import { isDialablePhone } from "../lib/form";
 import { DriverStatusBadge } from "./DriverStatusBadge";
 
-export type DriverLookupState = "loading" | "ready" | "not-found" | "error";
+export type DriverLookupState = "loading" | "ready" | "not-found" | "error" | "offline";
 
 export interface DriverDrawerProps {
   driver: Driver | null;
@@ -51,6 +51,7 @@ export function DriverDrawer(props: DriverDrawerProps) {
       placement="page"
       label="Driver details"
       title={driver?.name ?? "Driver"}
+      titleClassName="font-sans"
       closeLabel="Close driver details"
       headerAside={
         driver ? (
@@ -85,6 +86,14 @@ export function DriverDrawer(props: DriverDrawerProps) {
         </div>
       ) : lookup === "error" && lookupError ? (
         <ErrorState error={lookupError} onRetry={onRetryLookup} className="py-8" />
+      ) : lookup === "offline" ? (
+        <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+          <p className="text-text text-base font-medium">This driver isn't available offline</p>
+          <p className="text-muted text-sm">Reconnect to load the driver list.</p>
+          <Button size="sm" onClick={onClose}>
+            Back to drivers
+          </Button>
+        </div>
       ) : !driver ? (
         <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
           <p className="text-text text-base font-medium">Driver not found</p>

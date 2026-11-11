@@ -311,6 +311,7 @@ test.describe("drivers", () => {
     });
 
     await expect(page.getByText("Couldn't refresh")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/Stale ·/)).toBeVisible();
     await expect(page.getByRole("button", { name: /Open driver Adebayo Okafor/ }).first()).toBeVisible();
     await expectNoAxeViolations(page);
   });
@@ -349,5 +350,21 @@ test.describe("drivers", () => {
     });
     await expect(page.getByText("No drivers yet")).toHaveCount(0);
     await expectNoAxeViolations(page);
+  });
+
+  test("an offline deep link is neutral instead of claiming removal", async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "onLine", { configurable: true, get: () => false });
+    });
+    await page.goto(`/drivers?driver=${ADEBAYO}&fault=drivers%3Anetwork`);
+
+    const drawer = page.getByRole("complementary", { name: "Driver details" });
+    await expect(drawer).toBeVisible();
+    await expect(drawer.getByText("This driver isn't available offline")).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(drawer.getByText("Driver not found")).toHaveCount(0);
+    await expectNoAxeViolations(page);
+    await captureForReview(page, "07-drivers-offline-deeplink");
   });
 });
