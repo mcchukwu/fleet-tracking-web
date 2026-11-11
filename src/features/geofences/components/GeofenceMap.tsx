@@ -1,0 +1,80 @@
+import { useEffect, useRef } from "react";
+import type { MapAdapter, MapGeofence } from "../../../map/types";
+import { FleetMap } from "../../../map/FleetMap";
+import { MapAttribution } from "../../../map/MapAttribution";
+import { GeofenceMapControls } from "./GeofenceMapControls";
+
+export interface GeofenceMapProps {
+  geofences: readonly MapGeofence[];
+  adapter: MapAdapter | null;
+  offline: boolean;
+  hint?: string;
+  fitDisabled?: boolean;
+  onAdapter: (adapter: MapAdapter | null) => void;
+  onFitAll: () => void;
+}
+
+export function GeofenceMap({
+  geofences,
+  adapter,
+  offline,
+  hint,
+  fitDisabled = false,
+  onAdapter,
+  onFitAll,
+}: GeofenceMapProps) {
+  const onAdapterRef = useRef(onAdapter);
+  useEffect(() => {
+    onAdapterRef.current = onAdapter;
+  });
+
+  useEffect(
+    () => () => {
+      onAdapterRef.current(null);
+    },
+    [],
+  );
+
+  const offlinePanel = offline && (adapter === null || !adapter.capabilities.offline);
+  const styleState = adapter?.getStyleState();
+
+  return (
+    <div className="bg-surface-2 relative min-h-0 flex-1 overflow-hidden">
+      {offlinePanel ? (
+        <div className="bg-surface text-text flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
+          <p className="text-base font-medium">Map isn't available offline</p>
+          <p className="text-muted text-sm">The geofence list is still available.</p>
+        </div>
+      ) : (
+        <FleetMap
+          label="Geofence map"
+          geofences={geofences}
+          dimmed={offline}
+          onReady={onAdapter}
+          className="h-full"
+        />
+      )}
+
+      {!offlinePanel ? (
+        <>
+          {hint ? (
+            <output className="border-border bg-surface text-text shadow-float pointer-events-none absolute top-3 left-1/2 z-map-controls block max-w-panel -translate-x-1/2 rounded-md border px-3 py-2 text-center text-xs">
+              {hint}
+            </output>
+          ) : null}
+          <div className="absolute right-3 bottom-3 z-map-controls flex flex-col items-end gap-2">
+            <GeofenceMapControls
+              adapter={adapter}
+              fitDisabled={fitDisabled || adapter === null}
+              onFitAll={onFitAll}
+            />
+            <MapAttribution
+              styleId={styleState?.style ?? "standard"}
+              attribution={styleState?.attribution ?? null}
+            />
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}

@@ -23,6 +23,7 @@ import { useDocumentTitle } from "../lib/useDocumentTitle";
 import { LoginPage } from "../features/login/components/LoginPage";
 import { AlertsPage } from "../features/alerts/components/AlertsPage";
 import { DriversPage } from "../features/drivers/components/DriversPage";
+import { GeofencesPage } from "../features/geofences/components/GeofencesPage";
 import { MapPage } from "../features/map/components/MapPage";
 import { PlaybackPage } from "../features/playback/components/PlaybackPage";
 import { AppShell } from "../features/shell/components/AppShell";
@@ -229,7 +230,7 @@ const geofencesRoute = createRoute({
   path: "/geofences",
   validateSearch: geofencesSearchSchema,
   beforeLoad: ({ context }) => requireCapability(context.user, "read"),
-  component: placeholder("Geofences", "The geofence editor ships in Slice 8."),
+  component: GeofencesPage,
 });
 
 const importRoute = createRoute({

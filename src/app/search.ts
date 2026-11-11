@@ -67,4 +67,5 @@ export type MapSearch = z.infer<typeof mapSearchSchema>;
 export type AlertsSearch = z.infer<typeof alertsSearchSchema>;
 export type TripsSearch = z.infer<typeof tripsSearchSchema>;
 export type DriversSearch = z.infer<typeof driversSearchSchema>;
+export type GeofencesSearch = z.infer<typeof geofencesSearchSchema>;
 export type PlaybackSearch = z.infer<typeof playbackSearchSchema>;
