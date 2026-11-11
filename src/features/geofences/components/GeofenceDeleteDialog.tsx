@@ -104,7 +104,7 @@ export function GeofenceDeleteDialog({
             </Button>
           </div>
         ) : null}
-        {failureCopy && write.error ? (
+        {failureCopy && write.error && !blocked ? (
           <InlineError error={write.error} copy={failureCopy} onRetry={write.retry} />
         ) : null}
         {write.pending ? <SlowNotice onCancel={write.cancel} onRetry={write.retry} /> : null}

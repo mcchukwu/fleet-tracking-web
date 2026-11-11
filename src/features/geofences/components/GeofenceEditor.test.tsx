@@ -207,6 +207,7 @@ describe("GeofenceEditor", () => {
         write={makeWrite()}
         knownIds={new Set(["gf-1"])}
         geometryEditable={false}
+        geometryNote="This geofence has more than one ring. Its shape can't be edited here."
         onClose={vi.fn()}
         onSaved={vi.fn()}
         onRefresh={vi.fn()}
@@ -215,6 +216,42 @@ describe("GeofenceEditor", () => {
     expect(
       screen.getByText("This geofence has more than one ring. Its shape can't be edited here."),
     ).toBeInTheDocument();
+  });
+
+  it("saves name and kind without geometry when the stored shape is invalid", async () => {
+    const broken: Geofence = {
+      ...geofence,
+      geometry: {
+        type: "Polygon",
+        coordinates: [
+          [
+            [3.4, 6.4],
+            [3.5, 6.4],
+          ],
+        ],
+      },
+    };
+    const write = makeWrite();
+    const onSaved = vi.fn();
+    render(
+      <GeofenceEditor
+        mode="edit"
+        geofence={broken}
+        drawing={makeDrawing({ status: "idle", geometry: null, getGeometry: () => null })}
+        write={write}
+        knownIds={new Set(["gf-1"])}
+        geometryEditable={false}
+        geometryNote="This geofence's shape isn't valid. Its name and kind can still be edited."
+        onClose={vi.fn()}
+        onSaved={onSaved}
+        onRefresh={vi.fn()}
+      />,
+    );
+    await userEvent.clear(screen.getByLabelText("Name"));
+    await userEvent.type(screen.getByLabelText("Name"), "Lekki Gate");
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(write.update).toHaveBeenCalledWith(broken, { name: "Lekki Gate" }));
+    expect(onSaved).toHaveBeenCalledWith("gf-1");
   });
 
   it("offers Retry when the drawing tool fails", async () => {

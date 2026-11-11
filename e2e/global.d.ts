@@ -70,6 +70,11 @@ declare global {
         bearing: number;
         bounds: { south: number; west: number; north: number; east: number };
       };
+      draw?: {
+        testSetRing?: (ring: [number, number][]) => void;
+        testAddVertex?: (point: [number, number]) => void;
+        getGeometry: () => { type: "Polygon"; coordinates: number[][][] } | null;
+      };
     } | null;
     __FLEET_TEST_CONNECTION__?: (patch: {
       network?: "online" | "offline";

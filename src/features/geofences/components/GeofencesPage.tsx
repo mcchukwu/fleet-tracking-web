@@ -77,9 +77,20 @@ function GeofencesPageContent() {
 
   const editingGeofence = editor.kind === "edit" ? editor.geofence : null;
   const editingRing = editingGeofence ? exteriorRing(editingGeofence.geometry) : null;
-  const geometryEditable =
-    !editingGeofence ||
-    (editingGeofence.geometry.coordinates.length === 1 && editingRing !== null);
+  const editingRings = editingGeofence?.geometry.coordinates.length ?? 0;
+  const drawingUnavailable = adapter !== null && !adapter.capabilities.drawing;
+  const geometryEditable = editingGeofence
+    ? editingRings === 1 && editingRing !== null && !drawingUnavailable
+    : !drawingUnavailable;
+  const geometryNote = editingGeofence
+    ? editingRings > 1
+      ? "This geofence has more than one ring. Its shape can't be edited here."
+      : editingRing === null
+        ? "This geofence's shape isn't valid. Its name and kind can still be edited."
+        : drawingUnavailable
+          ? "Drawing isn't available on this map. Name and kind can still be edited."
+          : undefined
+    : undefined;
   const editorOpen = editor.kind === "create" || editor.kind === "edit";
   const drawing = useGeofenceDrawing({
     adapter,
@@ -117,7 +128,9 @@ function GeofencesPageContent() {
     ? "Your role can't create geofences."
     : offline
       ? "You're offline."
-      : undefined;
+      : drawingUnavailable
+        ? "Drawing isn't available on this map."
+        : undefined;
   const editReason = !canMutate
     ? "Your role can't change geofences."
     : offline
@@ -240,6 +253,14 @@ function GeofencesPageContent() {
   function closeEditor(): void {
     drawing.cancel();
     setEditor({ kind: "closed" });
+    setTimeout(() => {
+      const editButton = document.querySelector<HTMLElement>("[data-edit-geofence]");
+      if (editButton) {
+        editButton.focus();
+        return;
+      }
+      createRef.current?.focus();
+    }, 0);
   }
 
   function afterSaved(id: string | null): void {
@@ -322,6 +343,7 @@ function GeofencesPageContent() {
               write={write}
               knownIds={new Set(feed.geofences.map((row) => row.id))}
               geometryEditable={geometryEditable}
+              {...(geometryNote ? { geometryNote } : {})}
               {...(editReason ? { disabledReason: editReason } : {})}
               onClose={closeEditor}
               onSaved={afterSaved}

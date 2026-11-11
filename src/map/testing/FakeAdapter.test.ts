@@ -104,6 +104,7 @@ describe("FakeAdapter drawing", () => {
 
   async function mountAdapter() {
     const element = document.createElement("div");
+    document.body.append(element);
     const adapter = new FakeAdapter();
     await adapter.mount(element, { theme: "light", tokens: contractTokens });
     adapter.viewport = {
@@ -192,5 +193,51 @@ describe("FakeAdapter drawing", () => {
 
     element.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
     expect(draw.getGeometry()).toBeNull();
+  });
+
+  it("selects the geofence under a click and reports a bare map click otherwise", async () => {
+    const element = document.createElement("div");
+    document.body.append(element);
+    Object.defineProperty(element, "getBoundingClientRect", {
+      value: () => ({
+        left: 0,
+        top: 0,
+        width: 100,
+        height: 100,
+        right: 100,
+        bottom: 100,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    });
+    const adapter = new FakeAdapter();
+    await adapter.mount(element, { theme: "light", tokens: contractTokens });
+    adapter.viewport = {
+      center: [3.45, 6.45],
+      zoom: 12,
+      bearing: 0,
+      bounds: { west: 3.3, south: 6.3, east: 3.6, north: 6.6 },
+    };
+    adapter.setGeofences([
+      {
+        id: "gf-1",
+        name: "Gate",
+        kind: "depot",
+        rings: [[[3.4, 6.4], [3.5, 6.4], [3.5, 6.5], [3.4, 6.4]]],
+        highlighted: false,
+      },
+    ]);
+    const fences: unknown[] = [];
+    const maps: unknown[] = [];
+    adapter.on("geofenceClick", (event) => fences.push(event));
+    adapter.on("mapClick", (event) => maps.push(event));
+
+    element.dispatchEvent(new MouseEvent("click", { clientX: 50, clientY: 50, bubbles: true }));
+    expect(fences).toEqual([{ id: "gf-1" }]);
+
+    element.dispatchEvent(new MouseEvent("click", { clientX: 95, clientY: 95, bubbles: true }));
+    expect(maps).toHaveLength(1);
+    adapter.destroy();
   });
 });

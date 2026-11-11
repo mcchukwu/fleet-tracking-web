@@ -32,6 +32,7 @@ export function GeofenceToolbar({
           <Button
             size="sm"
             variant="ghost"
+            data-edit-geofence
             leadingIcon={<Pencil aria-hidden="true" className="size-3.5" strokeWidth={1.5} />}
             {...(reason ? { disabledReason: reason } : {})}
             onClick={onEdit}

@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useBlocker } from "@tanstack/react-router";
-import type { Geofence } from "../../../api/types";
+import type { Geofence, GeofenceUpdate } from "../../../api/types";
 import { InlineError } from "../../../errors/InlineError";
 import { SlowNotice } from "../../../errors/SlowNotice";
 import { Button } from "../../../ui/Button";
@@ -33,6 +33,7 @@ export interface GeofenceEditorProps {
   write: GeofenceWriteController;
   knownIds: ReadonlySet<string>;
   geometryEditable: boolean;
+  geometryNote?: string;
   disabledReason?: string;
   onClose: () => void;
   onSaved: (id: string | null) => void;
@@ -48,6 +49,7 @@ export function GeofenceEditor({
   write,
   knownIds,
   geometryEditable,
+  geometryNote,
   disabledReason,
   onClose,
   onSaved,
@@ -94,12 +96,13 @@ export function GeofenceEditor({
 
   const dirty = isDirty || drawing.dirty;
   const dirtyRef = useRef(dirty);
+  const skipBlockerRef = useRef(false);
   useEffect(() => {
     dirtyRef.current = dirty;
   }, [dirty]);
 
   const blocker = useBlocker({
-    shouldBlockFn: () => dirtyRef.current,
+    shouldBlockFn: () => !skipBlockerRef.current && dirtyRef.current,
     withResolver: true,
     disabled: !dirty,
     enableBeforeUnload: dirty,
@@ -144,9 +147,29 @@ export function GeofenceEditor({
     action?.();
   }
 
+  // oxlint-disable-next-line react/refs -- refs are only written inside the submit event, never during render.
   const submit = handleSubmit(async (values) => {
     setPolygonError(null);
     setGone(false);
+    const finish = (id: string | null): void => {
+      skipBlockerRef.current = true;
+      onSaved(id);
+    };
+
+    if (mode === "edit" && geofence && !geometryEditable) {
+      const update: GeofenceUpdate = {};
+      if (values.name.trim() !== geofence.name.trim()) update.name = values.name.trim();
+      if (values.kind !== geofence.kind) update.kind = values.kind;
+      if (Object.keys(update).length === 0) {
+        finish(geofence.id);
+        return;
+      }
+      const outcome = await write.update(geofence, update);
+      if (outcome.status === "done") finish(geofence.id);
+      else if (outcome.status === "gone") setGone(true);
+      return;
+    }
+
     const ring = currentRing();
     if (!ring) {
       setPolygonError(NO_POLYGON);
@@ -165,8 +188,8 @@ export function GeofenceEditor({
         return;
       }
       const outcome = await write.create(input, knownIds);
-      if (outcome.status === "created") onSaved(outcome.id);
-      else if (outcome.status === "reconciled") onSaved(outcome.id);
+      if (outcome.status === "created") finish(outcome.id);
+      else if (outcome.status === "reconciled") finish(outcome.id);
       return;
     }
 
@@ -177,22 +200,21 @@ export function GeofenceEditor({
       return;
     }
     if (Object.keys(update).length === 0) {
-      onSaved(geofence.id);
+      finish(geofence.id);
       return;
     }
     const outcome = await write.update(geofence, update);
-    if (outcome.status === "done") onSaved(geofence.id);
+    if (outcome.status === "done") finish(geofence.id);
     else if (outcome.status === "gone") setGone(true);
   });
 
   const failureCopy = write.error
     ? geofenceWriteCopy(write.error, mode === "create" ? "create" : "update")
     : null;
-  const saveDisabled = write.pending || drawing.status !== "ready" || Boolean(disabledReason);
+  const saveDisabled =
+    write.pending || (geometryEditable && drawing.status !== "ready") || Boolean(disabledReason);
   const title = mode === "create" ? "New geofence" : "Edit geofence";
-  const shapeNote = !geometryEditable
-    ? "This geofence has more than one ring. Its shape can't be edited here."
-    : null;
+  const shapeNote = geometryNote ?? null;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">

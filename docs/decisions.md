@@ -589,3 +589,35 @@ The Vite build compiles components with `babel-plugin-react-compiler`. In the br
 ## 2026-11-11: A cancelled driver write is an uncertain outcome, and Retry waits for the reconcile
 
 The write dialogs offer Cancel and Retry on the 10s slow notice, but a mutation cannot be "unsent". Cancel aborts the request and reconciles against a fresh `GET /drivers` before reporting anything, so an aborted create that did land shows "It was saved." instead of implying nothing changed. Retry aborts the current attempt, reconciles it, and re-sends only when the reconcile proves it did not land (`outcome: failed`); a reconcile that reports saved ends the operation, and one that cannot reach the server keeps the honest "We couldn't confirm that it saved." state rather than risking a duplicate. Trade-off: Retry adds a list refetch before the second attempt, which is the price of not double-creating a driver.
+
+## 2026-11-11: Geofences are a full-tenant, client-filtered list
+
+`GET /geofences` returns the whole tenant in `{ data: [] }` and ignores `q`, `limit` and `offset` (verified on staging with `dispatcher@demo.ftb`, `viewer@demo.ftb` and `security@demo.ftb`). There is no `GET /geofences/{id}` (`405`), so `?selected=` resolves from the loaded list and an unknown id is a client-side not-found notice. Search and sort are client-side; the client sorts by lowercased name then id so rows cannot swap between refetches. Trade-off: a tenant with thousands of geofences would need server search and paging, which the API does not offer today.
+
+## 2026-11-11: Geometry is validated and ordered by the client
+
+Staging accepts coordinates only as `[lon, lat]`, requires a closed ring with at least three distinct vertices, no self-intersection and non-zero area, and rejects those on `POST` as `400 invalid_geometry`. `PATCH` has a server quirk: an unclosed or two-vertex ring returns `404 not_found` even though the geofence exists, while a `LineString` returns `400 invalid_geometry`. `PATCH` also stores swapped `[lat, lon]` values without complaint. The client therefore closes the ring, checks distinct vertices, self-intersection, area and finite in-range coordinates, and always emits `[lon, lat]` before every create and update, so the operator gets a precise shape message instead of a misleading `404`. Trade-off: the same validation exists on both sides; the client copy is the one that can name the exact problem.
+
+## 2026-11-11: Geofence names are trimmed, duplicates are allowed, and writes are diff-only
+
+The server stores names verbatim (including surrounding spaces) and allows duplicate names. Create sends `{name: trimmed, kind, geometry}`; `kind` defaults to `other` when omitted, and an unknown kind returns `400 invalid_kind`. Edit sends only changed fields among trimmed name, kind and a geometry that differs within a small epsilon; an unchanged edit sends nothing, because an empty `PATCH` returns `400 invalid_request`. The form always offers the four real kinds. Trade-off: reconciliation cannot match a create by name alone; it requires a new id plus trimmed name, kind and geometry.
+
+## 2026-11-11: Delete refusal is the real `in_use` code
+
+`DELETE /geofences/{id}` returns `204` when no events exist and `409 {"error":{"code":"in_use","message":"geofence has events and cannot be deleted"}}` for `Refinery Gate`. The earlier mock and catalog used a fictional `geofence_has_events`; they now use `in_use`. The dialog owns the fixed headline “This geofence has recorded events and can't be deleted.” and shows the server wording only as the detail line. Trade-off: the server's lowercase wording is quoted as-is; the headline carries the user-facing sentence-case copy.
+
+## 2026-11-11: Terra Draw sits behind the DrawController and is imported on first use
+
+`DrawController` gained async `start(kind, ring?)` and `cancel()`. `stop()` commits and leaves draw mode; `cancel()` discards and emits `null`. The MapLibre adapter owns Terra Draw (`terra-draw@^1.39.0` plus `terra-draw-maplibre-gl-adapter@^1.5.0`, both approved), and the library is dynamically imported inside the first `start()`, so the map screen never downloads the draw chunk. Features see only the controller. A capture-phase keyboard guard stops draw keys when the event target is an input, select, textarea or contenteditable. Trade-off: the contract grows by one method and the first draw has a short preparing state; the alternative is a larger map bundle for every screen.
+
+## 2026-11-11: The selected geofence gets an accent halo, not a replacement stroke
+
+The selected polygon gets an accent halo under its normal kind stroke. Recolouring the whole polygon would destroy the kind's colour and pattern meaning. The halo uses `--accent` and leaves the `--gf-*` colours intact; the unsaved polygon is a separate adapter source with a 12% accent fill and a 2px dashed accent stroke. Trade-off: one extra line layer and a little more paint work, negligible for a tenant-sized geofence list.
+
+## 2026-11-11: The geofence map is a stacked split on mobile
+
+At `lg` and above the list is a fixed 360px panel beside the map. Below `lg` the same split reflows vertically: the map takes the upper flex region and the list takes a fixed `basis-2/5` lower region. This page's list is a page panel, not the map screen's floating vehicle panel, so the draggable bottom sheet is deliberately not reused. Trade-off: the mobile list shows fewer rows and the map is smaller than a full-bleed sheet, but there is no overlay, no new shared sheet primitive and the drawing surface stays visible.
+
+## 2026-11-11: The geofence slice changes shared code, so T3 is a merge gate
+
+This slice changes `src/map` (contract, MapLibre adapter, FakeAdapter, layers, tests) and `src/ui` (`SearchInput`), so the full `npm run e2e` (T3) must run before merging. The agent ran T2 for the four geofence specs; the human runs T3 in a second terminal or CI. Trade-off: the slice's own T2 is clean but cannot prove the map screen or other pages were unaffected.

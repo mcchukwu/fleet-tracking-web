@@ -65,6 +65,20 @@ function isTypingTarget(target: EventTarget | null): boolean {
   );
 }
 
+function pointInRing(point: LngLat, ring: readonly LngLat[]): boolean {
+  let inside = false;
+  for (let index = 0, previous = ring.length - 1; index < ring.length; previous = index, index += 1) {
+    const a = ring[index];
+    const b = ring[previous];
+    if (!a || !b) continue;
+    const crosses =
+      a[1] > point[1] !== b[1] > point[1] &&
+      point[0] < ((b[0] - a[0]) * (point[1] - a[1])) / (b[1] - a[1]) + a[0];
+    if (crosses) inside = !inside;
+  }
+  return inside;
+}
+
 /** Deterministic drawing controller: clicks add vertices, keys close, remove and cancel. */
 class FakeDrawController implements DrawController {
   private active = false;
@@ -125,6 +139,10 @@ class FakeDrawController implements DrawController {
     this.vertices = [...ring];
     this.geometry = polygon;
     this.emit(polygon);
+  }
+
+  isActive(): boolean {
+    return this.active;
   }
 
   dispose(): void {
@@ -248,10 +266,31 @@ export class FakeAdapter implements MapAdapter {
 
   private readonly listeners = new Map<keyof MapEvents, Set<(payload: never) => void>>();
 
+  private readonly handleMapClick = (event: MouseEvent): void => {
+    const element = this.element;
+    if (!element || this.controller?.isActive()) return;
+    const rect = element.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    const bounds = this.viewport.bounds;
+    const point: LngLat = [
+      bounds.west + ((event.clientX - rect.left) / rect.width) * (bounds.east - bounds.west),
+      bounds.north - ((event.clientY - rect.top) / rect.height) * (bounds.north - bounds.south),
+    ];
+    const fence = this.geofences.find((geofence) =>
+      geofence.rings.some((ring) => pointInRing(point, ring)),
+    );
+    if (fence) {
+      this.emit("geofenceClick", { id: fence.id });
+      return;
+    }
+    this.emit("mapClick", { point });
+  };
+
   mount(element: HTMLElement, options: MountOptions): Promise<void> {
     this.mounted = true;
     this.mountCount += 1;
     this.element = element;
+    element.addEventListener("click", this.handleMapClick);
     this.theme = options.theme;
     this.tokens = options.tokens;
     this.baseStyle = options.baseStyle ?? "standard";
@@ -276,6 +315,7 @@ export class FakeAdapter implements MapAdapter {
   destroy(): void {
     this.controller?.dispose();
     this.controller = null;
+    this.element?.removeEventListener("click", this.handleMapClick);
     this.mounted = false;
     this.element = null;
     this.destroyCount += 1;

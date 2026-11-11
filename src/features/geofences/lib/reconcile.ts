@@ -105,7 +105,7 @@ export function geofenceWriteCopy(
       detail: "Check the geofences list before trying again.",
     };
   }
-  if (error.kind === "network" || error.kind === "timeout") {
+  if (error.kind === "network" || error.kind === "timeout" || error.kind === "aborted") {
     return { title: "It wasn't saved.", detail: "Try again." };
   }
   return errorCopy(error);
@@ -140,7 +140,7 @@ export function geofenceDeleteCopy(error: AppError): GeofenceWriteCopy {
       detail: "Check the geofences list before trying again.",
     };
   }
-  if (error.kind === "network" || error.kind === "timeout") {
+  if (error.kind === "network" || error.kind === "timeout" || error.kind === "aborted") {
     return { title: "It wasn't deleted.", detail: "Try again." };
   }
   return errorCopy(error);
