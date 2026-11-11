@@ -60,6 +60,7 @@ Use the provided API types or generate from `api/openapi.yaml`; do not hand-writ
 - No driver unassignment: `PATCH /vehicles/{id}` drops `driver_id: null`, so the UI can change a driver but not clear one.
 - Device fields (`sim_number`, `device_model`, `protocol`) are accepted by `PATCH` but never returned by `GET /vehicles/{id}`; they cannot be verified after a save.
 - No pagination totals or report CSV export.
+- No server-side import job history: recent imports live in this browser only (IndexedDB, five entries) and are wiped on logout or user change.
 - No WebSocket sequence number; resync with `/live/snapshot` on reconnect.
 - `GET /live/snapshot` has no bbox filter.
 - No CORS; production is served from a Cloudflare Worker that proxies `/api` same-origin.
