@@ -44,10 +44,12 @@ function polygonStyles(tokens: MapTokens) {
   const surface = tokens.colors.surface as HexColor;
   return {
     fillColor: accent,
-    fillOpacity: 0.12,
+    // The app overlay is the unsaved polygon's single visual; Terra Draw keeps
+    // only its handles above it.
+    fillOpacity: 0,
     outlineColor: accent,
     outlineWidth: 2,
-    outlineOpacity: 1,
+    outlineOpacity: 0,
     closingPointColor: surface,
     closingPointWidth: 6,
     closingPointOutlineColor: accent,
@@ -112,9 +114,9 @@ export function createTerraDrawController(context: DrawContext): TerraDrawContro
         ? {
             styles: {
               selectedPolygonColor: styles.fillColor,
-              selectedPolygonFillOpacity: 0.12,
+              selectedPolygonFillOpacity: 0,
               selectedPolygonOutlineColor: styles.outlineColor,
-              selectedPolygonOutlineWidth: 2,
+              selectedPolygonOutlineWidth: 0,
             },
           }
         : {}),
@@ -132,7 +134,14 @@ export function createTerraDrawController(context: DrawContext): TerraDrawContro
   async function start(nextKind: GeofenceKind, ring?: LngLat[]): Promise<void> {
     kind = nextKind;
     tokens = context.getTokens();
-    ready ??= ensureDraw();
+    if (!ready) {
+      const attempt = ensureDraw();
+      ready = attempt;
+      attempt.catch(() => {
+        // A rejected chunk must not poison every later attempt.
+        if (ready === attempt) ready = null;
+      });
+    }
     await ready;
     if (!draw) return;
 
@@ -161,13 +170,13 @@ export function createTerraDrawController(context: DrawContext): TerraDrawContro
 
   function stopSession(): void {
     document.removeEventListener("keydown", guardKeys, true);
+    ready = null;
     if (!draw) return;
     draw.clear();
     draw.stop();
     draw = null;
     polygonMode = null;
     selectMode = null;
-    ready = null;
   }
 
   return {
@@ -197,9 +206,9 @@ export function createTerraDrawController(context: DrawContext): TerraDrawContro
       selectMode?.updateOptions({
         styles: {
           selectedPolygonColor: styles.fillColor,
-          selectedPolygonFillOpacity: 0.12,
+          selectedPolygonFillOpacity: 0,
           selectedPolygonOutlineColor: styles.outlineColor,
-          selectedPolygonOutlineWidth: 2,
+          selectedPolygonOutlineWidth: 0,
         },
       });
     },

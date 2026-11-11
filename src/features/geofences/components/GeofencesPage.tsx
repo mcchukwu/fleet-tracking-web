@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { Plus } from "lucide-react";
 import type { Geofence } from "../../../api/types";
 import type { GeofencesSearch } from "../../../app/search";
 import { useCan } from "../../../auth/useCan";
@@ -148,6 +149,7 @@ function GeofencesPageContent() {
     () => toMapGeofences(feed.geofences, selectedId),
     [feed.geofences, selectedId],
   );
+  const editingMapId = editingGeofence && drawing.status === "ready" ? editingGeofence.id : null;
 
   const fitPadding = wide ? FIT_PADDING_DESKTOP : FIT_PADDING_MOBILE;
 
@@ -171,6 +173,7 @@ function GeofencesPageContent() {
   useEffect(() => {
     if (!adapter) return;
     const offFence = adapter.on("geofenceClick", ({ id }) => {
+      if (editorOpen) return;
       const hiddenBySearch = filterGeofences(feed.geofences, q).every((row) => row.id !== id);
       updateSearch(hiddenBySearch ? { q: undefined, selected: id } : { selected: id }, false);
     });
@@ -201,7 +204,7 @@ function GeofencesPageContent() {
     setMapDebug({
       mapLoaded: adapter !== null,
       provider: adapter?.id ?? null,
-      geofenceCount: mapGeofences.length,
+      geofenceCount: mapGeofences.filter((row) => row.id !== editingMapId).length,
       selectedKey: selectedId,
       baseStyle: adapter?.getStyleState().style ?? null,
       styleState: adapter?.getStyleState().status ?? null,
@@ -210,7 +213,7 @@ function GeofencesPageContent() {
       bounds: adapter?.getViewport().bounds ?? null,
     });
     if (import.meta.env.DEV) window.__FLEET_TEST_MAP__ = adapter;
-  }, [adapter, mapGeofences.length, selectedId]);
+  }, [adapter, editingMapId, mapGeofences, selectedId]);
 
   useEffect(
     () => () => {
@@ -311,25 +314,30 @@ function GeofencesPageContent() {
         <div className="flex flex-col gap-1">
           <h1 className="text-text text-lg font-semibold">Geofences</h1>
           <p className="text-muted text-sm">
-            <span className="tabular-nums">{formatCount(visible.length)}</span>
             {q.trim() !== "" ? (
               <>
+                Showing <span className="tabular-nums">{formatCount(visible.length)}</span>
                 {" of "}
-                <span className="tabular-nums">{formatCount(feed.geofences.length)}</span> geofences
+                <span className="tabular-nums">{formatCount(feed.geofences.length)}</span>
               </>
             ) : (
-              " geofences"
+              <>
+                <span className="tabular-nums">{formatCount(visible.length)}</span> geofences
+              </>
             )}
           </p>
         </div>
         <Button
           ref={createRef}
           variant="primary"
+          className="min-w-touch md:min-w-0"
+          aria-label="Create geofence"
+          leadingIcon={<Plus aria-hidden="true" className="size-4" strokeWidth={1.5} />}
           data-create-geofence
           {...(createReason ? { disabledReason: createReason } : {})}
           onClick={() => setEditor({ kind: "create" })}
         >
-          Create geofence
+          <span className="hidden md:inline">Create geofence</span>
         </Button>
       </header>
 
@@ -390,6 +398,7 @@ function GeofencesPageContent() {
         <div className="order-1 flex min-h-48 flex-1 flex-col lg:order-2">
           <GeofenceMap
             geofences={mapGeofences}
+            editingId={editingMapId}
             adapter={adapter}
             offline={offline}
             {...(hint ? { hint } : {})}
@@ -407,7 +416,7 @@ function GeofencesPageContent() {
         {...(editReason ? { disabledReason: editReason } : {})}
         onClose={() => setEditor({ kind: "closed" })}
         onDeleted={afterDelete}
-        onRefresh={() => void refreshDeleteTarget()}
+        onRefresh={refreshDeleteTarget}
       />
     </div>
   );

@@ -149,7 +149,7 @@ export function useGeofenceWrite(): GeofenceWriteController {
       if (result.status === "reconciled") {
         await invalidateGeofences();
         toast({
-          title: "Geofence updated.",
+          title: "It was saved.",
           tone: "success",
           key: `geofence-updated:${geofence.id}`,
         });

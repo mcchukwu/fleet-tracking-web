@@ -102,4 +102,48 @@ describe("useGeofenceDrawing", () => {
     await waitFor(() => expect(result.current.status).toBe("idle"));
     expect(adapter.draw?.getGeometry()).toBeNull();
   });
+
+  it("keeps the ring when the map is replaced and resumes it on retry", async () => {
+    const first = await mountAdapter();
+    const second = await mountAdapter();
+    const { result, rerender } = renderHook(
+      ({ adapter }: { adapter: MapAdapter }) =>
+        useGeofenceDrawing({ adapter, active: true, kind: "depot", initialRing: ring }),
+      { initialProps: { adapter: first } },
+    );
+    await waitFor(() => expect(result.current.status).toBe("ready"));
+
+    const moved = ring.map(([lon, lat]) => [lon + 0.001, lat] as LngLat);
+    act(() => {
+      (first.draw as unknown as { testSetRing: (value: LngLat[]) => void }).testSetRing(moved);
+    });
+    await waitFor(() => expect(result.current.dirty).toBe(true));
+
+    rerender({ adapter: second });
+    await waitFor(() => expect(result.current.status).toBe("interrupted"));
+    expect(result.current.notice).toBe("The map reloaded. Draw the polygon again.");
+    expect(result.current.canResume).toBe(true);
+    expect(result.current.getGeometry()?.coordinates[0]).toEqual([...moved, moved[0]]);
+
+    act(() => result.current.retry());
+    await waitFor(() => expect(result.current.status).toBe("ready"));
+    expect(second.draw?.getGeometry()?.coordinates[0]).toEqual([...moved, moved[0]]);
+    expect(result.current.notice).toBeNull();
+  });
+
+  it("explains a cancelled draft after a style swap", async () => {
+    const adapter = await mountAdapter();
+    const { result } = renderHook(() =>
+      useGeofenceDrawing({ adapter, active: true, kind: "depot" }),
+    );
+    await waitFor(() => expect(result.current.status).toBe("ready"));
+
+    act(() => {
+      adapter.setBaseStyle("standard");
+    });
+
+    await waitFor(() =>
+      expect(result.current.notice).toBe("Drawing was cancelled. Draw the polygon again."),
+    );
+  });
 });

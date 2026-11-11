@@ -113,6 +113,33 @@ describe("GeofenceDeleteDialog", () => {
     expect(screen.getByRole("button", { name: "Delete" })).toBeEnabled();
   });
 
+  it("retries the delete from the error action", async () => {
+    const error = {
+      kind: "network" as const,
+      retryable: true,
+      outcome: "failed" as const,
+      context: { route: "/geofences" },
+      at: 0,
+    };
+    const write = makeWrite({ error });
+    renderDialog(write);
+    await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(write.remove).toHaveBeenCalledOnce());
+  });
+
+  it("clears the gone state after a successful refresh", async () => {
+    const write = makeWrite({ remove: vi.fn().mockResolvedValue({ status: "gone" }) });
+    const { onRefresh } = renderDialog(write);
+    await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+    await screen.findByText("This geofence no longer exists.");
+    expect(screen.getByRole("button", { name: "Delete" })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole("button", { name: "Refresh" }));
+    await waitFor(() => expect(onRefresh).toHaveBeenCalledOnce());
+    await waitFor(() => expect(screen.queryByText("This geofence no longer exists.")).toBeNull());
+    expect(screen.getByRole("button", { name: "Delete" })).toBeEnabled();
+  });
+
   it("disables both actions while pending", () => {
     const write = makeWrite({ pending: true });
     renderDialog(write);

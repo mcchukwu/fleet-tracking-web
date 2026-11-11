@@ -6,6 +6,8 @@ import { GeofenceMapControls } from "./GeofenceMapControls";
 
 export interface GeofenceMapProps {
   geofences: readonly MapGeofence[];
+  /** The geofence being edited; its normal layer is hidden while a draw session is live. */
+  editingId?: string | null;
   adapter: MapAdapter | null;
   offline: boolean;
   hint?: string;
@@ -16,6 +18,7 @@ export interface GeofenceMapProps {
 
 export function GeofenceMap({
   geofences,
+  editingId = null,
   adapter,
   offline,
   hint,
@@ -37,6 +40,7 @@ export function GeofenceMap({
 
   const offlinePanel = offline && (adapter === null || !adapter.capabilities.offline);
   const styleState = adapter?.getStyleState();
+  const drawn = editingId ? geofences.filter((row) => row.id !== editingId) : geofences;
 
   return (
     <div className="bg-surface-2 relative min-h-0 flex-1 overflow-hidden">
@@ -48,7 +52,7 @@ export function GeofenceMap({
       ) : (
         <FleetMap
           label="Geofence map"
-          geofences={geofences}
+          geofences={drawn}
           dimmed={offline}
           onReady={onAdapter}
           className="h-full"

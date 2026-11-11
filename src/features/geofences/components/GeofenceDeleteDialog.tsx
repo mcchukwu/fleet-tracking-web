@@ -14,7 +14,7 @@ export interface GeofenceDeleteDialogProps {
   disabledReason?: string;
   onClose: () => void;
   onDeleted: () => void;
-  onRefresh: () => void;
+  onRefresh: () => Promise<void>;
 }
 
 export function GeofenceDeleteDialog({
@@ -61,6 +61,11 @@ export function GeofenceDeleteDialog({
     }
   }
 
+  async function refresh(): Promise<void> {
+    await onRefresh();
+    setGone(false);
+  }
+
   const failureCopy = write.error ? geofenceDeleteCopy(write.error) : null;
   const confirmDisabled = write.pending || Boolean(blocked) || Boolean(gone);
 
@@ -99,13 +104,17 @@ export function GeofenceDeleteDialog({
         {gone ? (
           <div role="alert" className="text-danger flex items-center gap-2 text-sm">
             <span className="flex-1">This geofence no longer exists.</span>
-            <Button size="sm" variant="ghost" onClick={onRefresh}>
+            <Button size="sm" variant="ghost" onClick={() => void refresh()}>
               Refresh
             </Button>
           </div>
         ) : null}
         {failureCopy && write.error && !blocked ? (
-          <InlineError error={write.error} copy={failureCopy} onRetry={write.retry} />
+          <InlineError
+            error={write.error}
+            copy={failureCopy}
+            {...(write.error.outcome === "failed" ? { onRetry: () => void confirm() } : {})}
+          />
         ) : null}
         {write.pending ? <SlowNotice onCancel={write.cancel} onRetry={write.retry} /> : null}
         {disabledReason ? <p className="text-muted text-sm">{disabledReason}</p> : null}

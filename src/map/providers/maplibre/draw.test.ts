@@ -206,11 +206,42 @@ describe("Terra Draw controller", () => {
     });
     expect(holder.MockPolygonMode.latest?.options.styles).toMatchObject({
       fillColor: "#ff0000",
+      fillOpacity: 0,
       outlineColor: "#ff0000",
+      outlineOpacity: 0,
     });
     expect(holder.MockSelectMode.latest?.options.styles).toMatchObject({
       selectedPolygonOutlineColor: "#ff0000",
+      selectedPolygonFillOpacity: 0,
+      selectedPolygonOutlineWidth: 0,
     });
+    controller.dispose();
+  });
+
+  it("leaves the unsaved polygon to the app overlay", async () => {
+    const controller = await loadController();
+    await controller.start("depot");
+    expect(holder.MockPolygonMode.latest?.options.styles).toMatchObject({
+      fillOpacity: 0,
+      outlineOpacity: 0,
+    });
+    expect(holder.MockSelectMode.latest?.options.styles).toMatchObject({
+      selectedPolygonFillOpacity: 0,
+      selectedPolygonOutlineWidth: 0,
+    });
+    controller.dispose();
+  });
+
+  it("recovers from a failed start on the next attempt", async () => {
+    const { createTerraDrawController } = await import("./draw");
+    let maps = 0;
+    const controller = createTerraDrawController({
+      getMap: () => (maps++ === 0 ? null : ({} as never)),
+      getTokens: () => contractTokens,
+    });
+    await expect(controller.start("depot")).rejects.toThrow("not ready");
+    await controller.start("depot");
+    expect(holder.MockDraw.latest?.mode).toBe("polygon");
     controller.dispose();
   });
 

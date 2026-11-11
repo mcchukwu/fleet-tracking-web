@@ -1,7 +1,9 @@
+import type { ReactElement } from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { MapAdapter } from "../../../map/types";
+import { TooltipProvider } from "../../../ui/Tooltip";
 import { GeofenceMap } from "./GeofenceMap";
 
 const holder = vi.hoisted(() => ({ adapter: null as unknown }));
@@ -10,6 +12,13 @@ const adapter = {
   id: "fake",
   capabilities: { offline: true, drawing: true, clustering: "emulated", comfortableVehicleCount: 1, styles: ["standard"] },
   getStyleState: () => ({ style: "standard", status: "ready", attribution: null }),
+  getViewport: () => ({
+    center: [3.4, 6.5],
+    zoom: 10,
+    bearing: 0,
+    bounds: { south: 6, west: 3, north: 7, east: 4 },
+  }),
+  on: () => () => undefined,
 } as unknown as MapAdapter;
 
 holder.adapter = adapter;
@@ -34,10 +43,14 @@ vi.mock("../../../map/FleetMap", () => ({
   ),
 }));
 
+function renderMap(element: ReactElement) {
+  return render(<TooltipProvider>{element}</TooltipProvider>);
+}
+
 describe("GeofenceMap", () => {
   it("renders the map, hint, controls and attribution", async () => {
     const onAdapter = vi.fn();
-    render(
+    renderMap(
       <GeofenceMap
         geofences={[]}
         adapter={adapter}
@@ -56,8 +69,25 @@ describe("GeofenceMap", () => {
     expect(onAdapter).toHaveBeenCalledWith(adapter);
   });
 
+  it("hides the geofence that is being edited from the normal layer", () => {
+    renderMap(
+      <GeofenceMap
+        geofences={[
+          { id: "gf-1", name: "Border", kind: "depot", rings: [], highlighted: true },
+          { id: "gf-2", name: "Lekki", kind: "depot", rings: [], highlighted: false },
+        ]}
+        editingId="gf-1"
+        adapter={adapter}
+        offline={false}
+        onAdapter={vi.fn()}
+        onFitAll={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId("fleet-map")).toHaveAttribute("data-count", "1");
+  });
+
   it("dims the map while offline when the adapter supports offline tiles", () => {
-    render(
+    renderMap(
       <GeofenceMap
         geofences={[]}
         adapter={adapter}
@@ -74,7 +104,7 @@ describe("GeofenceMap", () => {
       ...adapter,
       capabilities: { ...adapter.capabilities, offline: false },
     } as MapAdapter;
-    render(
+    renderMap(
       <GeofenceMap
         geofences={[]}
         adapter={noOffline}
@@ -90,7 +120,7 @@ describe("GeofenceMap", () => {
 
   it("reports the adapter as gone when the map unmounts", () => {
     const onAdapter = vi.fn();
-    const { unmount } = render(
+    const { unmount } = renderMap(
       <GeofenceMap
         geofences={[]}
         adapter={adapter}

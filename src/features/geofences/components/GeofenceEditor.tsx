@@ -279,6 +279,16 @@ export function GeofenceEditor({
           {drawing.status === "ready" && drawing.geometry ? (
             <p className="text-muted text-sm">Polygon ready.</p>
           ) : null}
+          {drawing.notice ? (
+            <output className="text-muted flex items-center gap-2 text-sm">
+              <span className="flex-1">{drawing.notice}</span>
+              {drawing.status === "interrupted" && drawing.canResume ? (
+                <Button size="sm" variant="ghost" onClick={drawing.retry}>
+                  Retry
+                </Button>
+              ) : null}
+            </output>
+          ) : null}
           {shapeNote ? <p className="text-muted text-sm">{shapeNote}</p> : null}
           {polygonError ? (
             <p className="text-danger text-sm" role="alert">
@@ -297,7 +307,7 @@ export function GeofenceEditor({
             <InlineError
               error={write.error}
               copy={failureCopy}
-              onRetry={write.retry}
+              {...(write.error.outcome === "failed" ? { onRetry: () => void submit() } : {})}
             />
           ) : null}
         </div>

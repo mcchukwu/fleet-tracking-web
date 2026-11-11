@@ -54,6 +54,8 @@ function makeDrawing(
     geometry: validPolygon,
     dirty: false,
     error: null,
+    notice: null,
+    canResume: true,
     getGeometry: () => validPolygon,
     retry: vi.fn(),
     stop: vi.fn(),
@@ -294,6 +296,39 @@ describe("GeofenceEditor", () => {
     renderEditor({ write: makeWrite({ error }) });
     expect(screen.getByText("The polygon isn't valid.")).toBeInTheDocument();
     expect(screen.getByText("geometry must be a valid polygon")).toBeInTheDocument();
+  });
+
+  it("resubmits the failed write from the error Retry", async () => {
+    const error: AppError = {
+      kind: "network",
+      retryable: true,
+      outcome: "failed",
+      context: { route: "/geofences" },
+      at: 0,
+    };
+    const write = makeWrite({ error });
+    renderEditor({ write });
+    await userEvent.type(screen.getByLabelText("Name"), "Gate");
+    await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(write.create).toHaveBeenCalledOnce());
+  });
+
+  it("shows the drawing notice with Retry when the map was replaced", async () => {
+    const retry = vi.fn();
+    const geometry = validPolygon;
+    renderEditor({
+      drawing: makeDrawing({
+        status: "interrupted",
+        notice: "The map reloaded. Draw the polygon again.",
+        canResume: true,
+        geometry,
+        getGeometry: () => geometry,
+        retry,
+      }),
+    });
+    expect(screen.getByText("The map reloaded. Draw the polygon again.")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(retry).toHaveBeenCalledOnce();
   });
 
   it("asks before discarding a dirty form", async () => {
