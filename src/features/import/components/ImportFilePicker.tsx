@@ -88,6 +88,7 @@ export function ImportFilePicker({
           data-testid="import-file-input"
           type="file"
           accept=".csv,text/csv"
+          aria-label="Choose a CSV file"
           tabIndex={-1}
           className="sr-only"
           onChange={(event) => {

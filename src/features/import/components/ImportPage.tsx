@@ -212,7 +212,7 @@ function ImportPageContent() {
         <div className="max-w-dialog flex w-full flex-col gap-2">
           <div className="flex flex-wrap items-center gap-3">
             <Button
-              variant="primary"
+              variant={result ? "secondary" : "primary"}
               data-import-upload
               onClick={() => void runUpload()}
               loading={upload.pending}

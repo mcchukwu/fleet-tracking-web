@@ -30,12 +30,14 @@ describe("CopyButton", () => {
         label="Header row"
         ariaLabel="Copy header row"
         appearance="button"
-      />,
+      >
+        Copy header row
+      </CopyButton>,
     );
     const button = screen.getByRole("button", { name: "Copy header row" });
     expect(button).toHaveClass("border", "border-border-strong", "px-3", "rounded-md");
     expect(button).not.toHaveClass("font-mono");
-    expect(button).toHaveTextContent("imei,sim_number,device_model");
+    expect(button).toHaveTextContent("Copy header row");
   });
 
   it("keeps a 44px touch target that lays out as one text line inline", () => {

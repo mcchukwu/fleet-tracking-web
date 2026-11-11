@@ -1,3 +1,4 @@
+/* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- the horizontally scrollable header row must be keyboard reachable */
 import { Download } from "lucide-react";
 import { Button } from "../../../ui/Button";
 import { CopyButton } from "../../../ui/CopyButton";
@@ -51,7 +52,9 @@ export function ImportExpectedHeaders({
             label="Header row"
             ariaLabel="Copy header row"
             appearance="button"
-          />
+          >
+            Copy header row
+          </CopyButton>
           <Button
             size="sm"
             leadingIcon={
@@ -66,7 +69,9 @@ export function ImportExpectedHeaders({
       </div>
       <code
         data-testid="import-header-row"
-        className="border-border bg-surface-2 text-muted block overflow-x-auto rounded-md border px-3 py-2 font-mono text-xs whitespace-nowrap"
+        tabIndex={0}
+        aria-label="Expected column names"
+        className="border-border bg-surface-2 text-muted block min-h-touch overflow-x-auto rounded-md border px-3 py-2 font-mono text-xs whitespace-nowrap md:min-h-0"
       >
         {header}
       </code>

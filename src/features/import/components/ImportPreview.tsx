@@ -29,7 +29,7 @@ function previewColumns(preview: Preview): DataTableColumn<string[]>[] {
     const label = identifiers[normalised];
     return {
       id: `${index}:${normalised || header}`,
-      header: header || MISSING,
+      header: <span title={header}>{header || MISSING}</span>,
       width: index === 0 ? 180 : 150,
       truncate: label === undefined,
       cell: (row) => {
@@ -120,7 +120,11 @@ export function ImportPreview({
   if (!preview) return null;
 
   return (
-    <section aria-labelledby="import-preview-title" className="flex flex-col gap-2">
+    <section
+      aria-labelledby="import-preview-title"
+      data-testid="import-preview"
+      className="flex flex-col gap-2"
+    >
       <h2 id="import-preview-title" className="text-text text-sm font-medium">
         First 5 rows
       </h2>
