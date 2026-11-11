@@ -6,7 +6,7 @@ import { api } from "../../../api/instance";
 import type { Driver } from "../../../api/types";
 import { ApiError } from "../../../errors/types";
 import { ToastProvider } from "../../../ui/Toast";
-import { useDriverWrite } from "./useDriverWrite";
+import { useDriverWrite, type DriverCreateOutcome } from "./useDriverWrite";
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
@@ -57,7 +57,10 @@ describe("useDriverWrite", () => {
       result.current.create({ name: "Ada Obi" }, new Set(["driver-1"])),
     );
     expect(outcome).toEqual({ status: "created" });
-    expect(mocks.create).toHaveBeenCalledWith({ name: "Ada Obi" });
+    expect(mocks.create).toHaveBeenCalledWith({
+      input: { name: "Ada Obi" },
+      signal: expect.any(AbortSignal),
+    });
   });
 
   it("reconciles an unknown create outcome and refreshes the list", async () => {
@@ -104,7 +107,11 @@ describe("useDriverWrite", () => {
 
     const outcome = await act(() => result.current.update(driver, { phone: "" }));
     expect(outcome).toEqual({ status: "done", reconciled: false });
-    expect(mocks.update).toHaveBeenCalledWith({ id: driver.id, update: { phone: "" } });
+    expect(mocks.update).toHaveBeenCalledWith({
+      id: driver.id,
+      update: { phone: "" },
+      signal: expect.any(AbortSignal),
+    });
   });
 
   it("refreshes every denormalised root after a reconciled update", async () => {
@@ -146,5 +153,54 @@ describe("useDriverWrite", () => {
       expect(outcome.error.kind).toBe("validation");
       expect(outcome.error.code).toBe("invalid_status");
     }
+  });
+
+  it("cancels a slow create and reconciles what the server did", async () => {
+    mocks.create.mockImplementation(
+      ({ signal }: { signal: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          signal.addEventListener("abort", () =>
+            reject(new DOMException("aborted", "AbortError")),
+          );
+        }),
+    );
+    vi.spyOn(api, "drivers").mockResolvedValue({
+      data: [
+        driver,
+        { ...driver, id: "driver-2", name: "Ada Obi", phone: "", licence: "", vehicles: 0 },
+      ],
+    });
+    const { result } = setup();
+
+    let outcome: DriverCreateOutcome | undefined;
+    await act(async () => {
+      const pending = result.current.create({ name: "Ada Obi" }, new Set(["driver-1"]));
+      result.current.cancel();
+      outcome = await pending;
+    });
+
+    expect(outcome).toEqual({ status: "reconciled" });
+  });
+
+  it("retries a cancelled create only when it did not reach the server", async () => {
+    const abortable = ({ signal }: { signal: AbortSignal }) =>
+      new Promise((_resolve, reject) => {
+        signal.addEventListener("abort", () =>
+          reject(new DOMException("aborted", "AbortError")),
+        );
+      });
+    mocks.create.mockImplementationOnce(abortable).mockResolvedValueOnce({ id: "driver-2" });
+    vi.spyOn(api, "drivers").mockResolvedValue({ data: [driver] });
+    const { result } = setup();
+
+    let outcome: DriverCreateOutcome | undefined;
+    await act(async () => {
+      const pending = result.current.create({ name: "Ada Obi" }, new Set(["driver-1"]));
+      result.current.retry();
+      outcome = await pending;
+    });
+
+    expect(outcome).toEqual({ status: "created" });
+    expect(mocks.create).toHaveBeenCalledTimes(2);
   });
 });

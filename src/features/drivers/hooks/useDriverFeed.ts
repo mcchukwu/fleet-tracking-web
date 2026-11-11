@@ -11,7 +11,7 @@ export interface DriverFeedController {
   error: unknown;
   dataUpdatedAt: number;
   cancelled: boolean;
-  refetch: () => void;
+  refetch: () => Promise<Driver[] | undefined>;
   cancel: () => void;
 }
 
@@ -32,8 +32,9 @@ export function useDriverFeed(): DriverFeedController {
 
   const drivers = useMemo(() => query.data ?? [], [query.data]);
 
-  const refetch = useCallback(() => {
-    void query.refetch();
+  const refetch = useCallback(async (): Promise<Driver[] | undefined> => {
+    const result = await query.refetch();
+    return result.data;
   }, [query]);
 
   const cancel = useCallback(() => {

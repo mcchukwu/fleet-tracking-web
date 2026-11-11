@@ -126,11 +126,13 @@ describe("DriverCreateDialog", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("keeps the submit focusable but inert for a read-only role", () => {
+  it("keeps the submit focusable but inert for a read-only role", async () => {
+    const user = userEvent.setup();
     renderDialog({ disabledReason: "Your role can't create drivers." });
-    expect(screen.getByRole("button", { name: "Create driver" })).toHaveAttribute(
-      "aria-disabled",
-      "true",
-    );
+    const submit = screen.getByRole("button", { name: "Create driver" });
+    expect(submit).toHaveAttribute("aria-disabled", "true");
+
+    await user.type(screen.getByLabelText("Name"), "Ada Obi{Enter}");
+    expect(mocks.write.create).not.toHaveBeenCalled();
   });
 });

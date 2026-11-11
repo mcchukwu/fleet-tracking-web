@@ -87,6 +87,17 @@ describe("DriverDeactivateDialog", () => {
     expect(onFinished).toHaveBeenCalled();
   });
 
+  it("does not close while the deactivation is pending", async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    mocks.write.pending = true;
+    renderDialog({ onCancel });
+
+    await user.keyboard("{Escape}");
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog", { name: "Deactivate Adebayo Okafor?" })).toBeVisible();
+  });
+
   it("shows a failed deactivation without closing", async () => {
     mocks.write.error = {
       kind: "network",

@@ -57,7 +57,8 @@ export function DriverDeactivateDialog({
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        if (!next) onCancel();
+        if (next || write.pending) return;
+        onCancel();
       }}
       title={driver ? `Deactivate ${driver.name}?` : "Deactivate driver?"}
       description={
@@ -78,7 +79,7 @@ export function DriverDeactivateDialog({
         </>
       }
     >
-      {write.pending ? <SlowNotice /> : null}
+      {write.pending ? <SlowNotice onCancel={write.cancel} onRetry={write.retry} /> : null}
 
       <div ref={errorRef} tabIndex={-1} className="focus:outline-none">
         {write.error && copy ? (

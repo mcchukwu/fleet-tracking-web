@@ -55,8 +55,8 @@ describe("useDriverFeed", () => {
     expect(result.current.dataUpdatedAt).toBe(1);
   });
 
-  it("passes refetch through and cancels the query", () => {
-    const refetch = vi.fn();
+  it("passes refetch through and cancels the query", async () => {
+    const refetch = vi.fn().mockResolvedValue({ data: drivers });
     mocks.query = {
       data: drivers,
       isPending: false,
@@ -69,7 +69,9 @@ describe("useDriverFeed", () => {
     const cancel = vi.spyOn(queryClient, "cancelQueries").mockResolvedValue(undefined);
     const { result } = renderHook(() => useDriverFeed(), { wrapper: wrapperFor(queryClient) });
 
-    act(() => result.current.refetch());
+    await act(async () => {
+      await result.current.refetch();
+    });
     expect(refetch).toHaveBeenCalled();
 
     act(() => result.current.cancel());

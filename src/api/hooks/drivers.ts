@@ -27,10 +27,22 @@ export function useDrivers(options: DriverQueryOptions = {}) {
   return useQuery(driversQueryOptions(options));
 }
 
+export interface CreateDriverVariables {
+  input: DriverInput;
+  signal?: AbortSignal;
+}
+
+export interface UpdateDriverVariables {
+  id: string;
+  update: DriverUpdate;
+  signal?: AbortSignal;
+}
+
 export function useCreateDriver() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: DriverInput) => api.createDriver(input),
+    mutationFn: ({ input, signal }: CreateDriverVariables) =>
+      api.createDriver(input, signal ? { signal } : {}),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.drivers });
     },
@@ -41,8 +53,8 @@ export function useCreateDriver() {
 export function useUpdateDriver() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, update }: { id: string; update: DriverUpdate }) =>
-      api.updateDriver(id, update),
+    mutationFn: ({ id, update, signal }: UpdateDriverVariables) =>
+      api.updateDriver(id, update, signal ? { signal } : {}),
     onSuccess: async () => {
       // A rename or phone change is denormalised into snapshot vehicles and trips.
       await Promise.all([

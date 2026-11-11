@@ -78,6 +78,7 @@ export function DriverCreateDialog({
   }
 
   async function onSubmit(values: DriverCreateFormValues): Promise<void> {
+    if (disabledReason) return;
     const outcome = await write.create(toDriverInput(values), knownDriverIds);
     if (outcome.status === "created" || outcome.status === "reconciled") {
       reset(emptyDriverCreateForm);
@@ -118,7 +119,7 @@ export function DriverCreateDialog({
           id="driver-create-form"
           onSubmit={(event) => void handleSubmit(onSubmit)(event)}
         >
-          {write.pending ? <SlowNotice /> : null}
+          {write.pending ? <SlowNotice onCancel={write.cancel} onRetry={write.retry} /> : null}
 
           <div ref={errorRef} tabIndex={-1} className="focus:outline-none">
             {write.error && copy ? (

@@ -108,7 +108,7 @@ describe("mutation invalidation", () => {
 
     const { result } = renderHook(() => useCreateDriver(), { wrapper: wrapperFor(queryClient) });
     await act(async () => {
-      await result.current.mutateAsync({ name: "Ada Obi" });
+      await result.current.mutateAsync({ input: { name: "Ada Obi" } });
     });
 
     const keys = invalidate.mock.calls.map(([filters]) => filters?.queryKey);
@@ -124,7 +124,6 @@ describe("mutation invalidation", () => {
     await act(async () => {
       await result.current.mutateAsync({ id: "driver-1", update: { phone: "" } });
     });
-
     const keys = invalidate.mock.calls.map(([filters]) => filters?.queryKey);
     expect(keys).toContainEqual(queryKeys.drivers);
     expect(keys).toContainEqual(queryKeys.liveSnapshot);

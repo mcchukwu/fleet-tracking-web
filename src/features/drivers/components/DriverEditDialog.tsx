@@ -86,7 +86,7 @@ export function DriverEditDialog({
   }
 
   async function onSubmit(formValues: DriverEditFormValues): Promise<void> {
-    if (!driver) return;
+    if (disabledReason || !driver) return;
     const update = diffDriver(driver, formValues);
     if (!hasChanges(update)) return;
     if (requiresDeactivationConfirmation(driver, update)) {
@@ -130,7 +130,7 @@ export function DriverEditDialog({
           id="driver-edit-form"
           onSubmit={(event) => void handleSubmit(onSubmit)(event)}
         >
-          {write.pending ? <SlowNotice /> : null}
+          {write.pending ? <SlowNotice onCancel={write.cancel} onRetry={write.retry} /> : null}
 
           <div ref={errorRef} tabIndex={-1} className="focus:outline-none">
             {write.error && copy ? (
