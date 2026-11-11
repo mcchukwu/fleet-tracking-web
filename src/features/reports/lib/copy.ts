@@ -1,7 +1,6 @@
 export const reportsCopy = {
   rangeNote:
     "Trip and alert numbers cover the selected range; the links open the full lists.",
-  refresh: "Couldn't refresh",
   loadingCancelled: "Loading cancelled",
   invalidRange: {
     title: "That range isn't valid",
@@ -11,7 +10,6 @@ export const reportsCopy = {
   offlineEmpty: {
     title: "This range isn't available offline",
     description: "Reconnect to load the report.",
-    action: undefined,
   },
   zero: {
     title: "No activity in this range",

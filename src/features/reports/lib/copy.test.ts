@@ -18,7 +18,7 @@ describe("reports copy", () => {
 
   it("explains that an uncached range needs a connection", () => {
     expect(reportsCopy.offlineEmpty.description).toContain("Reconnect");
-    expect(reportsCopy.offlineEmpty.action).toBeUndefined();
+    expect("action" in reportsCopy.offlineEmpty).toBe(false);
   });
 
   it("offers a reset for an invalid range", () => {

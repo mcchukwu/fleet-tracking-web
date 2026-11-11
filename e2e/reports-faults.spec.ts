@@ -75,6 +75,9 @@ test.describe("reports faults", () => {
     await expect(page.getByTestId("reports-stats")).toBeVisible({ timeout: 15_000 });
 
     await setFault(page, "reports:server");
+    if ((page.viewportSize()?.width ?? 1440) < 768) {
+      await page.getByRole("button", { name: "Open navigation" }).click();
+    }
     await page
       .getByRole("navigation", { name: "Main" })
       .getByRole("link", { name: "Map" })

@@ -22,7 +22,6 @@ export interface ReportsRangePickerProps {
   onPreset: (preset: ReportPresetId) => void;
   onCustom: () => void;
   triggerRef?: Ref<HTMLButtonElement>;
-  disabled?: boolean;
 }
 
 export function ReportsRangePicker({
@@ -30,7 +29,6 @@ export function ReportsRangePicker({
   onPreset,
   onCustom,
   triggerRef,
-  disabled = false,
 }: ReportsRangePickerProps) {
   const label = reportPresetLabel(preset);
 
@@ -43,7 +41,6 @@ export function ReportsRangePicker({
           variant="secondary"
           aria-label={`Range, ${label}`}
           className="min-w-0 shrink-0 justify-start gap-1"
-          disabled={disabled}
         >
           <span className="truncate">{label}</span>
           <ChevronDown
