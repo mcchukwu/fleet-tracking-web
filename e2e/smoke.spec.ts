@@ -132,7 +132,9 @@ test.describe("foundation smoke", () => {
     await expect(page).toHaveURL(/\/forbidden$/);
 
     await page.goto("/import");
-    await expect(page.getByRole("heading", { name: "Import" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Import", level: 1 }),
+    ).toBeVisible();
   });
 
   test("an admin can open the audit log", async ({ page }) => {

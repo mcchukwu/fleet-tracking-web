@@ -594,7 +594,6 @@ export function StyleGuidePage() {
             <CopyButton
               value="imei,plate,year"
               label="Header row"
-              ariaLabel="Copy header row"
               appearance="button"
             />
             <div className="border-border bg-border grid w-full max-w-sm grid-cols-2 gap-px rounded-lg border">
