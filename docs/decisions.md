@@ -621,3 +621,9 @@ At `lg` and above the list is a fixed 360px panel beside the map. Below `lg` the
 ## 2026-11-11: The geofence slice changes shared code, so T3 is a merge gate
 
 This slice changes `src/map` (contract, MapLibre adapter, FakeAdapter, layers, tests) and `src/ui` (`SearchInput`), so the full `npm run e2e` (T3) must run before merging. The agent ran T2 for the four geofence specs; the human runs T3 in a second terminal or CI. Trade-off: the slice's own T2 is clean but cannot prove the map screen or other pages were unaffected.
+
+## 2026-11-11: Terra Draw paints only handles; an interrupted session says so
+
+The unsaved polygon has exactly one visual owner: the adapter's `draw` source and layers (12% accent fill, 2px dashed accent stroke). Terra Draw's polygon and select modes now use zero fill and outline opacity, so its solid outline can no longer paint over the dashed overlay or double the fill. Handles stay visible because they are the editing affordance.
+
+A rejected draw-library import now clears the cached `ready` promise, so Retry performs a real second import instead of re-awaiting the same rejection. When the map adapter is replaced while a session holds geometry, `useGeofenceDrawing` keeps the last ring, marks the session `interrupted` and shows “The map reloaded. Draw the polygon again.” with Retry; if the map is simply unavailable (offline), the copy says to reconnect and the session resumes automatically when the adapter returns. A style or theme swap that cancels an incomplete draft shows “Drawing was cancelled. Draw the polygon again.” rather than silently dropping points. Trade-off: the hook grows a small interruption state machine; the alternative was silent geometry loss on a map retry or a theme change.
