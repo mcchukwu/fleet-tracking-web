@@ -27,6 +27,7 @@ import { GeofencesPage } from "../features/geofences/components/GeofencesPage";
 import { ImportPage } from "../features/import/components/ImportPage";
 import { MapPage } from "../features/map/components/MapPage";
 import { PlaybackPage } from "../features/playback/components/PlaybackPage";
+import { ReportsPage } from "../features/reports/components/ReportsPage";
 import { AppShell } from "../features/shell/components/AppShell";
 import { SessionExpiryDialog } from "../features/shell/components/SessionExpiryDialog";
 import { ShellSkeleton } from "../features/shell/components/ShellSkeleton";
@@ -246,7 +247,7 @@ const reportsRoute = createRoute({
   path: "/reports",
   validateSearch: reportsSearchSchema,
   beforeLoad: ({ context }) => requireCapability(context.user, "read"),
-  component: placeholder("Reports", "The reports screen ships in Slice 10."),
+  component: ReportsPage,
 });
 
 const systemRoute = createRoute({

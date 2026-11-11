@@ -1,3 +1,4 @@
+import type { AlertStatus, TripStatus } from "../../../api/types";
 import { MISSING, formatPercent } from "../../../lib/format";
 
 export type StatId =
@@ -9,10 +10,10 @@ export type StatId =
   | "openAlerts"
   | "distance";
 
-export interface StatDestination {
-  to: string;
-  search?: Record<string, string>;
-}
+export type StatDestination =
+  | { to: "/map" }
+  | { to: "/trips"; search?: { status?: TripStatus } }
+  | { to: "/alerts"; search?: { status?: AlertStatus } };
 
 /** Alerts and Trips have no date filter, so the links open the full lists. */
 export function statDestination(id: StatId): StatDestination | null {
