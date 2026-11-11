@@ -63,6 +63,19 @@ test.describe("drivers layout", { tag: "@theme" }, () => {
     expect(body.scrollWidth).toBeLessThanOrEqual(body.clientWidth + 1);
   });
 
+  test("holds the same geometry at 360px", async ({ page }) => {
+    test.skip(!isMobile(page), "mobile-only layout");
+    await page.setViewportSize({ width: 360, height: 640 });
+    await gotoDrivers(page);
+    await page.locator('[data-row="data"]').first().waitFor();
+
+    await expectStableColumns(page.locator("[data-data-table]").first());
+    await expectNoHorizontalScroll(page);
+    await expectTouchTargets(page, 44);
+    await expectNoAxeViolations(page);
+    await captureForReview(page, "07-drivers-layout-360");
+  });
+
   test("the drawer, create, edit and deactivate states are axe clean", async ({ page }) => {
     await gotoDrivers(page);
 
@@ -98,6 +111,7 @@ test.describe("drivers layout", { tag: "@theme" }, () => {
   test("the empty, no-results, error, forbidden and contract states are axe clean", async ({
     page,
   }) => {
+    test.setTimeout(60_000);
     await gotoDrivers(page, "empty=drivers");
     await expect(page.getByText("No drivers yet")).toBeVisible();
     await expectNoAxeViolations(page);

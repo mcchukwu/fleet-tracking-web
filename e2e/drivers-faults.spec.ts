@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { captureForReview, expectNoAxeViolations } from "./helpers";
+import { captureForReview, expectNoAxeViolations, expectNoHorizontalScroll } from "./helpers";
 
 async function gotoFault(page: Page, fault: string, extra = ""): Promise<void> {
   await page.goto(`/drivers?fault=${encodeURIComponent(fault)}${extra ? `&${extra}` : ""}`);
@@ -115,6 +115,7 @@ test.describe("drivers faults", () => {
     page,
   }) => {
     test.setTimeout(60_000);
+    const errors = collectErrors(page);
     await page.goto("/drivers");
     await expectLoaded(page);
     await page.evaluate(() => {
@@ -138,10 +139,14 @@ test.describe("drivers faults", () => {
       .toBe(true);
     expect(await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? [])).toHaveLength(0);
     await expect(page.getByRole("dialog", { name: "Create driver" })).toBeVisible();
+    await expect(page.locator("body")).not.toContainText(/\.tsx:\d+/);
+    await expectNoAxeViolations(page);
+    expect(unexpectedConsole(errors)).toEqual([]);
   });
 
   test("a lost update reports that it was not saved and keeps the form", async ({ page }) => {
     test.setTimeout(60_000);
+    const errors = collectErrors(page);
     await page.goto("/drivers");
     await expectLoaded(page);
     await openEdit(page);
@@ -156,10 +161,19 @@ test.describe("drivers faults", () => {
 
     await expect(page.getByText("It wasn't saved.").first()).toBeVisible({ timeout: 45_000 });
     await expect(page.getByRole("dialog", { name: "Edit driver" })).toBeVisible();
+    await expect
+      .poll(() =>
+        page.evaluate(() => Boolean(document.activeElement?.closest('[role="dialog"]'))),
+      )
+      .toBe(true);
     expect(await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? [])).toHaveLength(0);
+    await expect(page.locator("body")).not.toContainText(/\.tsx:\d+/);
+    await expectNoAxeViolations(page);
+    expect(unexpectedConsole(errors)).toEqual([]);
   });
 
   test("a driver removed elsewhere shows not-found with Refresh", async ({ page }) => {
+    const errors = collectErrors(page);
     await page.goto("/drivers");
     await expectLoaded(page);
     await openEdit(page);
@@ -175,12 +189,21 @@ test.describe("drivers faults", () => {
     await expect(page.getByText("This driver no longer exists.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Refresh" })).toBeVisible();
     await expect(page.getByRole("dialog", { name: "Edit driver" })).toBeVisible();
+    await expect
+      .poll(() =>
+        page.evaluate(() => Boolean(document.activeElement?.closest('[role="dialog"]'))),
+      )
+      .toBe(true);
+    await expect(page.locator("body")).not.toContainText(/\.tsx:\d+/);
+    await expectNoAxeViolations(page);
+    expect(unexpectedConsole(errors)).toEqual([]);
   });
 
   test("a render crash is contained by the route boundary", async ({ page }) => {
     await page.goto("/drivers?crash=drivers");
     await expect(page.getByText("This part of the page stopped working")).toBeVisible();
     await expect(page.getByRole("banner")).toBeVisible();
+    await expectNoHorizontalScroll(page);
     await captureForReview(page, "07-drivers-crash");
   });
 });

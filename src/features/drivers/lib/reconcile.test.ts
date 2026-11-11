@@ -107,4 +107,18 @@ describe("driver write copy", () => {
       "Your session expired",
     );
   });
+
+  it("covers a conflict with the safe server detail", () => {
+    const copy = driverWriteCopy(
+      error({
+        kind: "conflict",
+        status: 409,
+        code: "invalid_request",
+        serverMessage: "the driver was changed",
+      }),
+      "update",
+    );
+    expect(copy.title).toBe("Couldn't complete that");
+    expect(copy.detail).toBe("the driver was changed");
+  });
 });
