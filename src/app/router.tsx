@@ -32,6 +32,7 @@ import { AppShell } from "../features/shell/components/AppShell";
 import { SessionExpiryDialog } from "../features/shell/components/SessionExpiryDialog";
 import { ShellSkeleton } from "../features/shell/components/ShellSkeleton";
 import { StyleGuidePage } from "../features/styleguide/StyleGuidePage";
+import { SystemPage } from "../features/system/components/SystemPage";
 import { TripsPage } from "../features/trips/components/TripsPage";
 import { ForbiddenState } from "../ui/StatePanel";
 import { NotFound } from "./NotFound";
@@ -254,10 +255,7 @@ const systemRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/system",
   beforeLoad: ({ context }) => requireCapability(context.user, "read"),
-  component: placeholder(
-    "System health",
-    "The system health screen ships in Slice 11.",
-  ),
+  component: SystemPage,
 });
 
 const auditRoute = createRoute({
