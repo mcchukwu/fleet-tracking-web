@@ -22,6 +22,7 @@ import { recordError } from "../errors/report";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
 import { LoginPage } from "../features/login/components/LoginPage";
 import { AlertsPage } from "../features/alerts/components/AlertsPage";
+import { DriversPage } from "../features/drivers/components/DriversPage";
 import { MapPage } from "../features/map/components/MapPage";
 import { PlaybackPage } from "../features/playback/components/PlaybackPage";
 import { AppShell } from "../features/shell/components/AppShell";
@@ -220,7 +221,7 @@ const driversRoute = createRoute({
   path: "/drivers",
   validateSearch: driversSearchSchema,
   beforeLoad: ({ context }) => requireCapability(context.user, "read"),
-  component: placeholder("Drivers", "The drivers table ships in Slice 7."),
+  component: DriversPage,
 });
 
 const geofencesRoute = createRoute({
