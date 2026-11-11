@@ -120,3 +120,32 @@ export function parseImportText(text: string): PreviewParseResult {
   }
   return buildImportPreview(parsed.rows, { bom });
 }
+
+export interface ParsedImportFile {
+  rows: string[][];
+  bom: boolean;
+  errorCount: number;
+}
+
+async function detectBom(file: File): Promise<boolean> {
+  const head = new Uint8Array(await file.slice(0, 3).arrayBuffer());
+  return head[0] === 0xef && head[1] === 0xbb && head[2] === 0xbf;
+}
+
+/** Reads only the preview block, so a 5,000-row file is never parsed in full. */
+export async function readImportFile(file: File): Promise<ParsedImportFile> {
+  const bom = await detectBom(file);
+  return new Promise((resolve, reject) => {
+    Papa.parse<string[]>(file, {
+      ...previewConfig,
+      complete: (parsed) => {
+        resolve({
+          rows: parsed.data.map((row) => row.map(textCell)),
+          bom,
+          errorCount: parsed.errors.length,
+        });
+      },
+      error: (cause) => reject(cause),
+    });
+  });
+}
