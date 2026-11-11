@@ -24,6 +24,17 @@ export function formatDistance(km: number | null | undefined): string {
   return `${rounded} km`;
 }
 
+/** Stats keep one line; six-figure distances would wrap at 28px. */
+export function formatDistanceCompact(km: number | null | undefined): string {
+  if (!isNumber(km)) return MISSING;
+  if (km < 100_000) return formatDistance(km);
+  const [divisor, suffix] = km >= 1_000_000 ? [1_000_000, "M"] : [1_000, "k"];
+  const scaled = km / divisor;
+  const rounded =
+    scaled >= 10 ? Math.round(scaled) : Math.round(scaled * 10) / 10;
+  return `${rounded}${suffix} km`;
+}
+
 const byteUnits = ["KB", "MB", "GB", "TB"] as const;
 
 export function formatBytes(bytes: number | null | undefined): string {
@@ -99,7 +110,11 @@ export function formatTimeTooltip(iso: string, timeZone?: string): string {
   return `${local} · ${utc} UTC`;
 }
 
-export function formatRelativeTime(iso: string, now: number, timeZone?: string): string {
+export function formatRelativeTime(
+  iso: string,
+  now: number,
+  timeZone?: string,
+): string {
   const date = dateOf(iso);
   if (!date) return MISSING;
 

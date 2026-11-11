@@ -5,7 +5,13 @@ import { describe, expect, it, vi } from "vitest";
 import { DateRangeDialog } from "./DateRangeDialog";
 import { validateDatetimeRange } from "../lib/datetime";
 
-function localIso(y: number, m: number, d: number, h: number, min: number): string {
+function localIso(
+  y: number,
+  m: number,
+  d: number,
+  h: number,
+  min: number,
+): string {
   return new Date(y, m - 1, d, h, min).toISOString();
 }
 
@@ -116,7 +122,9 @@ describe("DateRangeDialog", () => {
       target: { value: "2026-11-09T00:00" },
     });
     await userEvent.click(screen.getByRole("button", { name: "Apply" }));
-    expect(screen.getAllByText("Choose a range of 7 days or less.")[0]).toBeVisible();
+    expect(
+      screen.getAllByText("Choose a range of 7 days or less.")[0],
+    ).toBeVisible();
   });
 
   it("returns focus to the opener when cancelled", async () => {
@@ -143,6 +151,51 @@ describe("DateRangeDialog", () => {
     await userEvent.click(opener);
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(opener).toHaveFocus();
+  });
+
+  it("validates the start on blur and clears the message while editing", () => {
+    render(
+      <DateRangeDialog
+        open
+        from={from}
+        to={to}
+        validate={validateDatetimeRange}
+        onApply={() => undefined}
+        onClose={() => undefined}
+      />,
+    );
+    const start = screen.getByLabelText("Start");
+    fireEvent.change(start, { target: { value: "" } });
+    fireEvent.blur(start);
+    expect(start).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByText("Choose a start and end time.")).toBeVisible();
+
+    fireEvent.change(start, { target: { value: "2026-11-08T14:00" } });
+    expect(screen.queryByText("Choose a start and end time.")).toBeNull();
+  });
+
+  it("shows the order error as soon as the end field loses focus", () => {
+    render(
+      <DateRangeDialog
+        open
+        from={from}
+        to={to}
+        validate={validateDatetimeRange}
+        onApply={() => undefined}
+        onClose={() => undefined}
+      />,
+    );
+    const end = screen.getByLabelText("End");
+    fireEvent.change(end, { target: { value: "2026-11-08T11:00" } });
+    fireEvent.blur(end);
+    expect(
+      screen.getAllByText("The end time must be after the start time.")[0],
+    ).toBeVisible();
+    expect(screen.getByLabelText("Start")).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    expect(end).toHaveAttribute("aria-invalid", "true");
   });
 
   it("labels the dialog and explains that the request uses UTC", () => {

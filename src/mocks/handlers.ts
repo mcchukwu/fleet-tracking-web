@@ -29,6 +29,7 @@ import {
   auditResponseFixture,
   reportSummaryBadRowFixture,
   reportSummaryFixture,
+  reportSummaryHugeChartFixture,
   reportSummaryLargeFixture,
   reportSummaryNoBreakdownFixture,
   reportSummaryZeroFixture,
@@ -203,6 +204,7 @@ function reportSummaryForScenario() {
   const scenario = readOverride(MOCK_REPORTS_KEY);
   if (scenario === "zero") return reportSummaryZeroFixture;
   if (scenario === "large") return reportSummaryLargeFixture;
+  if (scenario === "huge") return reportSummaryHugeChartFixture;
   if (scenario === "no-breakdown") return reportSummaryNoBreakdownFixture;
   if (scenario === "bad-row") return reportSummaryBadRowFixture;
   return reportSummaryFixture;

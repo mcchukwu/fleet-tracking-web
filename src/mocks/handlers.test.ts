@@ -927,5 +927,13 @@ describe("mock reports", () => {
       alerts_by_type: unknown[];
     };
     expect(badRow.alerts_by_type).toHaveLength(2);
+
+    localStorage.setItem("fleet.mockReports", "huge"); // guard-ignore: test-only mock scenario.
+    const huge = (await (await fetch(`${API}/reports/summary`)).json()) as {
+      alerts: number;
+      alerts_by_type: { count: number }[];
+    };
+    expect(huge.alerts).toBe(1_284_945);
+    expect(huge.alerts_by_type[0]?.count).toBe(1_284_933);
   });
 });

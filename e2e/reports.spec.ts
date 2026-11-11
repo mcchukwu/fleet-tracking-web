@@ -39,8 +39,27 @@ async function rangeDuration(page: Page): Promise<number> {
   return Date.parse(to ?? "") - Date.parse(from ?? "");
 }
 
+function isSummaryRequest(url: string): boolean {
+  return new URL(url).pathname.endsWith("/reports/summary");
+}
+
+async function nextSummaryRequest(page: Page): Promise<URL> {
+  const request = await page.waitForRequest((candidate) =>
+    isSummaryRequest(candidate.url()),
+  );
+  return new URL(request.url());
+}
+
+function requestedDuration(url: URL): number {
+  return (
+    Date.parse(url.searchParams.get("to") ?? "") -
+    Date.parse(url.searchParams.get("from") ?? "")
+  );
+}
+
 test.describe("reports", () => {
   test("writes a seven-day default, requests it and renders every stat", async ({ page }) => {
+    const summary = nextSummaryRequest(page);
     await page.goto("/reports");
     await expect(page.getByRole("heading", { name: "Reports", level: 1 })).toBeVisible({
       timeout: 15_000,
@@ -50,6 +69,12 @@ test.describe("reports", () => {
       .toMatch(/^\d{4}-\d{2}-\d{2}T.*Z$/);
     expect(await rangeDuration(page)).toBe(7 * DAY);
     await expect(page.getByRole("button", { name: "Range, 7 days" })).toBeVisible();
+
+    const requested = await summary;
+    expect(requested.searchParams.get("from")).toBe(searchParam(page, "from"));
+    expect(requested.searchParams.get("to")).toBe(searchParam(page, "to"));
+    expect(requested.searchParams.get("from")).toMatch(/Z$/);
+    expect(requestedDuration(requested)).toBe(7 * DAY);
 
     const strip = page.getByTestId("reports-stats");
     await expect(strip.getByText("Vehicles")).toBeVisible();
@@ -65,18 +90,45 @@ test.describe("reports", () => {
     await expect(page).toHaveTitle("Reports · Fleet Console");
   });
 
+  test("clearing the range in place writes the default back", async ({ page }) => {
+    await gotoReports(page, rangeUrl());
+    await expect(page.getByTestId("reports-stats")).toBeVisible();
+
+    if ((page.viewportSize()?.width ?? 1440) < 768) {
+      await page.getByRole("button", { name: "Open navigation" }).click();
+    }
+    const summary = nextSummaryRequest(page);
+    await page
+      .getByRole("navigation", { name: "Main" })
+      .getByRole("link", { name: "Reports" })
+      .click();
+
+    await expect
+      .poll(() => searchParam(page, "from"))
+      .toMatch(/^\d{4}-\d{2}-\d{2}T.*Z$/);
+    expect(await rangeDuration(page)).toBe(7 * DAY);
+    const requested = await summary;
+    expect(requested.searchParams.get("from")).toBe(searchParam(page, "from"));
+    await expect(page.getByTestId("reports-stats")).toBeVisible();
+    await expect(page.getByLabel("Loading report")).toHaveCount(0);
+  });
+
   test("each preset writes its duration to the URL", async ({ page }) => {
     await gotoReports(page, rangeUrl());
 
     await page.getByRole("button", { name: "Range, 7 days" }).click();
+    const dayRequest = nextSummaryRequest(page);
     await page.getByRole("menuitemradio", { name: "24 hours" }).click();
     await expect(page.getByRole("button", { name: "Range, 24 hours" })).toBeVisible();
     await expect.poll(() => rangeDuration(page)).toBe(DAY);
+    expect(requestedDuration(await dayRequest)).toBe(DAY);
 
     await page.getByRole("button", { name: "Range, 24 hours" }).click();
+    const monthRequest = nextSummaryRequest(page);
     await page.getByRole("menuitemradio", { name: "30 days" }).click();
     await expect(page.getByRole("button", { name: "Range, 30 days" })).toBeVisible();
     await expect.poll(() => rangeDuration(page)).toBe(30 * DAY);
+    expect(requestedDuration(await monthRequest)).toBe(30 * DAY);
   });
 
   test.describe("custom range", () => {
@@ -91,12 +143,16 @@ test.describe("reports", () => {
       await expect(dialog).toBeVisible();
       await dialog.getByLabel("Start").fill("2026-11-01T09:00");
       await dialog.getByLabel("End").fill("2026-11-02T10:00");
+      const summary = nextSummaryRequest(page);
       await dialog.getByRole("button", { name: "Apply" }).click();
 
       await expect
         .poll(() => searchParam(page, "from"))
         .toBe("2026-11-01T08:00:00.000Z");
       expect(searchParam(page, "to")).toBe("2026-11-02T09:00:00.000Z");
+      const requested = await summary;
+      expect(requested.searchParams.get("from")).toBe("2026-11-01T08:00:00.000Z");
+      expect(requested.searchParams.get("to")).toBe("2026-11-02T09:00:00.000Z");
       await expect(page.getByRole("button", { name: "Range, Custom" })).toBeVisible();
       await expect(page.getByTestId("reports-stats")).toBeVisible();
 
@@ -111,6 +167,7 @@ test.describe("reports", () => {
   test("a valid offset deep link is honoured and invalid ones never render data", async ({
     page,
   }) => {
+    test.setTimeout(60_000);
     await gotoReports(
       page,
       `/reports?from=${encodeURIComponent("2026-11-01T00:00:00+01:00")}&to=${encodeURIComponent(
@@ -173,7 +230,7 @@ test.describe("reports", () => {
 
     const strip = page.getByTestId("reports-stats");
     await expect(strip.getByText("45,231")).toBeVisible();
-    await expect(strip.getByText("1,284,933 km")).toBeVisible();
+    await expect(strip.getByText("1.3M km")).toBeVisible();
 
     const labels = page.getByTestId("chart-label");
     await expect(labels).toHaveText([

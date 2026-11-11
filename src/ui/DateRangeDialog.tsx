@@ -84,6 +84,26 @@ export function DateRangeDialog({
     onApply(startIso, endIso);
   }
 
+  function validateOnBlur(field: "start" | "end"): void {
+    const startIso = fromLocalInputValue(start);
+    const endIso = fromLocalInputValue(end);
+    const value = field === "start" ? startIso : endIso;
+    if (!value) {
+      setError({ message: emptyMessage, field });
+      return;
+    }
+    if (!startIso || !endIso) return;
+    const validation = validate(startIso, endIso);
+    setError(
+      validation.valid
+        ? null
+        : {
+            message: validation.message,
+            field: fieldOf(validation, startIso, endIso),
+          },
+    );
+  }
+
   return (
     <Dialog
       open={open}
@@ -109,7 +129,11 @@ export function DateRangeDialog({
           label="Start"
           type="datetime-local"
           value={start}
-          onChange={(event) => setStart(event.target.value)}
+          onChange={(event) => {
+            setStart(event.target.value);
+            setError(null);
+          }}
+          onBlur={() => validateOnBlur("start")}
           error={error && error.field !== "end" ? error.message : undefined}
         />
         <Input
@@ -117,7 +141,11 @@ export function DateRangeDialog({
           label="End"
           type="datetime-local"
           value={end}
-          onChange={(event) => setEnd(event.target.value)}
+          onChange={(event) => {
+            setEnd(event.target.value);
+            setError(null);
+          }}
+          onBlur={() => validateOnBlur("end")}
           error={error && error.field !== "start" ? error.message : undefined}
         />
       </div>

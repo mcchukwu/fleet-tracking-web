@@ -6,6 +6,7 @@ import {
   formatCoordinates,
   formatCount,
   formatDistance,
+  formatDistanceCompact,
   formatHeading,
   formatPlaybackDuration,
   formatPlaybackRange,
@@ -38,6 +39,14 @@ describe("format", () => {
     expect(formatDistance(100.4)).toBe("100 km");
     expect(formatDistance(1_284_932.5)).toBe("1,284,933 km");
     expect(formatDistance(0)).toBe("0.0 km");
+  });
+
+  it("compacts only distances that would wrap a stat cell", () => {
+    expect(formatDistanceCompact(99_999.4)).toBe("99,999 km");
+    expect(formatDistanceCompact(100_000)).toBe("100k km");
+    expect(formatDistanceCompact(128_493)).toBe("128k km");
+    expect(formatDistanceCompact(1_284_932.5)).toBe("1.3M km");
+    expect(formatDistanceCompact(undefined)).toBe(MISSING);
   });
 
   it("formats heading with a compass point", () => {

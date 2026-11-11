@@ -12,7 +12,10 @@ import { useConnection } from "../../../stores/connection";
 import { Button } from "../../../ui/Button";
 import { DateRangeDialog } from "../../../ui/DateRangeDialog";
 import { EmptyState } from "../../../ui/StatePanel";
-import { StateBoundary, type StateBoundaryState } from "../../../ui/StateBoundary";
+import {
+  StateBoundary,
+  type StateBoundaryState,
+} from "../../../ui/StateBoundary";
 import { AlertsByTypeChart } from "./AlertsByTypeChart";
 import { ReportsRangePicker } from "./ReportsRangePicker";
 import { ReportsSkeleton } from "./ReportsSkeleton";
@@ -61,7 +64,11 @@ function ReportsPageContent() {
   useDocumentTitle("Reports");
 
   useEffect(() => {
-    if (hasRange || defaultedRef.current) return;
+    if (hasRange) {
+      defaultedRef.current = false;
+      return;
+    }
+    if (defaultedRef.current) return;
     defaultedRef.current = true;
     const next = defaultReportsRange();
     void navigate({ to: "/reports", search: next, replace: true });
@@ -143,10 +150,7 @@ function ReportsPageContent() {
   const content = data ? (
     <div className="flex flex-col gap-6">
       <ReportsStats summary={data} />
-      <AlertsByTypeChart
-        items={data.alerts_by_type}
-        alertCount={data.alerts}
-      />
+      <AlertsByTypeChart items={data.alerts_by_type} alertCount={data.alerts} />
     </div>
   ) : null;
 
@@ -157,8 +161,10 @@ function ReportsPageContent() {
     >
       <header className="flex flex-col gap-1">
         <h1 className="text-text text-lg font-semibold">Reports</h1>
-        <p className="text-muted text-sm">
-          {validation.valid ? formatRangeLabel(from, to) : "Fleet activity for a time range."}
+        <p className="text-muted text-sm tabular-nums">
+          {validation.valid
+            ? formatRangeLabel(from, to)
+            : "Fleet activity for a time range."}
         </p>
       </header>
 

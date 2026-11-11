@@ -4,7 +4,12 @@ import { formatCount } from "../../../lib/format";
 import type { DataTableColumn } from "../../../ui/DataTable";
 import { DataTable } from "../../../ui/DataTable";
 import { EmptyState } from "../../../ui/StatePanel";
-import { chartDescription, chartItems, chartState, type ChartItem } from "../lib/chart";
+import {
+  chartDescription,
+  chartItems,
+  chartState,
+  type ChartItem,
+} from "../lib/chart";
 import type { AlertTypeCount } from "../lib/chart";
 import { reportsCopy } from "../lib/copy";
 
@@ -30,7 +35,10 @@ export interface AlertsByTypeChartProps {
   alertCount: number;
 }
 
-export function AlertsByTypeChart({ items, alertCount }: AlertsByTypeChartProps) {
+export function AlertsByTypeChart({
+  items,
+  alertCount,
+}: AlertsByTypeChartProps) {
   const headingId = useId();
   const descriptionId = useId();
   const visible = chartItems(items);
@@ -40,7 +48,7 @@ export function AlertsByTypeChart({ items, alertCount }: AlertsByTypeChartProps)
     <section
       aria-labelledby={headingId}
       data-testid="alerts-by-type"
-      className="border-border bg-surface flex flex-col gap-3 rounded-lg border p-4"
+      className="border-border bg-surface flex min-h-48 flex-col gap-3 rounded-lg border p-4"
     >
       <h2 id={headingId} className="text-md text-text font-medium">
         Alerts by type
@@ -83,7 +91,13 @@ export function AlertsByTypeChart({ items, alertCount }: AlertsByTypeChartProps)
                   preserveAspectRatio="none"
                   className="h-2 min-w-0 flex-1"
                 >
-                  <rect x="0" y="0" width="100" height="8" className="fill-surface-2" />
+                  <rect
+                    x="0"
+                    y="0"
+                    width="100"
+                    height="8"
+                    className="fill-surface-2"
+                  />
                   <rect
                     x="0"
                     y="0"
@@ -92,7 +106,7 @@ export function AlertsByTypeChart({ items, alertCount }: AlertsByTypeChartProps)
                     className="fill-accent"
                   />
                 </svg>
-                <span className="text-text w-14 shrink-0 text-right text-sm tabular-nums">
+                <span className="text-text min-w-14 shrink-0 text-right text-sm tabular-nums">
                   {formatCount(item.count)}
                 </span>
               </div>

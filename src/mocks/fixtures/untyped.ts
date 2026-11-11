@@ -131,6 +131,16 @@ export const reportSummaryNoBreakdownFixture = {
   open_alerts: 45,
 };
 
+/** A seven-digit type count for the chart's fixed value column. */
+export const reportSummaryHugeChartFixture = {
+  ...reportSummaryLargeFixture,
+  alerts: 1_284_945,
+  alerts_by_type: [
+    { key: "speeding", count: 1_284_933 },
+    { key: "geofence_exit", count: 12 },
+  ],
+};
+
 export const reportSummaryBadRowFixture = {
   ...reportSummaryZeroFixture,
   alerts: 3,

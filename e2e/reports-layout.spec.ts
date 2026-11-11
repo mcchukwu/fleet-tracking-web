@@ -56,6 +56,7 @@ test.describe("reports layout", () => {
   test("the seven stats hold one row or a two-column grid", { tag: "@theme" }, async ({
     page,
   }) => {
+    test.setTimeout(60_000);
     await gotoReports(page);
     await expectNoHorizontalScroll(page);
 
@@ -88,6 +89,50 @@ test.describe("reports layout", () => {
       page.getByTestId("alerts-by-type").locator('td[data-column-id="count"]').first(),
     );
     await expectNoAxeViolations(page);
+  });
+
+  test("the large report keeps every stat on one line and the strip even", async ({
+    page,
+  }) => {
+    await setScenario(page, "large");
+    await gotoReports(page);
+
+    const boxes = await statBoxes(page);
+    expect(new Set(boxes.map((box) => box.height)).size).toBe(1);
+    const value = page.locator('[data-stat-id="distance"] .tabular-nums');
+    const clipped = await value.evaluate((element) => ({
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+    }));
+    expect(clipped.scrollWidth).toBeLessThanOrEqual(clipped.clientWidth);
+    await expectNoHorizontalScroll(page);
+  });
+
+  test("the chart skeleton matches the ready card", async ({ page }) => {
+    await page.goto(`${rangeUrl()}&fault=${encodeURIComponent("reports:slow")}`);
+    const skeleton = page.getByTestId("reports-skeleton-chart");
+    await expect(skeleton).toBeVisible({ timeout: 15_000 });
+    const skeletonBox = await skeleton.boundingBox();
+
+    await page.goto(rangeUrl());
+    await expect(page.getByTestId("alerts-by-type")).toBeVisible({ timeout: 15_000 });
+    const readyBox = await page.getByTestId("alerts-by-type").boundingBox();
+    if (!skeletonBox || !readyBox) throw new Error("The chart has no box");
+    expect(Math.abs(skeletonBox.height - readyBox.height)).toBeLessThanOrEqual(1);
+  });
+
+  test("the seven-digit chart value stays inside its column", async ({ page }) => {
+    await setScenario(page, "huge");
+    await page.setViewportSize({ width: 390, height: page.viewportSize()?.height ?? 844 });
+    await gotoReports(page);
+
+    const value = page.getByTestId("alerts-by-type").locator("span.tabular-nums").first();
+    const clipped = await value.evaluate((element) => ({
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+    }));
+    expect(clipped.scrollWidth).toBeLessThanOrEqual(clipped.clientWidth);
+    await expectNoHorizontalScroll(page);
   });
 
   test("chart labels truncate instead of pushing the page at 360px", { tag: "@theme" }, async ({

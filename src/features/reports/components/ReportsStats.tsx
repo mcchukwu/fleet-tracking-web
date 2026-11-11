@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import type { ReportSummary } from "../../../api/types";
-import { formatCount, formatDistance } from "../../../lib/format";
+import { formatCount, formatDistanceCompact } from "../../../lib/format";
 import { Stat } from "../../../ui/Stat";
 import { reportsCopy } from "../lib/copy";
 import {
@@ -48,7 +48,7 @@ function cells(summary: ReportSummary): Cell[] {
     {
       id: "distance",
       label: "Distance",
-      value: formatDistance(summary.distance_km),
+      value: formatDistanceCompact(summary.distance_km),
     },
   ];
 }
@@ -114,7 +114,11 @@ export function ReportsStats({ summary }: { summary: ReportSummary }) {
           );
           const destination = statDestination(cell.id);
           return destination ? (
-            <DestinationLink key={cell.id} destination={destination} statId={cell.id}>
+            <DestinationLink
+              key={cell.id}
+              destination={destination}
+              statId={cell.id}
+            >
               {stat}
             </DestinationLink>
           ) : (
