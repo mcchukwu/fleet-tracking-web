@@ -28,6 +28,9 @@ import { tripsFixture } from "./fixtures/trips";
 import {
   auditResponseFixture,
   reportSummaryFixture,
+  reportSummaryLargeFixture,
+  reportSummaryNoBreakdownFixture,
+  reportSummaryZeroFixture,
   systemHealthFixture,
 } from "./fixtures/untyped";
 import { vehiclesFixture } from "./fixtures/vehicles";
@@ -163,6 +166,7 @@ export function appendMockAlert(vehicleId?: string): Alert {
 const MOCK_SESSION_KEY = "fleet.mockSession";
 const MOCK_ROLE_KEY = "fleet.mockRole";
 const MOCK_AUTH_KEY = "fleet.mockAuth";
+const MOCK_REPORTS_KEY = "fleet.mockReports";
 const DEFAULT_EMAIL = "dispatcher@demo.ftb";
 
 function resolveUser(): User | null {
@@ -192,6 +196,14 @@ function clearOverride(key: string): void {
   } catch {
     // The mock keeps working without persistence.
   }
+}
+
+function reportSummaryForScenario() {
+  const scenario = readOverride(MOCK_REPORTS_KEY);
+  if (scenario === "zero") return reportSummaryZeroFixture;
+  if (scenario === "large") return reportSummaryLargeFixture;
+  if (scenario === "no-breakdown") return reportSummaryNoBreakdownFixture;
+  return reportSummaryFixture;
 }
 
 const loginSchema = z.object({ email: z.string(), password: z.string() });
@@ -1229,10 +1241,11 @@ export const handlers = [
   http.get(`${API}/reports/summary`, ({ request }) => {
     return withFault("reports", request, () => {
       const url = new URL(request.url);
+      const fixture = reportSummaryForScenario();
       return HttpResponse.json({
-        ...reportSummaryFixture,
-        from: url.searchParams.get("from") ?? reportSummaryFixture.from,
-        to: url.searchParams.get("to") ?? reportSummaryFixture.to,
+        ...fixture,
+        from: url.searchParams.get("from") ?? fixture.from,
+        to: url.searchParams.get("to") ?? fixture.to,
       });
     });
   }),

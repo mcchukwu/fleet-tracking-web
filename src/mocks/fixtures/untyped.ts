@@ -92,3 +92,41 @@ export const reportSummaryFixture = {
   trips: 5,
   vehicles: 25,
 };
+
+// Mock-only scenarios for the reports screen; shapes match the staging probe.
+export const reportSummaryZeroFixture = {
+  active_trips: 0,
+  alerts: 0,
+  alerts_by_type: [],
+  completed_trips: 0,
+  distance_km: 0,
+  from: "2026-10-27T08:13:42.114639496Z",
+  open_alerts: 0,
+  to: "2026-11-03T08:13:42.114639496Z",
+  trips: 0,
+  vehicles: 25,
+};
+
+export const reportSummaryLargeFixture = {
+  active_trips: 128,
+  alerts: 45_231,
+  alerts_by_type: [
+    { key: "solar_flare", count: 120 },
+    { key: "speeding", count: 30_120 },
+    { key: "geofence_exit", count: 9_800 },
+    { key: "idle", count: 0 },
+  ],
+  completed_trips: 12_045,
+  distance_km: 1_284_932.5,
+  from: "2026-10-27T08:13:42.114639496Z",
+  open_alerts: 402,
+  to: "2026-11-03T08:13:42.114639496Z",
+  trips: 15_430,
+  vehicles: 25,
+};
+
+export const reportSummaryNoBreakdownFixture = {
+  ...reportSummaryZeroFixture,
+  alerts: 66,
+  open_alerts: 45,
+};

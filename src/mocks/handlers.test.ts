@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { appendMockAlert, applyMockImport, freshenVehicles, resetMockState } from "./handlers";
 import { vehiclesFixture } from "./fixtures/vehicles";
 import { alertsFixture } from "./fixtures/alerts";
@@ -882,5 +882,44 @@ describe("mock geofences", () => {
       geometry: { type: "Polygon", coordinates: [squareRing] },
     });
     expect(create.status).toBe(201);
+  });
+});
+
+describe("mock reports", () => {
+  afterEach(() => {
+    localStorage.removeItem("fleet.mockReports"); // guard-ignore: test-only mock scenario.
+  });
+
+  it("echoes the requested range and serves the default fixture", async () => {
+    const response = await fetch(
+      `${API}/reports/summary?from=2026-11-01T00%3A00%3A00Z&to=2026-11-08T00%3A00%3A00Z`,
+    );
+    await expect(response.json()).resolves.toMatchObject({
+      from: "2026-11-01T00:00:00Z",
+      to: "2026-11-08T00:00:00Z",
+      trips: 5,
+    });
+  });
+
+  it("selects the zero, large and no-breakdown scenarios", async () => {
+    localStorage.setItem("fleet.mockReports", "zero"); // guard-ignore: test-only mock scenario.
+    let body = (await (await fetch(`${API}/reports/summary`)).json()) as {
+      trips: number;
+      alerts_by_type: unknown[];
+    };
+    expect(body.trips).toBe(0);
+    expect(body.alerts_by_type).toEqual([]);
+
+    localStorage.setItem("fleet.mockReports", "large"); // guard-ignore: test-only mock scenario.
+    body = (await (await fetch(`${API}/reports/summary`)).json()) as typeof body;
+    expect(body.trips).toBe(15_430);
+
+    localStorage.setItem("fleet.mockReports", "no-breakdown"); // guard-ignore: test-only mock scenario.
+    const noBreakdown = (await (await fetch(`${API}/reports/summary`)).json()) as {
+      alerts: number;
+      alerts_by_type: unknown[];
+    };
+    expect(noBreakdown.alerts).toBe(66);
+    expect(noBreakdown.alerts_by_type).toEqual([]);
   });
 });
