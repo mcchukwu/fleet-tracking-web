@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { cn } from "./cn";
 
 export interface StatProps {
@@ -5,10 +6,19 @@ export interface StatProps {
   value: string | number;
   hint?: string;
   size?: "md" | "sm";
+  /** A status dot or similar sits before the label without changing the value. */
+  leading?: ReactNode;
   className?: string;
 }
 
-export function Stat({ label, value, hint, size = "md", className }: StatProps) {
+export function Stat({
+  label,
+  value,
+  hint,
+  size = "md",
+  leading,
+  className,
+}: StatProps) {
   return (
     <div
       className={cn(
@@ -17,7 +27,10 @@ export function Stat({ label, value, hint, size = "md", className }: StatProps) 
         className,
       )}
     >
-      <span className="label-caps text-muted">{label}</span>
+      <span className="flex min-w-0 items-center gap-1.5">
+        {leading ? <span className="flex shrink-0 items-center">{leading}</span> : null}
+        <span className="label-caps text-muted">{label}</span>
+      </span>
       <span className={cn("tabular-nums text-text", size === "md" ? "text-stat" : "text-lg font-medium")}>
         {value}
       </span>

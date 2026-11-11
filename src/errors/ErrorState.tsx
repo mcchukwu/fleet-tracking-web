@@ -44,6 +44,8 @@ export interface ErrorStateProps {
   onAction?: () => void;
   compact?: boolean;
   blocking?: boolean;
+  /** Replaces only the headline; the catalog detail and action still apply. */
+  titleOverride?: string;
   className?: string;
 }
 
@@ -53,9 +55,11 @@ export function ErrorState({
   onAction,
   compact = false,
   blocking = false,
+  titleOverride,
   className,
 }: ErrorStateProps) {
   const copy = errorCopy(error);
+  const title = titleOverride ?? copy.title;
   const Icon = icons[error.kind] ?? TriangleAlert;
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
 
@@ -90,7 +94,7 @@ export function ErrorState({
         className={cn("flex items-center gap-2 px-3 py-2", className)}
       >
         <TriangleAlert aria-hidden="true" className="size-4 shrink-0 text-danger" strokeWidth={1.5} />
-        <p className="min-w-0 flex-1 truncate text-sm text-text">{copy.title}</p>
+        <p className="min-w-0 flex-1 truncate text-sm text-text">{title}</p>
         {actionHandler ? (
           <Button size="sm" variant="ghost" onClick={actionHandler}>
             {actionLabels[copy.action === "none" ? "retry" : copy.action]}
@@ -106,7 +110,7 @@ export function ErrorState({
       className={cn("flex flex-col items-center gap-2 px-4 py-10 text-center", className)}
     >
       <Icon aria-hidden="true" className="size-6 text-danger" strokeWidth={1.5} />
-      <p className="text-base font-medium text-text">{copy.title}</p>
+      <p className="text-base font-medium text-text">{title}</p>
       <p className="max-w-prose text-sm text-muted">{copy.detail}</p>
       <div className="flex flex-wrap items-center justify-center gap-2">
         {actionHandler ? (

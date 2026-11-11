@@ -578,7 +578,17 @@ export function StyleGuidePage() {
           description="A single strip of bordered cells. Numbers use tabular figures."
         >
           <div className="border-border bg-surface flex flex-wrap rounded-lg border">
-            <Stat label="Vehicles online" value="20" hint="of 20" />
+            <Stat
+              label="Vehicles online"
+              value="20"
+              hint="of 20"
+              leading={
+                <span
+                  aria-hidden="true"
+                  className="bg-moving size-2 rounded-full"
+                />
+              }
+            />
             <Stat label="Active trips" value="5" hint="2 behind schedule" />
             <Stat label="Open alerts" value="3" hint="1 critical" />
             <Stat label="Last data age" value="4s" hint="Live" />

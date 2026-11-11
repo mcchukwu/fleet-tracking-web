@@ -505,7 +505,7 @@ Anatomy: `[icon or dot] [label]`, 20px tall, `--radius-full`, `text-xs` weight 5
 
 ### 10.5 Stat (KPI)
 
-Not a decorative card. A bordered cell in a single strip with 16px horizontal and vertical padding: `label-caps` label above a `stat` number, one optional delta or hint line in `text-xs`. Clicking a stat filters the relevant view (`Open alerts` opens Alerts filtered to open).
+Not a decorative card. A bordered cell in a single strip with 16px horizontal and vertical padding: `label-caps` label above a `stat` number, one optional delta or hint line in `text-xs`. The label row may carry one optional leading status indicator (System health's status dot); it sits before the label and never replaces the text meaning. Clicking a stat filters the relevant view (`Open alerts` opens Alerts filtered to open).
 
 Below `lg`, the map uses the compact variant: a 2×2 grid of the same four cells with a 20px number, `py-2`, and no left border. The strip leaves a right gutter for native map controls.
 
