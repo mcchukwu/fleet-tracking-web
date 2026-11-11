@@ -205,6 +205,9 @@ export interface GeofenceInput {
   geometry: Polygon;
 }
 
+/** `PATCH /geofences/{id}` is partial; an empty body is rejected by the server. */
+export type GeofenceUpdate = Partial<Pick<GeofenceInput, "name" | "kind" | "geometry">>;
+
 export interface ReportSummary {
   from: string;
   to: string;

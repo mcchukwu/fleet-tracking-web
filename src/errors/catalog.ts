@@ -22,9 +22,11 @@ export interface CopyHints {
 
 const safeServerCodes = new Set([
   "conflict",
-  "geofence_has_events",
+  "in_use",
   "invalid_credentials",
+  "invalid_geometry",
   "invalid_input",
+  "invalid_kind",
   "invalid_range",
   "invalid_request",
   "invalid_status",

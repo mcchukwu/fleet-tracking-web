@@ -3,6 +3,7 @@ import {
   alertsSearchSchema,
   auditSearchSchema,
   driversSearchSchema,
+  geofencesSearchSchema,
   loginSearchSchema,
   mapSearchSchema,
   playbackSearchSchema,
@@ -96,6 +97,24 @@ describe("route search schemas", () => {
       from: "2026-11-01",
       to: "2026-11-03",
     });
+  });
+});
+
+describe("geofences route search", () => {
+  it("keeps a search and a selected id", () => {
+    expect(geofencesSearchSchema.parse({ q: "lekki", selected: "gf-1" })).toEqual({
+      q: "lekki",
+      selected: "gf-1",
+    });
+  });
+
+  it("leaves empty params out of the URL", () => {
+    expect(geofencesSearchSchema.parse({})).toEqual({});
+  });
+
+  it("drops repeated and malformed values", () => {
+    expect(geofencesSearchSchema.parse({ q: ["Lekki", "Ibadan"] })).toEqual({});
+    expect(geofencesSearchSchema.parse({ selected: 42 })).toEqual({});
   });
 });
 

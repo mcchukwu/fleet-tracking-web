@@ -68,7 +68,7 @@ export function MapPage() {
     isError: geofencesFailed,
     error: geofencesCause,
     refetch: refetchGeofences,
-  } = useGeofences(authenticated);
+  } = useGeofences({ enabled: authenticated });
   const alertsQuery = useOpenAlerts(authenticated);
   const preferences = useMapPreferences();
   const mapStyle = useMapStyle();

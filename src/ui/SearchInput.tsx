@@ -13,6 +13,8 @@ interface SearchInputProps {
   compact?: boolean;
   /** Keeps the field's name meaningful on screens other than the map. */
   name?: string;
+  /** Pages whose `/` shortcut targets the top-bar search hide the map hint. */
+  shortcutHint?: boolean;
 }
 
 export function SearchInput({
@@ -22,6 +24,7 @@ export function SearchInput({
   placeholder = "Plate or IMEI",
   compact = false,
   name = "vehicle-search",
+  shortcutHint = true,
 }: SearchInputProps) {
   const [draft, setDraft] = useState(value);
   const [lastValue, setLastValue] = useState(value);
@@ -64,11 +67,11 @@ export function SearchInput({
                 }
                 onClick={() => update("")}
               />
-            ) : (
+            ) : shortcutHint ? (
               <kbd className="border-border bg-surface-2 text-muted rounded-sm border px-1 font-mono text-xs">
                 /
               </kbd>
-            )}
+            ) : null}
           </>
         ) : undefined
       }

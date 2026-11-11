@@ -36,4 +36,19 @@ describe("SearchInput", () => {
     render(<SearchInput value="" onChange={vi.fn()} name="driver-search" />);
     expect(screen.getByRole("searchbox")).toHaveAttribute("name", "driver-search");
   });
+
+  it("can suppress the global / hint without losing the clear button", () => {
+    const { rerender } = render(
+      <SearchInput value="" onChange={vi.fn()} shortcutHint={false} />,
+    );
+    expect(screen.queryByText("/")).toBeNull();
+
+    rerender(<SearchInput value="Lekki" onChange={vi.fn()} shortcutHint={false} />);
+    expect(screen.getByRole("button", { name: "Clear search" })).toBeVisible();
+  });
+
+  it("shows the / hint by default", () => {
+    render(<SearchInput value="" onChange={vi.fn()} />);
+    expect(screen.getByText("/")).toBeVisible();
+  });
 });

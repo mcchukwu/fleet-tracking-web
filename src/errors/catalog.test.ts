@@ -55,12 +55,15 @@ describe("error catalog", () => {
   });
 
   it("shows a server message only for allowlisted codes", () => {
-    expect(isSafeServerCode("geofence_has_events")).toBe(true);
+    expect(isSafeServerCode("in_use")).toBe(true);
+    expect(isSafeServerCode("geofence_has_events")).toBe(false);
     expect(isSafeServerCode("invalid_request")).toBe(true);
+    expect(isSafeServerCode("invalid_geometry")).toBe(true);
+    expect(isSafeServerCode("invalid_kind")).toBe(true);
     expect(isSafeServerCode("invalid_range")).toBe(true);
     expect(isSafeServerCode("invalid_status")).toBe(true);
     expect(isSafeServerCode("internal")).toBe(false);
-    const safe = errorCopy(error({ kind: "conflict", code: "geofence_has_events", serverMessage: "It has events." }));
+    const safe = errorCopy(error({ kind: "conflict", code: "in_use", serverMessage: "It has events." }));
     expect(safe.detail).toBe("It has events.");
     const status = errorCopy(error({ kind: "validation", code: "invalid_status", serverMessage: "status must be active or inactive" }));
     expect(status.detail).toBe("status must be active or inactive");

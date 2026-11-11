@@ -6,6 +6,11 @@ import { api } from "../instance";
 import { queryKeys } from "../keys";
 import { useAckAlert } from "./alerts";
 import { useCreateDriver, useUpdateDriver } from "./drivers";
+import {
+  useCreateGeofence,
+  useDeleteGeofence,
+  useUpdateGeofence,
+} from "./geofences";
 import { useCreateTrip, useUpdateTrip } from "./trips";
 import { useUpdateVehicle } from "./vehicles";
 
@@ -130,5 +135,72 @@ describe("mutation invalidation", () => {
     expect(keys).toContainEqual(["vehicle"]);
     expect(keys).toContainEqual(["vehicles"]);
     expect(keys).toContainEqual(["trips"]);
+  });
+
+  it("refreshes only geofences after creating one, with the caller's signal", async () => {
+    const create = vi.spyOn(api, "createGeofence").mockResolvedValue({ id: "gf-2" });
+    const queryClient = new QueryClient();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    const controller = new AbortController();
+
+    const { result } = renderHook(() => useCreateGeofence(), {
+      wrapper: wrapperFor(queryClient),
+    });
+    await act(async () => {
+      await result.current.mutateAsync({
+        input: {
+          name: "Gate",
+          geometry: {
+            type: "Polygon",
+            coordinates: [[[3.4, 6.4], [3.5, 6.4], [3.5, 6.5], [3.4, 6.4]]],
+          },
+        },
+        signal: controller.signal,
+      });
+    });
+
+    expect(create.mock.calls[0]?.[1]).toMatchObject({ signal: controller.signal });
+    const keys = invalidate.mock.calls.map(([filters]) => filters?.queryKey);
+    expect(keys).toEqual([queryKeys.geofences]);
+  });
+
+  it("refreshes only geofences after an edit, with the caller's signal", async () => {
+    const update = vi.spyOn(api, "updateGeofence").mockResolvedValue(undefined);
+    const queryClient = new QueryClient();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    const controller = new AbortController();
+
+    const { result } = renderHook(() => useUpdateGeofence(), {
+      wrapper: wrapperFor(queryClient),
+    });
+    await act(async () => {
+      await result.current.mutateAsync({
+        id: "gf-1",
+        update: { name: "Lekki Gate" },
+        signal: controller.signal,
+      });
+    });
+
+    expect(update.mock.calls[0]?.[2]).toMatchObject({ signal: controller.signal });
+    const keys = invalidate.mock.calls.map(([filters]) => filters?.queryKey);
+    expect(keys).toEqual([queryKeys.geofences]);
+  });
+
+  it("refreshes only geofences after a delete, with the caller's signal", async () => {
+    const remove = vi.spyOn(api, "deleteGeofence").mockResolvedValue(undefined);
+    const queryClient = new QueryClient();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    const controller = new AbortController();
+
+    const { result } = renderHook(() => useDeleteGeofence(), {
+      wrapper: wrapperFor(queryClient),
+    });
+    await act(async () => {
+      await result.current.mutateAsync({ id: "gf-1", signal: controller.signal });
+    });
+
+    expect(remove.mock.calls[0]?.[1]).toMatchObject({ signal: controller.signal });
+    const keys = invalidate.mock.calls.map(([filters]) => filters?.queryKey);
+    expect(keys).toEqual([queryKeys.geofences]);
   });
 });
