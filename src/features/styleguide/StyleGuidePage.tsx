@@ -591,6 +591,12 @@ export function StyleGuidePage() {
             <Timestamp iso="2026-11-04T09:58:00Z" />
             <CopyButton value="LSD-100-AA" label="Plate" />
             <CopyButton value="demo-imei-0001" label="IMEI" />
+            <CopyButton
+              value="imei,plate,year"
+              label="Header row"
+              ariaLabel="Copy header row"
+              appearance="button"
+            />
             <div className="border-border bg-border grid w-full max-w-sm grid-cols-2 gap-px rounded-lg border">
               <div className="bg-surface">
                 <Stat size="sm" label="Online" value="20 of 25" />

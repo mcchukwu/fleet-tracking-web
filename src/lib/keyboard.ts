@@ -1,3 +1,5 @@
+export const FOCUS_SEARCH_EVENT = "fleet:focus-search";
+
 export function isEditable(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   if (target.isContentEditable) return true;

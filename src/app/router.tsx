@@ -24,6 +24,7 @@ import { LoginPage } from "../features/login/components/LoginPage";
 import { AlertsPage } from "../features/alerts/components/AlertsPage";
 import { DriversPage } from "../features/drivers/components/DriversPage";
 import { GeofencesPage } from "../features/geofences/components/GeofencesPage";
+import { ImportPage } from "../features/import/components/ImportPage";
 import { MapPage } from "../features/map/components/MapPage";
 import { PlaybackPage } from "../features/playback/components/PlaybackPage";
 import { AppShell } from "../features/shell/components/AppShell";
@@ -237,7 +238,7 @@ const importRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/import",
   beforeLoad: ({ context }) => requireCapability(context.user, "mutate"),
-  component: placeholder("Import", "The vehicle import ships in Slice 9."),
+  component: ImportPage,
 });
 
 const reportsRoute = createRoute({

@@ -11,6 +11,9 @@ export interface CopyButtonProps {
   label: string;
   className?: string;
   inline?: boolean;
+  appearance?: "inline" | "button";
+  /** Short accessible name when the visible value is a long row. */
+  ariaLabel?: string;
   children?: React.ReactNode;
 }
 
@@ -30,10 +33,13 @@ export function CopyButton({
   label,
   className,
   inline = false,
+  appearance = "inline",
+  ariaLabel,
   children,
 }: CopyButtonProps) {
   const { toast } = useToast();
   const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const accessibleName = ariaLabel ?? `Copy ${label.toLowerCase()} ${value}`;
 
   async function copy(): Promise<void> {
     try {
@@ -58,15 +64,21 @@ export function CopyButton({
     <button
       type="button"
       onClick={() => void copy()}
-      aria-label={`Copy ${label.toLowerCase()} ${value}`}
-      title={`Copy ${label.toLowerCase()}`}
+      aria-label={accessibleName}
+      title={ariaLabel ?? `Copy ${label.toLowerCase()}`}
       data-copy-status={status}
       className={cn(
-        "inline-flex min-w-touch items-center justify-start rounded-sm font-mono text-sm text-text underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:min-w-0",
-        // The inline variant keeps a 24px visual line inside a 56px row but must
-        // still offer a 44px touch target, so it grows symmetrically and the
-        // negative margins keep its layout contribution at one text line.
-        inline ? "-my-3 h-touch md:my-0 md:h-control-sm" : "h-touch md:h-control-sm",
+        "inline-flex min-w-touch items-center justify-start text-sm underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:min-w-0",
+        appearance === "button"
+          ? "border-border-strong bg-surface text-text hover:bg-surface-2 h-touch rounded-md border px-3 font-medium hover:no-underline md:h-control-md"
+          : // The inline variant keeps a 24px visual line inside a 56px row but must
+            // still offer a 44px touch target, so it grows symmetrically and the
+            // negative margins keep its layout contribution at one text line.
+            cn(
+              "text-text hover:underline",
+              "font-mono rounded-sm",
+              inline ? "-my-3 h-touch md:my-0 md:h-control-sm" : "h-touch md:h-control-sm",
+            ),
         className,
       )}
     >

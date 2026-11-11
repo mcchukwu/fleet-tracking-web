@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Menu, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { FOCUS_SEARCH_EVENT } from "../../../lib/keyboard";
 import { useConnection } from "../../../stores/connection";
 import { ConnectionIndicator, type ConnectionState } from "../../../ui/Badge";
 import { BrandBar } from "../../../ui/BrandBar";
@@ -26,8 +27,8 @@ export function TopBar({ onOpenMenu, onOpenShortcuts }: TopBarProps) {
       }
       setSearchOpen(true);
     };
-    window.addEventListener("fleet:focus-search", focusSearch);
-    return () => window.removeEventListener("fleet:focus-search", focusSearch);
+    window.addEventListener(FOCUS_SEARCH_EVENT, focusSearch);
+    return () => window.removeEventListener(FOCUS_SEARCH_EVENT, focusSearch);
   }, []);
   const connection: ConnectionState =
     network === "offline"

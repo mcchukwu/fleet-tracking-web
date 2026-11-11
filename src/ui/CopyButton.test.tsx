@@ -23,6 +23,21 @@ describe("CopyButton", () => {
     expect(await screen.findByText("Plate copied")).toBeInTheDocument();
   });
 
+  it("renders the button appearance with a short explicit accessible name", () => {
+    withProviders(
+      <CopyButton
+        value="imei,sim_number,device_model"
+        label="Header row"
+        ariaLabel="Copy header row"
+        appearance="button"
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Copy header row" });
+    expect(button).toHaveClass("border", "border-border-strong", "px-3", "rounded-md");
+    expect(button).not.toHaveClass("font-mono");
+    expect(button).toHaveTextContent("imei,sim_number,device_model");
+  });
+
   it("keeps a 44px touch target that lays out as one text line inline", () => {
     withProviders(<CopyButton inline value="LSD-100-AA" label="Plate" />);
     const button = screen.getByRole("button", { name: /copy plate/i });

@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
-import { isEditable, isModalOpen } from "../../../lib/keyboard";
+import { FOCUS_SEARCH_EVENT, isEditable, isModalOpen } from "../../../lib/keyboard";
 import type { NavPath } from "../nav";
 import { chordTargets } from "../shortcuts";
 
 const CHORD_TIMEOUT_MS = 1_000;
 
 function requestSearchFocus(): void {
-  window.dispatchEvent(new CustomEvent("fleet:focus-search"));
+  window.dispatchEvent(new CustomEvent(FOCUS_SEARCH_EVENT));
 }
 
 export interface ShortcutActions {
