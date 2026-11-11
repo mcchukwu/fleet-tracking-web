@@ -55,9 +55,11 @@ function cells(summary: ReportSummary): Cell[] {
 
 function DestinationLink({
   destination,
+  statId,
   children,
 }: {
   destination: StatDestination;
+  statId: StatId;
   children: ReactNode;
 }) {
   const className =
@@ -65,19 +67,29 @@ function DestinationLink({
   switch (destination.to) {
     case "/map":
       return (
-        <Link to="/map" search={{}} className={className}>
+        <Link to="/map" search={{}} data-stat-id={statId} className={className}>
           {children}
         </Link>
       );
     case "/trips":
       return (
-        <Link to="/trips" search={destination.search ?? {}} className={className}>
+        <Link
+          to="/trips"
+          search={destination.search ?? {}}
+          data-stat-id={statId}
+          className={className}
+        >
           {children}
         </Link>
       );
     case "/alerts":
       return (
-        <Link to="/alerts" search={destination.search ?? {}} className={className}>
+        <Link
+          to="/alerts"
+          search={destination.search ?? {}}
+          data-stat-id={statId}
+          className={className}
+        >
           {children}
         </Link>
       );
@@ -87,7 +99,10 @@ function DestinationLink({
 export function ReportsStats({ summary }: { summary: ReportSummary }) {
   return (
     <div className="flex flex-col gap-2">
-      <div className="border-border bg-border grid grid-cols-2 gap-px overflow-hidden rounded-lg border sm:grid-cols-3 lg:grid-cols-7">
+      <div
+        data-testid="reports-stats"
+        className="border-border bg-border grid grid-cols-2 gap-px overflow-hidden rounded-lg border sm:grid-cols-3 lg:grid-cols-7"
+      >
         {cells(summary).map((cell) => {
           const stat = (
             <Stat
@@ -99,11 +114,13 @@ export function ReportsStats({ summary }: { summary: ReportSummary }) {
           );
           const destination = statDestination(cell.id);
           return destination ? (
-            <DestinationLink key={cell.id} destination={destination}>
+            <DestinationLink key={cell.id} destination={destination} statId={cell.id}>
               {stat}
             </DestinationLink>
           ) : (
-            <div key={cell.id}>{stat}</div>
+            <div key={cell.id} data-stat-id={cell.id}>
+              {stat}
+            </div>
           );
         })}
       </div>

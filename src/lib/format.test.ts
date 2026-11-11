@@ -36,6 +36,7 @@ describe("format", () => {
   it("formats distance with one decimal under 100 km", () => {
     expect(formatDistance(12.44)).toBe("12.4 km");
     expect(formatDistance(100.4)).toBe("100 km");
+    expect(formatDistance(1_284_932.5)).toBe("1,284,933 km");
     expect(formatDistance(0)).toBe("0.0 km");
   });
 

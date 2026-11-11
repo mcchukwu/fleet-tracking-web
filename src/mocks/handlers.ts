@@ -27,6 +27,7 @@ import { generateHistory, historyFixture } from "./fixtures/history";
 import { tripsFixture } from "./fixtures/trips";
 import {
   auditResponseFixture,
+  reportSummaryBadRowFixture,
   reportSummaryFixture,
   reportSummaryLargeFixture,
   reportSummaryNoBreakdownFixture,
@@ -203,6 +204,7 @@ function reportSummaryForScenario() {
   if (scenario === "zero") return reportSummaryZeroFixture;
   if (scenario === "large") return reportSummaryLargeFixture;
   if (scenario === "no-breakdown") return reportSummaryNoBreakdownFixture;
+  if (scenario === "bad-row") return reportSummaryBadRowFixture;
   return reportSummaryFixture;
 }
 

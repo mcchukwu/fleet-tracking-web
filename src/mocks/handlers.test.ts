@@ -921,5 +921,11 @@ describe("mock reports", () => {
     };
     expect(noBreakdown.alerts).toBe(66);
     expect(noBreakdown.alerts_by_type).toEqual([]);
+
+    localStorage.setItem("fleet.mockReports", "bad-row"); // guard-ignore: test-only mock scenario.
+    const badRow = (await (await fetch(`${API}/reports/summary`)).json()) as {
+      alerts_by_type: unknown[];
+    };
+    expect(badRow.alerts_by_type).toHaveLength(2);
   });
 });

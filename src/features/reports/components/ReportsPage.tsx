@@ -72,7 +72,7 @@ function ReportsPageContent() {
   const cancelled = cancelledKey === key;
   const error = !offline && query.error ? normalize(query.error) : null;
   const pendingFirstLoad =
-    query.isPending && !cached && !cancelled && hasRange;
+    query.isFetching && !cached && !cancelled && hasRange;
 
   const state: StateBoundaryState = !hasRange
     ? "loading"
@@ -80,10 +80,10 @@ function ReportsPageContent() {
       ? "empty"
       : error?.kind === "forbidden"
         ? "forbidden"
-        : pendingFirstLoad
-          ? "loading"
-          : offline && !cached
-            ? "empty"
+        : offline && !cached
+          ? "empty"
+          : pendingFirstLoad
+            ? "loading"
             : error
               ? "error"
               : offline && cached

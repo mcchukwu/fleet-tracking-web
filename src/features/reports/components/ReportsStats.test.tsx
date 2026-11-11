@@ -51,7 +51,7 @@ describe("ReportsStats", () => {
     expect(screen.getByText("4")).toBeVisible();
     expect(screen.getByText("66")).toBeVisible();
     expect(screen.getByText("45")).toBeVisible();
-    expect(screen.getByText("10917 km")).toBeVisible();
+    expect(screen.getByText("10,917 km")).toBeVisible();
   });
 
   it("links each scoped stat to a real destination", () => {

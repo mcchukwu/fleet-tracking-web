@@ -649,3 +649,21 @@ The upload is one pessimistic multipart request with the approved 120 s timeout.
 ## 2026-11-11: The import mock executes the CSV instead of returning a fixed fixture
 
 The MSW handler parses the uploaded CSV with Papa Parse, enforces the `imei` header, validates years, counts rows including the header line, caps returned errors at 100, creates named drivers, and upserts vehicles by `external_id` so the onboarding hand-off to the map search is testable. The parsing/upsert body is exported as `applyMockImport` and unit-tested directly, because jsdom's `File` cannot satisfy Node's `Request.formData()` adapter; the HTTP wrapper is covered by Playwright in a real browser. `@types/papaparse` is a dev-only type package for the approved `papaparse` runtime dependency. Trade-off: the mock mirrors a small part of the backend's validation, which is acceptable because the Playwright specs need deterministic partial failures.
+
+## 2026-11-11: The report summary contract is stricter than the API and more tolerant in one place
+
+Probed against staging: `GET /reports/summary` returns the seven documented numbers plus an undocumented `from`/`to` echo, and `alerts_by_type` rows whose `key` is an open string (the demo tenant is already sending a value outside the client enum). It also answers `200` for date-only, reversed, equal and malformed ranges by silently substituting its own defaults, and enforces no maximum duration (365 days returned data). The client therefore always sends explicit `Z` instants, validates strict RFC 3339 and order before any request, caps nothing, and treats `from`/`to` as optional echo metadata. The seven core numbers are required and a mismatch is a `contract` error; a malformed `alerts_by_type` row is dropped and counted instead, because one bad chart row must not blank an otherwise usable report. Unknown keys render through `alertTypeLabel` as `Unknown type: <key>`. Trade-off: a malformed row is silently invisible after the diagnostics entry; the alternative was losing the whole report.
+
+`vehicles` is the whole-tenant fleet total (it stayed 33 in a future range), so the cell says `Fleet total` and links to the map. Trips, completed, active, alerts and open alerts are range-scoped, but Alerts and Trips have no date filter, so the links open the full lists and the page states that in one line. No range-scoped vehicle count is invented.
+
+## 2026-11-11: The report refetches on return, and a cached refresh failure stays readable
+
+`useReportSummary` sets `staleTime: 0`. The global client uses 30 s, which is right for live rows but wrong for a historical aggregate: returning to Reports within 30 s showed figures the user might reasonably believe were recomputed. With zero, a remount refetches and a failed refresh renders `Couldn't refresh · Retry` above the cached numbers plus the stale badge, matching the error-handling rule that cached data beats an error. Trade-off: a remount always costs one request; the report has no polling, so this is the only refresh path.
+
+## 2026-11-11: The custom-range dialog is shared, not duplicated
+
+Playback already had the local-time-to-UTC dialog and Reports needs the same control, but features must not import each other. The control moved to `src/ui/DateRangeDialog.tsx` and `src/lib/datetime.ts`; the caller supplies the validation rule (playback keeps its seven-day cap, reports validates format and order only) and the dialog owns the fields, error-to-field mapping, focus and focus return. Playback's `CustomRangeDialog` is a thin wrapper with unchanged props and labels. The shared dialog is on `/styleguide`. Trade-off: one more shared primitive and one more touch point in shared code, which makes the full e2e suite a merge gate for this slice.
+
+## 2026-11-11: Report mock scenarios are opt-in, range-echoing and dev-only
+
+The MSW handler echoes the requested `from`/`to` and selects `zero`, `large`, `no-breakdown` or `bad-row` from the mock-only `fleet.mockReports` key. The key is read only inside the mock; production code has no scenario switch. The `large` fixture carries an unknown alert key and a zero-count row so the chart's fallback and zero filtering are exercised without a separate fault kind, and `bad-row` proves one malformed chart row degrades without losing the report.

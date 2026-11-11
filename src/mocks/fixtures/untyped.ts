@@ -130,3 +130,13 @@ export const reportSummaryNoBreakdownFixture = {
   alerts: 66,
   open_alerts: 45,
 };
+
+export const reportSummaryBadRowFixture = {
+  ...reportSummaryZeroFixture,
+  alerts: 3,
+  open_alerts: 0,
+  alerts_by_type: [
+    { key: "speeding", count: 3 },
+    { key: null, count: "many" },
+  ],
+};

@@ -20,7 +20,7 @@ export function formatSpeed(kph: number | null | undefined): string {
 
 export function formatDistance(km: number | null | undefined): string {
   if (!isNumber(km)) return MISSING;
-  const rounded = km < 100 ? km.toFixed(1) : String(Math.round(km));
+  const rounded = km < 100 ? km.toFixed(1) : formatNumber(Math.round(km));
   return `${rounded} km`;
 }
 
