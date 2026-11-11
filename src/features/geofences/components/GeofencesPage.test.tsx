@@ -1,9 +1,11 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Geofence } from "../../../api/types";
 import type { MapAdapter } from "../../../map/types";
+import { ToastProvider } from "../../../ui/Toast";
 import { TooltipProvider } from "../../../ui/Tooltip";
 import { GeofencesPage } from "./GeofencesPage";
 
@@ -55,6 +57,7 @@ const adapter = {
 vi.mock("@tanstack/react-router", () => ({
   useSearch: () => holder.search,
   useNavigate: () => holder.navigate,
+  useBlocker: () => ({ status: "idle", proceed: vi.fn(), reset: vi.fn() }),
   Link: ({ to, children }: { to: string; children: ReactNode }) => <a href={to}>{children}</a>,
 }));
 
@@ -168,9 +171,13 @@ function load(search: Record<string, unknown> = {}, feed: Partial<typeof holder.
     ...feed,
   };
   return render(
-    <TooltipProvider>
-      <GeofencesPage />
-    </TooltipProvider>,
+    <QueryClientProvider client={new QueryClient()}>
+      <ToastProvider>
+        <TooltipProvider>
+          <GeofencesPage />
+        </TooltipProvider>
+      </ToastProvider>
+    </QueryClientProvider>,
   );
 }
 

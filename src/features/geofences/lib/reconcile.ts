@@ -5,21 +5,28 @@ import type { ReconcileOutcome } from "../../../errors/useActionError";
 import { geometryEquals } from "./geometry";
 
 /** A create only returns `{ id }`; a match needs identity plus every intended field. */
-export function reconcileCreatedGeofence(
+export function findCreatedGeofence(
   geofences: readonly Geofence[],
   input: GeofenceInput,
   beforeSubmitIds: ReadonlySet<string>,
-): ReconcileOutcome {
+): Geofence | undefined {
   const name = input.name.trim();
   const kind = input.kind ?? "other";
-  const match = geofences.find(
+  return geofences.find(
     (geofence) =>
       !beforeSubmitIds.has(geofence.id) &&
       geofence.name.trim() === name &&
       geofence.kind === kind &&
       geometryEquals(geofence.geometry, input.geometry),
   );
-  return match ? "saved" : "not_saved";
+}
+
+export function reconcileCreatedGeofence(
+  geofences: readonly Geofence[],
+  input: GeofenceInput,
+  beforeSubmitIds: ReadonlySet<string>,
+): ReconcileOutcome {
+  return findCreatedGeofence(geofences, input, beforeSubmitIds) ? "saved" : "not_saved";
 }
 
 export function reconcileGeofenceUpdate(

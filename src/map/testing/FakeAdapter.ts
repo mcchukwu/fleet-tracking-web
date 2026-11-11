@@ -84,7 +84,7 @@ class FakeDrawController implements DrawController {
     this.vertices = ring ? [...ring] : [];
     this.geometry = ring ? polygonFromRing(ring) : null;
     this.getElement()?.addEventListener("click", this.handleClick);
-    this.getElement()?.addEventListener("keydown", this.handleKey);
+    document.addEventListener("keydown", this.handleKey, true);
     this.emit(this.geometry);
   }
 
@@ -203,7 +203,7 @@ class FakeDrawController implements DrawController {
 
   private detach(): void {
     this.getElement()?.removeEventListener("click", this.handleClick);
-    this.getElement()?.removeEventListener("keydown", this.handleKey);
+    document.removeEventListener("keydown", this.handleKey, true);
   }
 }
 

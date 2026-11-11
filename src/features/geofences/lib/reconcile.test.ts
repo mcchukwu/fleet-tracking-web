@@ -3,6 +3,7 @@ import type { Geofence, GeofenceInput } from "../../../api/types";
 import type { AppError } from "../../../errors/types";
 import type { LngLat } from "../../../map/types";
 import {
+  findCreatedGeofence,
   geofenceDeleteCopy,
   geofenceWriteCopy,
   reconcileCreatedGeofence,
@@ -108,6 +109,23 @@ describe("reconcileCreatedGeofence", () => {
         new Set(["gf-1"]),
       ),
     ).toBe("saved");
+  });
+
+  it("returns the created row's id so the page can focus it", () => {
+    const row = findCreatedGeofence(
+      [
+        existing,
+        {
+          id: "gf-2",
+          name: "Refinery Gate",
+          kind: "restricted",
+          geometry: input.geometry,
+        },
+      ],
+      input,
+      new Set(["gf-1"]),
+    );
+    expect(row?.id).toBe("gf-2");
   });
 });
 

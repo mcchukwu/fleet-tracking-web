@@ -13,10 +13,15 @@ import type { MapAdapter } from "../../../map/types";
 import { useConnection } from "../../../stores/connection";
 import { Button } from "../../../ui/Button";
 import type { StateBoundaryState } from "../../../ui/StateBoundary";
+import { GeofenceDeleteDialog } from "./GeofenceDeleteDialog";
+import { GeofenceEditor } from "./GeofenceEditor";
 import { GeofenceList } from "./GeofenceList";
 import { GeofenceMap } from "./GeofenceMap";
+import { useGeofenceDelete } from "../hooks/useGeofenceDelete";
+import { useGeofenceDrawing } from "../hooks/useGeofenceDrawing";
 import { useGeofenceFeed } from "../hooks/useGeofenceFeed";
-import { boundsOfGeofences } from "../lib/geometry";
+import { useGeofenceWrite } from "../hooks/useGeofenceWrite";
+import { boundsOfGeofences, exteriorRing } from "../lib/geometry";
 import { filterGeofences, sortGeofences } from "../lib/filter";
 import { FIT_PADDING_DESKTOP, FIT_PADDING_MOBILE } from "../lib/constants";
 
@@ -48,6 +53,8 @@ function GeofencesPageContent() {
   const createRef = useRef<HTMLButtonElement>(null);
 
   const feed = useGeofenceFeed();
+  const write = useGeofenceWrite();
+  const deletion = useGeofenceDelete();
   const [adapter, setAdapter] = useState<MapAdapter | null>(null);
   const [editor, setEditor] = useState<EditorState>({ kind: "closed" });
   const [selectionReset, setSelectionReset] = useState(0);
@@ -67,6 +74,19 @@ function GeofencesPageContent() {
   );
 
   useDocumentTitle("Geofences");
+
+  const editingGeofence = editor.kind === "edit" ? editor.geofence : null;
+  const editingRing = editingGeofence ? exteriorRing(editingGeofence.geometry) : null;
+  const geometryEditable =
+    !editingGeofence ||
+    (editingGeofence.geometry.coordinates.length === 1 && editingRing !== null);
+  const editorOpen = editor.kind === "create" || editor.kind === "edit";
+  const drawing = useGeofenceDrawing({
+    adapter,
+    active: editorOpen && geometryEditable,
+    kind: editingGeofence?.kind ?? "depot",
+    initialRing: geometryEditable ? editingRing : null,
+  });
 
   const closedError = !offline && feed.error ? normalize(feed.error) : null;
   const state: StateBoundaryState =
@@ -98,7 +118,11 @@ function GeofencesPageContent() {
     : offline
       ? "You're offline."
       : undefined;
-  const editorOpen = editor.kind === "create" || editor.kind === "edit";
+  const editReason = !canMutate
+    ? "Your role can't change geofences."
+    : offline
+      ? "You're offline."
+      : undefined;
 
   const updateSearch = useCallback(
     (patch: Partial<GeofencesSearch>, replace = true): void => {
@@ -198,6 +222,58 @@ function GeofencesPageContent() {
     setSelectionReset((value) => value + 1);
   }
 
+  function focusRow(id: string | null): void {
+    setTimeout(() => {
+      if (id) {
+        const target = document.querySelector<HTMLElement>(
+          `[data-geofence-id="${CSS.escape(id)}"]`,
+        );
+        if (target) {
+          target.focus();
+          return;
+        }
+      }
+      createRef.current?.focus();
+    }, 0);
+  }
+
+  function closeEditor(): void {
+    drawing.cancel();
+    setEditor({ kind: "closed" });
+  }
+
+  function afterSaved(id: string | null): void {
+    drawing.stop();
+    setEditor({ kind: "closed" });
+    lastFitId.current = null;
+    updateSearch({ q: undefined, selected: id ?? undefined });
+    focusRow(id);
+  }
+
+  async function refreshEditTarget(): Promise<void> {
+    const rows = await feed.refetch();
+    if (editor.kind === "edit" && !rows?.some((row) => row.id === editor.geofence.id)) {
+      closeEditor();
+    }
+  }
+
+  async function refreshDeleteTarget(): Promise<void> {
+    const rows = await feed.refetch();
+    if (editor.kind === "delete" && !rows?.some((row) => row.id === editor.geofence.id)) {
+      setEditor({ kind: "closed" });
+      updateSearch({ selected: undefined });
+    }
+  }
+
+  function afterDelete(): void {
+    const deletedId = editor.kind === "delete" ? editor.geofence.id : null;
+    const next = visible.find((row) => row.id !== deletedId)?.id ?? null;
+    setEditor({ kind: "closed" });
+    lastFitId.current = null;
+    if (selectedId === deletedId) updateSearch({ selected: undefined });
+    focusRow(next);
+  }
+
   const hint =
     editor.kind === "create"
       ? "Click to add points. Click the first point or press Enter to close."
@@ -238,7 +314,21 @@ function GeofencesPageContent() {
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         <div className="border-border order-2 flex min-h-0 basis-2/5 flex-col border-t lg:order-1 lg:w-panel lg:shrink-0 lg:basis-auto lg:border-t-0 lg:border-r">
-          <GeofenceList
+          {editorOpen ? (
+            <GeofenceEditor
+              mode={editor.kind === "edit" ? "edit" : "create"}
+              geofence={editingGeofence}
+              drawing={drawing}
+              write={write}
+              knownIds={new Set(feed.geofences.map((row) => row.id))}
+              geometryEditable={geometryEditable}
+              {...(editReason ? { disabledReason: editReason } : {})}
+              onClose={closeEditor}
+              onSaved={afterSaved}
+              onRefresh={() => void refreshEditTarget()}
+            />
+          ) : (
+            <GeofenceList
             geofences={visible}
             total={feed.geofences.length}
             q={q}
@@ -271,7 +361,8 @@ function GeofencesPageContent() {
             onRetry={() => void feed.retry()}
             onCancelLoading={feed.cancel}
             resetKey={`${q}:${selectionReset}`}
-          />
+            />
+          )}
         </div>
 
         <div className="order-1 flex min-h-48 flex-1 flex-col lg:order-2">
@@ -286,6 +377,16 @@ function GeofencesPageContent() {
           />
         </div>
       </div>
+
+      <GeofenceDeleteDialog
+        geofence={editor.kind === "delete" ? editor.geofence : null}
+        open={editor.kind === "delete"}
+        write={deletion}
+        {...(editReason ? { disabledReason: editReason } : {})}
+        onClose={() => setEditor({ kind: "closed" })}
+        onDeleted={afterDelete}
+        onRefresh={() => void refreshDeleteTarget()}
+      />
     </div>
   );
 }
