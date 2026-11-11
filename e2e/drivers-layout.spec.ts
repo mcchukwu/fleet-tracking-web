@@ -44,6 +44,7 @@ test.describe("drivers layout", { tag: "@theme" }, () => {
     );
     if (isMobile(page)) await expectTouchTargets(page, 44);
     await expectNoAxeViolations(page);
+    await captureForReview(page, "07-drivers-layout-list");
   });
 
   test("the table is the only horizontal scroller on a narrow viewport", async ({ page }) => {
@@ -120,11 +121,27 @@ test.describe("drivers layout", { tag: "@theme" }, () => {
     await gotoDrivers(page, "fault=drivers%3Aforbidden");
     await expect(page.getByText("You don't have access to this.")).toBeVisible();
     await expectNoAxeViolations(page);
+    await captureForReview(page, "07-drivers-layout-forbidden");
 
     await gotoDrivers(page, "fault=drivers%3Acontract");
     await expect(page.getByText("Unexpected response from the server").first()).toBeVisible({
       timeout: 15_000,
     });
     await expectNoAxeViolations(page);
+    await captureForReview(page, "07-drivers-layout-contract");
+  });
+
+  test("offline cached rows keep the stale presentation in both themes", async ({
+    page,
+    context,
+  }) => {
+    await gotoDrivers(page);
+    await expect(page.getByTestId("drivers-page")).toContainText("26 drivers");
+    await context.setOffline(true);
+    await expect(page.getByText("You're offline", { exact: false }).first()).toBeVisible();
+    await expect(page.getByText(/Stale ·/)).toBeVisible();
+    await expectNoAxeViolations(page);
+    await captureForReview(page, "07-drivers-layout-offline");
+    await context.setOffline(false);
   });
 });
