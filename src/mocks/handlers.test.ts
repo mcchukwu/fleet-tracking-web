@@ -429,3 +429,159 @@ describe("mock trips", () => {
     expect(payload.data).toHaveLength(100);
   });
 });
+
+describe("mock drivers", () => {
+  const driverId = "5b77edaf-c0c6-4ba4-b0c7-d2b6422c598d";
+
+  async function patchDriver(id: string, body: unknown): Promise<Response> {
+    return fetch(`${API}/drivers/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  it("returns the whole list and ignores the filters staging ignores", async () => {
+    resetMockState();
+    const response = await fetch(`${API}/drivers?status=active&q=zzz&limit=2&offset=1`);
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as { data: Array<{ id: string }> };
+    expect(payload.data).toHaveLength(driversFixture.length);
+    expect(payload.data.map((driver) => driver.id)).toContain("c7d3e3a6-0b6e-4f2c-9a4e-2b1f6f2d8e19");
+  });
+
+  it("supports the empty page flag and a driver-shaped unknown enum", async () => {
+    resetMockState();
+    const empty = await fetch(`${API}/drivers?empty=drivers`);
+    await expect(empty.json()).resolves.toEqual({ data: [] });
+
+    const unknown = await fetch(`${API}/drivers?fault=drivers%3Aunknown_enum`);
+    const payload = (await unknown.json()) as { data: Array<{ status: string }> };
+    expect(payload.data[0]?.status).toBe("suspended");
+  });
+
+  it("creates an active zero-vehicle driver with trimmed and defaulted fields", async () => {
+    resetMockState();
+    localStorage.setItem("fleet.mockRole", "dispatcher"); // guard-ignore: test-only mock role override.
+    window.__FLEET_MOCK_WRITES__ = [];
+    const response = await fetch(`${API}/drivers`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "  Ada Obi  " }),
+    });
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ id: expect.any(String) });
+
+    const list = await fetch(`${API}/drivers`);
+    const payload = (await list.json()) as {
+      data: Array<{ name: string; phone: string; licence: string; status: string; vehicles: number }>;
+    };
+    const created = payload.data.find((driver) => driver.name === "Ada Obi");
+    expect(created).toMatchObject({ phone: "", licence: "", status: "active", vehicles: 0 });
+    expect(window.__FLEET_MOCK_WRITES__?.at(-1)).toMatchObject({
+      method: "POST",
+      url: "/api/v1/drivers",
+      body: { name: "  Ada Obi  " },
+    });
+  });
+
+  it("rejects a blank or missing name the way staging does", async () => {
+    resetMockState();
+    for (const body of [{ name: "   " }, {}]) {
+      const response = await fetch(`${API}/drivers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      expect(response.status).toBe(400);
+      await expect(response.json()).resolves.toMatchObject({
+        error: { code: "invalid_request", message: "name is required" },
+      });
+    }
+  });
+
+  it("rejects an empty body, a blank name and an invalid status on update", async () => {
+    resetMockState();
+    const empty = await patchDriver(driverId, {});
+    expect(empty.status).toBe(400);
+    await expect(empty.json()).resolves.toMatchObject({
+      error: { code: "invalid_request", message: "no fields to update" },
+    });
+
+    const blank = await patchDriver(driverId, { name: "  " });
+    expect(blank.status).toBe(400);
+    await expect(blank.json()).resolves.toMatchObject({
+      error: { code: "invalid_request", message: "name cannot be empty" },
+    });
+
+    const invalid = await patchDriver(driverId, { status: "suspended" });
+    expect(invalid.status).toBe(400);
+    await expect(invalid.json()).resolves.toMatchObject({
+      error: { code: "invalid_status", message: "status must be active or inactive" },
+    });
+  });
+
+  it("returns 404 for an unknown driver", async () => {
+    resetMockState();
+    const response = await patchDriver("does-not-exist", { phone: "08031000010" });
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: "not_found", message: "driver not found" },
+    });
+  });
+
+  it("forbids viewer and security writes and allows a dispatcher", async () => {
+    for (const role of ["viewer", "security"]) {
+      localStorage.setItem("fleet.mockRole", role); // guard-ignore: test-only mock role override.
+      resetMockState();
+      const create = await fetch(`${API}/drivers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Ada Obi" }),
+      });
+      expect(create.status).toBe(403);
+      const update = await patchDriver(driverId, { phone: "" });
+      expect(update.status).toBe(403);
+    }
+
+    localStorage.setItem("fleet.mockRole", "dispatcher"); // guard-ignore: test-only mock role override.
+    resetMockState();
+    const update = await patchDriver(driverId, { phone: "" });
+    expect(update.status).toBe(204);
+  });
+
+  it("updates the denormalised snapshot fields after a rename or phone change", async () => {
+    resetMockState();
+    const before = (await (await fetch(`${API}/live/snapshot`)).json()) as {
+      data: Array<{ driver_id?: string; driver_name?: string; driver_phone?: string }>;
+    };
+    expect(before.data.some((vehicle) => vehicle.driver_id === driverId)).toBe(true);
+
+    const response = await patchDriver(driverId, { name: "Adebayo Renamed", phone: "" });
+    expect(response.status).toBe(204);
+    const after = (await (await fetch(`${API}/live/snapshot`)).json()) as {
+      data: Array<{ driver_id?: string; driver_name?: string; driver_phone?: string }>;
+    };
+    for (const vehicle of after.data.filter((row) => row.driver_id === driverId)) {
+      expect(vehicle.driver_name).toBe("Adebayo Renamed");
+      expect(vehicle.driver_phone).toBe("");
+    }
+  });
+
+  it("keeps vehicles assigned when a driver is deactivated", async () => {
+    resetMockState();
+    const response = await patchDriver(driverId, { status: "inactive" });
+    expect(response.status).toBe(204);
+    const list = (await (await fetch(`${API}/drivers`)).json()) as {
+      data: Array<{ id: string; status: string; vehicles: number }>;
+    };
+    expect(list.data.find((driver) => driver.id === driverId)).toMatchObject({
+      status: "inactive",
+      vehicles: 1,
+    });
+    const snapshot = (await (await fetch(`${API}/live/snapshot`)).json()) as {
+      data: Array<{ driver_id?: string }>;
+    };
+    expect(snapshot.data.some((vehicle) => vehicle.driver_id === driverId)).toBe(true);
+  });
+});

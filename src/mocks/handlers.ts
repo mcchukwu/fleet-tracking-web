@@ -227,10 +227,18 @@ const geofenceInputSchema = z.object({
   geometry: z.object({ type: z.literal("Polygon"), coordinates: z.array(z.array(z.array(z.number()))) }),
 });
 const driverInputSchema = z.object({
-  name: z.string(),
+  name: z.string().optional(),
   phone: z.string().optional(),
   licence: z.string().optional(),
 });
+const driverPatchSchema = z
+  .object({
+    name: z.string().optional(),
+    phone: z.string().optional(),
+    licence: z.string().optional(),
+    status: z.string().optional(),
+  })
+  .strict();
 
 async function readJson(request: Request): Promise<unknown> {
   try {
@@ -843,39 +851,103 @@ export const handlers = [
     });
   }),
 
-  http.get(`${API}/drivers`, ({ request }) =>
-    withFault("drivers", request, () => HttpResponse.json({ data: state.drivers })),
-  ),
+  http.get(`${API}/drivers`, ({ request }) => {
+    const fault = new URL(request.url).searchParams.get("fault");
+    if (fault === "drivers:unknown_enum") {
+      const first = state.drivers[0];
+      return HttpResponse.json({
+        data: first ? [{ ...first, status: "suspended" }] : [],
+      });
+    }
+    return withFault("drivers", request, () => {
+      const url = new URL(request.url);
+      const pageEmpty =
+        typeof window !== "undefined" &&
+        new URLSearchParams(window.location.search).get("empty") === "drivers";
+      if (url.searchParams.get("empty") === "drivers" || pageEmpty) {
+        return HttpResponse.json({ data: [] });
+      }
+      // Staging ignores status, q, limit and offset; the mock mirrors that.
+      return HttpResponse.json({ data: state.drivers });
+    });
+  }),
 
   http.post(`${API}/drivers`, async ({ request }) => {
     return withFault("drivers", request, async () => {
+      const user = resolveUser();
+      if (!user || !can(user.role, "mutate")) return forbidden();
       const parsed = driverInputSchema.safeParse(await readJson(request));
       if (!parsed.success) return badRequest();
+      const name = parsed.data.name?.trim() ?? "";
+      if (!name) {
+        return HttpResponse.json(
+          { error: { code: "invalid_request", message: "name is required" } },
+          { status: 400 },
+        );
+      }
+      recordMockWrite("POST", `${API}/drivers`, parsed.data);
       const id = `driver-${state.drivers.length + 1}`;
       state.drivers = [
         ...state.drivers,
         {
           id,
-          name: parsed.data.name,
-          phone: parsed.data.phone ?? "",
-          licence: parsed.data.licence ?? "",
+          name,
+          phone: parsed.data.phone?.trim() ?? "",
+          licence: parsed.data.licence?.trim() ?? "",
           status: "active",
           vehicles: 0,
         },
       ];
-      return HttpResponse.json({ id });
+      return HttpResponse.json({ id }, { status: 201 });
     });
   }),
 
   http.patch(`${API}/drivers/:id`, async ({ params, request }) => {
     return withFault("drivers", request, async () => {
+      const user = resolveUser();
+      if (!user || !can(user.role, "mutate")) return forbidden();
       const driver = state.drivers.find((item) => item.id === params.id);
       if (!driver) {
-        return HttpResponse.json({ error: { code: "not_found", message: "not found" } }, { status: 404 });
+        return HttpResponse.json(
+          { error: { code: "not_found", message: "driver not found" } },
+          { status: 404 },
+        );
       }
-      const parsed = driverInputSchema.partial().extend({ status: z.enum(["active", "inactive"]).optional() }).safeParse(await readJson(request));
+      const raw = await readJson(request);
+      const parsed = driverPatchSchema.safeParse(raw);
       if (!parsed.success) return badRequest();
-      Object.assign(driver, parsed.data);
+      const { name, phone, licence, status } = parsed.data;
+      if (name === undefined && phone === undefined && licence === undefined && status === undefined) {
+        return HttpResponse.json(
+          { error: { code: "invalid_request", message: "no fields to update" } },
+          { status: 400 },
+        );
+      }
+      if (status !== undefined && status !== "active" && status !== "inactive") {
+        return HttpResponse.json(
+          { error: { code: "invalid_status", message: "status must be active or inactive" } },
+          { status: 400 },
+        );
+      }
+      const trimmedName = name?.trim();
+      if (name !== undefined && !trimmedName) {
+        return HttpResponse.json(
+          { error: { code: "invalid_request", message: "name cannot be empty" } },
+          { status: 400 },
+        );
+      }
+      recordMockWrite("PATCH", `${API}/drivers/${String(params.id)}`, raw);
+      if (trimmedName !== undefined) driver.name = trimmedName;
+      if (phone !== undefined) driver.phone = phone;
+      if (licence !== undefined) driver.licence = licence;
+      if (status !== undefined) driver.status = status;
+      if (trimmedName !== undefined || phone !== undefined) {
+        for (const vehicle of state.vehicles) {
+          if (vehicle.driver_id !== driver.id) continue;
+          if (trimmedName !== undefined) vehicle.driver_name = trimmedName;
+          if (phone !== undefined) vehicle.driver_phone = phone;
+        }
+      }
       return new HttpResponse(null, { status: 204 });
     });
   }),

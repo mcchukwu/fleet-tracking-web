@@ -200,5 +200,13 @@ export const driversFixture: Driver[] = [
     "licence": "LIC-01019",
     "status": "active",
     "vehicles": 1
+  },
+  {
+    "id": "c7d3e3a6-0b6e-4f2c-9a4e-2b1f6f2d8e19",
+    "name": "Test Driver Six",
+    "phone": "",
+    "licence": "",
+    "status": "inactive",
+    "vehicles": 0
   }
 ];
