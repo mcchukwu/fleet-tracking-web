@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { StorageError } from "../errors/types";
 import {
   addImportHistory,
+  claimImportHistory,
   clearImportHistory,
   readImportHistory,
   type RecentImport,
@@ -82,6 +83,36 @@ describe("import history", () => {
     expect(next[0]?.completedAt).toBe("2026-11-11T13:00:00Z");
   });
 
+  it("keeps the history of the same owner", async () => {
+    mocks.get.mockResolvedValue("user-1");
+
+    await expect(claimImportHistory("user-1")).resolves.toBeNull();
+    expect(mocks.clear).not.toHaveBeenCalled();
+    expect(mocks.set).not.toHaveBeenCalled();
+  });
+
+  it("drops another user's history and records the new owner", async () => {
+    mocks.get.mockResolvedValue("user-1");
+
+    await expect(claimImportHistory("user-2")).resolves.toBe("user-1");
+    expect(mocks.clear).toHaveBeenCalledTimes(1);
+    expect(mocks.set).toHaveBeenCalledWith(
+      "fleet.import-history-owner",
+      "user-2",
+    );
+  });
+
+  it("clears unattributed history from devices without an owner", async () => {
+    mocks.get.mockResolvedValue(undefined);
+
+    await expect(claimImportHistory("user-1")).resolves.toBeNull();
+    expect(mocks.clear).toHaveBeenCalledTimes(1);
+    expect(mocks.set).toHaveBeenCalledWith(
+      "fleet.import-history-owner",
+      "user-1",
+    );
+  });
+
   it("surfaces a storage failure on read, write and clear", async () => {
     mocks.get.mockRejectedValue(new Error("idb unavailable"));
     await expect(readImportHistory()).rejects.toBeInstanceOf(StorageError);
@@ -94,6 +125,11 @@ describe("import history", () => {
 
     mocks.clear.mockRejectedValue(new Error("blocked"));
     await expect(clearImportHistory()).rejects.toBeInstanceOf(StorageError);
+
+    mocks.get.mockRejectedValue(new Error("idb unavailable"));
+    await expect(claimImportHistory("user-1")).rejects.toBeInstanceOf(
+      StorageError,
+    );
   });
 
   it("clears the store", async () => {

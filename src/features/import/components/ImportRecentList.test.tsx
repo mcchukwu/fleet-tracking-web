@@ -81,6 +81,27 @@ describe("ImportRecentList", () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
+  it("shows the storage notice on a clean device that could not save the import", async () => {
+    const onRetry = vi.fn();
+    view(
+      <ImportRecentList
+        entries={[]}
+        state="ready"
+        error={storageError}
+        onView={vi.fn()}
+        onRetry={onRetry}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        "This import worked, but this device couldn't save it to Recent imports.",
+      ),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
   it("explains when history cannot be read at all", () => {
     view(
       <ImportRecentList

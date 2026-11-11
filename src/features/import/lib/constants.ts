@@ -18,6 +18,5 @@ export const IMPORT_HEADERS = [
 ] as const;
 
 export const PREVIEW_ROW_LIMIT = 5;
-export const RECENT_IMPORT_LIMIT = 5;
 export const ERROR_DISPLAY_LIMIT = 100;
 export const IMPORT_FILE_EXTENSION = ".csv";

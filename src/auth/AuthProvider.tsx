@@ -3,8 +3,17 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/instance";
 import { normalize } from "../errors/normalize";
 import { recordError } from "../errors/report";
-import { clearImportHistory } from "../lib/importHistory";
+import { claimImportHistory, clearImportHistory } from "../lib/importHistory";
 import { useAuthStore } from "./store";
+
+function reportHistoryFailure(cause: unknown): void {
+  recordError(
+    normalize(cause, {
+      action: "clear import history",
+      resource: "import history",
+    }),
+  );
+}
 
 export function handleSessionExpired(): void {
   const state = useAuthStore.getState();
@@ -32,18 +41,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const previous = previousUserId.current;
-    if (previous !== null && previous !== userId) {
-      queryClient.clear();
-      void clearImportHistory().catch((cause: unknown) => {
-        recordError(
-          normalize(cause, {
-            action: "clear import history",
-            resource: "import history",
-          }),
-        );
-      });
+    previousUserId.current = userId;
+
+    if (userId === null) {
+      if (previous !== null) {
+        queryClient.clear();
+        void clearImportHistory().catch(reportHistoryFailure);
+      }
+      return;
     }
-    if (userId !== null) previousUserId.current = userId;
+
+    if (previous !== null && previous !== userId) queryClient.clear();
+
+    void claimImportHistory(userId)
+      .then((previousOwner) => {
+        if (previousOwner !== null && previousOwner !== userId) queryClient.clear();
+      })
+      .catch(reportHistoryFailure);
   }, [userId, queryClient]);
 
   useEffect(() => {

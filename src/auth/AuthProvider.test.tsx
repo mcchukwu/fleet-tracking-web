@@ -1,15 +1,17 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, render } from "@testing-library/react";
+import { act, render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider, handleSessionExpired } from "./AuthProvider";
 import { useAuthStore } from "./store";
 
 const mocks = vi.hoisted(() => ({
   clearImportHistory: vi.fn(),
+  claimImportHistory: vi.fn(),
 }));
 
 vi.mock("../lib/importHistory", () => ({
   clearImportHistory: mocks.clearImportHistory,
+  claimImportHistory: mocks.claimImportHistory,
 }));
 
 const user = {
@@ -24,6 +26,8 @@ beforeEach(() => {
   useAuthStore.setState({ user: null, csrfToken: null, status: "unknown" });
   mocks.clearImportHistory.mockReset();
   mocks.clearImportHistory.mockResolvedValue(undefined);
+  mocks.claimImportHistory.mockReset();
+  mocks.claimImportHistory.mockResolvedValue(null);
 });
 
 afterEach(() => {
@@ -91,24 +95,52 @@ describe("AuthProvider", () => {
     expect(mocks.clearImportHistory).toHaveBeenCalledTimes(1);
   });
 
-  it("clears import history when a different user signs in", () => {
+  it("clears the query cache when a different user signs in", async () => {
     useAuthStore.getState().setSession(user, "token");
+    mocks.claimImportHistory
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce("user-1");
+    const queryClient = new QueryClient();
+    const clear = vi.spyOn(queryClient, "clear");
     render(
-      <QueryClientProvider client={new QueryClient()}>
+      <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <div />
         </AuthProvider>
       </QueryClientProvider>,
     );
 
-    act(() => {
+    await act(async () => {
       useAuthStore.getState().setSession(
         { ...user, id: "user-2", email: "admin@demo.ftb", role: "admin" },
         "token-2",
       );
     });
 
-    expect(mocks.clearImportHistory).toHaveBeenCalledTimes(1);
+    expect(mocks.claimImportHistory).toHaveBeenCalledWith("user-2");
+    expect(clear).toHaveBeenCalled();
+  });
+
+  it("claims the device history on the first user of a fresh load", async () => {
+    useAuthStore.getState().setSession(
+      { ...user, id: "user-2", email: "admin@demo.ftb", role: "admin" },
+      "token-2",
+    );
+    mocks.claimImportHistory.mockResolvedValue("user-1");
+    const queryClient = new QueryClient();
+    const clear = vi.spyOn(queryClient, "clear");
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <div />
+        </AuthProvider>
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() =>
+      expect(mocks.claimImportHistory).toHaveBeenCalledWith("user-2"),
+    );
+    expect(clear).toHaveBeenCalledTimes(1);
   });
 
   it("keeps import history across a same-user session refresh", () => {

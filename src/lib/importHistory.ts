@@ -1,9 +1,10 @@
 import { clear, get, set } from "idb-keyval";
 import { z } from "zod";
 import { StorageError } from "../errors/types";
-import { RECENT_IMPORT_LIMIT } from "../features/import/lib/constants";
 
+export const RECENT_IMPORT_LIMIT = 5;
 export const IMPORT_HISTORY_KEY = "fleet.import-history";
+export const IMPORT_HISTORY_OWNER_KEY = "fleet.import-history-owner";
 
 const importRowErrorSchema = z.object({
   row: z.number(),
@@ -56,6 +57,28 @@ export async function addImportHistory(entry: RecentImport): Promise<RecentImpor
     throw storageFailure();
   }
   return next;
+}
+
+/**
+ * Binds the device-local history to one user. Returns the previous owner when
+ * the store had to be cleared, so the shell can also drop cached queries.
+ */
+export async function claimImportHistory(userId: string): Promise<string | null> {
+  let owner: unknown;
+  try {
+    owner = await get<unknown>(IMPORT_HISTORY_OWNER_KEY);
+  } catch {
+    throw storageFailure();
+  }
+  if (owner === userId) return null;
+
+  try {
+    await clear();
+    await set(IMPORT_HISTORY_OWNER_KEY, userId);
+  } catch {
+    throw storageFailure();
+  }
+  return typeof owner === "string" ? owner : null;
 }
 
 export async function clearImportHistory(): Promise<void> {

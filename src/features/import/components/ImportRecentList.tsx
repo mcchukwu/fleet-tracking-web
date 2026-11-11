@@ -46,7 +46,7 @@ export function ImportRecentList({
   onRetry,
 }: ImportRecentListProps) {
   const showSkeleton = useDelayedFlag(state === "loading");
-  const writeFailed = error !== null && entries.length > 0;
+  const writeFailed = error !== null && state !== "error";
 
   return (
     <section
@@ -97,7 +97,7 @@ export function ImportRecentList({
             <li
               key={entry.jobId}
               data-recent-import={entry.jobId}
-              className="border-border flex min-h-14 flex-wrap items-center justify-between gap-2 border-b py-2 last:border-b-0"
+              className="border-border flex h-14 items-center justify-between gap-2 border-b last:border-b-0"
             >
               <div className="flex min-w-0 flex-col gap-0.5">
                 <span
@@ -106,7 +106,7 @@ export function ImportRecentList({
                 >
                   {entry.fileName}
                 </span>
-                <span className="text-muted flex flex-wrap items-center gap-1 text-xs tabular-nums">
+                <span className="text-muted flex items-center gap-1 overflow-hidden text-xs whitespace-nowrap tabular-nums">
                   <span>{formatCount(entry.imported)} imported</span>
                   <span aria-hidden="true">·</span>
                   <span>{formatCount(entry.failed)} failed</span>
