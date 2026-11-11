@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { AppError } from "../../../errors/types";
@@ -82,6 +82,43 @@ describe("ImportFailureNotice", () => {
     );
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
     expect(screen.queryByText("panic: nil pointer")).not.toBeInTheDocument();
+  });
+
+  it("counts down before a rate-limited upload can retry", () => {
+    vi.useFakeTimers();
+    try {
+      view(
+        <ImportFailureNotice
+          error={error({
+            kind: "rate_limited",
+            status: 429,
+            retryAfterSec: 30,
+            at: Date.now(),
+          })}
+          fileName="vehicles.csv"
+          onRetry={vi.fn()}
+          onChooseAnother={vi.fn()}
+          onBack={vi.fn()}
+        />,
+      );
+
+      expect(screen.getByRole("button", { name: "Retry" })).toHaveAttribute(
+        "aria-disabled",
+        "true",
+      );
+      expect(screen.getByText("Try again in 30s.")).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(31_000);
+      });
+
+      expect(screen.getByRole("button", { name: "Retry" })).not.toHaveAttribute(
+        "aria-disabled",
+      );
+      expect(screen.getByText("You can try again now.")).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("offers a way back for a forbidden role", async () => {

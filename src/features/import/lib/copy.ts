@@ -58,7 +58,14 @@ export function resultSentence(
   return `${imported} ${vehicles} imported, ${failed} ${plural(result.failed, "row", "rows")} failed.`;
 }
 
-export function importFailureCopy(error: AppError): ImportCopy {
+export interface ImportFailureHints {
+  remainingSec?: number;
+}
+
+export function importFailureCopy(
+  error: AppError,
+  hints: ImportFailureHints = {},
+): ImportCopy {
   if (error.kind === "aborted") {
     return { title: "Upload cancelled", detail: "Nothing was imported." };
   }
@@ -101,5 +108,14 @@ export function importFailureCopy(error: AppError): ImportCopy {
     };
   }
   const copy = errorCopy(error);
+  if (error.kind === "rate_limited" && hints.remainingSec !== undefined) {
+    return {
+      title: copy.title,
+      detail:
+        hints.remainingSec > 0
+          ? `Try again in ${hints.remainingSec}s.`
+          : "You can try again now.",
+    };
+  }
   return { title: copy.title, detail: copy.detail };
 }

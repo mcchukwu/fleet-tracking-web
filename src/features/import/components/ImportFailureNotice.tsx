@@ -2,6 +2,7 @@ import type { Ref } from "react";
 import { InlineError } from "../../../errors/InlineError";
 import type { AppError } from "../../../errors/types";
 import { Button } from "../../../ui/Button";
+import { useRetryCountdown } from "../hooks/useRetryCountdown";
 import { importFailureCopy } from "../lib/copy";
 
 export interface ImportFailureNoticeProps {
@@ -13,11 +14,18 @@ export interface ImportFailureNoticeProps {
   noticeRef?: Ref<HTMLDivElement>;
 }
 
+// CSRF failures are retried by the API client and surface as forbidden, and
+// client errors come from rendering, so neither reaches an upload failure.
 function canRetry(error: AppError): boolean {
   if (error.code === "invalid_request") return true;
-  return ["network", "timeout", "server", "unavailable", "contract"].includes(
-    error.kind,
-  );
+  return [
+    "network",
+    "timeout",
+    "server",
+    "unavailable",
+    "contract",
+    "rate_limited",
+  ].includes(error.kind);
 }
 
 export function ImportFailureNotice({
@@ -28,7 +36,8 @@ export function ImportFailureNotice({
   onBack,
   noticeRef,
 }: ImportFailureNoticeProps) {
-  const copy = importFailureCopy(error);
+  const remaining = useRetryCountdown(error);
+  const copy = importFailureCopy(error, { remainingSec: remaining ?? undefined });
   const forbidden = error.kind === "forbidden";
   const sessionExpired = error.kind === "unauthenticated";
 
@@ -58,6 +67,9 @@ export function ImportFailureNotice({
               variant="primary"
               onClick={onRetry}
               data-import-retry
+              {...(remaining !== null && remaining > 0
+                ? { disabledReason: `Try again in ${remaining}s.` }
+                : {})}
             >
               {error.outcome === "unknown" ? "Upload again" : "Retry"}
             </Button>
