@@ -41,6 +41,10 @@ function unexpectedConsole(errors: string[]): string[] {
   );
 }
 
+// Several tests poll a 45s reconciliation window plus a full page render; the
+// default 30s is too tight for the parallel four-project gate.
+test.describe.configure({ timeout: 60_000 });
+
 function row(page: Page, name: string) {
   return page
     .getByRole("list", { name: "Geofences" })
@@ -66,6 +70,7 @@ test.describe("geofences faults", () => {
   test("a server error with nothing cached shows the region error and Retry recovers", async ({
     page,
   }) => {
+    test.setTimeout(60_000);
     const errors = collectErrors(page);
     await gotoFault(page, "geofences:server");
     await expect(page.getByText("Something went wrong on our side").first()).toBeVisible({
@@ -84,6 +89,7 @@ test.describe("geofences faults", () => {
   });
 
   test("a cached refresh error keeps the rows and offers Retry", async ({ page }) => {
+    test.setTimeout(60_000);
     await page.goto("/geofences?map=fake");
     await expectLoaded(page);
     await page.evaluate(() => {
@@ -130,6 +136,7 @@ test.describe("geofences faults", () => {
       timeout: 15_000,
     });
     await expect(page.getByRole("button", { name: "Copy diagnostics" })).toBeVisible();
+    await expectNoAxeViolations(page);
   });
 
   test("an unknown kind falls back to Other and keeps the row", async ({ page }) => {
@@ -240,6 +247,56 @@ test.describe("geofences faults", () => {
     await expect(row(page, "Lost Gate")).toHaveCount(0);
     await expect(page.getByTestId("geofences-page")).toContainText("4 geofences");
     expect(unexpectedConsole(errors)).toEqual([]);
+  });
+
+  test("a lost update reports that it was not saved and keeps the row", async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.goto("/geofences?map=fake");
+    await expectLoaded(page);
+    await row(page, "Border").click();
+    await page.getByRole("button", { name: "Edit" }).click();
+    const form = page.getByRole("form", { name: "Edit geofence" });
+    await form.getByLabel("Name").fill("Border North");
+    await page.evaluate(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("fault", "geofences-patch:lost");
+      history.replaceState({}, "", `${url.pathname}${url.search}`);
+    });
+    await form.getByRole("button", { name: "Save changes" }).click();
+
+    await expect(page.getByText("It wasn't saved.").first()).toBeVisible({ timeout: 45_000 });
+    await expect(form).toBeVisible();
+    expect(await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? [])).toHaveLength(0);
+    await form.getByRole("button", { name: "Cancel" }).click();
+    await page
+      .getByRole("dialog", { name: "Discard changes?" })
+      .getByRole("button", { name: "Discard" })
+      .click();
+    await expect(row(page, "Border")).toBeVisible();
+    await expect(row(page, "Border North")).toHaveCount(0);
+  });
+
+  test("a session expiry during a write keeps the form and asks to sign in", async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.goto("/geofences?map=fake");
+    await expectLoaded(page);
+    await row(page, "Border").click();
+    await page.getByRole("button", { name: "Edit" }).click();
+    const form = page.locator('form[aria-label="Edit geofence"]');
+    await form.getByLabel("Name").fill("Border North");
+    await page.evaluate(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("fault", "geofences-patch:unauthenticated");
+      history.replaceState({}, "", `${url.pathname}${url.search}`);
+    });
+    await form.getByRole("button", { name: "Save changes" }).click();
+
+    await expect(page.getByRole("dialog", { name: "Your session expired" })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(form).toHaveCount(1);
+    await expect(form.getByLabel("Name")).toHaveValue("Border North");
+    await expect(page.getByText("Sign in, then try again.")).toHaveCount(1);
   });
 
   test("a lost delete reports that it was not deleted and keeps the row", async ({ page }) => {

@@ -80,6 +80,8 @@ test.describe("geofences real drawing", () => {
     await clickMapPoint(page, 0.45, 0.62);
     await page.keyboard.press("Enter");
     await expect(page.getByText("Polygon ready.")).toBeVisible({ timeout: 15_000 });
+    const viewport = await page.evaluate(() => window.__FLEET_TEST_MAP__?.getViewport());
+    if (!viewport) throw new Error("map has no viewport");
 
     await form.getByLabel("Name").fill("Drawn Gate");
     await form.getByRole("button", { name: "Create geofence" }).click();
@@ -95,10 +97,10 @@ test.describe("geofences real drawing", () => {
     expect(ring.length).toBeGreaterThanOrEqual(4);
     expect(ring[0]).toEqual(ring[ring.length - 1]);
     for (const [lon, lat] of ring) {
-      expect(lon).toBeGreaterThanOrEqual(-180);
-      expect(lon).toBeLessThanOrEqual(180);
-      expect(lat).toBeGreaterThanOrEqual(-90);
-      expect(lat).toBeLessThanOrEqual(90);
+      expect(lon).toBeGreaterThanOrEqual(viewport.bounds.west);
+      expect(lon).toBeLessThanOrEqual(viewport.bounds.east);
+      expect(lat).toBeGreaterThanOrEqual(viewport.bounds.south);
+      expect(lat).toBeLessThanOrEqual(viewport.bounds.north);
     }
 
     await page.getByRole("button", { name: "Create geofence" }).click();

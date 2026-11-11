@@ -6,12 +6,22 @@ import {
   expectNoHorizontalScroll,
 } from "./helpers";
 
+// This file drives several full navigations, axe runs and screenshots per test;
+// 30s is too tight for the four-project parallel gate on a loaded host.
+test.describe.configure({ timeout: 60_000 });
+
 async function gotoGeofences(page: Page, search = ""): Promise<void> {
   await page.goto(`/geofences?map=fake${search ? `&${search}` : ""}`);
   await expect(page.getByRole("heading", { name: "Geofences" })).toBeVisible({
     timeout: 15_000,
   });
-  await expect(page.getByTestId("geofences-page")).toContainText("4 geofences");
+  if (search) {
+    await expect(page.getByRole("list", { name: "Geofences" })).toBeVisible({
+      timeout: 15_000,
+    });
+  } else {
+    await expect(page.getByTestId("geofences-page")).toContainText("4 geofences");
+  }
   await expect
     .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.mapLoaded), {
       timeout: 15_000,
@@ -55,6 +65,7 @@ async function drawTriangle(page: Page): Promise<void> {
 
 test.describe("geofences", () => {
   test("lists geofences, selects one and restores the URL", async ({ page }) => {
+    test.setTimeout(60_000);
     await gotoGeofences(page);
     await expect(page.getByRole("list", { name: "Geofences" })).toBeVisible();
     await expect(row(page, "Border")).toBeVisible();
@@ -87,7 +98,7 @@ test.describe("geofences", () => {
     const search = page.getByRole("searchbox", { name: "Search geofences" });
     await search.fill("lekki");
     await expect(page).toHaveURL(/q=lekki/);
-    await expect(page.getByTestId("geofences-page")).toContainText("1 of 4");
+    await expect(page.getByTestId("geofences-page")).toContainText("Showing 1 of 4");
     await expect(row(page, "Lekki Depot")).toBeVisible();
     await expect(row(page, "Border")).toHaveCount(0);
     await captureForReview(page, "08-geofences-filtered");
@@ -95,6 +106,7 @@ test.describe("geofences", () => {
     await search.fill("airport");
     await expect(page.getByText('No geofences match "airport".', { exact: false })).toBeVisible();
     await captureForReview(page, "08-geofences-no-results");
+    await expectNoAxeViolations(page);
     await page.getByRole("button", { name: "Clear search" }).first().click();
     await expect(page.getByTestId("geofences-page")).toContainText("4 geofences");
   });
@@ -177,6 +189,7 @@ test.describe("geofences", () => {
     let write = await lastWrite(page);
     expect(write).toMatchObject({ method: "PATCH", body: { name: "Border North" } });
     expect(Object.keys((write?.body as object) ?? {})).toEqual(["name"]);
+    await expect(row(page, "Border North")).toBeFocused();
 
     await row(page, "Border North").click();
     await page.getByRole("button", { name: "Edit" }).click();
@@ -236,6 +249,7 @@ test.describe("geofences", () => {
     await expect(row(page, "Border")).toHaveCount(0);
     expect(await lastWrite(page)).toMatchObject({ method: "DELETE" });
     await expect(page.getByTestId("geofences-page")).toContainText("3 geofences");
+    await expect(row(page, "Ibadan Customer")).toBeFocused();
 
     await row(page, "Refinery Gate").click();
     await page.getByRole("button", { name: "Delete" }).click();
@@ -288,6 +302,7 @@ test.describe("geofences", () => {
     await gotoGeofences(page, "selected=does-not-exist");
     await expect(page.getByText("This geofence no longer exists.")).toBeVisible();
     await captureForReview(page, "08-geofences-not-found");
+    await expectNoAxeViolations(page);
     await page.getByRole("button", { name: "Clear selection" }).click();
     await expect(page).not.toHaveURL(/selected=/);
   });

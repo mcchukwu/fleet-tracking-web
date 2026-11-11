@@ -31,6 +31,10 @@ function row(page: Page, name: string) {
     .getByRole("button", { name: new RegExp(name) });
 }
 
+// These tests navigate several states and run axe in each; axe can take tens of
+// seconds per state when all four projects run in parallel on a loaded host.
+test.describe.configure({ timeout: 120_000 });
+
 test.describe("geofences layout", { tag: "@theme" }, () => {
   test("keeps a 360px list and fixed 48px rows on desktop", async ({ page }) => {
     test.skip(isMobile(page), "desktop-only layout");
@@ -54,6 +58,24 @@ test.describe("geofences layout", { tag: "@theme" }, () => {
 
     const map = page.getByRole("region", { name: "Geofence map" });
     await expectNoOverlap(panel, map);
+
+    const zoomIn = await page.getByRole("button", { name: "Zoom in" }).boundingBox();
+    expect(zoomIn).not.toBeNull();
+    expect(Math.abs((zoomIn?.width ?? 0) - 36)).toBeLessThanOrEqual(1);
+  });
+
+  test("keeps the split at a 1024px viewport", async ({ page }) => {
+    test.skip(isMobile(page), "desktop-only layout");
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await gotoGeofences(page);
+    const panel = page.getByRole("region", { name: "Geofence list" });
+    const map = page.getByRole("region", { name: "Geofence map" });
+    const box = await panel.boundingBox();
+    expect(Math.abs((box?.width ?? 0) - 360)).toBeLessThanOrEqual(1);
+    await expectNoOverlap(panel, map);
+    await expectNoHorizontalScroll(page);
+    await expectNoAxeViolations(page);
+    await captureForReview(page, "08-geofences-layout-1024");
   });
 
   test("stacks the map above the list on mobile without overflow", async ({ page }) => {
@@ -79,6 +101,7 @@ test.describe("geofences layout", { tag: "@theme" }, () => {
   });
 
   test("the selected state, editor and dialogs keep clear of the map chrome", async ({ page }) => {
+    test.setTimeout(60_000);
     await gotoGeofences(page);
     await row(page, "Border").click();
     await expectNoAxeViolations(page);
@@ -113,6 +136,7 @@ test.describe("geofences layout", { tag: "@theme" }, () => {
   });
 
   test("empty, forbidden, error and 409 states are clean", async ({ page }) => {
+    test.setTimeout(60_000);
     await page.goto("/geofences?map=fake&empty=geofences");
     await expect(page.getByText("No geofences yet")).toBeVisible({ timeout: 15_000 });
     await expectNoAxeViolations(page);
