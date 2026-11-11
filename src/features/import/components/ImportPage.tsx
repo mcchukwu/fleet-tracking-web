@@ -145,7 +145,11 @@ function ImportPageContent() {
       ? "Uploading…"
       : upload.status === "cancelled"
         ? "Upload cancelled"
-        : "";
+        : preview.state === "parsing"
+          ? "Reading file…"
+          : preview.state === "ready" && !shownResult
+            ? "File ready to upload."
+            : "";
 
   const result = shownResult;
 
@@ -193,6 +197,7 @@ function ImportPageContent() {
             onSelect={selectFile}
             onClear={clearFile}
             chooseButtonRef={chooseButtonRef}
+            emphasized={preview.state === "error"}
           />
           <ImportExpectedHeaders
             preview={preview.preview}
@@ -242,7 +247,7 @@ function ImportPageContent() {
               error={upload.error}
               fileName={selectedFile?.name ?? ""}
               onRetry={() => void runUpload()}
-              onChooseAnother={() => chooseButtonRef.current?.focus()}
+              onChooseAnother={() => chooseButtonRef.current?.click()}
               onBack={searchPlate}
               noticeRef={failureRef}
             />

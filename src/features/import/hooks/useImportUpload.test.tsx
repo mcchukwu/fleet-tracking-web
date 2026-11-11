@@ -1,4 +1,4 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../../errors/types";
 import type { ImportResult } from "../../../api/types";
@@ -124,14 +124,22 @@ describe("useImportUpload", () => {
       .mockResolvedValueOnce(result);
     const { result: hook } = renderHook(() => useImportUpload());
 
+    let attempt: Promise<Awaited<ReturnType<typeof hook.current.upload>>> =
+      Promise.resolve({ status: "ignored" });
     act(() => {
-      void hook.current.upload(file);
+      attempt = hook.current.upload(file);
     });
     act(() => {
       hook.current.retry();
     });
 
-    await waitFor(() => expect(hook.current.result).toEqual(result));
+    let outcome: Awaited<typeof attempt> | undefined;
+    await act(async () => {
+      outcome = await attempt;
+    });
+
+    expect(outcome?.status).toBe("success");
+    expect(hook.current.result).toEqual(result);
     expect(mocks.mutateAsync).toHaveBeenCalledTimes(2);
     expect(hook.current.error).toBeNull();
   });

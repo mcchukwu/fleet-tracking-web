@@ -162,6 +162,26 @@ describe("ImportPage", () => {
     expect(mocks.navigate).toHaveBeenCalledWith({ to: "/map" });
   });
 
+  it("announces the parse phase and a ready preview", () => {
+    mocks.preview = { state: "parsing", preview: null, issue: null };
+    const { rerender } = view(<ImportPage />);
+    expect(screen.getByTestId("import-status")).toHaveTextContent(
+      "Reading file…",
+    );
+
+    mocks.preview = { state: "ready", preview, issue: null };
+    rerender(
+      <TooltipProvider>
+        <ToastProvider>
+          <ImportPage />
+        </ToastProvider>
+      </TooltipProvider>,
+    );
+    expect(screen.getByTestId("import-status")).toHaveTextContent(
+      "File ready to upload.",
+    );
+  });
+
   it("announces cancellation without showing an error", async () => {
     mocks.preview = { state: "ready", preview, issue: null };
     mocks.upload = {

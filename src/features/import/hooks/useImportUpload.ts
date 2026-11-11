@@ -60,39 +60,42 @@ export function useImportUpload(): ImportUploadController {
       if (inFlight.current) return { status: "ignored" };
 
       inFlight.current = true;
-      const request = new AbortController();
-      controller.current = request;
       setPending(true);
       setError(null);
       setResult(null);
-      setStatus("uploading");
 
       try {
-        const value = await mutation.mutateAsync({
-          file,
-          signal: request.signal,
-        });
-        setResult(value);
-        setStatus("success");
-        return { status: "success", result: value };
-      } catch (cause) {
-        if (retryRequested.current) return { status: "ignored" };
-        if (request.signal.aborted) {
-          setStatus("cancelled");
-          return { status: "cancelled" };
+        while (true) {
+          const request = new AbortController();
+          controller.current = request;
+          retryRequested.current = false;
+          setStatus("uploading");
+
+          try {
+            const value = await mutation.mutateAsync({
+              file,
+              signal: request.signal,
+            });
+            setResult(value);
+            setStatus("success");
+            return { status: "success", result: value };
+          } catch (cause) {
+            if (retryRequested.current) continue;
+            if (request.signal.aborted) {
+              setStatus("cancelled");
+              return { status: "cancelled" };
+            }
+            const normalized = markUncertain(cause);
+            setError(normalized);
+            setStatus("error");
+            return { status: "error", error: normalized };
+          }
         }
-        const normalized = markUncertain(cause);
-        setError(normalized);
-        setStatus("error");
-        return { status: "error", error: normalized };
       } finally {
         inFlight.current = false;
         controller.current = null;
+        retryRequested.current = false;
         setPending(false);
-        if (retryRequested.current) {
-          retryRequested.current = false;
-          void run(file);
-        }
       }
     },
     [mutation],

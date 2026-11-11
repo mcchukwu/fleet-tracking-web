@@ -68,6 +68,22 @@ describe("ImportFilePicker", () => {
     expect(onClear).toHaveBeenCalledTimes(1);
   });
 
+  it("emphasizes the file action when the preview is invalid", () => {
+    const file = new File(["x"], "fleet.csv", { type: "text/csv" });
+    view(
+      <ImportFilePicker
+        file={file}
+        emphasized
+        onSelect={vi.fn()}
+        onClear={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Choose another file" }).className,
+    ).toContain("bg-accent");
+  });
+
   it("keeps the control visible but inert while disabled", async () => {
     const onSelect = vi.fn();
     view(

@@ -11,6 +11,7 @@ export interface ImportFilePickerProps {
   onSelect: (file: File) => void;
   onClear: () => void;
   chooseButtonRef?: Ref<HTMLButtonElement>;
+  emphasized?: boolean;
 }
 
 export function ImportFilePicker({
@@ -20,6 +21,7 @@ export function ImportFilePicker({
   onSelect,
   onClear,
   chooseButtonRef,
+  emphasized = false,
 }: ImportFilePickerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -75,7 +77,7 @@ export function ImportFilePicker({
         </div>
         <Button
           ref={chooseButtonRef}
-          variant={file ? "secondary" : "primary"}
+          variant={file && !emphasized ? "secondary" : "primary"}
           onClick={choose}
           {...(disabled
             ? { disabledReason: disabledReason ?? "Uploading." }
