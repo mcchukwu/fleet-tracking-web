@@ -31,4 +31,9 @@ describe("SearchInput", () => {
     rerender(<SearchInput value="" onChange={vi.fn()} />);
     expect(screen.getByRole("searchbox")).toHaveValue("");
   });
+
+  it("names the field for the screen it belongs to", () => {
+    render(<SearchInput value="" onChange={vi.fn()} name="driver-search" />);
+    expect(screen.getByRole("searchbox")).toHaveAttribute("name", "driver-search");
+  });
 });

@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { api } from "../instance";
 import { queryKeys } from "../keys";
 import { useAckAlert } from "./alerts";
+import { useCreateDriver, useUpdateDriver } from "./drivers";
 import { useCreateTrip, useUpdateTrip } from "./trips";
 import { useUpdateVehicle } from "./vehicles";
 
@@ -98,5 +99,37 @@ describe("mutation invalidation", () => {
 
     const keys = invalidate.mock.calls.map(([filters]) => filters?.queryKey);
     expect(keys).toContainEqual(queryKeys.drivers);
+  });
+
+  it("refreshes only the driver list after creating one", async () => {
+    vi.spyOn(api, "createDriver").mockResolvedValue({ id: "driver-1" });
+    const queryClient = new QueryClient();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+
+    const { result } = renderHook(() => useCreateDriver(), { wrapper: wrapperFor(queryClient) });
+    await act(async () => {
+      await result.current.mutateAsync({ name: "Ada Obi" });
+    });
+
+    const keys = invalidate.mock.calls.map(([filters]) => filters?.queryKey);
+    expect(keys).toEqual([queryKeys.drivers]);
+  });
+
+  it("refreshes every denormalised driver field after an edit", async () => {
+    vi.spyOn(api, "updateDriver").mockResolvedValue(undefined);
+    const queryClient = new QueryClient();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+
+    const { result } = renderHook(() => useUpdateDriver(), { wrapper: wrapperFor(queryClient) });
+    await act(async () => {
+      await result.current.mutateAsync({ id: "driver-1", update: { phone: "" } });
+    });
+
+    const keys = invalidate.mock.calls.map(([filters]) => filters?.queryKey);
+    expect(keys).toContainEqual(queryKeys.drivers);
+    expect(keys).toContainEqual(queryKeys.liveSnapshot);
+    expect(keys).toContainEqual(["vehicle"]);
+    expect(keys).toContainEqual(["vehicles"]);
+    expect(keys).toContainEqual(["trips"]);
   });
 });

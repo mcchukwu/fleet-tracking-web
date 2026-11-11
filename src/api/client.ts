@@ -9,6 +9,7 @@ import {
 import { normalize } from "../errors/normalize";
 import { recordError, recordSessionCheckSuccess } from "../errors/report";
 import { endpointTimeouts } from "./timeouts";
+import { parseDrivers } from "./drivers";
 import {
   auditResponseSchema,
   errorResponseSchema,
@@ -29,7 +30,6 @@ import {
 import type {
   AlertFilters,
   AuditFilters,
-  Driver,
   DriverInput,
   DriverUpdate,
   GeofenceInput,
@@ -410,8 +410,11 @@ export class FleetApiClient {
     return this.request<void>("DELETE", `/geofences/${id}`, undefined, options);
   }
 
-  drivers(options: RequestOptions = {}) {
-    return this.request<{ data: Driver[] }>("GET", "/drivers", undefined, options);
+  async drivers(options: RequestOptions = {}) {
+    const payload = await this.request<unknown>("GET", "/drivers", undefined, options);
+    const result = this.parse(payload, "/drivers", parseDrivers);
+    this.noteRejectedRows("/drivers", result.rejected);
+    return { data: result.drivers };
   }
 
   createDriver(input: DriverInput, options: RequestOptions = {}) {

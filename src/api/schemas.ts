@@ -73,6 +73,7 @@ export const snapshotVehicleSchema = z.object({
   external_id: z.string().min(1),
   plate: z.string(),
   depot: z.string().optional().default(""),
+  driver_id: z.string().optional(),
   driver_name: z.string().optional(),
   online: z.boolean().optional().default(false),
   lat: z.number().optional(),

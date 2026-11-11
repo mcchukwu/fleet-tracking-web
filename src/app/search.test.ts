@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   alertsSearchSchema,
   auditSearchSchema,
+  driversSearchSchema,
   loginSearchSchema,
   mapSearchSchema,
   playbackSearchSchema,
@@ -113,5 +114,23 @@ describe("trips route search", () => {
   it("drops an unknown status instead of trusting it", () => {
     expect(tripsSearchSchema.parse({ status: "diverted" })).toEqual({});
     expect(tripsSearchSchema.parse({ status: 42 })).toEqual({});
+  });
+});
+
+describe("drivers route search", () => {
+  it("keeps a valid status, search and selected driver", () => {
+    expect(
+      driversSearchSchema.parse({ status: "inactive", q: "ada", driver: "driver-1" }),
+    ).toEqual({ status: "inactive", q: "ada", driver: "driver-1" });
+  });
+
+  it("drops an unknown status and repeated values", () => {
+    expect(driversSearchSchema.parse({ status: "suspended" })).toEqual({});
+    expect(driversSearchSchema.parse({ status: ["active", "inactive"] })).toEqual({});
+    expect(driversSearchSchema.parse({ q: 42 })).toEqual({});
+  });
+
+  it("leaves empty params out of the URL", () => {
+    expect(driversSearchSchema.parse({})).toEqual({});
   });
 });

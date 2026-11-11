@@ -74,6 +74,7 @@ export interface SnapshotVehicle {
   external_id: string;
   plate: string;
   depot: string;
+  driver_id?: string;
   driver_name?: string;
   online: boolean;
   lat?: number;
@@ -152,7 +153,8 @@ export interface Driver {
   name: string;
   phone: string;
   licence: string;
-  status: "active" | "inactive";
+  // The server may add statuses; the badge falls back to a neutral unknown state.
+  status: string;
   vehicles: number;
 }
 

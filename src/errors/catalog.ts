@@ -27,6 +27,7 @@ const safeServerCodes = new Set([
   "invalid_input",
   "invalid_range",
   "invalid_request",
+  "invalid_status",
   "rate_limited",
   "validation_failed",
 ]);

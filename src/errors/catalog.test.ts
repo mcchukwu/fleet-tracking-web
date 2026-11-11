@@ -58,9 +58,12 @@ describe("error catalog", () => {
     expect(isSafeServerCode("geofence_has_events")).toBe(true);
     expect(isSafeServerCode("invalid_request")).toBe(true);
     expect(isSafeServerCode("invalid_range")).toBe(true);
+    expect(isSafeServerCode("invalid_status")).toBe(true);
     expect(isSafeServerCode("internal")).toBe(false);
     const safe = errorCopy(error({ kind: "conflict", code: "geofence_has_events", serverMessage: "It has events." }));
     expect(safe.detail).toBe("It has events.");
+    const status = errorCopy(error({ kind: "validation", code: "invalid_status", serverMessage: "status must be active or inactive" }));
+    expect(status.detail).toBe("status must be active or inactive");
     const unsafe = errorCopy(error({ kind: "server", serverMessage: "panic: nil pointer" }));
     expect(unsafe.detail).not.toContain("panic");
   });

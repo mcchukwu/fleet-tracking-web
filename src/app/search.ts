@@ -33,8 +33,9 @@ export const tripsSearchSchema = z.object({
 });
 
 export const driversSearchSchema = z.object({
-  status: text,
+  status: z.enum(["active", "inactive"]).optional().catch(undefined),
   q: text,
+  driver: text,
 });
 
 export const geofencesSearchSchema = z.object({
@@ -65,4 +66,5 @@ export const loginSearchSchema = z.object({
 export type MapSearch = z.infer<typeof mapSearchSchema>;
 export type AlertsSearch = z.infer<typeof alertsSearchSchema>;
 export type TripsSearch = z.infer<typeof tripsSearchSchema>;
+export type DriversSearch = z.infer<typeof driversSearchSchema>;
 export type PlaybackSearch = z.infer<typeof playbackSearchSchema>;

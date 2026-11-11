@@ -11,6 +11,8 @@ interface SearchInputProps {
   placeholder?: string;
   /** The map sheet header uses a visually hidden label and no shortcut hint. */
   compact?: boolean;
+  /** Keeps the field's name meaningful on screens other than the map. */
+  name?: string;
 }
 
 export function SearchInput({
@@ -19,6 +21,7 @@ export function SearchInput({
   label = "Search vehicles",
   placeholder = "Plate or IMEI",
   compact = false,
+  name = "vehicle-search",
 }: SearchInputProps) {
   const [draft, setDraft] = useState(value);
   const [lastValue, setLastValue] = useState(value);
@@ -39,7 +42,7 @@ export function SearchInput({
   return (
     <SearchField
       type="search"
-      name="vehicle-search"
+      name={name}
       label={label}
       hideLabel={compact}
       placeholder={placeholder}

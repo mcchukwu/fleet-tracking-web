@@ -102,6 +102,24 @@ describe("contract schemas", () => {
     expect(result.rejected).toBe(0);
   });
 
+  it("keeps driver_id and driver_name so the drawer can join assignments", () => {
+    const result = parseSnapshot({ data: [vehiclesFixture[0]] });
+    expect(result.vehicles[0]?.driver_id).toBe(
+      "5b77edaf-c0c6-4ba4-b0c7-d2b6422c598d",
+    );
+    expect(result.vehicles[0]?.driver_name).toBe("Adebayo Okafor");
+  });
+
+  it("accepts a snapshot row without driver_id", () => {
+    const { driver_id: _driverId, ...withoutDriver } = vehiclesFixture[0] ?? {};
+    expect(vehiclesFixture[0]?.driver_id).toBe(
+      "5b77edaf-c0c6-4ba4-b0c7-d2b6422c598d",
+    );
+    const result = parseSnapshot({ data: [withoutDriver] });
+    expect(result.vehicles).toHaveLength(1);
+    expect(result.vehicles[0]?.driver_id).toBeUndefined();
+  });
+
   it("rejects a snapshot envelope that is not a data array", () => {
     expect(() => parseSnapshot({ rows: [] })).toThrow();
     expect(() => parseSnapshot({ data: {} })).toThrow();
