@@ -689,3 +689,31 @@ The health payload has no `last_seen_at`, no timestamp and no device field, alth
 ## 2026-11-12: Health status is a dot plus text, and Can't reach the API is a title override
 
 Every item has a 16px status dot with an icon and an accessible name (`Healthy`, `Warning`, `Critical`) plus the label and value, so status is never colour alone. The dot composes the existing status tokens; no token was added. Non-healthy items sort first inside their group, and the page summary is the only live region (`All systems healthy` or `N issues need attention`). The Dependencies and Fleet strips use the default `Stat`; Ingest uses the compact `Stat` because eight-digit cumulative counters would wrap at 390px, and it includes the payload's undocumented `redis_errors` and two cold-path counters so the screen cannot report all-green while those are rising. `ErrorState` gained an optional `titleOverride` used only by this page for `Can't reach the API`; the catalog's detail, action and diagnostics still apply, and contract errors keep their own title. The screen is read-only for every role and has no stat links, because navigating away would imply thresholds the API does not define.
+
+## 2026-11-12: Audit is an untyped endpoint, so the parser is the contract
+
+Probed against staging on 2026-11-12: `GET /audit` returns `{ data: AuditEntry[] }` with `id` (number), `action`, `entity`, `entity_id`, `user_name`, `metadata` (object) and `created_at` (RFC 3339 UTC). `openapi.yaml` declares only `type: object`; there is no entry schema, no action or entity enum and no actor id. Admin and security get `200`; dispatcher and viewer get `403 forbidden`; no session gets `401 unauthorized`. The client therefore validates row by row through `parseAuditResponse`: `id`, `action`, `entity` and a valid `created_at` are required, `entity_id` and `user_name` normalise to `""`, and `metadata` normalises to `{}`. A malformed row is dropped and counted; a page where every non-empty row is malformed raises `contract`. The strict `auditResponseSchema` stays for the committed fixture and schema tests. Trade-off: a bad row can be invisible in the table, but the alternative was blanking a security log because one new action row changed shape.
+
+## 2026-11-12: Audit filtering is client-side, paging is 100 rows and there is no total
+
+Staging ignores `action`, `entity` and `q`, accepts `limit` and `offset`, defaults to 100 rows, caps customer use at 500 and returns no total or count header. It also silently falls back to 100 for `limit=501`, `limit=abc` and other overly large or malformed values. The page sends 100-row pages, offers `Load more` only when the last page was exactly full, never renders a total, and filters by action and text over the loaded pages. The action options are derived from the loaded rows and an active value stays in the list after a refresh removes it. The empty state distinguishes no data, no results across all loaded pages, and no matches with more pages available. Trade-off: a match older than the loaded pages requires `Load more`; that is the honest behaviour of an API with no filters and no total.
+
+## 2026-11-12: Audit refreshes on open, focus and Refresh, never by polling
+
+An audit log is a security record, not a live feed. `staleTime` is zero and the query refetches on mount, on window focus and on the Refresh button; there is no interval and no socket subscription. A page response is flattened by `String(id)`, preserving the newest copy, because a refresh shifts offsets and overlapping pages would otherwise duplicate rows. The screen is read-only, uses no CSRF and has no mutation or reconcile path. Trade-off: a brand-new entry waits for a focus or a click instead of appearing by itself.
+
+## 2026-11-12: Audit deep links resolve from loaded rows, then one 500-row lookup
+
+There is no `GET /audit/{id}`. `?entry=` first resolves from the loaded feed, then from a single `limit=500&offset=0` lookup. An id outside the newest 500 rows gets a not-found drawer with `It may be older than the 500 most recent entries.` rather than a route 404. The drawer is the shared page panel; it shows `user_name` exactly as returned and never invents an actor email or role because the entry has none. Trade-off: the oldest entries cannot be deep-linked until a single-entry endpoint exists; the limitation is in `docs/backlog.md`.
+
+## 2026-11-12: Audit is deliberately absent from offline persistence
+
+The audit screen is excluded from the Slice 13 persisted-query allowlist. In the same session, cached pages stay visible offline with the stale treatment; a cold offline load shows `Audit isn't available offline` and offers no failing Retry. Refresh and Load more stay visible but disabled with `You're offline.`. Trade-off: an operator cannot read the security log after a reload without a connection, which avoids persisting tenant-wide security records on a shared device.
+
+## 2026-11-12: Audit colour carries no category
+
+The table is neutral: text, muted secondary values, neutral copy affordances, and accent only for focus and selection. Action and entity types are not colour-coded because colour in this system means status or severity, and the audit log has neither. Unknown actions and entities are humanised from dots and underscores (`user.role_change` becomes `User role change`) while the raw token stays in the cell tooltip and the drawer. Trade-off: the screen reads as a dense log rather than a dashboard, which is its job.
+
+## 2026-11-12: A drawer that mounts open defers its focus return
+
+The audit page renders the shared page drawer only while `?entry=` resolves, so the drawer mounts already open. In development, StrictMode runs that open effect as setup → cleanup → setup; the cleanup's `returnFocus` handed focus back to the originating row and overrode the second setup's close-button focus. The shared `Drawer` now schedules the focus return on the next tick and cancels it when the open effect runs again, so a real close still restores focus and a mounted-open drawer keeps focus on its close button. Trade-off: focus return is one tick later, and the Drawer tests await it; this is a shared `src/ui` change, so the full e2e suite is a merge gate for this slice.
