@@ -165,4 +165,36 @@ describe("useSystemHealthFeed", () => {
     expect(result.current.cancelled).toBe(false);
     expect(result.current.data).toBeDefined();
   });
+
+  it("keeps the poll stopped after a cancel until Retry", async () => {
+    const health = vi
+      .spyOn(api, "systemHealth")
+      .mockImplementation(
+        (options = {}) =>
+          new Promise((_resolve, reject) => {
+            options.signal?.addEventListener("abort", () => {
+              reject(new DOMException("Aborted", "AbortError"));
+            });
+          }),
+      );
+    const { result } = renderHook(() => useSystemHealthFeed(), {
+      wrapper: wrapperFor(client()),
+    });
+
+    await flush();
+    expect(health).toHaveBeenCalledTimes(1);
+    act(() => result.current.cancel());
+    await flush();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(SYSTEM_HEALTH_POLL_MS * 3);
+    });
+    expect(health).toHaveBeenCalledTimes(1);
+
+    health.mockResolvedValue(systemHealthFixture);
+    act(() => result.current.refetch());
+    await flush();
+    expect(health).toHaveBeenCalledTimes(2);
+    expect(result.current.data).toBeDefined();
+  });
 });

@@ -32,16 +32,17 @@ export function useSystemHealthFeed(): SystemHealthFeed {
   const wasVisible = useRef(visible);
 
   const query = useSystemHealth({
-    enabled: online,
-    refetchInterval: online && visible ? SYSTEM_HEALTH_POLL_MS : false,
+    enabled: online && !cancelled,
+    refetchInterval:
+      online && visible && !cancelled ? SYSTEM_HEALTH_POLL_MS : false,
   });
   const { refetch } = query;
   const dataUpdatedAt = query.dataUpdatedAt;
 
   useEffect(() => {
-    if (visible && !wasVisible.current && online) void refetch();
+    if (visible && !wasVisible.current && online && !cancelled) void refetch();
     wasVisible.current = visible;
-  }, [visible, online, refetch]);
+  }, [visible, online, cancelled, refetch]);
 
   const lastUpdated = useRef(dataUpdatedAt);
   useEffect(() => {
