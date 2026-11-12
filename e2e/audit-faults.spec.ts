@@ -79,6 +79,7 @@ test.describe("audit faults", () => {
   });
 
   test("a cached refresh error keeps the rows", async ({ page }) => {
+    const errors = collectErrors(page);
     await page.goto("/audit");
     await expect(page.getByTestId("audit-page")).toContainText("12 entries loaded");
 
@@ -88,15 +89,18 @@ test.describe("audit faults", () => {
     await expect(page.getByText("Couldn't refresh")).toBeVisible({
       timeout: 15_000,
     });
+    await expect(page.getByText(/Stale ·/)).toBeVisible();
     await expect(page.getByTestId("audit-page")).toContainText("12 entries loaded");
     await expect(
       page.getByRole("row").filter({ hasText: "Demo Admin" }).first(),
     ).toBeVisible();
     await expectNoAxeViolations(page);
     await captureForReview(page, "12-audit-stale");
+    expect(unexpectedConsole(errors)).toEqual([]);
   });
 
   test("a slow first load shows working, long and cancelled states", async ({ page }) => {
+    const errors = collectErrors(page);
     test.setTimeout(60_000);
     await page.clock.install();
     await gotoFault(page, "audit:slow");
@@ -110,20 +114,25 @@ test.describe("audit faults", () => {
     await expect(page.getByText("Still working…")).toHaveCount(0);
     await expect(page.getByText("Taking longer than usual")).toHaveCount(0);
     await expect(page.getByText("Loading cancelled")).toBeVisible();
+    await expect(page.getByText("No audit entries yet")).toHaveCount(0);
     await expect(
       page.getByRole("button", { name: "Retry", exact: true }),
     ).toBeVisible();
+    expect(unexpectedConsole(errors)).toEqual([]);
   });
 
   test("a forbidden response shows the forbidden state", async ({ page }) => {
+    const errors = collectErrors(page);
     await gotoFault(page, "audit:forbidden");
     await expect(page.getByText("You don't have access to this.")).toBeVisible();
     await expect(page.getByRole("link", { name: "Go back" })).toBeVisible();
     await expect(page.getByTestId("audit-page")).not.toContainText("Demo Admin");
     await expectNoAxeViolations(page);
+    expect(unexpectedConsole(errors)).toEqual([]);
   });
 
   test("a malformed body is a contract failure with diagnostics", async ({ page }) => {
+    const errors = collectErrors(page);
     await gotoFault(page, "audit:malformed");
     await expect(
       page.getByText("Unexpected response from the server").first(),
@@ -134,9 +143,11 @@ test.describe("audit faults", () => {
     await expect(page.getByText(/Unexpected token|JSON/)).toHaveCount(0);
     await expect(page.locator("body")).not.toContainText(/\.tsx:\d+/);
     await expectNoAxeViolations(page);
+    expect(unexpectedConsole(errors)).toEqual([]);
   });
 
   test("offline without a cache shows the neutral offline state", async ({ page }) => {
+    const errors = collectErrors(page);
     await page.addInitScript(() => {
       Object.defineProperty(navigator, "onLine", {
         configurable: true,
@@ -149,9 +160,11 @@ test.describe("audit faults", () => {
     ).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole("button", { name: "Retry" })).toHaveCount(0);
     await expectNoAxeViolations(page);
+    expect(unexpectedConsole(errors)).toEqual([]);
   });
 
   test("a session expiry shows the dialog and keeps the page", async ({ page }) => {
+    const errors = collectErrors(page);
     await page.goto(
       `/audit?fault=${encodeURIComponent("audit:unauthenticated")}`,
     );
@@ -164,6 +177,7 @@ test.describe("audit faults", () => {
       .toBe(true);
     expect(new URL(page.url()).pathname).toBe("/audit");
     await expect(page.getByTestId("audit-page")).toHaveCount(1);
+    expect(unexpectedConsole(errors)).toEqual([]);
   });
 
   test("a render crash is contained by the route boundary", async ({ page }) => {

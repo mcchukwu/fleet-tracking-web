@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuditFeedQuery } from "../../../api/hooks/audit";
 import { queryKeys } from "../../../api/keys";
 import type { AuditEntry } from "../../../api/types";
-import { useConnection } from "../../../stores/connection";
+import { useConnectionStore } from "../../../stores/connection";
 import { flattenAuditPages } from "../lib/audit";
 
 export interface AuditFeedController {
@@ -23,7 +23,7 @@ export interface AuditFeedController {
 }
 
 export function useAuditFeed(): AuditFeedController {
-  const { network } = useConnection();
+  const network = useConnectionStore((state) => state.network);
   const online = network !== "offline";
   const query = useAuditFeedQuery(online);
   const queryClient = useQueryClient();
@@ -34,7 +34,7 @@ export function useAuditFeed(): AuditFeedController {
     cancelMarker !== null && query.dataUpdatedAt <= cancelMarker;
 
   const entries = useMemo(
-    () => flattenAuditPages(query.data?.pages ?? []),
+    () => flattenAuditPages((query.data?.pages ?? []).map((page) => page.data)),
     [query.data?.pages],
   );
 

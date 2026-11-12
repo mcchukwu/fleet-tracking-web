@@ -233,6 +233,7 @@ describe("AuditPage", () => {
 
   it("keeps cached rows under Couldn't refresh", () => {
     mocks.feed = feed({
+      dataUpdatedAt: Date.parse("2026-11-12T14:05:00Z"),
       error: {
         kind: "server",
         retryable: true,
@@ -244,6 +245,7 @@ describe("AuditPage", () => {
     renderPage();
 
     expect(screen.getByText("Couldn't refresh")).toBeVisible();
+    expect(screen.getByText(/Stale ·/)).toBeVisible();
     expect(screen.getByText("Demo Admin")).toBeVisible();
   });
 
@@ -257,6 +259,7 @@ describe("AuditPage", () => {
     renderPage();
 
     expect(screen.getByText("Loading cancelled")).toBeVisible();
+    expect(screen.queryByText("No audit entries yet")).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(mocks.feed.refetch).toHaveBeenCalled();
   });
@@ -267,11 +270,14 @@ describe("AuditPage", () => {
     await userEvent.click(
       screen.getByRole("button", { name: /Open audit entry/i }),
     );
-    expect(mocks.navigate).toHaveBeenLastCalledWith({
-      to: "/audit",
-      search: { entry: 207 },
-      replace: false,
-    });
+    const lastCall = mocks.navigate.mock.lastCall?.[0] as {
+      to: string;
+      search: (previous: Record<string, unknown>) => Record<string, unknown>;
+      replace: boolean;
+    };
+    expect(lastCall.to).toBe("/audit");
+    expect(lastCall.replace).toBe(false);
+    expect(lastCall.search({ q: "demo" })).toEqual({ q: "demo", entry: 207 });
   });
 
   it("restores a deep-linked entry from the loaded rows", () => {

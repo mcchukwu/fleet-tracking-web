@@ -9,7 +9,9 @@ import { useAuditFeed } from "./useAuditFeed";
 
 const mocks = vi.hoisted(() => ({
   query: {
-    data: undefined as { pages: AuditEntry[][] } | undefined,
+    data: undefined as
+      | { pages: { data: AuditEntry[]; received: number }[] }
+      | undefined,
     dataUpdatedAt: 0,
     isPending: false,
     isFetching: false,
@@ -61,7 +63,10 @@ describe("useAuditFeed", () => {
 
   it("exposes the loaded count, deduplicates overlapping pages and keeps hasMore", () => {
     mocks.query.data = {
-      pages: [[row(9), row(8)], [row(8, "vehicle.update"), row(7)]],
+      pages: [
+        { data: [row(9), row(8)], received: 2 },
+        { data: [row(8, "vehicle.update"), row(7)], received: 2 },
+      ],
     };
     mocks.query.hasNextPage = true;
 

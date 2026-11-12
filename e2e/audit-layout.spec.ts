@@ -96,6 +96,40 @@ test.describe("audit layout", { tag: "@theme" }, () => {
     await captureForReview(page, "12-audit-list");
   });
 
+  test("keeps the header height while the first page loads", async ({ page }) => {
+    const headerHeight = () =>
+      page
+        .getByTestId("audit-page")
+        .locator("header")
+        .evaluate((element) => Math.round(element.getBoundingClientRect().height));
+
+    await page.goto("/audit?fault=audit%3Aslow");
+    await expect(
+      page.getByRole("heading", { name: "Audit", level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+    const loading = await headerHeight();
+
+    await gotoAudit(page);
+    await waitForTable(page);
+    expect(await headerHeight()).toBe(loading);
+  });
+
+  test("keeps the filter row on one line at desktop widths", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await gotoAudit(page);
+    await waitForTable(page);
+
+    const action = await page.getByLabel("Action").boundingBox();
+    const reset = await page.getByRole("button", { name: "Reset" }).boundingBox();
+    expect(action, "the action select has no box").not.toBeNull();
+    expect(reset, "the reset button has no box").not.toBeNull();
+    if (action && reset) {
+      expect(reset.y).toBeLessThan(action.y + action.height);
+      expect(reset.y + reset.height).toBeGreaterThan(action.y);
+      expect(reset.x).toBeGreaterThan(action.x + action.width);
+    }
+  });
+
   test("stacks the filters and scrolls only the table on a narrow page", async ({
     page,
   }) => {

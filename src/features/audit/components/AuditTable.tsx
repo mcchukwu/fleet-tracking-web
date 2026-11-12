@@ -147,6 +147,7 @@ export interface AuditTableProps {
   loadingMore: boolean;
   offline?: boolean;
   staleLabel?: string;
+  cancelled?: boolean;
   emptyReason: AuditEmptyReason | null;
   onClearFilters: () => void;
   forbiddenAction?: ReactNode;
@@ -166,6 +167,7 @@ export function AuditTable({
   loadingMore,
   offline = false,
   staleLabel,
+  cancelled = false,
   emptyReason,
   onClearFilters,
   forbiddenAction,
@@ -281,7 +283,17 @@ export function AuditTable({
     [onOpen],
   );
 
-  const empty = emptyReason === "offline" ? (
+  const empty = cancelled ? (
+    <EmptyState
+      title="Loading cancelled"
+      description="The audit log request was cancelled."
+      action={
+        <Button size="sm" onClick={onRetry}>
+          Retry
+        </Button>
+      }
+    />
+  ) : emptyReason === "offline" ? (
     <EmptyState
       title="Audit isn't available offline"
       description="Reconnect to read the audit log. It isn't stored on this device."
@@ -291,7 +303,12 @@ export function AuditTable({
       title="No matches in the loaded log"
       description="Older entries may match. Load more to search further."
       action={
-        <Button size="sm" onClick={onLoadMore} loading={loadingMore}>
+        <Button
+          size="sm"
+          onClick={onLoadMore}
+          loading={loadingMore}
+          {...(offline ? { disabledReason: "You're offline." } : {})}
+        >
           Load more
         </Button>
       }

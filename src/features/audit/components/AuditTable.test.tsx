@@ -149,6 +149,35 @@ describe("AuditTable", () => {
     expect(clear).toHaveBeenCalled();
   });
 
+  it("shows only the cancelled state after a cancelled first load", () => {
+    const retry = vi.fn();
+    renderTable({
+      entries: [],
+      state: "empty",
+      cancelled: true,
+      onRetry: retry,
+      emptyReason: "no-data",
+    });
+
+    expect(screen.getByText("Loading cancelled")).toBeVisible();
+    expect(screen.queryByText("No audit entries yet")).not.toBeInTheDocument();
+  });
+
+  it("explains why the empty-filter Load more cannot run offline", () => {
+    renderTable({
+      entries: [],
+      state: "empty",
+      hasMore: true,
+      offline: true,
+      emptyReason: "no-loaded-matches",
+    });
+
+    expect(screen.getByRole("button", { name: "Load more" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+  });
+
   it("shows a full error with Retry when nothing is cached", () => {
     renderTable({
       entries: [],

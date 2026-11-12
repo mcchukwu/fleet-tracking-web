@@ -1,11 +1,13 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useAuditLookup } from "../../../api/hooks/audit";
 import { normalize } from "../../../errors/normalize";
 import { formatClockTime, formatCount } from "../../../lib/format";
+import { useDelayedFlag } from "../../../lib/useDelayedFlag";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import type { AuditSearch } from "../../../app/search";
 import { Button } from "../../../ui/Button";
+import { Skeleton } from "../../../ui/StatePanel";
 import type { StateBoundaryState } from "../../../ui/StateBoundary";
 import { useAuditFeed } from "../hooks/useAuditFeed";
 import {
@@ -99,6 +101,17 @@ function AuditPageContent() {
     void navigate({ to: "/audit", search: { ...search, ...patch }, replace });
   }
 
+  const openEntry = useCallback(
+    (id: string | number) => {
+      void navigate({
+        to: "/audit",
+        search: (previous) => ({ ...previous, entry: id }),
+        replace: false,
+      });
+    },
+    [navigate],
+  );
+
   function changeFilters(patch: Partial<AuditFilterValues>): void {
     const next: Partial<AuditSearch> = { entry: undefined };
     if ("action" in patch) next.action = patch.action ?? undefined;
@@ -143,10 +156,18 @@ function AuditPageContent() {
     : `${formatCount(feed.loadedCount)} ${
         feed.loadedCount === 1 ? "entry" : "entries"
       } loaded`;
-  const showCount =
-    state !== "forbidden" &&
-    !feed.isLoading &&
-    !(state === "error" && feed.loadedCount === 0);
+  // Reserve the count line in every state, so the first page cannot push the
+  // header (and the table below it) down when it arrives.
+  const showCountLine = state !== "forbidden";
+  const showCountText =
+    !feed.isLoading && !(state === "error" && feed.loadedCount === 0);
+  const countLoading = useDelayedFlag(feed.isLoading);
+  const staleLabel =
+    feed.loadedCount > 0 &&
+    (offline || state === "error") &&
+    feed.dataUpdatedAt > 0
+      ? formatClockTime(feed.dataUpdatedAt)
+      : undefined;
 
   return (
     <div
@@ -156,8 +177,14 @@ function AuditPageContent() {
       <header className="flex shrink-0 flex-wrap items-end justify-between gap-2">
         <div className="flex flex-col gap-1">
           <h1 className="text-text text-lg font-semibold">Audit</h1>
-          {showCount ? (
-            <p className="text-muted text-sm tabular-nums">{countLabel}</p>
+          {showCountLine ? (
+            <div className="flex h-5 items-center">
+              {countLoading ? (
+                <Skeleton className="h-3 w-24" />
+              ) : showCountText ? (
+                <p className="text-muted text-sm tabular-nums">{countLabel}</p>
+              ) : null}
+            </div>
           ) : null}
         </div>
         {state !== "forbidden" ? (
@@ -181,29 +208,19 @@ function AuditPageContent() {
         className="shrink-0"
       />
 
-      {feed.cancelled && feed.loadedCount === 0 ? (
-        <output className="border-border bg-surface-2 mb-3 flex items-center justify-between gap-2 rounded-md border px-3 py-2">
-          <span className="text-muted text-sm">Loading cancelled</span>
-          <Button size="sm" variant="ghost" onClick={feed.refetch}>
-            Retry
-          </Button>
-        </output>
-      ) : null}
-
       <AuditTable
         entries={entries}
         state={state}
         error={closedError}
         onRetry={feed.refetch}
         onCancelLoading={feed.cancel}
-        onOpen={(id) => updateSearch({ entry: id }, false)}
+        onOpen={openEntry}
         onLoadMore={feed.loadMore}
         hasMore={feed.hasMore}
         loadingMore={feed.isFetchingNextPage}
         offline={offline}
-        {...(offline && feed.dataUpdatedAt
-          ? { staleLabel: formatClockTime(feed.dataUpdatedAt) }
-          : {})}
+        cancelled={feed.cancelled}
+        {...(staleLabel ? { staleLabel } : {})}
         emptyReason={emptyReason}
         onClearFilters={resetFilters}
         selectedId={selectedId}

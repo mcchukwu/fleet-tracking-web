@@ -53,6 +53,10 @@ async function appendEntry(page: Page): Promise<void> {
 }
 
 test.describe("audit", () => {
+  // The first navigations pay the Vite cold compile; under parallel load the
+  // suite needs more than Playwright's 30 s default (A9 flaky pattern).
+  test.describe.configure({ timeout: 60_000 });
+
   test("admin and security reach the log; dispatcher and viewer are blocked", async ({
     page,
   }) => {
@@ -191,7 +195,6 @@ test.describe("audit", () => {
   test("pages a large log 100, 100 and 5 rows", async ({ page }) => {
     await setScenario(page, "large");
     await asRole(page, "admin");
-    test.setTimeout(60_000);
 
     await expect(page.getByTestId("audit-page")).toContainText("100 entries loaded");
     await page.getByRole("button", { name: "Load more" }).click();
@@ -199,6 +202,30 @@ test.describe("audit", () => {
     await page.getByRole("button", { name: "Load more" }).click();
     await expect(page.getByTestId("audit-page")).toContainText("205 entries loaded");
     await expect(page.getByRole("button", { name: "Load more" })).toHaveCount(0);
+  });
+
+  test("an empty-filter Load more is disabled with a reason while offline", async ({
+    page,
+    context,
+  }) => {
+    await setScenario(page, "large");
+    await asRole(page, "admin");
+    await expect(page.getByTestId("audit-page")).toContainText("100 entries loaded");
+
+    await page.getByLabel("Search audit log").fill("zzzz-nothing");
+    await expect(page.getByText("No matches in the loaded log")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Load more" })).not.toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+
+    await context.setOffline(true);
+    await expect(page.getByRole("button", { name: "Load more" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+      { timeout: 15_000 },
+    );
+    await context.setOffline(false);
   });
 
   test("refresh picks up a new entry without duplicating rows", async ({ page }) => {

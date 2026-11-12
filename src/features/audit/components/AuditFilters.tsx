@@ -3,12 +3,7 @@ import { Button } from "../../../ui/Button";
 import { SearchInput } from "../../../ui/SearchInput";
 import { Select } from "../../../ui/Select";
 import { cn } from "../../../ui/cn";
-import type { AuditActionOption } from "../lib/audit";
-
-export interface AuditFilterValues {
-  action: string | null;
-  q: string;
-}
+import type { AuditActionOption, AuditFilterValues } from "../lib/audit";
 
 export interface AuditFiltersProps {
   values: AuditFilterValues;
@@ -55,7 +50,7 @@ export function AuditFilters({
         />
       </div>
 
-      <div className="col-span-2 flex items-end justify-end">
+      <div className="col-span-2 flex items-end justify-end sm:col-span-1">
         <Button
           size="sm"
           variant="ghost"
