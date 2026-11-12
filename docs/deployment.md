@@ -28,7 +28,7 @@ Vercel can proxy the HTTP calls with a rewrite, but a WebSocket must terminate i
 ```bash
 npm ci
 npm run check
-npm run build
+npm run build           # runs scripts/check-map-pack.sh first
 npx wrangler login
 npx wrangler deploy
 ```
@@ -66,10 +66,13 @@ Workers Builds installs dependencies from the lockfile before running the build 
 | Variable                | Required | Notes                                                                                                                          |
 | ----------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `VITE_MAPTILER_API_KEY` | No       | Enables Streets and Satellite. Restrict the key by domain in MapTiler. Without it the app uses the OpenFreeMap standard style. |
-| `VITE_APP_VERSION`      | No       | Set from `WORKERS_CI_COMMIT_SHA` in the build command for error reports.                                                       |
+| `VITE_APP_VERSION`      | No       | Set from `WORKERS_CI_COMMIT_SHA` in the build command for error reports and the offline cache buster.                           |
+| `VITE_MAP_PMTILES_URL`  | No       | `/map/fleet.pmtiles` enables the offline MapLibre basemap. The pack and glyphs/sprites must exist in `public/map/`.               |
 | `VITE_API_BASE`         | No       | Must stay unset. Setting it moves the API to another origin and breaks cookies, CORS and the socket.                           |
 
 `VITE_*` values are compiled into the bundle. Changing one requires a rebuild.
+
+`public/_headers` keeps `index.html`, `sw.js`, the Workbox runtime and the manifest out of long-lived caches while hashed `/assets/*` stay immutable. `/map/*` is cached for a day; the service worker's PMTiles cache name includes `VITE_APP_VERSION`, so a deploy fetches a fresh pack.
 
 ## Runtime variables
 

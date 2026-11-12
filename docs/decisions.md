@@ -717,3 +717,35 @@ The table is neutral: text, muted secondary values, neutral copy affordances, an
 ## 2026-11-12: A drawer that mounts open defers its focus return
 
 The audit page renders the shared page drawer only while `?entry=` resolves, so the drawer mounts already open. In development, StrictMode runs that open effect as setup → cleanup → setup; the cleanup's `returnFocus` handed focus back to the originating row and overrode the second setup's close-button focus. The shared `Drawer` now schedules the focus return on the next tick and cancels it when the open effect runs again, so a real close still restores focus and a mounted-open drawer keeps focus on its close button. Trade-off: focus return is one tick later, and the Drawer tests await it; this is a shared `src/ui` change, so the full e2e suite is a merge gate for this slice.
+
+## 2026-11-12: Offline means read-only, with one persisted cache
+
+Slice 13 persists the allowlisted query cache to IndexedDB and never queues writes. Mutations use `networkMode: "always"` plus a client guard that throws the catalogued `offline` error before `fetch`, so an offline write cannot wait for the connection and replay later. Trade-off: an operator cannot capture a change while disconnected, which avoids stale CSRF tokens, conflicting edits and an unbounded queue on a shared device.
+
+## 2026-11-12: Cache buster and 24-hour expiry
+
+The persisted payload carries `${VITE_APP_VERSION}:1` and a `savedAt` timestamp. A deploy or a schema change discards the cache; anything older than 24 hours is deleted. Restored data keeps its original `updatedAt`, so a cold offline screen shows the stale treatment instead of pretending to be fresh. Trade-off: a cached view disappears after a day even if the device never reconnects.
+
+## 2026-11-12: The offline profile is deliberately unverified
+
+A successful login or `/me` stores only `id`, `tenant_id`, `email`, `name` and `role`. A cold offline boot renders the shell from that profile with `sessionVerified: false`; reconnect verifies with `/me` once and `401` goes through the existing expiry dialog. The CSRF token stays in memory and is never persisted. Trade-off: an operator with a stored profile can read cached tenant data offline even after the 12-hour session has expired, and is forced to re-authenticate on the next connection.
+
+## 2026-11-12: Connectivity is probe-backed, not `navigator.onLine`
+
+Browser events only trigger a probe. A 15-second `GET /api/v1/me`, a failed fetch and any HTTP response drive the single network state. Queries use `networkMode: "online"` so cached data is the offline answer and no first request fires. Trade-off: recovery can take up to the probe interval when the browser fires no `online` event; the visible state stays honest.
+
+## 2026-11-12: The PWA update prompt is the existing banner
+
+The slice spec says "toast", but design-system §11.5 and error-handling §9 already define one update banner with a Reload action, shared with chunk-load recovery. `onNeedRefresh` raises that banner and nothing reloads automatically. Trade-off: the same surface communicates both a new deploy and a failed lazy chunk, which is truthful because both mean "reload to get the current build".
+
+## 2026-11-12: Offline basemap tokens and a committed pack
+
+The local Protomaps style needs more colours than the status `MapTokens`. Ten desaturated `--basemap-*` tokens were added (light and dark) and reach the adapter through `MapTokens.basemap`; no hex lives in provider code. The regional pack (`2.4,4.2,5.2,8.6`, max zoom 12) measured 11 MB and is committed, so a clean checkout and the PWA suite build and run offline without Go or network. Trade-off: the repository gains 11 MB, and glyph coverage stops at U+07FF; both are recorded in `docs/offline.md`.
+
+## 2026-11-12: One mutation gate
+
+`useCanMutate(capability, roleReason)` combines role, network and session verification in that precedence. Pages use `roleAllowed` for forbidden states and `blockedBy` to keep the neutral offline notice distinct from a role refusal; every mutating control uses `allowed` and `reason`. `npm run guard` rejects new `useCan("mutate"|"ack")` calls outside the hook. Trade-off: a page that needs a capability-specific role sentence passes it as the second argument, which keeps the copy local without duplicating the gate.
+
+## 2026-11-12: PWA tests run against a production preview
+
+Service workers, Workbox precache and the PMTiles range route do not exist under the MSW dev server, so `playwright.pwa.config.ts` builds and serves `dist` on port 4174 with `VITE_MAP_PMTILES_URL=/map/test.pmtiles`. The main suite ignores `*.pwa.spec.ts`. Chromium covers the real WebGL map; WebKit covers shell, cache, banner and mutation behaviour, with the platform limitation reported if CI cannot mount WebGL.

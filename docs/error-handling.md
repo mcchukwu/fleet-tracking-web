@@ -246,6 +246,17 @@ Each slice's rows are acceptance criteria. "Keeps" means what must not disappear
 | Audit | `403` | forbidden state | Go back |
 | Audit | any other | region `ErrorState` | Retry |
 | Copy to clipboard | denied | toast with fallback | none |
+| Offline boot | profile and cache present | shell renders, offline banner with data age, cached data, mutations disabled | reconnect; probe-driven |
+| Offline boot | profile, no cached data | neutral empty state per screen, never a skeleton or region error | reconnect |
+| Offline boot | no profile | login with "You're offline. Reconnect to sign in."; sign-in disabled | reconnect |
+| Offline mutation | attempted programmatically | catalogued `offline` error before dispatch; control disabled with `You're offline.` | never queued; reconnect |
+| Storage unavailable | IndexedDB read or write fails or times out | one `storage` toast per session; online behaviour unchanged | Dismiss |
+| Map pack warm-up | PMTiles fetch fails | one toast "Couldn't save the map for offline use" | retried on the next online map view |
+| Offline map | provider capability is false | list-only layout with `Map isn't available offline` | reconnect or use the list |
+| Playback | range not cached offline | `Not available offline` region notice | change range or reconnect |
+| Audit | cold offline load | `Audit isn't available offline`; no failing Retry | reconnect |
+| Reports, System | cached offline | cached data plus `Stale · hh:mm` | reconnect |
+| PWA registration | service worker fails | diagnostics only; app works as an online SPA | next load |
 | Update available | n/a | banner with Reload | Reload when ready |
 
 ---

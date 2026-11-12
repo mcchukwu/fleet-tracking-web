@@ -14,12 +14,15 @@ react-hook-form
 ## Mapping
 maplibre-gl
 pmtiles
+@protomaps/basemaps
 terra-draw
 @googlemaps/js-api-loader
 
 Restrictions:
 - terra-draw MapLibre adapter is approved.
 - Other terra-draw adapters are restricted to Slice 15.
+- `@protomaps/basemaps` is only imported by `src/map/providers/**` (guard-enforced).
+- `vite-plugin-pwa` and the Workbox family (`workbox-range-requests`) are the approved offline build tooling.
 - @googlemaps/js-api-loader is approved for Slice 15 only.
 
 ## UI

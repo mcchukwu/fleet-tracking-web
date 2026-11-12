@@ -111,6 +111,18 @@ Neutrals are the zinc scale. One accent. Status colours carry meaning and are us
   --gf-restricted: #dc2626;
   --gf-other:      #71717a;
 
+  /* Offline basemap (self-hosted Protomaps, §9.3) */
+  --basemap-background: #f4f4f5;
+  --basemap-earth:      #fafafa;
+  --basemap-water:      #e4e4e7;
+  --basemap-park:       #eef0ec;
+  --basemap-building:   #e4e4e7;
+  --basemap-road:       #ffffff;
+  --basemap-road-minor: #f4f4f5;
+  --basemap-boundary:   #d4d4d8;
+  --basemap-label:      #52525b;
+  --basemap-label-halo: #ffffff;
+
   /* Feedback */
   --success:       #15803d;
   --warning:       #b45309;
@@ -162,6 +174,17 @@ Neutrals are the zinc scale. One accent. Status colours carry meaning and are us
   --gf-customer:   #2dd4bf;
   --gf-restricted: #f87171;
   --gf-other:      #a1a1aa;
+
+  --basemap-background: #09090b;
+  --basemap-earth:      #18181b;
+  --basemap-water:      #172033;
+  --basemap-park:       #14201a;
+  --basemap-building:   #27272a;
+  --basemap-road:       #3f3f46;
+  --basemap-road-minor: #27272a;
+  --basemap-boundary:   #3f3f46;
+  --basemap-label:      #a1a1aa;
+  --basemap-label-halo: #09090b;
 
   --success: #86efac; --warning: #fcd34d; --danger: #fca5a5; --info: #93c5fd;
 }
@@ -623,6 +646,11 @@ The banner region shrinks the content area by exactly the banner’s height, so 
 - Mutations are disabled offline with an explanatory tooltip. Never queue writes silently.
 - On reconnect: resync from `/live/snapshot` first, then apply socket messages, then clear the stale treatment. Show `Reconnecting…` for the whole gap.
 - Show an `Install app` affordance in the user menu when the PWA prompt is available. Never a modal.
+- The offline map is a provider capability. When it is false, hide the map, controls and attribution, and render the vehicle list full width below the KPI strip with the banner `Map isn't available offline`; keep the drawer available for cached records and disable Centre on map.
+- A map that works offline keeps last-known positions dimmed and shows a `Stale · hh:mm` badge next to the attribution. It is absent while live.
+- The basemap uses the `--basemap-*` group (desaturated neutrals). Adapters receive it through `MapTokens.basemap`; no adapter contains a hex value.
+- A session restored from the stored profile is marked `Unverified offline` with a neutral badge in the user menu and the accessible description `Reconnect to verify your session.` Do not add a second banner.
+- The update prompt is the existing info banner with a Reload action. Nothing reloads while a live view is open until the operator activates it.
 
 ---
 
