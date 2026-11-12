@@ -89,6 +89,13 @@ describe("route search schemas", () => {
     expect(auditSearchSchema.parse({})).toEqual({});
   });
 
+  it("keeps a numeric audit entry id without quoting the shared URL", () => {
+    expect(auditSearchSchema.parse({ entry: 206 })).toEqual({ entry: 206 });
+    expect(auditSearchSchema.parse({ entry: "audit-8" })).toEqual({
+      entry: "audit-8",
+    });
+  });
+
   it("drops repeated and malformed audit values", () => {
     expect(
       auditSearchSchema.parse({ q: ["LSD", "trip"], action: 42, entry: ["1", "2"] }),

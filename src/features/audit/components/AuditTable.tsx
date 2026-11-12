@@ -141,7 +141,7 @@ export interface AuditTableProps {
   error?: AppError | null;
   onRetry: () => void;
   onCancelLoading?: () => void;
-  onOpen: (id: string) => void;
+  onOpen: (id: AuditEntry["id"]) => void;
   onLoadMore: () => void;
   hasMore: boolean;
   loadingMore: boolean;
@@ -215,7 +215,7 @@ export function AuditTable({
         width: COLUMN_WIDTHS.time,
         align: "left",
         cell: (entry) => (
-          <AuditTimeCell entry={entry} onOpen={() => onOpen(String(entry.id))} />
+          <AuditTimeCell entry={entry} onOpen={() => onOpen(entry.id)} />
         ),
       },
       {
@@ -350,7 +350,7 @@ export function AuditTable({
               ),
               onClick: (event) => {
                 if ((event.target as HTMLElement).closest("button, a")) return;
-                onOpen(String(entry.id));
+                onOpen(entry.id);
               },
             })}
           />

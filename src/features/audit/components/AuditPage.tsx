@@ -48,7 +48,8 @@ function AuditPageContent() {
     [feed.entries, filters.action],
   );
 
-  const selectedId = search.entry ?? null;
+  const selectedId =
+    search.entry === undefined ? null : String(search.entry);
   const selectedInFeed = findAuditEntry(feed.entries, selectedId);
   const lookupEnabled =
     selectedId !== null && selectedInFeed === null && !feed.isLoading;
@@ -142,6 +143,10 @@ function AuditPageContent() {
     : `${formatCount(feed.loadedCount)} ${
         feed.loadedCount === 1 ? "entry" : "entries"
       } loaded`;
+  const showCount =
+    state !== "forbidden" &&
+    !feed.isLoading &&
+    !(state === "error" && feed.loadedCount === 0);
 
   return (
     <div
@@ -151,19 +156,21 @@ function AuditPageContent() {
       <header className="flex shrink-0 flex-wrap items-end justify-between gap-2">
         <div className="flex flex-col gap-1">
           <h1 className="text-text text-lg font-semibold">Audit</h1>
-          {!feed.isLoading ? (
+          {showCount ? (
             <p className="text-muted text-sm tabular-nums">{countLabel}</p>
           ) : null}
         </div>
-        <Button
-          variant="secondary"
-          data-refresh-audit
-          loading={feed.isFetching && !feed.isFetchingNextPage}
-          {...(offline ? { disabledReason: "You're offline." } : {})}
-          onClick={feed.refetch}
-        >
-          Refresh
-        </Button>
+        {state !== "forbidden" ? (
+          <Button
+            variant="secondary"
+            data-refresh-audit
+            loading={feed.isFetching && !feed.isFetchingNextPage}
+            {...(offline ? { disabledReason: "You're offline." } : {})}
+            onClick={feed.refetch}
+          >
+            Refresh
+          </Button>
+        ) : null}
       </header>
 
       <AuditFilters
@@ -199,7 +206,7 @@ function AuditPageContent() {
           : {})}
         emptyReason={emptyReason}
         onClearFilters={resetFilters}
-        selectedId={search.entry ?? null}
+        selectedId={selectedId}
         resetKey={`${filters.action ?? ""}:${filters.q}`}
         forbiddenAction={
           <Link
@@ -211,7 +218,7 @@ function AuditPageContent() {
         }
       />
 
-      {selectedId ? (
+      {selectedId && state !== "forbidden" ? (
         <AuditDetailPanel
           entry={selectedEntry}
           lookup={lookupState}

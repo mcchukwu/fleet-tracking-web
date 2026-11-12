@@ -250,7 +250,7 @@ describe("AuditTable", () => {
       name: /Open audit entry: Import vehicles by Demo Dispatcher/i,
     });
     await userEvent.click(open);
-    expect(onOpen).toHaveBeenLastCalledWith("207");
+    expect(onOpen).toHaveBeenLastCalledWith(207);
 
     await userEvent.click(screen.getByText("Demo Dispatcher"));
     expect(onOpen).toHaveBeenCalledTimes(2);

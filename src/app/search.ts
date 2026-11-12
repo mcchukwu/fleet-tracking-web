@@ -58,7 +58,9 @@ export const reportsSearchSchema = z.object({
 export const auditSearchSchema = z.object({
   q: text,
   action: text,
-  entry: text,
+  // TanStack's default search parser turns "206" into a number, so accept both
+  // and keep the original type: a numeric id stays a clean `entry=206` URL.
+  entry: z.union([z.string(), z.number()]).optional().catch(undefined),
 });
 
 export const loginSearchSchema = z.object({

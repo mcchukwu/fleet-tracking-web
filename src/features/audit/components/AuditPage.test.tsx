@@ -208,6 +208,8 @@ describe("AuditPage", () => {
 
     expect(screen.getByText("You don't have access to this.")).toBeVisible();
     expect(screen.getByRole("link", { name: "Go back" })).toBeVisible();
+    expect(screen.queryByText(/entries? loaded/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Refresh" })).not.toBeInTheDocument();
   });
 
   it("shows a region error with Retry when nothing is cached", async () => {
@@ -267,7 +269,7 @@ describe("AuditPage", () => {
     );
     expect(mocks.navigate).toHaveBeenLastCalledWith({
       to: "/audit",
-      search: { entry: "207" },
+      search: { entry: 207 },
       replace: false,
     });
   });

@@ -1,4 +1,4 @@
-import { http, HttpResponse } from "msw";
+import { delay, http, HttpResponse } from "msw";
 import Papa from "papaparse";
 import { z } from "zod";
 import { can } from "../auth/roles";
@@ -1289,6 +1289,11 @@ export const handlers = [
   ),
 
   http.get(`${API}/audit`, ({ request }) => {
+    // The slow-notice test needs the request still open while the page clock
+    // advances past 10 s; the shared 12 s slow fault can resolve first.
+    if (new URL(request.url).searchParams.get("fault") === "audit:slow") {
+      return delay(30_000).then(() => HttpResponse.json({ data: [] }));
+    }
     return withFault("audit", request, () => {
       const user = resolveUser();
       if (!user) {
