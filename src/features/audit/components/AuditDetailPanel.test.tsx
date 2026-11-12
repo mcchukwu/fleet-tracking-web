@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { AuditEntry } from "../../../api/types";
@@ -138,6 +138,6 @@ describe("AuditDetailPanel", () => {
     expect(onClose).toHaveBeenCalled();
 
     unmount();
-    expect(returnFocus).toHaveBeenCalled();
+    await waitFor(() => expect(returnFocus).toHaveBeenCalled());
   });
 });

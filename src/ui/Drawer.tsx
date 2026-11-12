@@ -45,6 +45,7 @@ export function Drawer({
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
   const returnRef = useRef(returnFocus);
+  const returnTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     returnRef.current = returnFocus;
@@ -62,9 +63,20 @@ export function Drawer({
 
   useEffect(() => {
     if (!open) return;
+    // A drawer can mount already open. StrictMode then runs setup, cleanup and
+    // setup again; the pending return must be cancelled so the second setup's
+    // close-button focus is not overwritten by the origin button.
+    if (returnTimer.current !== null) {
+      clearTimeout(returnTimer.current);
+      returnTimer.current = null;
+    }
     closeRef.current?.focus();
     return () => {
-      returnRef.current?.();
+      if (returnTimer.current !== null) clearTimeout(returnTimer.current);
+      returnTimer.current = setTimeout(() => {
+        returnTimer.current = null;
+        returnRef.current?.();
+      }, 0);
     };
   }, [open]);
 

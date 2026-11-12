@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useState } from "react";
+import { StrictMode, useRef, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { Drawer } from "./Drawer";
 /* oxlint-disable jsx-a11y/no-static-element-interactions -- test harness only; the outer listener proves Escape does not bubble. */
@@ -64,7 +64,55 @@ describe("Drawer", () => {
     await user.click(
       screen.getByRole("button", { name: "Close vehicle details" }),
     );
-    expect(onReturn).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(onReturn).toHaveBeenCalledTimes(1));
+  });
+
+  it("keeps focus on the close button when StrictMode mounts an open drawer", async () => {
+    function MountedHarness() {
+      const [open, setOpen] = useState(false);
+      const originRef = useRef<HTMLButtonElement>(null);
+      return (
+        <div>
+          <button
+            ref={originRef}
+            type="button"
+            onClick={() => setOpen(true)}
+          >
+            Open vehicle details
+          </button>
+          {open ? (
+            <Drawer
+              open
+              label="Vehicle details for LSD-100-AA"
+              title="LSD-100-AA"
+              onClose={() => setOpen(false)}
+              // The page restores focus asynchronously, so a mistaken return
+              // during StrictMode's setup-cleanup-setup cycle would win.
+              returnFocus={() => {
+                setTimeout(() => originRef.current?.focus(), 0);
+              }}
+            >
+              <p>Body content</p>
+            </Drawer>
+          ) : null}
+        </div>
+      );
+    }
+
+    const user = userEvent.setup();
+    render(
+      <StrictMode>
+        <MountedHarness />
+      </StrictMode>,
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Open vehicle details" }),
+    );
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Close vehicle details" }),
+      ).toHaveFocus();
+    });
   });
 
   it("closes on Escape and stops the event before the global shortcut", async () => {
