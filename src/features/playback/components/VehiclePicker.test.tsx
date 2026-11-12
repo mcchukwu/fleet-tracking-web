@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useConnectionStore } from "../../../stores/connection";
@@ -50,15 +50,20 @@ describe("VehiclePicker", () => {
     const onChange = vi.fn();
     render(<VehiclePicker value={null} onChange={onChange} />);
 
-    const input = screen.getByRole("combobox", { name: "Vehicle" });
-    await user.click(input);
-    expect(screen.getAllByRole("option")).toHaveLength(2);
-    expect(screen.getAllByRole("option")[0]?.querySelector("span")).toHaveClass("font-mono");
+    await user.click(screen.getByRole("combobox", { name: "Vehicle" }));
+    const dialog = screen.getByRole("dialog", { name: "Vehicle" });
+    const search = within(dialog).getByRole("combobox", { name: "Vehicle" });
+    expect(within(dialog).getAllByRole("option")).toHaveLength(2);
+    expect(
+      within(dialog).getAllByRole("option")[0]?.querySelector("span"),
+    ).toHaveClass("font-mono");
 
-    await user.type(input, "imei-0002");
-    expect(screen.getAllByRole("option")).toHaveLength(1);
+    await user.type(search, "imei-0002");
+    expect(within(dialog).getAllByRole("option")).toHaveLength(1);
     await user.keyboard("{Enter}");
-    expect(onChange).toHaveBeenCalledWith("6c69032e-b802-447e-8f7a-ad8c0ddc2359");
+    expect(onChange).toHaveBeenCalledWith(
+      "6c69032e-b802-447e-8f7a-ad8c0ddc2359",
+    );
   });
 
   it("shows the skeleton after the delay when nothing is cached", async () => {
@@ -91,22 +96,29 @@ describe("VehiclePicker", () => {
     useConnectionStore.setState({ network: "offline" });
     render(<VehiclePicker value={null} onChange={() => undefined} />);
     expect(screen.getByText("Not available offline")).toBeVisible();
-    expect(screen.queryByText("Can't reach the server")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Can't reach the server"),
+    ).not.toBeInTheDocument();
   });
 
   it("distinguishes an empty tenant from no matches", async () => {
     mocks.snapshot.data = [];
     render(<VehiclePicker value={null} onChange={() => undefined} />);
     expect(screen.getByText("No vehicles yet")).toBeVisible();
-    expect(screen.getByText("Vehicles appear here when they report.")).toBeVisible();
+    expect(
+      screen.getByText("Vehicles appear here when they report."),
+    ).toBeVisible();
   });
 
   it("says no matches when the search misses", async () => {
     const user = userEvent.setup();
     render(<VehiclePicker value={null} onChange={() => undefined} />);
-    const input = screen.getByRole("combobox", { name: "Vehicle" });
-    await user.click(input);
-    await user.type(input, "zzz");
-    expect(screen.getByText("No vehicles match")).toBeVisible();
+    await user.click(screen.getByRole("combobox", { name: "Vehicle" }));
+    const dialog = screen.getByRole("dialog", { name: "Vehicle" });
+    await user.type(
+      within(dialog).getByRole("combobox", { name: "Vehicle" }),
+      "zzz",
+    );
+    expect(within(dialog).getByText("No vehicles match")).toBeVisible();
   });
 });

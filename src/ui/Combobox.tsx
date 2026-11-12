@@ -1,4 +1,4 @@
-import { ChevronDown, CircleAlert } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import {
   useEffect,
   useId,
@@ -10,7 +10,10 @@ import {
 } from "react";
 import { cn } from "./cn";
 import { LayerPortal } from "./LayerPortal";
+import { PickerList } from "./PickerList";
+import { PickerSheet } from "./PickerSheet";
 import { SearchField } from "./SearchField";
+import { usePickerPresentation } from "./usePickerPresentation";
 /* oxlint-disable jsx-a11y/no-noninteractive-element-to-interactive-role, jsx-a11y/prefer-tag-over-role, jsx-a11y/click-events-have-key-events -- ARIA 1.2 combobox/listbox: the input owns the keyboard and aria-activedescendant; list options are pointer shortcuts. */
 
 export interface ComboboxItem {
@@ -36,6 +39,12 @@ export interface ComboboxProps {
   placeholder?: string;
   initialFocus?: boolean;
   className?: string;
+  /** Retry for the query that feeds the picker; shown with cached options too. */
+  onRetry?: () => void;
+  /** Only optional fields offer a Clear row; required fields never do. */
+  clearable?: boolean;
+  onClear?: () => void;
+  clearLabel?: string;
 }
 
 function normalize(value: string): string {
@@ -50,11 +59,12 @@ function matches(item: ComboboxItem, query: string): boolean {
   );
 }
 
-const LIST_MAX_HEIGHT = 256;
+const LIST_MAX_HEIGHT = 360;
 const LIST_COMFORTABLE = 160;
 const LIST_MIN_WIDTH = 240;
 const LIST_GAP = 4;
 const VIEWPORT_MARGIN = 8;
+const POPOVER_ROW_HEIGHT = 44;
 
 interface ListBoxPosition {
   top: number | null;
@@ -105,8 +115,14 @@ function measureListBox(input: HTMLInputElement): ListBoxPosition {
 
   // The list may overlay the dialog's content, never its close or footer
   // controls. Geometry, not z-index, keeps those reachable.
-  const belowLimit = Math.min(bounds.bottom, footerTop ?? Number.POSITIVE_INFINITY);
-  const aboveLimit = Math.max(bounds.top, closeBottom ?? Number.NEGATIVE_INFINITY);
+  const belowLimit = Math.min(
+    bounds.bottom,
+    footerTop ?? Number.POSITIVE_INFINITY,
+  );
+  const aboveLimit = Math.max(
+    bounds.top,
+    closeBottom ?? Number.NEGATIVE_INFINITY,
+  );
   const below = belowLimit - LIST_GAP - rect.bottom;
   const above = rect.top - LIST_GAP - aboveLimit;
   const openAbove = below < LIST_COMFORTABLE && above > below;
@@ -167,25 +183,41 @@ export function Combobox({
   placeholder = "Search",
   initialFocus = false,
   className,
+  onRetry,
+  clearable = false,
+  onClear,
+  clearLabel = "Clear selection",
 }: ComboboxProps) {
   const listId = useId();
-  const inputId = useId();
+  const sheetId = useId();
   const hintId = useId();
+  const presentation = usePickerPresentation();
+  const sheet = presentation === "sheet";
   const [open, setOpen] = useState(false);
+  const [openPresentation, setOpenPresentation] = useState(presentation);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const [listBox, setListBox] = useState<ListBoxPosition | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const listRef = useRef<HTMLUListElement>(null);
   const skipAutoOpen = useRef(initialFocus);
+
+  // A viewport change while open closes the picker, so the sheet and the
+  // popover can never coexist. Adjusting state during render is React's
+  // documented way to reset state when a prop (here: the presentation) changes.
+  if (open && openPresentation !== presentation) {
+    setOpen(false);
+    setOpenPresentation(presentation);
+    setQuery("");
+    setActiveIndex(0);
+  }
 
   useEffect(() => {
     if (initialFocus) inputRef.current?.focus();
   }, [initialFocus]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || sheet) return;
     const input = inputRef.current;
     if (!input) return;
     const update = () => setListBox(measureListBox(input));
@@ -197,9 +229,7 @@ export function Combobox({
     viewport?.addEventListener("resize", update);
     viewport?.addEventListener("scroll", update);
     const observer =
-      typeof ResizeObserver === "undefined"
-        ? null
-        : new ResizeObserver(update);
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
     observer?.observe(input);
     return () => {
       window.removeEventListener("resize", update);
@@ -209,10 +239,10 @@ export function Combobox({
       viewport?.removeEventListener("scroll", update);
       observer?.disconnect();
     };
-  }, [open]);
+  }, [open, sheet]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || sheet) return;
     const onEscape = (event: globalThis.KeyboardEvent) => {
       if (event.key !== "Escape") return;
       // Radix closes the dialog from a capture listener on the document. While
@@ -226,7 +256,7 @@ export function Combobox({
     };
     window.addEventListener("keydown", onEscape, true);
     return () => window.removeEventListener("keydown", onEscape, true);
-  }, [open]);
+  }, [open, sheet]);
 
   const selected = items.find((item) => item.id === value) ?? null;
   const display = selected?.label ?? selectedLabel ?? "";
@@ -234,26 +264,30 @@ export function Combobox({
     () => items.filter((item) => matches(item, query)),
     [items, query],
   );
-  const activeIndexClamped =
-    filtered.length === 0 ? 0 : Math.min(activeIndex, filtered.length - 1);
+  const clearOffset = clearable && onClear ? 1 : 0;
+  const total = filtered.length + clearOffset;
+  const activeIndexClamped = total === 0 ? 0 : Math.min(activeIndex, total - 1);
+  const activeItem =
+    clearOffset === 1 && activeIndexClamped === 0
+      ? null
+      : filtered[activeIndexClamped - clearOffset];
+  const activeOptionId =
+    total === 0
+      ? undefined
+      : clearOffset === 1 && activeIndexClamped === 0
+        ? `${listId}-clear`
+        : activeItem
+          ? `${listId}-${activeItem.id}`
+          : undefined;
 
-  useEffect(() => {
-    if (!open) return;
-    const list = listRef.current;
-    const active = list?.querySelector<HTMLElement>("[data-active]");
-    if (!list || !active) return;
-    const paddingTop =
-      Number.parseFloat(window.getComputedStyle(list).paddingTop) || 0;
-    const top = active.offsetTop - paddingTop;
-    const bottom = top + active.offsetHeight;
-    if (top < list.scrollTop) list.scrollTop = Math.max(0, top);
-    else if (bottom > list.scrollTop + list.clientHeight)
-      list.scrollTop = bottom - list.clientHeight;
-  }, [open, activeIndexClamped, filtered.length]);
+  function focusTrigger(): void {
+    window.setTimeout(() => inputRef.current?.focus(), 0);
+  }
 
   function openList(): void {
     if (disabled) return;
     setListBox(null);
+    setOpenPresentation(presentation);
     setOpen(true);
     setQuery("");
     setActiveIndex(0);
@@ -262,25 +296,40 @@ export function Combobox({
   function closeList(): void {
     setOpen(false);
     setQuery("");
+    setActiveIndex(0);
   }
 
   function select(item: ComboboxItem): void {
     onChange(item.id);
     closeList();
-    inputRef.current?.focus();
+    focusTrigger();
+  }
+
+  function selectClear(): void {
+    onClear?.();
+    closeList();
+    focusTrigger();
+  }
+
+  function moveActive(delta: 1 | -1): void {
+    setActiveIndex((index) => {
+      if (total === 0) return 0;
+      const current = Math.min(index, total - 1);
+      return Math.max(0, Math.min(total - 1, current + delta));
+    });
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
     if (event.key === "ArrowDown") {
       event.preventDefault();
       if (!open) openList();
-      else setActiveIndex((index) => Math.min(filtered.length - 1, index + 1));
+      else moveActive(1);
       return;
     }
     if (event.key === "ArrowUp") {
       event.preventDefault();
       if (!open) openList();
-      else setActiveIndex((index) => Math.max(0, index - 1));
+      else moveActive(-1);
       return;
     }
     if (event.key === "Home" && open) {
@@ -290,28 +339,40 @@ export function Combobox({
     }
     if (event.key === "End" && open) {
       event.preventDefault();
-      setActiveIndex(Math.max(0, filtered.length - 1));
+      setActiveIndex(Math.max(0, total - 1));
       return;
     }
     if (event.key === "Enter" && open) {
       event.preventDefault();
-      const item = filtered[activeIndexClamped];
-      if (item) select(item);
-      return;
+      if (clearOffset === 1 && activeIndexClamped === 0) {
+        selectClear();
+        return;
+      }
+      if (activeItem) select(activeItem);
     }
   }
 
-  const statusMessage = loading
-    ? "Loading options…"
-    : error
-      ? error
-      : !loading && filtered.length === 0
-        ? emptyMessage
-        : null;
-  const activeItem = open ? filtered[activeIndexClamped] : undefined;
-  const statusId = `${inputId}-status`;
+  function onSheetTriggerKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
+    if (
+      event.key === "Enter" ||
+      event.key === " " ||
+      event.key === "ArrowDown"
+    ) {
+      event.preventDefault();
+      openList();
+    }
+  }
+
+  const triggerValue = sheet ? display : open ? query : display;
+  const statusId = `${hintId}-status`;
+  // Validation errors belong under the field; a query error moves into the
+  // open picker, where its Retry lives.
+  const showTriggerError = Boolean(error) && !open;
   const describedBy =
-    [disabled && disabledReason ? hintId : null, error ? statusId : null]
+    [
+      disabled && disabledReason ? hintId : null,
+      showTriggerError ? statusId : null,
+    ]
       .filter(Boolean)
       .join(" ") || undefined;
 
@@ -320,6 +381,7 @@ export function Combobox({
       ref={containerRef}
       className={cn("flex flex-col gap-1", className)}
       onBlur={(event) => {
+        if (sheet) return;
         if (!event.currentTarget.contains(event.relatedTarget as Node | null))
           closeList();
       }}
@@ -330,25 +392,26 @@ export function Combobox({
         type="text"
         role="combobox"
         autoComplete="off"
+        readOnly={sheet}
         aria-expanded={open}
-        aria-haspopup="listbox"
-        aria-controls={open ? listId : undefined}
-        aria-autocomplete="list"
-        aria-activedescendant={
-          open && activeItem ? `${listId}-${activeItem.id}` : undefined
-        }
+        aria-haspopup={sheet ? "dialog" : "listbox"}
+        aria-controls={open ? (sheet ? sheetId : listId) : undefined}
+        aria-autocomplete={sheet ? undefined : "list"}
+        aria-activedescendant={!sheet && open ? activeOptionId : undefined}
         aria-describedby={describedBy}
-        invalid={Boolean(error)}
+        aria-invalid={error ? true : undefined}
         aria-disabled={disabled || undefined}
         disabled={disabled}
-        value={open ? query : display}
-        placeholder={selected ? undefined : placeholder}
+        value={triggerValue}
+        placeholder={selected || display ? undefined : placeholder}
         onChange={(event) => {
+          if (sheet) return;
           setQuery(event.target.value);
           if (!open) setOpen(true);
           setActiveIndex(0);
         }}
         onFocus={() => {
+          if (sheet) return;
           if (skipAutoOpen.current) {
             skipAutoOpen.current = false;
             return;
@@ -358,7 +421,7 @@ export function Combobox({
         onClick={() => {
           if (!open) openList();
         }}
-        onKeyDown={onKeyDown}
+        onKeyDown={sheet ? onSheetTriggerKeyDown : onKeyDown}
         trailing={
           <ChevronDown
             aria-hidden="true"
@@ -370,68 +433,68 @@ export function Combobox({
           />
         }
       />
-      {open && listBox ? (
+
+      {open && listBox && !sheet ? (
         <LayerPortal layer="popover">
-          <ul
-            ref={listRef}
-            id={listId}
-            role="listbox"
-            aria-label={label}
-            data-combobox-list
+          <div
+            data-combobox-shell
             style={listStyle(listBox)}
-            className="border-border bg-surface shadow-menu overscroll-contain overflow-y-auto rounded-md border p-1"
+            className="border-border bg-surface shadow-menu flex flex-col overflow-hidden rounded-md border"
           >
-            {filtered.map((item, index) => {
-              const isActive = index === activeIndexClamped;
-              const isSelected = item.id === value;
-              return (
-                <li
-                  key={item.id}
-                  id={`${listId}-${item.id}`}
-                  role="option"
-                  aria-selected={isSelected}
-                  data-active={isActive || undefined}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onMouseEnter={() => setActiveIndex(index)}
-                  onClick={() => select(item)}
-                  className={cn(
-                    "min-h-touch md:min-h-control-md flex cursor-pointer flex-col justify-center rounded-sm px-3 py-1 text-sm",
-                    isActive ? "bg-surface-2" : undefined,
-                    isSelected ? "text-accent-fg" : "text-text",
-                  )}
-                >
-                  <span className={cn("font-medium", item.labelClassName)}>
-                    {item.label}
-                  </span>
-                  {item.description ? (
-                    <span className="text-muted text-xs">
-                      {item.description}
-                    </span>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
+            <PickerList
+              items={filtered}
+              selectedId={value}
+              activeIndex={activeIndexClamped}
+              rowHeight={POPOVER_ROW_HEIGHT}
+              listboxId={listId}
+              label={label}
+              onSelect={select}
+              onActive={setActiveIndex}
+              loading={loading}
+              {...(error ? { error } : {})}
+              {...(emptyMessage ? { emptyMessage } : {})}
+              {...(onRetry ? { onRetry } : {})}
+              {...(clearOffset === 1
+                ? { clear: { label: clearLabel, onClear: selectClear } }
+                : {})}
+              className="max-h-full min-h-0"
+            />
+          </div>
         </LayerPortal>
       ) : null}
 
-      {statusMessage ? (
+      <PickerSheet
+        id={sheetId}
+        open={open && sheet}
+        label={label}
+        placeholder={placeholder}
+        query={query}
+        onQuery={(next) => {
+          setQuery(next);
+          setActiveIndex(0);
+        }}
+        items={filtered}
+        selectedId={value}
+        activeIndex={activeIndexClamped}
+        onActive={setActiveIndex}
+        onSelect={select}
+        onClose={closeList}
+        clearable={clearable}
+        {...(onClear ? { onClear: selectClear } : {})}
+        clearLabel={clearLabel}
+        loading={loading}
+        {...(error ? { error } : {})}
+        {...(emptyMessage ? { emptyMessage } : {})}
+        {...(onRetry ? { onRetry } : {})}
+      />
+
+      {showTriggerError ? (
         <p
           id={statusId}
-          role={error ? "alert" : open && !loading ? "status" : undefined}
-          className={cn(
-            "flex items-center gap-1 text-xs",
-            error ? "text-danger" : "text-muted",
-          )}
+          role="alert"
+          className="text-danger flex items-center gap-1 text-xs"
         >
-          {error ? (
-            <CircleAlert
-              aria-hidden="true"
-              className="size-3"
-              strokeWidth={1.5}
-            />
-          ) : null}
-          {statusMessage}
+          {error}
         </p>
       ) : null}
 

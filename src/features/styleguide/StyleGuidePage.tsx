@@ -532,6 +532,50 @@ export function StyleGuidePage() {
                 onChange={() => undefined}
                 loading
               />
+              <Combobox
+                label="Drivers unavailable"
+                items={[
+                  {
+                    id: "driver-1",
+                    label: "Adebayo Okafor",
+                    description: "08031000010 · LIC-01010",
+                  },
+                  {
+                    id: "driver-2",
+                    label: "Chinedu Musa",
+                    description: "08031000001 · LIC-01001",
+                  },
+                ]}
+                value={driverId}
+                onChange={setDriverId}
+                error="Couldn't refresh drivers. Showing the last list."
+                onRetry={() =>
+                  toast({
+                    tone: "info",
+                    title: "Retrying drivers",
+                    key: "styleguide-picker-retry",
+                  })
+                }
+              />
+              <Combobox
+                label="Optional driver"
+                items={[
+                  {
+                    id: "driver-1",
+                    label: "Adebayo Okafor",
+                    description: "08031000010 · LIC-01010",
+                  },
+                  {
+                    id: "driver-3",
+                    label: "Chinedu Musa",
+                    description: "08031000001 · LIC-01001",
+                  },
+                ]}
+                value={driverId}
+                onChange={setDriverId}
+                clearable
+                onClear={() => setDriverId(null)}
+              />
               <Textarea
                 label="Note"
                 placeholder="Add a note for the next shift."

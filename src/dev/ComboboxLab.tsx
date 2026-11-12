@@ -76,6 +76,31 @@ export function ComboboxLab() {
         />
       </section>
 
+      <section
+        aria-label="Picker states"
+        data-combobox-state="states"
+        className="flex w-80 max-w-full flex-col gap-3"
+      >
+        <Combobox
+          label="Vehicle with a stale list"
+          items={options(3)}
+          value={standalone[3]}
+          onChange={(id) => setStandalone((current) => ({ ...current, 3: id }))}
+          error="Couldn't refresh vehicles. Showing the last list."
+          onRetry={() => undefined}
+          placeholder="Search by plate or IMEI"
+        />
+        <Combobox
+          label="Optional vehicle"
+          items={options(3)}
+          value={standalone[3]}
+          onChange={(id) => setStandalone((current) => ({ ...current, 3: id }))}
+          clearable
+          onClear={() => setStandalone((current) => ({ ...current, 3: null }))}
+          placeholder="Search by plate or IMEI"
+        />
+      </section>
+
       {COUNTS.map((count) => (
         <section
           key={count}
