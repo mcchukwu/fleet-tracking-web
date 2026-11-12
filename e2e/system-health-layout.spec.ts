@@ -48,6 +48,27 @@ async function boxes(page: Page, group: string): Promise<Box[]> {
     );
 }
 
+async function groupHeights(page: Page): Promise<Record<string, number>> {
+  const rows = await page
+    .locator("[data-health-group]")
+    .evaluateAll((elements) =>
+      elements.map(
+        (element) =>
+          [
+            element.getAttribute("data-health-group"),
+            Math.round(element.getBoundingClientRect().height),
+          ] as const,
+      ),
+    );
+  return Object.fromEntries(rows);
+}
+
+async function headerHeight(page: Page): Promise<number> {
+  return page
+    .locator('[data-testid="system-page"] > header')
+    .evaluate((element) => Math.round(element.getBoundingClientRect().height));
+}
+
 test.describe("system health layout", () => {
   test("the three groups keep their columns and never overflow", { tag: "@theme" }, async ({
     page,
@@ -93,8 +114,38 @@ test.describe("system health layout", () => {
       await expectTabularNums(values.nth(index));
     }
     await expectTabularNums(page.locator("[data-health-updated] time"));
+    await expectTabularNums(page.locator('[data-health-id="online"] .text-xs'));
     await expectNoAxeViolations(page);
     await captureForReview(page, "11-system-healthy");
+  });
+
+  test("the loading skeleton keeps the header and group heights", async ({
+    page,
+  }) => {
+    await page.goto(`/system?fault=${encodeURIComponent("system-health:slow")}`);
+    await expect(page.locator('[data-testid="system-skeleton"]')).toBeVisible({
+      timeout: 15_000,
+    });
+    const skeleton = {
+      header: await headerHeight(page),
+      groups: await groupHeights(page),
+    };
+
+    await page.goto("/system");
+    await expect(page.getByText("All systems healthy")).toBeVisible({
+      timeout: 15_000,
+    });
+    const ready = {
+      header: await headerHeight(page),
+      groups: await groupHeights(page),
+    };
+
+    expect(Math.abs(skeleton.header - ready.header)).toBeLessThanOrEqual(1);
+    for (const id of ["dependencies", "fleet", "ingest"]) {
+      expect(
+        Math.abs((skeleton.groups[id] ?? 0) - (ready.groups[id] ?? 0)),
+      ).toBeLessThanOrEqual(1);
+    }
   });
 
   test("values never wrap or clip at 390 and 360", { tag: "@theme" }, async ({ page }) => {

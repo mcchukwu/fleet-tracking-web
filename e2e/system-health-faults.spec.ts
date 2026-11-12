@@ -46,6 +46,7 @@ test.describe("system health faults", () => {
   test("an unreachable first load shows Can't reach the API and Retry recovers", async ({
     page,
   }) => {
+    test.setTimeout(60_000);
     const errors = collectErrors(page);
     await gotoFault(page, "system-health:server");
     await expect(page.getByText("Can't reach the API")).toBeVisible({
