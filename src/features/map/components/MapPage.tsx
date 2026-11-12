@@ -6,6 +6,7 @@ import { useGeofences } from "../../../api/hooks/geofences";
 import { useLiveSnapshot } from "../../../api/hooks/vehicles";
 import { queryKeys } from "../../../api/keys";
 import { MapAttribution } from "../../../map/MapAttribution";
+import { mapConfig, mapOfflineHint } from "../../../map/config";
 import { toMapGeofences } from "../../../map/geofences";
 import { useAuthStore } from "../../../auth/store";
 import { errorCopy } from "../../../errors/catalog";
@@ -19,13 +20,17 @@ import { readMapDebug, setMapDebug } from "../../../dev/debug";
 import type { MapAdapter, MapStyleState, Viewport } from "../../../map/types";
 import type { Vehicle } from "../../../api/types";
 import { useConnection } from "../../../stores/connection";
+import { pwaCopy } from "../../../pwa/copy";
+import { warmMap } from "../../../pwa/warmMap";
+import { Badge } from "../../../ui/Badge";
+import { Banner } from "../../../ui/Banner";
 import { useToast } from "../../../ui/Toast";
 import { cn } from "../../../ui/cn";
 import { useMapData } from "../hooks/useMapData";
 import { useMapPreferences } from "../hooks/useMapPreferences";
 import { useMapShortcuts } from "../hooks/useMapShortcuts";
 import { useMapStyle } from "../hooks/useMapStyle";
-import { useCan } from "../../../auth/useCan";
+import { useCanMutate } from "../../../auth/useCanMutate";
 import { openAlertCountLabel } from "../../../lib/alerts";
 import {
   MAP_ROW_HEIGHT,
@@ -61,7 +66,8 @@ export function MapPage() {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const isXl = useMediaQuery("(min-width: 1280px)");
   const authenticated = useAuthStore((state) => state.status === "authenticated");
-  const canMutate = useCan("mutate");
+  const mutate = useCanMutate("mutate");
+  const canMutate = mutate.allowed;
   const snapshotQuery = useLiveSnapshot(authenticated);
   const {
     data: geofences,
@@ -89,6 +95,8 @@ export function MapPage() {
   const [detailSnap, setDetailSnap] = useState<SheetSnap>("half");
   const [sheetObscured, setSheetObscured] = useState(false);
   const [mapStyleState, setMapStyleState] = useState<MapStyleState | null>(null);
+  const [mapOfflineAvailable, setMapOfflineAvailable] = useState(() => mapOfflineHint());
+  const [mapReady, setMapReady] = useState(false);
   const [styleAttribution, setStyleAttribution] = useState<readonly string[] | null>(null);
   const [writeVehicle, setWriteVehicle] = useState<Vehicle | null>(null);
   const [writeMode, setWriteMode] = useState<"edit" | "assign" | null>(null);
@@ -144,6 +152,8 @@ export function MapPage() {
   const sheetSnap = drawerOpen && !isDesktop ? detailSnap : listSnap;
 
   const offline = network === "offline";
+  // Offline is only a layout variant when the provider cannot serve its map.
+  const listOnly = offline && !mapOfflineAvailable;
   // Offline is a state, not an error: keep the cached map and rows and let the
   // banner and stale treatment explain why nothing is refreshing.
   const snapshotError = !offline && snapshotQuery.error ? normalize(snapshotQuery.error) : null;
@@ -393,10 +403,26 @@ export function MapPage() {
 
   const handleAdapterReady = useCallback((adapter: MapAdapter | null) => {
     adapterRef.current = adapter;
+    setMapReady(adapter !== null);
+    setMapOfflineAvailable((current) => (adapter ? adapter.capabilities.offline : current));
     if (import.meta.env.DEV && import.meta.env.VITE_MOCK === "1") {
       window.__FLEET_TEST_MAP__ = adapter;
     }
   }, []);
+
+  useEffect(() => {
+    if (!mapReady || network !== "online" || !mapOfflineAvailable) return;
+    if (mapConfig.pmtilesUrl === "") return;
+    void warmMap(mapConfig.pmtilesUrl, {
+      onFailure: () =>
+        toast({
+          tone: "error",
+          title: pwaCopy.mapWarmFailed.title,
+          description: pwaCopy.mapWarmFailed.detail,
+          key: "pwa-map-warm-failed",
+        }),
+    });
+  }, [mapReady, network, mapOfflineAvailable, toast]);
 
   const failMapStyle = mapStyle.failStyle;
 
@@ -588,6 +614,7 @@ export function MapPage() {
     >
       <h1 className="sr-only">Map</h1>
 
+      {!listOnly ? (
       <ErrorBoundary level="panel" resetKeys={[selectedKey]}>
         <MapView
           vehicles={mapVehicles}
@@ -612,9 +639,11 @@ export function MapPage() {
           drawerOpen={drawerOpen}
         />
       </ErrorBoundary>
+      ) : null}
 
       {kpiHidden ? null : (
         <div
+          data-testid="map-kpi"
           className={cn(
             "map-kpi pointer-events-none absolute inset-x-0 top-3 z-panel flex justify-center pl-3 pr-14 lg:right-3 lg:px-3",
             panelVisible ? "lg:left-93" : "lg:left-3",
@@ -628,7 +657,24 @@ export function MapPage() {
         </div>
       )}
 
-      {isDesktop && panelVisible ? (
+      {listOnly ? (
+        <div
+          data-testid="map-list-only"
+          className="absolute inset-x-3 bottom-3 top-20 z-panel flex flex-col gap-2"
+        >
+          <Banner tone="neutral" message={pwaCopy.mapOfflineTitle} />
+          <ErrorBoundary level="panel">
+            <VehiclePanel
+              {...panelProps}
+              className="min-h-0 flex-1 rounded-lg border border-border shadow-float"
+              showHeader
+              onClose={isDesktop ? closePanel : undefined}
+            />
+          </ErrorBoundary>
+        </div>
+      ) : null}
+
+      {!listOnly && isDesktop && panelVisible ? (
         <aside className="absolute bottom-3 left-3 top-3 z-panel w-panel">
           <ErrorBoundary level="panel">
             <VehiclePanel
@@ -648,8 +694,9 @@ export function MapPage() {
             vehicleId={selectedId}
             row={selectedRow}
             snapshotVehicle={snapshotVehicle}
-            mapReady={viewport !== null}
+            mapReady={viewport !== null && !listOnly}
             canMutate={canMutate}
+            mutateReason={mutate.reason}
             offline={offline}
             onClose={closeDrawer}
             onCentre={centreSelected}
@@ -661,7 +708,7 @@ export function MapPage() {
         </ErrorBoundary>
       ) : null}
 
-      {!isDesktop ? (
+      {!listOnly && !isDesktop ? (
         drawerOpen && selectedId ? (
           <ErrorBoundary level="panel" resetKeys={[selectedId]}>
             <VehicleDetailSheet
@@ -671,8 +718,9 @@ export function MapPage() {
               snapshotVehicle={snapshotVehicle}
               snap={detailSnap}
               onSnap={setDetailSnap}
-              mapReady={viewport !== null}
+              mapReady={viewport !== null && !listOnly}
               canMutate={canMutate}
+              mutateReason={mutate.reason}
               offline={offline}
               onClose={closeDetailSheet}
               onCentre={centreSelected}
@@ -714,6 +762,7 @@ export function MapPage() {
         )
       ) : null}
 
+      {!listOnly ? (
       <div
         data-testid="map-footer"
         className={cn(
@@ -735,15 +784,21 @@ export function MapPage() {
           />
         </ErrorBoundary>
 
-        <div className="pointer-events-none flex min-w-0 justify-end">
+        <div className="pointer-events-none flex min-w-0 items-center justify-between gap-2">
+          {offline ? (
+            <span data-testid="map-stale-badge">
+              <Badge tone="neutral">{`${pwaCopy.stale} · ${staleLabel}`}</Badge>
+            </span>
+          ) : null}
           <MapAttribution
             styleId={activeStyle}
             attribution={hostedActive ? styleAttribution : null}
           />
         </div>
       </div>
+      ) : null}
 
-      {hostedActive ? (
+      {!listOnly && hostedActive ? (
         <div
           data-testid="maptiler-logo-anchor"
           className={cn(
@@ -757,7 +812,7 @@ export function MapPage() {
         </div>
       ) : null}
 
-      {!isDesktop && sheetSnap === "full" ? (
+      {!listOnly && !isDesktop && sheetSnap === "full" ? (
         <button
           type="button"
           onClick={() => {
@@ -786,7 +841,7 @@ export function MapPage() {
             })
           }
           onRefresh={refreshWriteVehicle}
-          readOnly={!canMutate || offline}
+          readOnly={!canMutate}
         />
       ) : null}
 
@@ -803,7 +858,7 @@ export function MapPage() {
             })
           }
           onRefresh={refreshWriteVehicle}
-          readOnly={!canMutate || offline}
+          readOnly={!canMutate}
         />
       ) : null}
     </div>

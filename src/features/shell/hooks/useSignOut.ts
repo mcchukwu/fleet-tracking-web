@@ -50,7 +50,7 @@ export function useSignOut(): SignOutResult {
       resetConnection();
       stopPersistedCache();
       queryClient.clear();
-      void wipeDeviceData().catch((cause: unknown) => {
+      await wipeDeviceData().catch((cause: unknown) => {
         recordError(normalize(cause, { action: "wipe device data", resource: "device storage" }));
       });
 

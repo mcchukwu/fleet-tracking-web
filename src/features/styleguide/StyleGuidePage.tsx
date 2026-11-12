@@ -1088,6 +1088,22 @@ export function StyleGuidePage() {
             tone="neutral"
             message="You're offline. Showing data from 14:02. Changes are disabled."
           />
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone="neutral">Stale · 14:02</Badge>
+            <span title="Reconnect to verify your session.">
+              <Badge tone="neutral">Unverified offline</Badge>
+              <span className="sr-only">Reconnect to verify your session.</span>
+            </span>
+          </div>
+          <Banner
+            tone="info"
+            message="A new version is available."
+            action={{ label: "Reload", onClick: () => undefined }}
+          />
+          <p className="text-muted text-sm">
+            Map isn&apos;t available offline. The vehicle list still works with the data
+            saved on this device.
+          </p>
         </Section>
 
         <Section

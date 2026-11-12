@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import type { Geofence } from "../../../api/types";
 import type { GeofencesSearch } from "../../../app/search";
-import { useCan } from "../../../auth/useCan";
+import { useCanMutate } from "../../../auth/useCanMutate";
 import { setMapDebug } from "../../../dev/debug";
 import { normalize } from "../../../errors/normalize";
 import { formatClockTime, formatCount } from "../../../lib/format";
@@ -47,7 +47,8 @@ export function GeofencesPage() {
 function GeofencesPageContent() {
   const search = useSearch({ from: "/_app/geofences" });
   const navigate = useNavigate();
-  const canMutate = useCan("mutate");
+  const mutate = useCanMutate("mutate");
+  const canMutate = mutate.allowed;
   const { network } = useConnection();
   const offline = network === "offline";
   const wide = useMediaQuery("(min-width: 1024px)");
@@ -125,18 +126,18 @@ function GeofencesPageContent() {
       ? formatClockTime(feed.dataUpdatedAt)
       : undefined;
 
-  const createReason = !canMutate
-    ? "Your role can't create geofences."
-    : offline
-      ? "You're offline."
-      : drawingUnavailable
-        ? "Drawing isn't available on this map."
-        : undefined;
-  const editReason = !canMutate
-    ? "Your role can't change geofences."
-    : offline
-      ? "You're offline."
-      : undefined;
+  const createReason =
+    mutate.blockedBy === "role"
+      ? "Your role can't create geofences."
+      : mutate.blockedBy
+        ? (mutate.reason ?? undefined)
+        : drawingUnavailable
+          ? "Drawing isn't available on this map."
+          : undefined;
+  const editReason =
+    mutate.blockedBy === "role"
+      ? "Your role can't change geofences."
+      : (mutate.reason ?? undefined);
 
   const updateSearch = useCallback(
     (patch: Partial<GeofencesSearch>, replace = true): void => {

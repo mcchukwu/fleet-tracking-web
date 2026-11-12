@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc -b",
-    "build": "npm run typecheck && vite build && bash scripts/assert-bundle.sh",
+    "build": "npm run typecheck && bash scripts/check-map-pack.sh && vite build && bash scripts/assert-bundle.sh",
     "lint": "oxlint --type-aware --type-check",
     "guard": "bash scripts/guard.sh",
     "test": "vitest run",
@@ -19,7 +19,11 @@
     "preview": "vite preview",
     "format": "prettier --plugin prettier-plugin-tailwindcss --write .",
     "format:check": "prettier --plugin prettier-plugin-tailwindcss --check .",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "map:pack": "bash scripts/map-pack.sh",
+    "map:assets": "bash scripts/map-assets.sh",
+    "e2e:pwa": "playwright test --config=playwright.pwa.config.ts --project=pwa-chromium --project=pwa-chromium-mobile",
+    "e2e:pwa:webkit": "playwright test --config=playwright.pwa.config.ts --project=pwa-webkit --project=pwa-webkit-ios"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
@@ -77,7 +81,13 @@
     "vite": "^8.3.5",
     "vite-plugin-pwa": "^2.0.0",
     "vitest": "^5.1.0",
+    "workbox-cacheable-response": "^7.4.1",
+    "workbox-core": "^7.4.1",
+    "workbox-expiration": "^7.4.1",
+    "workbox-precaching": "^7.4.1",
     "workbox-range-requests": "^7.4.1",
+    "workbox-routing": "^7.4.1",
+    "workbox-strategies": "^7.4.1",
     "wrangler": "4.158.0"
   },
   "msw": {

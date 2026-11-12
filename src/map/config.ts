@@ -77,6 +77,10 @@ export const mapConfig = {
   // Only the standard base style uses this override; hosted styles bring their
   // own glyphs and sprites.
   glyphsUrl: import.meta.env.VITE_MAP_GLYPHS_URL?.trim() ?? "",
+  /** Empty means the hosted OpenFreeMap standard style and no offline map. */
+  pmtilesUrl: import.meta.env.VITE_MAP_PMTILES_URL?.trim() ?? "",
+  localGlyphsUrl: readUrl(import.meta.env.VITE_MAP_GLYPHS_URL, "/map/fonts/{fontstack}/{range}.pbf"),
+  localSpriteBaseUrl: readUrl(import.meta.env.VITE_MAP_SPRITE_URL, "/map/sprites"),
   attribution: {
     label: "© OpenStreetMap · OpenFreeMap",
     href: "https://openfreemap.org",
@@ -95,6 +99,28 @@ export const mapConfig = {
     touchPitch: false,
   },
 } as const;
+
+export interface MapAttributionLink {
+  label: string;
+  href: string;
+}
+
+/** The build can only work offline when it ships a local pack. */
+export function mapOfflineConfigured(): boolean {
+  return mapConfig.pmtilesUrl !== "";
+}
+
+/** What the UI may assume before an adapter has mounted. */
+export function mapOfflineHint(): boolean {
+  return mapConfig.provider === "fake" ? true : mapOfflineConfigured();
+}
+
+/** Standard style credit follows the source that actually renders the tiles. */
+export function standardAttribution(pmtilesUrl: string = mapConfig.pmtilesUrl): MapAttributionLink {
+  return pmtilesUrl !== ""
+    ? { label: "© OpenStreetMap · Protomaps", href: "https://protomaps.com" }
+    : mapConfig.attribution;
+}
 
 export const mapProviderLabels: Record<MapProvider, string> = {
   maplibre: "MapLibre",

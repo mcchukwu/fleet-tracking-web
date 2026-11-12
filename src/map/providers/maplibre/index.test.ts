@@ -332,6 +332,16 @@ describe("MapLibre adapter", () => {
     expect(adapter.draw).toBeDefined();
   });
 
+  it("reports offline only when a local pack is configured", () => {
+    const adapter = createMapLibreAdapter({
+      mapTiler: null,
+      styles: ["standard"],
+      loadStyle: defaultLoader,
+      pmtilesUrl: "/map/fleet.pmtiles",
+    });
+    expect(adapter.capabilities.offline).toBe(true);
+  });
+
   it("does not install a native navigation control", async () => {
     const adapter = createAdapter();
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });

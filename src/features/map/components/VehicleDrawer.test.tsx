@@ -200,6 +200,8 @@ describe("VehicleDrawer", () => {
     renderDrawer({
       row: { ...row, stale: true, freshness: "stale" },
       offline: true,
+      canMutate: false,
+      mutateReason: "You're offline.",
     });
     expect(screen.getAllByText("Stale").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("button", { name: "Edit" })).toHaveAttribute(

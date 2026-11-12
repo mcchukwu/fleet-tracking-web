@@ -6,6 +6,8 @@ import {
   type MapTilerStyleId,
 } from "../../config";
 import type { MapStyleId, MapTokens } from "../../types";
+import { readMapTokens } from "../../tokens";
+import { BASEMAP_ATTRIBUTION, buildBasemapStyle } from "./basemap";
 
 export class StyleLoadError extends Error {
   readonly status: number | null;
@@ -121,12 +123,27 @@ export interface LoadedBaseStyle {
  * Fetch the style before the adapter swaps it. The old map stays visible while
  * this runs, so a slow style cannot leave a blank canvas.
  */
+/** The configured local pack replaces the hosted standard style entirely. */
+export function localBaseStyle(
+  theme: "light" | "dark",
+  pmtilesUrl: string,
+  tokens: MapTokens = readMapTokens(),
+): LoadedBaseStyle {
+  return {
+    style: buildBasemapStyle(tokens, theme, pmtilesUrl),
+    attribution: [BASEMAP_ATTRIBUTION],
+  };
+}
+
 export async function loadBaseStyle(
   id: MapStyleId,
   theme: "light" | "dark",
   mapTiler: MapTilerConfig | null,
   signal?: AbortSignal,
 ): Promise<LoadedBaseStyle> {
+  if (id === "standard" && mapConfig.pmtilesUrl !== "") {
+    return localBaseStyle(theme, mapConfig.pmtilesUrl);
+  }
   const url = styleUrlFor(id, theme, mapTiler);
   if (!url) throw new StyleLoadError(null);
 

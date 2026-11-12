@@ -15,6 +15,16 @@ const TOKEN_VARIABLES = {
   geofenceRestricted: "--gf-restricted",
   geofenceOther: "--gf-other",
   imagery: "--imagery-halo",
+  basemapBackground: "--basemap-background",
+  basemapEarth: "--basemap-earth",
+  basemapWater: "--basemap-water",
+  basemapPark: "--basemap-park",
+  basemapBuilding: "--basemap-building",
+  basemapRoad: "--basemap-road",
+  basemapRoadMinor: "--basemap-road-minor",
+  basemapBoundary: "--basemap-boundary",
+  basemapLabel: "--basemap-label",
+  basemapLabelHalo: "--basemap-label-halo",
 } as const;
 
 function readVariable(styles: CSSStyleDeclaration, name: string): string {
@@ -41,6 +51,18 @@ export function readMapTokens(element: HTMLElement = document.documentElement): 
 
   return {
     colors,
+    basemap: {
+      background: readVariable(styles, TOKEN_VARIABLES.basemapBackground),
+      earth: readVariable(styles, TOKEN_VARIABLES.basemapEarth),
+      water: readVariable(styles, TOKEN_VARIABLES.basemapWater),
+      park: readVariable(styles, TOKEN_VARIABLES.basemapPark),
+      building: readVariable(styles, TOKEN_VARIABLES.basemapBuilding),
+      road: readVariable(styles, TOKEN_VARIABLES.basemapRoad),
+      roadMinor: readVariable(styles, TOKEN_VARIABLES.basemapRoadMinor),
+      boundary: readVariable(styles, TOKEN_VARIABLES.basemapBoundary),
+      label: readVariable(styles, TOKEN_VARIABLES.basemapLabel),
+      labelHalo: readVariable(styles, TOKEN_VARIABLES.basemapLabelHalo),
+    },
     fonts: {
       ui: readVariable(styles, "--font-ui"),
       data: readVariable(styles, "--font-data"),

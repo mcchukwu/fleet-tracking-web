@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import type { Alert, Geofence } from "../../../api/types";
 import { ErrorState } from "../../../errors/ErrorState";
 import { FleetMap, MapAttribution } from "../../../map";
+import { mapOfflineConfigured } from "../../../map/config";
 import { toMapGeofences } from "../../../map/geofences";
 import type { MapAdapter, MapVehicle, Padding } from "../../../map/types";
 import { Skeleton } from "../../../ui/StatePanel";
@@ -46,7 +47,10 @@ export function AlertPositionMap({
     map.fitBounds({ south, west, north, east }, { animate: false, padding: FIT_PADDING });
   }, [map, south, west, north, east]);
 
-  if (offline) {
+  const mapCapability = adapter ?? map;
+  const offlinePanel = offline && !(mapCapability?.capabilities.offline ?? mapOfflineConfigured());
+
+  if (offlinePanel) {
     return (
       <div className="flex h-24 flex-col items-center justify-center gap-1 rounded-md border border-border bg-surface-2 text-center">
         <MapPin aria-hidden="true" className="size-5 text-subtle" strokeWidth={1.5} />

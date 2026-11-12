@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useTrips } from "../../../api/hooks/trips";
 import type { Trip } from "../../../api/types";
 import type { TripsSearch } from "../../../app/search";
-import { useCan } from "../../../auth/useCan";
+import { useCanMutate } from "../../../auth/useCanMutate";
 import { normalize } from "../../../errors/normalize";
 import type { AppError } from "../../../errors/types";
 import { formatClockTime, formatCount } from "../../../lib/format";
@@ -45,7 +45,8 @@ export function TripsPage() {
 function TripsPageContent() {
   const search = useSearch({ from: "/_app/trips" });
   const navigate = useNavigate();
-  const canMutate = useCan("mutate");
+  const mutate = useCanMutate("mutate");
+  const canMutate = mutate.allowed;
   const { network } = useConnection();
   const offline = network === "offline";
   const createRef = useRef<HTMLButtonElement>(null);
@@ -137,16 +138,10 @@ function TripsPageContent() {
     filtered: filters.status !== null || filters.q.trim() !== "",
   });
 
-  const changeReason = !canMutate
-    ? "Your role can't change trips."
-    : offline
-      ? "You're offline."
-      : undefined;
-  const createReason = !canMutate
-    ? "Your role can't create trips."
-    : offline
-      ? "You're offline."
-      : undefined;
+  const changeReason =
+    mutate.blockedBy === "role" ? "Your role can't change trips." : (mutate.reason ?? undefined);
+  const createReason =
+    mutate.blockedBy === "role" ? "Your role can't create trips." : (mutate.reason ?? undefined);
 
   function updateSearch(patch: Partial<TripsSearch>, replace = true): void {
     void navigate({ to: "/trips", search: { ...search, ...patch }, replace });

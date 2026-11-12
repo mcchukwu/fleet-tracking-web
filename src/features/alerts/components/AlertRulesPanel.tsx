@@ -1,5 +1,5 @@
 import { useAlertRules } from "../../../api/hooks/alerts";
-import { useCan } from "../../../auth/useCan";
+import { useCanMutate } from "../../../auth/useCanMutate";
 import { normalize } from "../../../errors/normalize";
 import { formatClockTime } from "../../../lib/format";
 import { useConnection } from "../../../stores/connection";
@@ -11,7 +11,8 @@ import { AlertRuleRow } from "./AlertRuleRow";
 
 export function AlertRulesPanel() {
   const query = useAlertRules();
-  const canMutate = useCan("mutate");
+  const mutate = useCanMutate("mutate", "Your role can't change alert rules.");
+  const canMutate = mutate.allowed;
   const { network, lastDataAt } = useConnection();
   const offline = network === "offline";
   const write = useAlertRulesWrite({ canMutate });
@@ -33,17 +34,13 @@ export function AlertRulesPanel() {
               ? "empty"
               : "ready";
 
-  const disabledReason = !canMutate
-    ? "Your role can't change alert rules."
-    : offline
-      ? "You're offline."
-      : undefined;
+  const disabledReason = mutate.reason ?? undefined;
 
   return (
     <div className="flex flex-col gap-3 py-3">
-      {!canMutate ? (
+      {mutate.blockedBy === "role" ? (
         <Banner message="Your role can't change alert rules." />
-      ) : offline ? (
+      ) : mutate.blockedBy === "offline" ? (
         <Banner message="You're offline. Changes are disabled." />
       ) : null}
 

@@ -1,4 +1,4 @@
-import { Map, setWorkerUrl } from "maplibre-gl";
+import { addProtocol, Map, setWorkerUrl } from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -14,4 +14,8 @@ export type {
 
 export function createMap(options: ConstructorParameters<typeof Map>[0]): Map {
   return new Map(options);
+}
+
+export function addMapProtocol(name: string, handler: Parameters<typeof addProtocol>[1]): void {
+  addProtocol(name, handler);
 }

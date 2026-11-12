@@ -14,7 +14,7 @@ describe("design guard", () => {
   it("fails on a deliberately bad sample", () => {
     writeFileSync(
       join(directory, "sample.tsx"),
-      'export const Bad = () => <div className="bg-zinc-100 p-[13px] z-50" />;\nexport default Bad;\n',
+      'import { useCan } from "./useCan";\nimport { layers } from "@protomaps/basemaps";\nexport const Bad = () => <div className="bg-zinc-100 p-[13px] z-50" />;\nexport const online = navigator.onLine;\nexport const can = useCan("mutate");\nexport const tiles = layers;\nexport default Bad;\n',
     );
     const result = spawnSync("bash", ["scripts/guard.sh", directory], {
       cwd: process.cwd(),
@@ -27,6 +27,9 @@ describe("design guard", () => {
     expect(result.stdout).toContain(
       "GUARD FAIL: numeric or arbitrary z-index outside src/ui/layers.css",
     );
+    expect(result.stdout).toContain("GUARD FAIL: mutating capability outside useCanMutate");
+    expect(result.stdout).toContain("GUARD FAIL: navigator.onLine outside the connection store");
+    expect(result.stdout).toContain("GUARD FAIL: map SDK used outside src/map/providers");
   });
 
   it("passes on the repository source", () => {

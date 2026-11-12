@@ -51,6 +51,7 @@ const statusRank: Record<MapVehicle["status"], number> = {
 
 export interface FakeAdapterOptions {
   styles?: readonly MapStyleId[];
+  offline?: boolean;
 }
 
 function polygonFromRing(ring: readonly LngLat[]): Polygon | null {
@@ -231,7 +232,7 @@ export class FakeAdapter implements MapAdapter {
 
   constructor(options: FakeAdapterOptions = {}) {
     this.capabilities = {
-      offline: true,
+      offline: options.offline ?? true,
       drawing: true,
       clustering: "emulated",
       comfortableVehicleCount: 5_000,

@@ -10,6 +10,13 @@ type FakeDraw = DrawController & {
 
 runAdapterContract("FakeAdapter", { create: () => new FakeAdapter() });
 
+describe("FakeAdapter capabilities", () => {
+  it("can declare that it cannot work offline", () => {
+    expect(new FakeAdapter().capabilities.offline).toBe(true);
+    expect(new FakeAdapter({ offline: false }).capabilities.offline).toBe(false);
+  });
+});
+
 describe("FakeAdapter determinism", () => {
   it("records the last state passed by a feature", async () => {
     const adapter = new FakeAdapter();

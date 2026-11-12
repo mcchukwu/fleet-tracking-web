@@ -46,6 +46,7 @@ import {
   type TerraDrawController,
 } from "./draw";
 import { routeLineCollection, routePointCollection } from "../../route";
+import { registerPmtilesProtocol } from "./pmtiles";
 import {
   createMap,
   type GeoJSONSource,
@@ -105,6 +106,8 @@ export interface MapLibreAdapterOptions {
   loadStyle?: StyleLoader;
   /** Test seam: lets unit tests avoid the real Terra Draw library. */
   drawFactory?: (context: DrawContext) => TerraDrawController;
+  /** Test seam: defaults to the configured local pack. */
+  pmtilesUrl?: string;
 }
 
 export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): MapAdapter {
@@ -112,6 +115,7 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
   const mapTiler = options.mapTiler === undefined ? mapTilerConfig : options.mapTiler;
   const loadStyle = options.loadStyle ?? loadBaseStyle;
   const drawFactory = options.drawFactory ?? createTerraDrawController;
+  const pmtilesUrl = options.pmtilesUrl ?? mapConfig.pmtilesUrl;
   let map: MapLibreMap | null = null;
   let theme: "light" | "dark" = "light";
   let tokens: MapTokens | null = null;
@@ -167,7 +171,8 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
   const listeners = new Map<keyof MapEvents, Set<(payload: never) => void>>();
 
   const capabilities: MapCapabilities = {
-    offline: false,
+    // Only a configured local PMTiles pack makes the map honest about offline.
+    offline: pmtilesUrl !== "",
     drawing: true,
     clustering: "native",
     // Measured 2026-11-05: a 5,000-vehicle target produced a 348 ms longest
@@ -698,6 +703,7 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
       const requested =
         options.baseStyle && styles.includes(options.baseStyle) ? options.baseStyle : "standard";
       baseStyle = requested;
+      if (pmtilesUrl !== "") registerPmtilesProtocol();
 
       const abort = new AbortController();
       styleAbort = abort;

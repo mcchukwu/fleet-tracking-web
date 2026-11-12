@@ -18,7 +18,6 @@ function renderActions(overrides: Partial<ComponentProps<typeof VehicleActions>>
         mapReady
         hasPosition
         canMutate
-        offline={false}
         {...overrides}
       />
     </TooltipProvider>,
@@ -62,7 +61,7 @@ describe("VehicleActions", () => {
   });
 
   it("marks edits and assignments offline", () => {
-    renderActions({ offline: true });
+    renderActions({ canMutate: false, mutateReason: "You're offline." });
     expect(screen.getByRole("button", { name: "Edit" })).toHaveAttribute(
       "aria-disabled",
       "true",

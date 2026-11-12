@@ -33,6 +33,7 @@ export interface VehicleDetailSheetProps {
   onSnap: (snap: SheetSnap) => void;
   mapReady: boolean;
   canMutate: boolean;
+  mutateReason?: string | null;
   offline: boolean;
   onClose: () => void;
   onCentre: (position?: { lat: number; lon: number }) => void;
@@ -63,6 +64,7 @@ export function VehicleDetailSheet({
   onSnap,
   mapReady,
   canMutate,
+  mutateReason,
   offline,
   onClose,
   onCentre,
@@ -221,7 +223,7 @@ export function VehicleDetailSheet({
               mapReady={mapReady}
               hasPosition={hasPosition}
               canMutate={canMutate}
-              offline={offline}
+              mutateReason={mutateReason}
               hasVehicle={!notFound}
               canEdit={hasDetail}
             />

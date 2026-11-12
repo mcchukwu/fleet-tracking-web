@@ -4,10 +4,12 @@ import { mapConfig } from "../../config";
 import {
   attributionText,
   isMapTilerStyleId,
+  localBaseStyle,
   loadBaseStyle,
   StyleLoadError,
   styleUrlFor,
 } from "./style";
+import { contractTokens } from "../../testing/adapter-contract";
 
 function style(sources: Record<string, unknown>): StyleSpecification {
   return { version: 8, name: "test", sources, layers: [] } as StyleSpecification;
@@ -43,6 +45,17 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe("local basemap", () => {
+  it("returns a PMTiles style instead of fetching a hosted style", () => {
+    const loaded = localBaseStyle("dark", "/map/fleet.pmtiles", contractTokens);
+
+    expect(loaded.attribution).toEqual(["© OpenStreetMap · Protomaps"]);
+    expect(loaded.style.sources.protomaps).toMatchObject({
+      url: "pmtiles:///map/fleet.pmtiles",
+    });
+  });
+});
+
 describe("attributionText", () => {
   it("turns the style's linked credit into one plain line", () => {
     expect(
@@ -58,6 +71,17 @@ describe("attributionText", () => {
   });
 });
 
+describe("local basemap", () => {
+  it("returns a PMTiles style instead of fetching a hosted style", () => {
+    const loaded = localBaseStyle("dark", "/map/fleet.pmtiles", contractTokens);
+
+    expect(loaded.attribution).toEqual(["© OpenStreetMap · Protomaps"]);
+    expect(loaded.style.sources.protomaps).toMatchObject({
+      url: "pmtiles:///map/fleet.pmtiles",
+    });
+  });
+});
+
 describe("MapTiler styles", () => {
   it("recognises only the hosted style ids", () => {
     expect(isMapTilerStyleId("streets")).toBe(true);
@@ -68,6 +92,17 @@ describe("MapTiler styles", () => {
   it("resolves the standard style from the standard configuration", () => {
     expect(styleUrlFor("standard", "light", null)).toBe(mapConfig.styleUrls.light);
     expect(styleUrlFor("streets", "light", null)).toBeNull();
+  });
+});
+
+describe("local basemap", () => {
+  it("returns a PMTiles style instead of fetching a hosted style", () => {
+    const loaded = localBaseStyle("dark", "/map/fleet.pmtiles", contractTokens);
+
+    expect(loaded.attribution).toEqual(["© OpenStreetMap · Protomaps"]);
+    expect(loaded.style.sources.protomaps).toMatchObject({
+      url: "pmtiles:///map/fleet.pmtiles",
+    });
   });
 });
 

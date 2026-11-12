@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import type { Driver } from "../../../api/types";
 import type { DriversSearch } from "../../../app/search";
-import { useCan } from "../../../auth/useCan";
+import { useCanMutate } from "../../../auth/useCanMutate";
 import { normalize } from "../../../errors/normalize";
 import { formatClockTime, formatCount } from "../../../lib/format";
 import { filterDrivers, sortDrivers, type DriverStatus } from "../../../lib/drivers";
@@ -32,7 +32,7 @@ export function DriversPage() {
 function DriversPageContent() {
   const search = useSearch({ from: "/_app/drivers" });
   const navigate = useNavigate();
-  const canMutate = useCan("mutate");
+  const mutate = useCanMutate("mutate");
   const { network } = useConnection();
   const offline = network === "offline";
   const createRef = useRef<HTMLButtonElement>(null);
@@ -101,16 +101,10 @@ function DriversPageContent() {
       ? formatClockTime(feed.dataUpdatedAt)
       : undefined;
 
-  const createReason = !canMutate
-    ? "Your role can't create drivers."
-    : offline
-      ? "You're offline."
-      : undefined;
-  const editReason = !canMutate
-    ? "Your role can't edit drivers."
-    : offline
-      ? "You're offline."
-      : undefined;
+  const createReason =
+    mutate.blockedBy === "role" ? "Your role can't create drivers." : (mutate.reason ?? undefined);
+  const editReason =
+    mutate.blockedBy === "role" ? "Your role can't edit drivers." : (mutate.reason ?? undefined);
 
   function updateSearch(patch: Partial<DriversSearch>, replace = true): void {
     void navigate({ to: "/drivers", search: { ...search, ...patch }, replace });

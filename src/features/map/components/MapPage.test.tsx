@@ -307,14 +307,16 @@ describe("MapPage", () => {
     expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(3);
   });
 
-  it("keeps cached vehicles and drops the region error while offline", async () => {
+  it("keeps cached vehicles in a full-width list when the map cannot work offline", async () => {
     useConnectionStore.getState().setNetwork("offline");
     mocks.search = {};
     mocks.snapshot.error = new Error("network down");
     renderPage();
 
-    await waitFor(() => expect(mocks.mapProps.at(-1)?.dimmed).toBe(true));
-    expect(mocks.mapProps.at(-1)?.error).toBeNull();
+    expect(await screen.findByTestId("map-list-only")).toBeVisible();
+    expect(screen.queryByTestId("fleet-map")).not.toBeInTheDocument();
+    expect(screen.queryByText("Can't reach the server")).not.toBeInTheDocument();
+    expect(screen.getByText("Map isn't available offline")).toBeVisible();
     useConnectionStore.getState().setNetwork("online");
   });
 

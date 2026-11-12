@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { onlineManager } from "@tanstack/react-query";
 import { useNow } from "../lib/ticker";
+import { setReportedOnline } from "../errors/report";
 
 export type NetworkState = "online" | "offline";
 export type SocketState = "live" | "reconnecting" | "down";
@@ -83,6 +84,7 @@ export function resetConnection(): void {
     socketDownAt: null,
   });
   onlineManager.setOnline(network === "online");
+  setReportedOnline(network === "online");
 }
 
 export function useConnection() {
@@ -108,6 +110,7 @@ function applyNetwork(next: NetworkState): void {
   useConnectionStore.getState().setNetwork(next);
   const after = useConnectionStore.getState().network;
   onlineManager.setOnline(after === "online");
+  setReportedOnline(after === "online");
   if (after === before) return;
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent("fleet:connectivity", { detail: { online: after === "online" } }));

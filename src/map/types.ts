@@ -90,6 +90,18 @@ export interface MapTokens {
     geofenceRestricted: string;
     geofenceOther: string;
   };
+  basemap: {
+    background: string;
+    earth: string;
+    water: string;
+    park: string;
+    building: string;
+    road: string;
+    roadMinor: string;
+    boundary: string;
+    label: string;
+    labelHalo: string;
+  };
   fonts: {
     ui: string;
     data: string;

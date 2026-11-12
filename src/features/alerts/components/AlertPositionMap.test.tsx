@@ -131,6 +131,15 @@ describe("AlertPositionMap", () => {
     expect(screen.getByText("Map isn't available offline")).toBeVisible();
   });
 
+  it("keeps the cached map when the adapter supports offline", () => {
+    renderMap(
+      { status: "evidence", position: { lat: 6.5, lon: 3.4 }, geofence: null },
+      new FakeAdapter(),
+    );
+    expect(screen.queryByText("Map isn't available offline")).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Alert position" })).toBeVisible();
+  });
+
   it("shows offline instead of a retryable position error", () => {
     render(
       <ThemeProvider>

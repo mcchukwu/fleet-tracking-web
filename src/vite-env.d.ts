@@ -7,6 +7,7 @@ interface ImportMetaEnv {
   readonly VITE_MAP_STYLE_URL_LIGHT?: string;
   readonly VITE_MAP_STYLE_URL_DARK?: string;
   readonly VITE_MAP_GLYPHS_URL?: string;
+  readonly VITE_MAP_SPRITE_URL?: string;
   readonly VITE_MAP_PMTILES_URL?: string;
   readonly VITE_MAPTILER_API_KEY?: string;
   readonly VITE_SW_DEV?: string;

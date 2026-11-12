@@ -59,7 +59,22 @@ vi.mock("@tanstack/react-router", () => ({
     <a href={to}>{children}</a>
   ),
 }));
-vi.mock("../../../auth/useCan", () => ({ useCan: () => mocks.canMutate }));
+vi.mock("../../../auth/useCanMutate", () => ({
+  useCanMutate: (_capability: string, roleReason?: string) => {
+    if (!mocks.canMutate) {
+      return {
+        allowed: false,
+        roleAllowed: false,
+        blockedBy: "role",
+        reason: roleReason ?? "Your role can't make changes.",
+      };
+    }
+    if (mocks.network === "offline") {
+      return { allowed: false, roleAllowed: true, blockedBy: "offline", reason: "You're offline." };
+    }
+    return { allowed: true, roleAllowed: true, blockedBy: null, reason: null };
+  },
+}));
 vi.mock("../../../stores/connection", () => ({
   useConnection: () => ({ network: mocks.network }),
 }));

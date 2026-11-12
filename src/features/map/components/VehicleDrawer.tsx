@@ -27,6 +27,7 @@ export interface VehicleDrawerProps {
   snapshotVehicle: SnapshotVehicle | null;
   mapReady: boolean;
   canMutate: boolean;
+  mutateReason?: string | null;
   offline: boolean;
   onClose: () => void;
   onCentre: (position?: { lat: number; lon: number }) => void;
@@ -49,6 +50,7 @@ export function VehicleDrawer({
   snapshotVehicle,
   mapReady,
   canMutate,
+  mutateReason,
   offline,
   onClose,
   onCentre,
@@ -106,7 +108,7 @@ export function VehicleDrawer({
           mapReady={mapReady}
           hasPosition={hasPosition}
           canMutate={canMutate}
-          offline={offline}
+          mutateReason={mutateReason}
           hasVehicle={!notFound}
           canEdit={hasDetail}
         />

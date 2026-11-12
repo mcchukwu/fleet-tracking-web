@@ -17,6 +17,18 @@ export const contractTokens: MapTokens = {
     geofenceRestricted: "restricted-token",
     geofenceOther: "other-token",
   },
+  basemap: {
+    background: "basemap-background",
+    earth: "basemap-earth",
+    water: "basemap-water",
+    park: "basemap-park",
+    building: "basemap-building",
+    road: "basemap-road",
+    roadMinor: "basemap-road-minor",
+    boundary: "basemap-boundary",
+    label: "basemap-label",
+    labelHalo: "basemap-label-halo",
+  },
   fonts: { ui: "ui-token", data: "data-token" },
   marker: {
     radius: 12,

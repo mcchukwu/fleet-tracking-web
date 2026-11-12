@@ -7,7 +7,7 @@ import {
 } from "../../../api/hooks/alerts";
 import { useGeofences } from "../../../api/hooks/geofences";
 import type { Alert } from "../../../api/types";
-import { useCan } from "../../../auth/useCan";
+import { useCanMutate } from "../../../auth/useCanMutate";
 import type { AlertsSearch } from "../../../app/search";
 import { normalize } from "../../../errors/normalize";
 import { formatClockTime } from "../../../lib/format";
@@ -48,7 +48,8 @@ function AlertsPageContent() {
   const [ackOrigin, setAckOrigin] = useState<"row" | "detail">("row");
   const { network, lastDataAt } = useConnection();
   const offline = network === "offline";
-  const canAck = useCan("ack");
+  const ackGate = useCanMutate("ack");
+  const canAck = ackGate.allowed;
   const openAlerts = useOpenAlerts();
   const geofences = useGeofences();
   const ack = useAlertAck({ canAck });
@@ -130,11 +131,10 @@ function AlertsPageContent() {
     hasMore: feed.hasMore,
   });
 
-  const disabledReason = !canAck
-    ? "Viewers can't acknowledge alerts."
-    : offline
-      ? "You're offline."
-      : undefined;
+  const disabledReason =
+    ackGate.blockedBy === "role"
+      ? "Viewers can't acknowledge alerts."
+      : (ackGate.reason ?? undefined);
 
   function updateSearch(patch: Partial<AlertsSearch>, replace = true): void {
     void navigate({

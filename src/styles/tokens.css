@@ -63,6 +63,17 @@
 
   --imagery-halo: #ffffff;
 
+  --basemap-background: #f4f4f5;
+  --basemap-earth: #fafafa;
+  --basemap-water: #e4e4e7;
+  --basemap-park: #eef0ec;
+  --basemap-building: #e4e4e7;
+  --basemap-road: #ffffff;
+  --basemap-road-minor: #f4f4f5;
+  --basemap-boundary: #d4d4d8;
+  --basemap-label: #52525b;
+  --basemap-label-halo: #ffffff;
+
   --motion-fast: 100ms;
   --motion-base: 150ms;
   --motion-slow: 220ms;
@@ -125,6 +136,17 @@
   --overlay: rgb(0 0 0 / 0.6);
 
   --imagery-halo: #09090b;
+
+  --basemap-background: #09090b;
+  --basemap-earth: #18181b;
+  --basemap-water: #172033;
+  --basemap-park: #14201a;
+  --basemap-building: #27272a;
+  --basemap-road: #3f3f46;
+  --basemap-road-minor: #27272a;
+  --basemap-boundary: #3f3f46;
+  --basemap-label: #a1a1aa;
+  --basemap-label-halo: #09090b;
 }
 
 :root[data-accent="violet"] {

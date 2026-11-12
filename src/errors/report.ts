@@ -36,8 +36,15 @@ function endpointOf(resource: string | undefined): string | undefined {
   return diagnosticPath(resource);
 }
 
+let onlineForDiagnostics = true;
+
+/** The connection store keeps this in sync; diagnostics never read navigator. */
+export function setReportedOnline(online: boolean): void {
+  onlineForDiagnostics = online;
+}
+
 function isOnline(): boolean {
-  return typeof navigator === "undefined" ? true : navigator.onLine;
+  return onlineForDiagnostics;
 }
 
 export function recordError(

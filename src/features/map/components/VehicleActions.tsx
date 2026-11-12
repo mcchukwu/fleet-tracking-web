@@ -10,7 +10,7 @@ export interface VehicleActionsProps {
   mapReady: boolean;
   hasPosition: boolean;
   canMutate: boolean;
-  offline: boolean;
+  mutateReason?: string | null;
   hasVehicle?: boolean;
   canEdit?: boolean;
 }
@@ -24,7 +24,7 @@ export function VehicleActions({
   mapReady,
   hasPosition,
   canMutate,
-  offline,
+  mutateReason,
   hasVehicle = true,
   canEdit = true,
 }: VehicleActionsProps) {
@@ -36,23 +36,19 @@ export function VehicleActions({
       : undefined;
   const playbackReason = !hasVehicle ? "Vehicle not found." : undefined;
   const editReason = !canMutate
-    ? "Your role can't edit vehicles."
-    : offline
-      ? "You're offline."
-      : !hasVehicle
-        ? "Vehicle not found."
-        : !canEdit
-          ? "Vehicle details aren't loaded."
-          : undefined;
+    ? (mutateReason ?? "Your role can't edit vehicles.")
+    : !hasVehicle
+      ? "Vehicle not found."
+      : !canEdit
+        ? "Vehicle details aren't loaded."
+        : undefined;
   const assignReason = !canMutate
-    ? "Your role can't assign drivers."
-    : offline
-      ? "You're offline."
-      : !hasVehicle
-        ? "Vehicle not found."
-        : !canEdit
-          ? "Vehicle details aren't loaded."
-          : undefined;
+    ? (mutateReason ?? "Your role can't assign drivers.")
+    : !hasVehicle
+      ? "Vehicle not found."
+      : !canEdit
+        ? "Vehicle details aren't loaded."
+        : undefined;
 
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-1">

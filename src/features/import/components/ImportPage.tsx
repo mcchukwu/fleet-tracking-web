@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import type { ImportResult } from "../../../api/types";
-import { useCan } from "../../../auth/useCan";
+import { useCanMutate } from "../../../auth/useCanMutate";
 import { Button } from "../../../ui/Button";
 import { LoadingBar, ForbiddenState } from "../../../ui/StatePanel";
 import { SlowNotice } from "../../../errors/SlowNotice";
@@ -41,7 +41,8 @@ export function ImportPage() {
 
 function ImportPageContent() {
   const navigate = useNavigate();
-  const canMutate = useCan("mutate");
+  const mutate = useCanMutate("mutate", "Your role can't import vehicles.");
+  const canMutate = mutate.allowed;
   const { network } = useConnection();
   const offline = network === "offline";
 
@@ -132,13 +133,11 @@ function ImportPageContent() {
     downloadText(errorsCsvFileName(fileName), errorsCsv(result.errors ?? []));
   }
 
-  const uploadReason = !canMutate
-    ? "Your role can't import vehicles."
-    : offline
-      ? "You're offline."
-      : preview.state !== "ready"
-        ? "Choose a valid .csv file first."
-        : undefined;
+  const uploadReason =
+    mutate.blockedBy === "role"
+      ? "Your role can't import vehicles."
+      : (mutate.reason ??
+        (preview.state !== "ready" ? "Choose a valid .csv file first." : undefined));
 
   const statusText =
     upload.status === "uploading"
@@ -153,7 +152,7 @@ function ImportPageContent() {
 
   const result = shownResult;
 
-  if (!canMutate) {
+  if (!mutate.roleAllowed) {
     return (
       <div
         data-testid="import-page"

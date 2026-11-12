@@ -62,9 +62,31 @@ vi.mock("@tanstack/react-router", () => ({
   ),
 }));
 
-vi.mock("../../../auth/useCan", () => ({
-  useCan: () => mocks.canAck,
-}));
+vi.mock("../../../auth/useCanMutate", async () => {
+  const { useConnection } = await import("../../../stores/connection");
+  return {
+    useCanMutate: (_capability: string, roleReason?: string) => {
+      const { network } = useConnection();
+      if (!mocks.canAck) {
+        return {
+          allowed: false,
+          roleAllowed: false,
+          blockedBy: "role",
+          reason: roleReason ?? "Viewers can't acknowledge alerts.",
+        };
+      }
+      if (network === "offline") {
+        return {
+          allowed: false,
+          roleAllowed: true,
+          blockedBy: "offline",
+          reason: "You're offline.",
+        };
+      }
+      return { allowed: true, roleAllowed: true, blockedBy: null, reason: null };
+    },
+  };
+});
 
 vi.mock("../../../api/hooks/alerts", () => ({
   OPEN_ALERT_LIMIT: 500,

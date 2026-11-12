@@ -1,4 +1,4 @@
-import { mapConfig } from "./config";
+import { standardAttribution } from "./config";
 import type { MapStyleId } from "./types";
 import { cn } from "../ui/cn";
 
@@ -26,7 +26,7 @@ export function MapAttribution({ styleId, attribution, className }: MapAttributi
     );
   }
 
-  const credit = mapConfig.attribution;
+  const credit = standardAttribution();
   return (
     <a
       data-testid="map-attribution"

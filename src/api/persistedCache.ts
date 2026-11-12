@@ -3,6 +3,7 @@ import { del, get, set } from "idb-keyval";
 import { z } from "zod";
 import { persistedQueryRoots } from "./keys";
 import { useAuthStore } from "../auth/store";
+import { setPwaDebug } from "../dev/debug";
 
 export const PERSISTED_CACHE_KEY = "fleet.query-cache";
 export const PERSISTED_CACHE_SCHEMA_VERSION = 1;
@@ -87,6 +88,7 @@ export async function savePersistedCache(
   };
   try {
     await set(PERSISTED_CACHE_KEY, payload);
+    setPwaDebug({ cacheSavedAt: payload.savedAt });
   } catch {
     dispatchStorageUnavailable();
   }
