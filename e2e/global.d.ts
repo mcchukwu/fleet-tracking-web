@@ -44,6 +44,12 @@ declare global {
         geofenceCount: number;
         stale: boolean;
       };
+      pwa: {
+        cacheSavedAt: number | null;
+        mapCachedAt: number | null;
+        updateAvailable: boolean;
+        serviceWorker: "unsupported" | "registering" | "ready" | "error";
+      };
       playback: {
         vehicleId: string | null;
         from: string | null;

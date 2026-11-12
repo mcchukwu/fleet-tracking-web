@@ -14,6 +14,7 @@ const launchOptions = executablePath
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore: /.*\.pwa\.spec\.ts/,
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
