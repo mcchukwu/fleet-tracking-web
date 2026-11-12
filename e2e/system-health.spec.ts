@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { expectNoHorizontalScroll } from "./helpers";
+import { expectNoHorizontalScroll, primeOfflineSession } from "./helpers";
 
 async function setScenario(page: Page, scenario: string): Promise<void> {
   await page.addInitScript((value) => {
@@ -185,12 +185,7 @@ test.describe("system health", () => {
   });
 
   test("offline without a cache shows the neutral offline state", async ({ page }) => {
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator, "onLine", {
-        configurable: true,
-        get: () => false,
-      });
-    });
+    await primeOfflineSession(page);
     await gotoSystem(page);
 
     await expect(

@@ -4,6 +4,7 @@ import {
   captureForReview,
   expectNoAxeViolations,
   expectNoHorizontalScroll,
+  primeOfflineSession,
 } from "./helpers";
 
 const ADEBAYO = "5b77edaf-c0c6-4ba4-b0c7-d2b6422c598d";
@@ -339,9 +340,7 @@ test.describe("drivers", () => {
   });
 
   test("offline with no cache shows the neutral empty state", async ({ page }) => {
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator, "onLine", { configurable: true, get: () => false });
-    });
+    await primeOfflineSession(page);
     await page.goto("/drivers?fault=drivers%3Anetwork");
 
     await expect(page.getByText("You're offline")).toBeVisible();
@@ -353,9 +352,7 @@ test.describe("drivers", () => {
   });
 
   test("an offline deep link is neutral instead of claiming removal", async ({ page }) => {
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator, "onLine", { configurable: true, get: () => false });
-    });
+    await primeOfflineSession(page);
     await page.goto(`/drivers?driver=${ADEBAYO}&fault=drivers%3Anetwork`);
 
     const drawer = page.getByRole("complementary", { name: "Driver details" });

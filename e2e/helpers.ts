@@ -18,6 +18,53 @@ export async function setStoredTheme(
   }, theme);
 }
 
+const OFFLINE_PROFILE_KEY = "fleet.offline-profile";
+
+/**
+ * Seeds the minimal offline profile so a first load can run without the
+ * network, then makes every later navigation report offline. A static
+ * same-origin document is used so the app does not boot and warm the cache.
+ */
+export async function primeOfflineSession(page: Page): Promise<void> {
+  await page.goto("/favicon.svg");
+  await page.evaluate(
+    async ({ key }) => {
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open("keyval-store");
+        request.onupgradeneeded = () => request.result.createObjectStore("keyval");
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      await new Promise<void>((resolve, reject) => {
+        const transaction = db.transaction("keyval", "readwrite");
+        transaction.objectStore("keyval").put(
+          {
+            user: {
+              id: "00000000-0000-0000-0000-000000000102",
+              tenant_id: "tenant-demo",
+              email: "dispatcher@demo.ftb",
+              name: "Demo Dispatcher",
+              role: "dispatcher",
+            },
+            savedAt: Date.now(),
+          },
+          key,
+        );
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
+      db.close();
+    },
+    { key: OFFLINE_PROFILE_KEY },
+  );
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "onLine", {
+      configurable: true,
+      get: () => false,
+    });
+  });
+}
+
 export async function expectTheme(
   page: Page,
   theme: ReviewTheme,
