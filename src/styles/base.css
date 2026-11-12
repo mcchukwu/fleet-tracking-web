@@ -3,6 +3,14 @@
     border-color: var(--border);
   }
 
+  html,
+  body,
+  #root {
+    height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
   html {
     color-scheme: light;
     background: var(--bg);
@@ -15,7 +23,6 @@
 
   body {
     margin: 0;
-    min-height: 100vh;
     background: var(--bg);
     color: var(--text);
     font-family: var(--font-ui);
@@ -82,6 +89,18 @@
 }
 
 @layer utilities {
+  /* The one bottom inset on a scroll page: the spacing step plus the device
+     safe area. Pages must not add their own bottom padding. */
+  .page-frame-end {
+    padding-bottom: calc(
+      var(--spacing-page) + env(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  .picker-sheet-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
   .label-caps {
     font-size: 11px;
     line-height: 16px;

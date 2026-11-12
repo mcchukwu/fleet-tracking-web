@@ -16,6 +16,7 @@ check "hex colour in source"      '#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b'
 check "inline style"              'style=\{\{'
 check "direct web storage"        '\b(localStorage|sessionStorage)\b'
 check "gradient"                  'gradient'
+check "viewport unit"             'min-h-screen|\bh-screen\b|\b100vh\b|\b100vw\b'
 check "default export"            '^export default'
 pending=$(rg -n --no-heading --glob '!src/api/useQueryView.ts' --glob '!**/*.test.*' \
       '\.isPending\b' "$target" | rg -v 'guard-ignore')

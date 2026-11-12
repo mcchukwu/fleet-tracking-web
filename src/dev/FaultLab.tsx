@@ -10,6 +10,7 @@ import { alertTypeLabel } from "../lib/status";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
 import { alertsFixture } from "../mocks/fixtures/alerts";
 import { Button } from "../ui/Button";
+import { PageFrame } from "../ui/PageFrame";
 import { StateBoundary, type StateBoundaryState } from "../ui/StateBoundary";
 
 const firstAlertId = alertsFixture[0]?.id ?? "alert-1";
@@ -118,7 +119,10 @@ export function FaultLab() {
   useDocumentTitle("Fault lab");
 
   return (
-    <div className="mx-auto flex w-full max-w-content flex-col gap-6 p-4 text-text sm:p-6">
+    <PageFrame
+      layout="scroll"
+      contentClassName="flex flex-col gap-6 p-4 text-text sm:p-6"
+    >
       <h1 className="text-lg font-semibold">Fault lab</h1>
       <p className="text-sm text-muted">
         Development-only page. Add ?fault=resource:kind to the URL to force failures.
@@ -144,6 +148,6 @@ export function FaultLab() {
         </h2>
         <p className="text-sm text-text">{alertTypeLabel("solar_flare")}</p>
       </section>
-    </div>
+    </PageFrame>
   );
 }

@@ -1,5 +1,6 @@
 import { useDocumentTitle } from "../lib/useDocumentTitle";
 import { LayerPortal } from "../ui/LayerPortal";
+import { PageFrame } from "../ui/PageFrame";
 
 const SWATCH =
   "fixed left-0 top-0 flex h-12 w-60 items-center justify-center border border-border bg-surface text-sm text-text";
@@ -13,7 +14,10 @@ export function LayerStack() {
   useDocumentTitle("Layer stack");
 
   return (
-    <div className="max-w-content text-text mx-auto flex w-full flex-col gap-4 p-4 sm:p-6">
+    <PageFrame
+      layout="scroll"
+      contentClassName="text-text flex flex-col gap-4 p-4 sm:p-6"
+    >
       <h1 className="text-lg font-semibold">Layer stack</h1>
       <p className="text-muted max-w-prose text-sm">
         Six layers overlap at the top-left point. The drawer is trapped in the
@@ -57,6 +61,6 @@ export function LayerStack() {
         <li>5. toast</li>
         <li>6. tooltip</li>
       </ol>
-    </div>
+    </PageFrame>
   );
 }

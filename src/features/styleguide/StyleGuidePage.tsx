@@ -65,6 +65,7 @@ import { useToast } from "../../ui/Toast";
 import { Tooltip } from "../../ui/Tooltip";
 import { InlineError } from "../../errors/InlineError";
 import { EvidenceList } from "../../ui/EvidenceList";
+import { PageFrame } from "../../ui/PageFrame";
 
 function Section({
   id,
@@ -296,8 +297,8 @@ export function StyleGuidePage() {
   const { toast } = useToast();
 
   return (
-    <div className="bg-bg text-text min-h-screen">
-      <header className="border-border bg-surface sticky top-0 z-topbar border-b">
+    <div className="bg-bg text-text flex h-dvh flex-col overflow-hidden">
+      <header className="border-border bg-surface z-topbar shrink-0 border-b">
         <div className="h-topbar mx-auto flex max-w-screen-2xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <span className="hidden sm:inline-flex">
@@ -318,7 +319,11 @@ export function StyleGuidePage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-screen-2xl space-y-12 px-4 py-8 sm:px-6">
+      <PageFrame
+        layout="scroll"
+        width="full"
+        contentClassName="mx-auto max-w-screen-2xl space-y-12 px-4 pt-8 sm:px-6"
+      >
         <div className="max-w-prose space-y-2">
           <p className="label-caps text-accent-fg">Design system</p>
           <h1 className="text-text text-lg font-semibold">
@@ -1179,7 +1184,7 @@ export function StyleGuidePage() {
             </Button>
           </div>
         </Section>
-      </main>
+      </PageFrame>
     </div>
   );
 }

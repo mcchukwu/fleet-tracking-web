@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { PageFrame } from "../ui/PageFrame";
 import { ErrorState } from "./ErrorState";
 import { normalize } from "./normalize";
 import { recordError } from "./report";
@@ -67,9 +68,15 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
     if (this.props.level === "app") {
       return (
-        <main className="flex min-h-screen items-center justify-center bg-bg p-6">
-          <h1 className="sr-only">Something went wrong</h1>
-          <ErrorState error={error} blocking onAction={() => window.location.reload()} />
+        <main className="h-dvh bg-bg">
+          <PageFrame layout="scroll" align="center" contentClassName="px-4 py-6">
+            <h1 className="sr-only">Something went wrong</h1>
+            <ErrorState
+              error={error}
+              blocking
+              onAction={() => window.location.reload()}
+            />
+          </PageFrame>
         </main>
       );
     }

@@ -3,6 +3,7 @@ import { useDocumentTitle } from "../lib/useDocumentTitle";
 import { Button } from "../ui/Button";
 import { Combobox, type ComboboxItem } from "../ui/Combobox";
 import { Dialog } from "../ui/Dialog";
+import { PageFrame } from "../ui/PageFrame";
 import { SearchField } from "../ui/SearchField";
 
 const COUNTS = [3, 25, 500] as const;
@@ -47,7 +48,10 @@ export function ComboboxLab() {
   const [search, setSearch] = useState("");
 
   return (
-    <div className="max-w-content text-text mx-auto flex w-full flex-col gap-6 p-4 sm:p-6">
+    <PageFrame
+      layout="scroll"
+      contentClassName="text-text flex flex-col gap-6 p-4 sm:p-6"
+    >
       <h1 className="text-lg font-semibold">Combobox lab</h1>
       <p className="text-muted max-w-prose text-sm">
         The same picker with 3, 25 and 500 options, standalone and inside a
@@ -117,6 +121,6 @@ export function ComboboxLab() {
           />
         ) : null}
       </Dialog>
-    </div>
+    </PageFrame>
   );
 }

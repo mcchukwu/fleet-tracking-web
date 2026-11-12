@@ -35,6 +35,7 @@ import { ShellSkeleton } from "../features/shell/components/ShellSkeleton";
 import { StyleGuidePage } from "../features/styleguide/StyleGuidePage";
 import { SystemPage } from "../features/system/components/SystemPage";
 import { TripsPage } from "../features/trips/components/TripsPage";
+import { PageFrame } from "../ui/PageFrame";
 import { ForbiddenState } from "../ui/StatePanel";
 import { NotFound } from "./NotFound";
 import { safeRedirect } from "./redirect";
@@ -89,14 +90,20 @@ function RouteError({ error, reset }: ErrorComponentProps) {
         : undefined;
 
   return (
-    <main className="bg-bg text-text flex min-h-screen items-center justify-center p-6">
-      <h1 className="sr-only">Something went wrong</h1>
-      <ErrorState
-        error={normalized}
-        blocking
-        onRetry={retry}
-        onAction={action}
-      />
+    <main className="bg-bg text-text h-dvh">
+      <PageFrame
+        layout="scroll"
+        align="center"
+        contentClassName="px-4 py-6 sm:px-6"
+      >
+        <h1 className="sr-only">Something went wrong</h1>
+        <ErrorState
+          error={normalized}
+          blocking
+          onRetry={retry}
+          onAction={action}
+        />
+      </PageFrame>
     </main>
   );
 }
@@ -132,7 +139,11 @@ function RootLayout() {
 function ForbiddenPage() {
   useDocumentTitle("Forbidden");
   return (
-    <div className="max-w-content text-text mx-auto flex flex-col items-center px-4 py-10 sm:px-6">
+    <PageFrame
+      layout="scroll"
+      align="center"
+      contentClassName="items-center px-4 py-10 sm:px-6"
+    >
       <h1 className="sr-only">Forbidden</h1>
       <ForbiddenState
         action={
@@ -144,7 +155,7 @@ function ForbiddenPage() {
           </Link>
         }
       />
-    </div>
+    </PageFrame>
   );
 }
 

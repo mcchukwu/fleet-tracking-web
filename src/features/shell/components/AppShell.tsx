@@ -54,7 +54,7 @@ export function AppShell() {
           <NavRail />
           <main
             tabIndex={-1}
-            className="min-h-0 min-w-0 flex-1 overflow-auto focus:outline-none"
+            className="min-h-0 min-w-0 flex-1 overflow-hidden focus:outline-none"
           >
             <ErrorBoundary level="route" resetKeys={[pathname]}>
               <Outlet />

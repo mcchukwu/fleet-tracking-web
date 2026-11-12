@@ -2,7 +2,7 @@ import { Skeleton } from "../../../ui/StatePanel";
 
 export function ShellSkeleton() {
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-bg text-text">
+    <div className="flex h-dvh flex-col overflow-hidden bg-bg text-text">
       <output className="sr-only">Loading the console</output>
       <div className="flex h-topbar shrink-0 items-center gap-2 border-b border-border bg-surface px-3">
         <Skeleton className="size-control-sm" />
