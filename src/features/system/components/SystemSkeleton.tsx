@@ -1,19 +1,31 @@
 import { Skeleton } from "../../../ui/StatePanel";
 import { cn } from "../../../ui/cn";
-import { HEALTH_GROUP_COLUMNS, HEALTH_GROUP_SPECS } from "../lib/constants";
+import {
+  HEALTH_GROUP_COLUMNS,
+  HEALTH_GROUP_SPECS,
+  type HealthGroupId,
+} from "../lib/constants";
 
-const skeletonCells = {
-  dependencies: { cells: 2, size: "md", hint: false },
-  fleet: { cells: 4, size: "md", hint: true },
-  ingest: { cells: 8, size: "sm", hint: true },
-} as const;
+type SkeletonHint = "none" | "text" | "touch";
+
+const skeletonCells: Record<
+  HealthGroupId,
+  { size: "md" | "sm"; hints: readonly SkeletonHint[] }
+> = {
+  dependencies: { size: "md", hints: ["none", "none"] },
+  fleet: { size: "md", hints: ["text", "none", "none", "touch"] },
+  ingest: {
+    size: "sm",
+    hints: ["text", "text", "text", "text", "text", "text", "text", "text"],
+  },
+};
 
 function SkeletonCell({
   size,
   hint,
 }: {
   size: "md" | "sm";
-  hint: boolean;
+  hint: SkeletonHint;
 }) {
   return (
     <div
@@ -27,8 +39,9 @@ function SkeletonCell({
         <Skeleton className="h-4 w-20" />
       </div>
       <Skeleton className={cn("w-12", size === "md" ? "h-8" : "h-7")} />
-      {hint ? (
-        <Skeleton className={size === "md" ? "h-5 w-16 md:h-4" : "h-4 w-16"} />
+      {hint === "text" ? <Skeleton className="h-4 w-16" /> : null}
+      {hint === "touch" ? (
+        <Skeleton className="h-5 w-16 md:h-4" />
       ) : null}
     </div>
   );
@@ -60,8 +73,8 @@ export function SystemSkeleton() {
                 HEALTH_GROUP_COLUMNS[spec.columns],
               )}
             >
-              {Array.from({ length: cells.cells }).map((_, index) => (
-                <SkeletonCell key={index} size={cells.size} hint={cells.hint} />
+              {cells.hints.map((hint, index) => (
+                <SkeletonCell key={index} size={cells.size} hint={hint} />
               ))}
             </div>
           </section>

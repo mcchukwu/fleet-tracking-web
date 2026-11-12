@@ -144,6 +144,7 @@ test.describe("system health layout", () => {
     for (const id of ["dependencies", "fleet", "ingest"]) {
       expect(
         Math.abs((skeleton.groups[id] ?? 0) - (ready.groups[id] ?? 0)),
+        `${id}: skeleton ${skeleton.groups[id]} ready ${ready.groups[id]}`,
       ).toBeLessThanOrEqual(1);
     }
   });
