@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { TooltipProvider } from "../../../ui/Tooltip";
 import { SystemHealthItem } from "./SystemHealthItem";
 
 describe("SystemHealthItem", () => {
@@ -39,5 +40,23 @@ describe("SystemHealthItem", () => {
     );
     expect(screen.getByText("—")).toBeVisible();
     expect(screen.getByText("No vehicle reports")).toBeVisible();
+  });
+
+  it("makes a relative hint focusable for its tooltip", () => {
+    render(
+      <TooltipProvider>
+        <SystemHealthItem
+          item={{
+            id: "last-report",
+            label: "Last vehicle report",
+            value: "10s",
+            hint: "12:00",
+            tooltip: "12 Nov 2026, 12:00 · 12 Nov 2026, 12:00 UTC",
+            tone: "healthy",
+          }}
+        />
+      </TooltipProvider>,
+    );
+    expect(screen.getByText("12:00")).toHaveAttribute("type", "button");
   });
 });

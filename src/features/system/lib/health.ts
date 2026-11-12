@@ -6,9 +6,10 @@ import {
   formatCount,
   formatPercent,
   formatRate,
+  formatTimeTooltip,
 } from "../../../lib/format";
 import { getDataFreshness } from "../../../lib/status";
-import type { HealthGroupId } from "./constants";
+import { HEALTH_GROUP_SPECS, type HealthGroupId } from "./constants";
 
 export type HealthTone = "healthy" | "warning" | "critical";
 
@@ -17,6 +18,7 @@ export interface HealthItem {
   label: string;
   value: string;
   hint?: string;
+  tooltip?: string;
   tone: HealthTone;
 }
 
@@ -153,6 +155,7 @@ export function counterHint({
       ? at - previousAt
       : null;
   const rate = counterRate(current, previous, elapsed);
+  if (rate === null) return "Measuring…";
   if (delta === null) return "Measuring…";
   if (delta === 0) return `No change · ${rateLabel(rate)}`;
   return `+${formatCount(delta)} · ${rateLabel(rate)}`;
@@ -192,6 +195,7 @@ function lastReportItem(
     label: "Last vehicle report",
     value: formatAgeSeconds(ageMs / 1_000),
     hint: formatClockTime(lastDataAt),
+    tooltip: formatTimeTooltip(new Date(lastDataAt).toISOString()),
     tone: freshnessTone(getDataFreshness(ageMs)),
   };
 }
@@ -352,32 +356,15 @@ export function buildHealthGroups(
   trend: HealthTrend,
   now: number,
 ): HealthGroup[] {
-  return [
-    {
-      id: "dependencies",
-      title: "Dependencies",
-      description: "Services the API depends on.",
-      items: sortHealthItems(dependencyItems(data)),
-      columns: 2,
-    },
-    {
-      id: "fleet",
-      title: "Fleet",
-      description: "Fleet counts and the newest position report.",
-      items: sortHealthItems(fleetItems(data, lastDataAt, now)),
-      columns: 4,
-    },
-    {
-      id: "ingest",
-      title: "Ingest",
-      description:
-        "Cumulative counters. Rates and changes are measured from consecutive polls since this page opened.",
-      items: sortHealthItems(
-        ingestItems(data, trend, trend.current?.at ?? now),
-      ),
-      columns: 4,
-    },
-  ];
+  const itemsFor: Record<HealthGroupId, HealthItem[]> = {
+    dependencies: dependencyItems(data),
+    fleet: fleetItems(data, lastDataAt, now),
+    ingest: ingestItems(data, trend, trend.current?.at ?? now),
+  };
+  return HEALTH_GROUP_SPECS.map((spec) => ({
+    ...spec,
+    items: sortHealthItems(itemsFor[spec.id]),
+  }));
 }
 
 export function healthSummary(groups: readonly HealthGroup[]): HealthSummary {

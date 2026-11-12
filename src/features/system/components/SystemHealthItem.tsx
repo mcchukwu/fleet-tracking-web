@@ -19,6 +19,7 @@ export function SystemHealthItem({ item, size = "md" }: SystemHealthItemProps) {
         label={item.label}
         value={item.value}
         hint={item.hint}
+        hintTooltip={item.tooltip}
         size={size}
         leading={<HealthDot tone={item.tone} label={item.label} />}
         className={size === "md" ? "border-0 min-h-24" : "border-0 min-h-20"}

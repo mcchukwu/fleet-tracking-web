@@ -141,6 +141,7 @@ describe("health groups", () => {
       value: "10s",
       tone: "healthy",
     });
+    expect(item(fresh, "last-report").tooltip).toMatch(/ · .* UTC$/);
 
     const delayed = buildHealthGroups(
       data(),
@@ -225,6 +226,17 @@ describe("health groups", () => {
     const groups = buildHealthGroups(data(), now, emptyTrend(), now);
     expect(item(groups, "received").hint).toBe("Measuring…");
     expect(item(groups, "queue").hint).toBe("of 20,000 · Measuring…");
+  });
+
+  it("says measuring on the first sample even though it is the baseline", () => {
+    const sample = withIngest({ dropped: 4 });
+    const groups = buildHealthGroups(sample, now, {
+      first: { data: sample, at: now },
+      current: { data: sample, at: now },
+      previous: null,
+      reset: false,
+    }, now);
+    expect(item(groups, "dropped").hint).toBe("Measuring…");
   });
 
   it("makes a full or over-full queue critical", () => {

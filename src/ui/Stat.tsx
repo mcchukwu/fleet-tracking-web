@@ -1,10 +1,13 @@
 import type { ReactNode } from "react";
 import { cn } from "./cn";
+import { Tooltip } from "./Tooltip";
 
 export interface StatProps {
   label: string;
   value: string | number;
   hint?: string;
+  /** Local and UTC reading for a relative hint such as an age. */
+  hintTooltip?: string;
   size?: "md" | "sm";
   /** A status dot or similar sits before the label without changing the value. */
   leading?: ReactNode;
@@ -15,6 +18,7 @@ export function Stat({
   label,
   value,
   hint,
+  hintTooltip,
   size = "md",
   leading,
   className,
@@ -34,7 +38,20 @@ export function Stat({
       <span className={cn("tabular-nums text-text", size === "md" ? "text-stat" : "text-lg font-medium")}>
         {value}
       </span>
-      {hint ? <span className="text-xs text-muted">{hint}</span> : null}
+      {hint ? (
+        hintTooltip ? (
+          <Tooltip label={hintTooltip}>
+            <button
+              type="button"
+              className="text-muted pointer-events-auto -my-3 inline-flex h-touch min-w-touch items-center justify-center rounded-sm text-xs tabular-nums focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:my-0 md:h-auto md:min-w-0"
+            >
+              {hint}
+            </button>
+          </Tooltip>
+        ) : (
+          <span className="text-muted text-xs tabular-nums">{hint}</span>
+        )
+      ) : null}
     </div>
   );
 }
