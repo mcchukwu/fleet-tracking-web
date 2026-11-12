@@ -19,6 +19,7 @@ Frontend handoff only. Never copy backend source.
 - Work only on the requested slice. No scope expansion.
 - Use generated or approved API types. Validate WebSocket messages at boundaries using discriminated unions. Avoid `any` and TypeScript non-null assertions.
 - TanStack Query owns server state; Zustand owns live positions keyed by `vehicle_id`.
+- Panels never branch on a query's isPending; use useQueryView.
 - Follow the vehicle-key decision in `docs/decisions.md`. Never mix `id` and `external_id`.
 - Features use `<FleetMap>` and MapAdapter. Only `src/map/providers/*` imports map SDKs (A8).
 - Features live in `src/features/<name>/{api,components,hooks}`; shared UI in `src/ui`. No cross-feature imports.

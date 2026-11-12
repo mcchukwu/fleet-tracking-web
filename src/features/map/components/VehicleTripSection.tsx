@@ -11,7 +11,6 @@ import { Badge, TripStatusBadge } from "../../../ui/Badge";
 import { VehicleField, VehicleSection } from "./VehicleField";
 
 export interface TripsResult {
-  isPending: boolean;
   isLoading: boolean;
   isError: boolean;
   error: unknown;

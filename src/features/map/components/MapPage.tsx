@@ -702,7 +702,7 @@ export function MapPage() {
             snapshotVehicle={snapshotVehicle}
             mapReady={viewport !== null && !listOnly}
             canMutate={canMutate}
-            mutateReason={mutate.reason}
+            mutateReason={mutate.blockedBy === "role" ? null : mutate.reason}
             offline={offline}
             onClose={closeDrawer}
             onCentre={centreSelected}
@@ -726,7 +726,7 @@ export function MapPage() {
               onSnap={setDetailSnap}
               mapReady={viewport !== null && !listOnly}
               canMutate={canMutate}
-              mutateReason={mutate.reason}
+              mutateReason={mutate.blockedBy === "role" ? null : mutate.reason}
               offline={offline}
               onClose={closeDetailSheet}
               onCentre={centreSelected}

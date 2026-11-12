@@ -192,7 +192,7 @@ export function VehicleEditDialog({
               value={driverValue}
               selectedLabel={vehicle.driver_name ?? "No driver assigned"}
               onChange={(id) => setValue("driver_id", id, { shouldDirty: true })}
-              loading={driversQuery.isPending}
+              loading={driversQuery.isLoading}
               error={driversQuery.error ? "Couldn't load drivers." : undefined}
               emptyMessage="No active drivers"
               disabled={readOnly}

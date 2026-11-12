@@ -57,7 +57,7 @@ export function useAuditFeed(): AuditFeedController {
     entries,
     loadedCount: entries.length,
     hasMore: query.hasNextPage ?? false,
-    isLoading: query.isPending && !cancelled && online,
+    isLoading: query.isLoading && !cancelled && online,
     isFetching: query.isFetching,
     isFetchingNextPage: query.isFetchingNextPage,
     error: query.error,

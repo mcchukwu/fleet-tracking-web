@@ -330,7 +330,7 @@ export function PlaybackPage() {
         ) : (
           <ErrorState error={historyError} onRetry={retryHistory} compact={storm} />
         );
-    } else if (!cached && !history.isPending) {
+    } else if (!cached && !history.isLoading) {
       overlay = <PlaybackStates variant="empty" onResetRange={useDefaultRange} />;
     }
   }
@@ -420,7 +420,7 @@ export function PlaybackPage() {
               pointCount={points.length}
               gaps={gapResult.gaps}
               events={timeline}
-              loading={history.isPending && !cached}
+              loading={history.isLoading && !cached}
               refreshing={history.isFetching && cached}
               error={cached ? historyError : null}
               disabled={cancelled}

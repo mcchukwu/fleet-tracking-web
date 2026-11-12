@@ -25,7 +25,7 @@ function CrashPanel() {
 function AlertsPanel() {
   const alerts = useAlerts();
   const rows = Array.isArray(alerts.data) ? alerts.data : [];
-  const state: StateBoundaryState = alerts.isPending
+  const state: StateBoundaryState = alerts.isLoading
     ? "loading"
     : alerts.isError
       ? "error"
@@ -63,7 +63,7 @@ function AlertsPanel() {
 
 function HealthPanel() {
   const health = useSystemHealth();
-  const state: StateBoundaryState = health.isPending
+  const state: StateBoundaryState = health.isLoading
     ? "loading"
     : health.isError
       ? "error"

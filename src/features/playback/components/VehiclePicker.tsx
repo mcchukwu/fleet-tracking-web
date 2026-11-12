@@ -51,7 +51,7 @@ export function VehiclePicker({
   const { network } = useConnection();
   const offline = network === "offline";
   const rows = snapshot.data ?? [];
-  const showSkeleton = useDelayedFlag(snapshot.isPending && rows.length === 0);
+  const showSkeleton = useDelayedFlag(snapshot.isLoading && rows.length === 0);
 
   if (rows.length === 0 && offline) {
     return (

@@ -7,7 +7,7 @@ import { VehiclePicker } from "./VehiclePicker";
 const mocks = vi.hoisted(() => ({
   snapshot: {
     data: [] as Array<Record<string, unknown>> | undefined,
-    isPending: false,
+    isLoading: false,
     isError: false,
     error: null as unknown,
     refetch: vi.fn(),
@@ -37,7 +37,7 @@ const vehicles = [
 
 beforeEach(() => {
   mocks.snapshot.data = vehicles;
-  mocks.snapshot.isPending = false;
+  mocks.snapshot.isLoading = false;
   mocks.snapshot.isError = false;
   mocks.snapshot.error = null;
   mocks.snapshot.refetch.mockReset();
@@ -63,7 +63,7 @@ describe("VehiclePicker", () => {
 
   it("shows the skeleton after the delay when nothing is cached", async () => {
     mocks.snapshot.data = undefined;
-    mocks.snapshot.isPending = true;
+    mocks.snapshot.isLoading = true;
     render(<VehiclePicker value={null} onChange={() => undefined} />);
     await waitFor(() =>
       expect(screen.getByLabelText("Loading vehicles")).toBeInTheDocument(),

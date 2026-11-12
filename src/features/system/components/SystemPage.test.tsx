@@ -27,7 +27,7 @@ function feed(overrides: Partial<SystemHealthFeed> = {}): SystemHealthFeed {
   return {
     data: systemHealthFixture,
     dataUpdatedAt: Date.now() - 3_000,
-    isPending: false,
+    isLoading: false,
     isFetching: false,
     error: null,
     cancelled: false,
@@ -84,7 +84,7 @@ describe("SystemPage", () => {
   it("shows the skeleton after 200ms while the first load runs", async () => {
     mocks.feed = feed({
       data: undefined,
-      isPending: true,
+      isLoading: true,
       isFetching: true,
     });
     renderPage();
@@ -111,7 +111,7 @@ describe("SystemPage", () => {
     mocks.feed = feed({
       data: undefined,
       online: false,
-      isPending: true,
+      isLoading: true,
       isFetching: false,
     });
     renderPage();
@@ -126,7 +126,7 @@ describe("SystemPage", () => {
     const user = userEvent.setup();
     mocks.feed = feed({
       data: undefined,
-      isPending: false,
+      isLoading: false,
       error: new TypeError("Failed to fetch"),
     });
     renderPage();
@@ -152,7 +152,7 @@ describe("SystemPage", () => {
   it("hides the data behind the forbidden state", () => {
     mocks.feed = feed({
       data: undefined,
-      isPending: false,
+      isLoading: false,
       error: new ApiError(403, "forbidden", "forbidden"),
     });
     renderPage();
@@ -166,7 +166,7 @@ describe("SystemPage", () => {
   it("renders a contract failure with diagnostics", () => {
     mocks.feed = feed({
       data: undefined,
-      isPending: false,
+      isLoading: false,
       error: new ContractError("Health did not match"),
     });
     renderPage();
@@ -184,7 +184,7 @@ describe("SystemPage", () => {
     const user = userEvent.setup();
     mocks.feed = feed({
       data: undefined,
-      isPending: true,
+      isLoading: true,
       isFetching: true,
       cancelled: true,
     });

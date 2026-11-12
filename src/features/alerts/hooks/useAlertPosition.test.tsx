@@ -6,7 +6,7 @@ import { useAlertPosition } from "./useAlertPosition";
 const mocks = vi.hoisted(() => ({
   history: {
     data: undefined as { data: Point[]; resolution: string } | undefined,
-    isPending: false,
+    isLoading: false,
     isError: false,
     error: null as unknown,
     refetch: vi.fn(),
@@ -39,7 +39,7 @@ const point = (t: string, lat = 6.45, lon = 3.39): Point => ({
 
 beforeEach(() => {
   mocks.history.data = undefined;
-  mocks.history.isPending = false;
+  mocks.history.isLoading = false;
   mocks.history.isError = false;
   mocks.history.error = null;
   mocks.history.refetch.mockReset();
@@ -69,11 +69,11 @@ describe("useAlertPosition", () => {
   });
 
   it("reports loading, unavailable and a retryable error", () => {
-    mocks.history.isPending = true;
+    mocks.history.isLoading = true;
     const pending = renderHook(() => useAlertPosition(alert(), []));
     expect(pending.result.current.state).toEqual({ status: "loading" });
 
-    mocks.history.isPending = false;
+    mocks.history.isLoading = false;
     mocks.history.data = { data: [], resolution: "30s" };
     const empty = renderHook(() => useAlertPosition(alert(), []));
     expect(empty.result.current.state).toEqual({ status: "unavailable" });

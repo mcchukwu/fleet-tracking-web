@@ -21,7 +21,6 @@ const trip: Trip = {
 };
 
 const query: TripsResult = {
-  isPending: false,
   isLoading: false,
   isError: false,
   error: null,
@@ -126,7 +125,7 @@ describe("VehicleTripSection", () => {
     renderSection(
       <VehicleTripSection
         tripId="trip-1"
-        tripQuery={{ ...query, isPending: true, isLoading: false }}
+        tripQuery={{ ...query, isLoading: false }}
         offline
       />,
     );

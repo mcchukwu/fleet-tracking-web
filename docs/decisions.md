@@ -746,6 +746,14 @@ The local Protomaps style needs more colours than the status `MapTokens`. Ten de
 
 `useCanMutate(capability, roleReason)` combines role, network and session verification in that precedence. Pages use `roleAllowed` for forbidden states and `blockedBy` to keep the neutral offline notice distinct from a role refusal; every mutating control uses `allowed` and `reason`. `npm run guard` rejects new `useCan("mutate"|"ack")` calls outside the hook. Trade-off: a page that needs a capability-specific role sentence passes it as the second argument, which keeps the copy local without duplicating the gate.
 
+## 2026-11-12: Panels derive loading from `useQueryView`, never a query's `isPending`
+
+TanStack Query keeps `isPending` true for a query paused by `networkMode: "online"`, so a cold offline panel that branched on it showed a skeleton forever. `useQueryView` maps loading, offline-empty, error, empty and ready in one place; `npm run guard` rejects `.isPending` outside it, except on a mutation (a write in progress). The desktop drawer and the mobile sheet share `VehicleDetailBody`, so their five states cannot drift apart. Trade-off: a panel that also needs stale or forbidden maps those from the data it already has.
+
+## 2026-11-12: The index route keeps its search string
+
+`/?v=<vehicle id>` is a supported vehicle deep link. The index redirect now passes `search: true`, so `/map` receives `?v=` instead of dropping it. Trade-off: any future index redirect also inherits query parameters, which is the intended behaviour for a default route.
+
 ## 2026-11-12: PWA tests run against a production preview
 
 Service workers, Workbox precache and the PMTiles range route do not exist under the MSW dev server, so `playwright.pwa.config.ts` builds and serves `dist` on port 4174 with `VITE_MAP_PMTILES_URL=/map/test.pmtiles`. The main suite ignores `*.pwa.spec.ts`. Chromium covers the real WebGL map; WebKit covers shell, cache, banner and mutation behaviour, with the platform limitation reported if CI cannot mount WebGL.

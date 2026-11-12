@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import type { Driver } from "../../../api/types";
 import { useLiveSnapshot } from "../../../api/hooks/vehicles";
+import { useQueryView } from "../../../api/useQueryView";
 import { ErrorState } from "../../../errors/ErrorState";
 import { normalize } from "../../../errors/normalize";
 import type { AppError } from "../../../errors/types";
@@ -112,7 +113,8 @@ export function DriverDrawer(props: DriverDrawerProps) {
 function DriverDetails({ driver, offline }: { driver: Driver; offline: boolean }) {
   const snapshot = useLiveSnapshot();
   const assigned = vehiclesForDriver(snapshot.data ?? [], driver.id);
-  const snapshotError = snapshot.error ? normalize(snapshot.error) : null;
+  const snapshotError = !offline && snapshot.error ? normalize(snapshot.error) : null;
+  const view = useQueryView(snapshot, { offline });
   const statusLabel = driverStatusLabel(driver.status);
 
   return (
@@ -165,11 +167,13 @@ function DriverDetails({ driver, offline }: { driver: Driver; offline: boolean }
           </Field>
         </dl>
 
-        {snapshot.isPending && !snapshot.data ? (
+        {view.state === "loading" ? (
           <div aria-busy="true" aria-label="Loading assigned vehicles" className="space-y-2 pt-2">
             <Skeleton className="w-1/2" />
             <Skeleton className="w-2/3" />
           </div>
+        ) : view.state === "offline-empty" ? (
+          <p className="text-muted pt-1 text-sm">Vehicles need a connection.</p>
         ) : snapshotError ? (
           <ErrorState
             error={snapshotError}

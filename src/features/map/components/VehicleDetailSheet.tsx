@@ -1,29 +1,16 @@
 import { useEffect, useRef, type CSSProperties, type Ref, type RefObject } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { ChevronUp, Copy, X } from "lucide-react";
 import type { SnapshotVehicle, Vehicle } from "../../../api/types";
-import { useTrips } from "../../../api/hooks/trips";
 import { useVehicle } from "../../../api/hooks/vehicles";
-import { queryKeys } from "../../../api/keys";
-import { SlowNotice } from "../../../errors/SlowNotice";
-import { ErrorState } from "../../../errors/ErrorState";
 import { normalize } from "../../../errors/normalize";
-import { useDelayedFlag } from "../../../lib/useDelayedFlag";
 import { Badge, StatusPill } from "../../../ui/Badge";
-import { Button } from "../../../ui/Button";
 import { CopyButton } from "../../../ui/CopyButton";
-import { ForbiddenState } from "../../../ui/StatePanel";
 import { cn } from "../../../ui/cn";
 import { useSheetDrag } from "../hooks/useSheetDrag";
 import type { VehicleRow } from "../lib/filter";
 import { nextSheetSnap, toggleSheetSnap, type SheetSnap } from "../lib/sheet";
 import { VehicleActions } from "./VehicleActions";
-import { VehicleCurrentState } from "./VehicleCurrentState";
-import { VehicleDetailsSection } from "./VehicleDetailsSection";
-import { VehicleDrawerSkeleton } from "./VehicleDrawerSkeleton";
-import { VehicleDriverSection } from "./VehicleDriverSection";
-import { VehicleEventsSection } from "./VehicleEventsSection";
-import { VehicleTripSection } from "./VehicleTripSection";
+import { VehicleDetailBody } from "./VehicleDetailBody";
 
 export interface VehicleDetailSheetProps {
   vehicleId: string;
@@ -75,7 +62,6 @@ export function VehicleDetailSheet({
   handleRef,
   onObscuredChange,
 }: VehicleDetailSheetProps) {
-  const queryClient = useQueryClient();
   const closeRef = useRef<HTMLButtonElement>(null);
   const { sheetRef, visible, handlers } = useSheetDrag({
     snap,
@@ -104,23 +90,14 @@ export function VehicleDetailSheet({
 
   const vehicleQuery = useVehicle(vehicleId);
   const vehicle = vehicleQuery.data;
-  const tripId = vehicle?.trip_id ?? snapshotVehicle?.trip_id;
-  const tripQuery = useTrips({ limit: 500 }, { enabled: Boolean(tripId) });
-  const trips = Array.isArray(tripQuery.data) ? tripQuery.data : undefined;
   const detailError = vehicleQuery.error && !offline ? normalize(vehicleQuery.error) : null;
   const notFound = detailError?.kind === "not_found";
-  const forbidden = detailError?.kind === "forbidden";
   const plate = row?.plate ?? snapshotVehicle?.plate ?? vehicle?.plate ?? "Vehicle";
   const status = row?.status ?? (vehicle?.online ? "idle" : "offline");
   const lat = row?.lat ?? vehicle?.lat ?? null;
   const lon = row?.lon ?? vehicle?.lon ?? null;
   const hasPosition = lat !== null && lon !== null;
   const hasDetail = vehicle !== undefined && !notFound;
-  const showDetailSkeleton = useDelayedFlag(vehicleQuery.isPending);
-
-  function retryDetail(): void {
-    void vehicleQuery.refetch();
-  }
 
   if (INJECT_CRASH) throw new Error("Injected vehicle drawer crash");
 
@@ -237,69 +214,13 @@ export function VehicleDetailSheet({
         {...(snap === "peek" ? { inert: true, "aria-hidden": true } : {})}
         className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
       >
-        {notFound ? (
-          <div className="p-4">
-            <p className="text-base font-medium text-text">Vehicle not found</p>
-            <p className="mt-1 text-sm text-muted">It may have been removed.</p>
-            <Button className="mt-4" onClick={onClose}>
-              Close
-            </Button>
-          </div>
-        ) : forbidden ? (
-          <ForbiddenState action={<Button onClick={onClose}>Close</Button>} />
-        ) : detailError && !vehicle && !row ? (
-          <div className="p-4">
-            <ErrorState error={detailError} onRetry={retryDetail} />
-          </div>
-        ) : (
-          <>
-            {row ? <VehicleCurrentState row={row} vehicle={vehicle} /> : null}
-            {vehicleQuery.isPending ? (
-              <>
-                <SlowNotice
-                  onRetry={retryDetail}
-                  onCancel={() =>
-                    void queryClient.cancelQueries({ queryKey: queryKeys.vehicle(vehicleId) })
-                  }
-                />
-                {showDetailSkeleton ? <VehicleDrawerSkeleton /> : null}
-              </>
-            ) : (
-              <>
-                {detailError && vehicle ? (
-                  <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2 text-xs text-muted">
-                    <span>Couldn't refresh vehicle details.</span>
-                    <button
-                      type="button"
-                      onClick={retryDetail}
-                      className="h-touch rounded-sm px-2 font-medium text-accent-fg hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus-ring md:h-control-sm"
-                    >
-                      Retry
-                    </button>
-                  </div>
-                ) : null}
-                {detailError && !vehicle ? (
-                  <div className="border-b border-border p-4">
-                    <ErrorState compact error={detailError} onRetry={retryDetail} />
-                  </div>
-                ) : null}
-                <VehicleTripSection
-                  tripId={tripId}
-                  snapshotVehicle={snapshotVehicle}
-                  trips={trips}
-                  tripQuery={tripQuery}
-                  offline={offline}
-                />
-                <VehicleDriverSection
-                  driverName={vehicle?.driver_name ?? row?.driverName}
-                  driverPhone={vehicle?.driver_phone}
-                />
-                {vehicle ? <VehicleDetailsSection vehicle={vehicle} /> : null}
-                <VehicleEventsSection vehicleId={vehicleId} offline={offline} />
-              </>
-            )}
-          </>
-        )}
+        <VehicleDetailBody
+          vehicleId={vehicleId}
+          row={row}
+          snapshotVehicle={snapshotVehicle}
+          offline={offline}
+          onClose={onClose}
+        />
       </div>
     </section>
   );

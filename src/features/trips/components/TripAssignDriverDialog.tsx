@@ -105,7 +105,7 @@ export function TripAssignDriverDialog({
         ) : null}
       </div>
 
-      {!driversQuery.isPending && !driversQuery.error && drivers.length === 0 ? (
+      {!driversQuery.isLoading && !driversQuery.error && drivers.length === 0 ? (
         <p className="mb-3 text-sm text-muted">
           No active drivers are available. Add one before assigning this trip.
         </p>
@@ -116,7 +116,7 @@ export function TripAssignDriverDialog({
         items={items}
         value={driverId}
         onChange={setDriverId}
-        loading={driversQuery.isPending}
+        loading={driversQuery.isLoading}
         error={driversQuery.error ? "Couldn't load drivers." : undefined}
         emptyMessage="No active drivers"
         placeholder="Search by name, phone or licence"

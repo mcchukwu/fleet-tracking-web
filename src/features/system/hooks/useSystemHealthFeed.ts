@@ -12,7 +12,7 @@ import type { HealthTrend } from "../lib/health";
 export interface SystemHealthFeed {
   data: SystemHealth | undefined;
   dataUpdatedAt: number;
-  isPending: boolean;
+  isLoading: boolean;
   isFetching: boolean;
   error: Error | null;
   cancelled: boolean;
@@ -57,7 +57,7 @@ export function useSystemHealthFeed(): SystemHealthFeed {
   return {
     data: query.data,
     dataUpdatedAt,
-    isPending: query.isPending,
+    isLoading: query.isLoading,
     isFetching: query.isFetching,
     error: query.error ?? null,
     cancelled,

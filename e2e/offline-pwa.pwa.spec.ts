@@ -146,6 +146,31 @@ test.describe("offline and PWA", () => {
     await expect(page.getByLabel("Loading alerts")).toHaveCount(0);
   });
 
+  test("a cold offline vehicle deep link shows the neutral empty state, not a skeleton", async ({
+    page,
+    context,
+    pwa,
+  }) => {
+    test.skip(page.viewportSize()?.width !== 390, "The mobile detail sheet is the surface under test.");
+    await warmOnline(page);
+    await clearCachedQueries(page);
+
+    const vehicleId = "4324a768-9b14-4223-a299-eb8da4d8d309";
+    pwa.setOffline(true);
+    await context.setOffline(true);
+    await page.goto(`/?v=${vehicleId}`);
+
+    await expectOfflineBoot(page);
+    await expect(page).toHaveURL(new RegExp(`/map\\?v=${vehicleId}`));
+    await expect(page.getByTestId("vehicle-detail-sheet")).toBeVisible();
+
+    await page.waitForTimeout(1_000);
+    await expect(page.getByLabel("Loading vehicle details")).toHaveCount(0);
+    await expect(page.getByText("Vehicle details aren't available offline")).toBeVisible();
+    await expect(page.getByText("Still working…")).toHaveCount(0);
+    await expect(page.getByText("Taking longer than usual")).toHaveCount(0);
+  });
+
   test("verifies the session and resumes live data on reconnect", async ({
     page,
     context,

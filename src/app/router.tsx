@@ -158,7 +158,7 @@ const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
   beforeLoad: () => {
-    throw redirect({ to: "/map" });
+    throw redirect({ to: "/map", search: true });
   },
 });
 

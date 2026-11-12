@@ -248,7 +248,7 @@ test.describe("trips", () => {
     const drawer = page.getByRole("complementary", { name: "Trip details" });
     await expect(drawer).toBeVisible();
     await expect(drawer.getByRole("heading", { name: "LSD-100-AA" })).toBeVisible();
-    await expect(drawer.getByText("10917 km")).toBeVisible();
+    await expect(drawer.getByText("10,917 km")).toBeVisible();
     await expectNoAxeViolations(page);
 
     await gotoTrips(page, "trip=does-not-exist");

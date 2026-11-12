@@ -71,7 +71,7 @@ function SystemPageContent() {
       ? "forbidden"
       : !cached && error
         ? "error"
-        : !cached && (feed.isPending || feed.isFetching)
+        : !cached && (feed.isLoading || feed.isFetching)
           ? "loading"
           : error
             ? "error"

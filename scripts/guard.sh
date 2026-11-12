@@ -17,6 +17,9 @@ check "inline style"              'style=\{\{'
 check "direct web storage"        '\b(localStorage|sessionStorage)\b'
 check "gradient"                  'gradient'
 check "default export"            '^export default'
+pending=$(rg -n --no-heading --glob '!src/api/useQueryView.ts' --glob '!**/*.test.*' \
+      '\.isPending\b' "$target" | rg -v 'guard-ignore')
+if [ -n "$pending" ]; then echo "GUARD FAIL: query isPending outside useQueryView"; echo "$pending"; fail=1; fi
 zout=$(rg -n --no-heading \
       --glob '!**/*.test.*' --glob '!**/__fixtures__/**' --glob '!src/ui/layers.css' \
       '\bz-(\[[^]]*\]|[0-9]+)\b|z-index\s*:|zIndex\s*:' "$target" | rg -v 'guard-ignore')

@@ -115,7 +115,7 @@ export function AssignDriverDialog({
         <p className="mb-3 text-sm text-muted">{blockedReason}</p>
       ) : null}
 
-      {!driversQuery.isPending && !driversQuery.error && drivers.length === 0 ? (
+      {!driversQuery.isLoading && !driversQuery.error && drivers.length === 0 ? (
         <p className="mb-3 text-sm text-muted">No active drivers are available.</p>
       ) : null}
 
@@ -125,7 +125,7 @@ export function AssignDriverDialog({
         value={driverId}
         selectedLabel={vehicle.driver_name ?? undefined}
         onChange={setDriverId}
-        loading={driversQuery.isPending}
+        loading={driversQuery.isLoading}
         error={driversQuery.error ? "Couldn't load drivers." : undefined}
         emptyMessage="No active drivers"
         disabled={readOnly}

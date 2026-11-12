@@ -64,7 +64,7 @@ function AuditPageContent() {
         ? "ready"
         : !feed.online && !lookup.data
           ? "offline"
-          : feed.isLoading || lookup.isPending
+          : feed.isLoading || lookup.isLoading
             ? "loading"
             : lookup.error
               ? "error"

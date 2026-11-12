@@ -56,7 +56,7 @@ export function useAlertPosition(
     return { state: { status: "unavailable" }, retry: () => undefined };
   }
 
-  if (history.isPending) {
+  if (history.isLoading) {
     return { state: { status: "loading" }, retry: () => void history.refetch() };
   }
 

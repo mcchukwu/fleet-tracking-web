@@ -163,7 +163,7 @@ export function TripCreateDialog({
               items={vehicleItems}
               value={vehicleId || null}
               onChange={(id) => setValue("vehicle_id", id, { shouldDirty: true, shouldValidate: true })}
-              loading={snapshot.isPending}
+              loading={snapshot.isLoading}
               error={vehicleError}
               emptyMessage="No vehicles"
               placeholder="Search by plate, depot or IMEI"
@@ -182,7 +182,7 @@ export function TripCreateDialog({
               items={driverItems}
               value={driverId || null}
               onChange={(id) => setValue("driver_id", id, { shouldDirty: true })}
-              loading={driversQuery.isPending}
+              loading={driversQuery.isLoading}
               error={driverError}
               emptyMessage="No active drivers"
               placeholder="Search by name, phone or licence"
