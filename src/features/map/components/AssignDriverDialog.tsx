@@ -16,6 +16,7 @@ export interface AssignDriverDialogProps {
   onSaved: () => void;
   onRefresh: () => void;
   readOnly: boolean;
+  readOnlyReason?: string;
 }
 
 export function AssignDriverDialog({
@@ -25,6 +26,7 @@ export function AssignDriverDialog({
   onSaved,
   onRefresh,
   readOnly,
+  readOnlyReason,
 }: AssignDriverDialogProps) {
   const driversQuery = useDrivers();
   const write = useVehicleWrite(vehicle.id);
@@ -54,6 +56,7 @@ export function AssignDriverDialog({
 
   const conflict =
     write.error?.kind === "conflict" || write.error?.kind === "not_found";
+  const blockedReason = readOnlyReason ?? "Your role can't assign drivers.";
 
   return (
     <Dialog
@@ -109,7 +112,7 @@ export function AssignDriverDialog({
       </div>
 
       {readOnly ? (
-        <p className="mb-3 text-sm text-muted">Your role can't assign drivers.</p>
+        <p className="mb-3 text-sm text-muted">{blockedReason}</p>
       ) : null}
 
       {!driversQuery.isPending && !driversQuery.error && drivers.length === 0 ? (
@@ -126,7 +129,7 @@ export function AssignDriverDialog({
         error={driversQuery.error ? "Couldn't load drivers." : undefined}
         emptyMessage="No active drivers"
         disabled={readOnly}
-        disabledReason={readOnly ? "Your role can't assign drivers." : undefined}
+        disabledReason={readOnly ? blockedReason : undefined}
         placeholder="Search by name, phone or licence"
       />
 

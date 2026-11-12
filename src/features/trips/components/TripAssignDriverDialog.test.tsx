@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Trip } from "../../../api/types";
+import { TooltipProvider } from "../../../ui/Tooltip";
 import { TripAssignDriverDialog } from "./TripAssignDriverDialog";
 
 const mocks = vi.hoisted(() => ({
@@ -59,16 +60,19 @@ const trip: Trip = {
   distance_km: 0,
 };
 
-function renderDialog() {
+function renderDialog(disabledReason?: string) {
   const onClose = vi.fn();
   const onFinished = vi.fn();
   render(
-    <TripAssignDriverDialog
-      open
-      trip={trip}
-      onClose={onClose}
-      onFinished={onFinished}
-    />,
+    <TooltipProvider>
+      <TripAssignDriverDialog
+        open
+        trip={trip}
+        onClose={onClose}
+        onFinished={onFinished}
+        {...(disabledReason ? { disabledReason } : {})}
+      />
+    </TooltipProvider>,
   );
   return { onClose, onFinished };
 }
@@ -194,5 +198,17 @@ describe("TripAssignDriverDialog", () => {
     rerender(<TripAssignDriverDialog open={false} trip={trip} onClose={onClose} />);
     rerender(<TripAssignDriverDialog open trip={trip} onClose={onClose} />);
     expect(screen.getByRole("button", { name: "Assign driver" })).toBeDisabled();
+  });
+
+  it("disables the assignment with the offline reason", async () => {
+    const user = userEvent.setup();
+    renderDialog("You're offline.");
+    await user.click(screen.getByRole("combobox", { name: "Driver" }));
+    await user.click(screen.getByRole("option", { name: /Adebayo Okafor/ }));
+
+    const action = screen.getByRole("button", { name: "Assign driver" });
+    expect(action).toHaveAttribute("aria-disabled", "true");
+    await user.click(action);
+    expect(mocks.transition).not.toHaveBeenCalled();
   });
 });

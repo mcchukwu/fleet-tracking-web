@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   snapshot: {
     data: [] as SnapshotVehicle[],
     isPending: false,
+    isLoading: false,
     error: null as unknown,
     refetch: vi.fn(),
   },
@@ -192,6 +193,7 @@ beforeEach(() => {
   mocks.geofences.error = null;
   mocks.snapshot.error = null;
   mocks.snapshot.isPending = false;
+  mocks.snapshot.isLoading = false;
   mocks.snapshot.data = [
     vehicle("uuid-1", "demo-imei-0001", "AAA-100", { speed_kph: 50 }),
     vehicle("uuid-2", "demo-imei-0002", "BBB-200", { speed_kph: 0 }),
@@ -317,6 +319,17 @@ describe("MapPage", () => {
     expect(screen.queryByTestId("fleet-map")).not.toBeInTheDocument();
     expect(screen.queryByText("Can't reach the server")).not.toBeInTheDocument();
     expect(screen.getByText("Map isn't available offline")).toBeVisible();
+    useConnectionStore.getState().setNetwork("online");
+  });
+
+  it("keeps the detail sheet available on mobile in the list-only layout", async () => {
+    mocks.desktop = false;
+    mocks.search = { v: "uuid-1" };
+    useConnectionStore.getState().setNetwork("offline");
+    renderPage();
+
+    expect(await screen.findByTestId("map-list-only")).toBeVisible();
+    expect(screen.getByRole("region", { name: "Vehicle details for AAA-100" })).toBeVisible();
     useConnectionStore.getState().setNetwork("online");
   });
 

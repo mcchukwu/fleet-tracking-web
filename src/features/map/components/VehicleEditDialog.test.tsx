@@ -63,7 +63,9 @@ const vehicle: Vehicle = {
   online: true,
 };
 
-function renderDialog(readOnly = false, onClose = vi.fn(), onSaved = vi.fn()) {
+function renderDialog(readOnly = false, readOnlyReason?: string) {
+  const onClose = vi.fn();
+  const onSaved = vi.fn();
   render(
     <ToastProvider>
       <VehicleEditDialog
@@ -73,6 +75,7 @@ function renderDialog(readOnly = false, onClose = vi.fn(), onSaved = vi.fn()) {
         onSaved={onSaved}
         onRefresh={vi.fn()}
         readOnly={readOnly}
+        {...(readOnlyReason ? { readOnlyReason } : {})}
       />
     </ToastProvider>,
   );
@@ -197,6 +200,13 @@ describe("VehicleEditDialog", () => {
     expect(screen.getByText("Your role can't edit vehicles. The fields are shown for reference.")).toBeVisible();
     expect(screen.getByLabelText("Plate")).toBeDisabled();
     expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+  });
+
+  it("names the offline reason when the network blocks the write", () => {
+    renderDialog(true, "You're offline.");
+    expect(
+      screen.getByText("You're offline. The fields are shown for reference."),
+    ).toBeVisible();
   });
 
   it("shows a server-error message and keeps the form", async () => {

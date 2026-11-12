@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { Geofence } from "../../../api/types";
+import type { MutatePermission } from "../../../auth/useCanMutate";
 import type { AppError } from "../../../errors/types";
 import { SlowNotice } from "../../../errors/SlowNotice";
 import { formatCount } from "../../../lib/format";
@@ -23,7 +24,7 @@ export interface GeofenceListProps {
   staleLabel?: string;
   cancelled: boolean;
   offline: boolean;
-  canMutate: boolean;
+  mutate: MutatePermission;
   notFound: boolean;
   forbiddenAction?: ReactNode;
   onSearch: (value: string) => void;
@@ -69,7 +70,7 @@ export function GeofenceList({
   staleLabel,
   cancelled,
   offline,
-  canMutate,
+  mutate,
   notFound,
   forbiddenAction,
   onSearch,
@@ -120,13 +121,13 @@ export function GeofenceList({
         title={total === 0 ? "No geofences yet" : "No geofences to show"}
         description={
           total === 0
-            ? canMutate
+            ? mutate.allowed
               ? "Draw the first one to start tracking zone events."
               : "No geofences have been created."
             : "Clear the search to see them."
         }
         action={
-          total === 0 && canMutate ? (
+          total === 0 && mutate.allowed ? (
             <Button size="sm" onClick={onCreate}>
               Create geofence
             </Button>
@@ -153,8 +154,7 @@ export function GeofenceList({
 
       <GeofenceToolbar
         selected={selected}
-        canMutate={canMutate}
-        offline={offline}
+        mutate={mutate}
         onEdit={onEdit}
         onDelete={onDelete}
       />

@@ -89,7 +89,7 @@ vi.mock("./GeofenceList", () => ({
     total: number;
     selected: Geofence | null;
     notFound: boolean;
-    canMutate: boolean;
+    mutate: { allowed: boolean };
     offline: boolean;
     onSelect: (id: string) => void;
     onSearch: (value: string) => void;
@@ -104,7 +104,7 @@ vi.mock("./GeofenceList", () => ({
       data-visible={props.geofences.length}
       data-selected={props.selected?.id ?? ""}
       data-not-found={String(props.notFound)}
-      data-can-mutate={String(props.canMutate)}
+      data-can-mutate={String(props.mutate.allowed)}
       data-offline={String(props.offline)}
     >
       <button type="button" onClick={() => props.onSelect(props.geofences[0]?.id ?? "")}>

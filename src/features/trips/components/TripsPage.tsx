@@ -112,11 +112,13 @@ function TripsPageContent() {
       ? "ready"
       : selectedTrip
         ? "ready"
-        : !lookupEnabled || lookup.isPending
-          ? "loading"
-          : lookup.error
-            ? "error"
-            : "not-found";
+        : offline
+          ? "offline"
+          : !lookupEnabled || lookup.isLoading
+            ? "loading"
+            : lookup.error
+              ? "error"
+              : "not-found";
 
   const closedError = !offline && feed.error ? normalize(feed.error) : null;
   const state: StateBoundaryState = closedError?.kind === "forbidden"
@@ -318,6 +320,7 @@ function TripsPageContent() {
       <TripCreateDialog
         open={createOpen}
         knownTripIds={new Set(feed.trips.map((trip) => trip.id))}
+        {...(createReason ? { disabledReason: createReason } : {})}
         onCreated={afterCreate}
         onClose={() => setCreateOpen(false)}
       />
@@ -326,6 +329,7 @@ function TripsPageContent() {
         key={assignTrip?.trip.id ?? "none"}
         open={assignTrip !== null}
         trip={assignTrip?.trip ?? null}
+        {...(changeReason ? { disabledReason: changeReason } : {})}
         onClose={() => setAssignTrip(null)}
         onFinished={() => {
           const current = assignTrip;
@@ -338,6 +342,7 @@ function TripsPageContent() {
         open={confirm !== null}
         trip={confirm?.trip ?? null}
         action={confirm?.action ?? "complete"}
+        {...(changeReason ? { disabledReason: changeReason } : {})}
         onClose={() => setConfirm(null)}
         onFinished={() => {
           const current = confirm;

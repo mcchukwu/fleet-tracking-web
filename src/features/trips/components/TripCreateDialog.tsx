@@ -23,6 +23,7 @@ export interface TripCreateDialogProps {
   knownTripIds: ReadonlySet<string>;
   onCreated: () => void;
   onClose: () => void;
+  disabledReason?: string;
 }
 
 export function TripCreateDialog({
@@ -30,6 +31,7 @@ export function TripCreateDialog({
   knownTripIds,
   onCreated,
   onClose,
+  disabledReason,
 }: TripCreateDialogProps) {
   const snapshot = useLiveSnapshot(open);
   const driversQuery = useDrivers();
@@ -85,6 +87,7 @@ export function TripCreateDialog({
   }
 
   async function onSubmit(values: TripFormValues): Promise<void> {
+    if (disabledReason) return;
     const outcome = await write.create(toTripInput(values), knownTripIds);
     if (outcome.status === "created" || outcome.status === "reconciled") {
       reset(emptyTripForm);
@@ -132,6 +135,7 @@ export function TripCreateDialog({
               form="trip-create-form"
               variant="primary"
               loading={write.pending}
+              {...(disabledReason ? { disabledReason } : {})}
             >
               Create trip
             </Button>

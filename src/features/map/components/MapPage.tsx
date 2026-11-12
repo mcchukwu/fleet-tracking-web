@@ -165,7 +165,7 @@ export function MapPage() {
   const hasData = data.total > 0;
   const loadingCancelledActive =
     loadingCancelled && !snapshotQuery.isFetching && !hasData;
-  const snapshotPending = snapshotQuery.isPending && !loadingCancelledActive;
+  const snapshotPending = snapshotQuery.isLoading && !loadingCancelledActive;
   const snapshotUnavailable = snapshotError !== null && !hasData;
 
   const retrySnapshot = useCallback(() => {
@@ -562,6 +562,7 @@ export function MapPage() {
     error: snapshotError,
     stale,
     staleLabel,
+    offline,
     selectedKey,
     rowHeight,
     signature: filterSignature(filters),
@@ -713,7 +714,7 @@ export function MapPage() {
         </ErrorBoundary>
       ) : null}
 
-      {!listOnly && !isDesktop ? (
+      {!isDesktop ? (
         drawerOpen && selectedId ? (
           <ErrorBoundary level="panel" resetKeys={[selectedId]}>
             <VehicleDetailSheet
@@ -737,7 +738,7 @@ export function MapPage() {
               onObscuredChange={setSheetObscured}
             />
           </ErrorBoundary>
-        ) : (
+        ) : !listOnly ? (
           <MobileVehicleSheet
             snap={listSnap}
             onSnap={setListSnap}
@@ -764,7 +765,7 @@ export function MapPage() {
               />
             </ErrorBoundary>
           </MobileVehicleSheet>
-        )
+        ) : null
       ) : null}
 
       {!listOnly ? (
@@ -847,6 +848,11 @@ export function MapPage() {
           }
           onRefresh={refreshWriteVehicle}
           readOnly={!canMutate}
+          readOnlyReason={
+            mutate.blockedBy === "role"
+              ? "Your role can't edit vehicles."
+              : (mutate.reason ?? undefined)
+          }
         />
       ) : null}
 
@@ -864,6 +870,11 @@ export function MapPage() {
           }
           onRefresh={refreshWriteVehicle}
           readOnly={!canMutate}
+          readOnlyReason={
+            mutate.blockedBy === "role"
+              ? "Your role can't assign drivers."
+              : (mutate.reason ?? undefined)
+          }
         />
       ) : null}
     </div>

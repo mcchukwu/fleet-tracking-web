@@ -48,7 +48,6 @@ function GeofencesPageContent() {
   const search = useSearch({ from: "/_app/geofences" });
   const navigate = useNavigate();
   const mutate = useCanMutate("mutate");
-  const canMutate = mutate.allowed;
   const { network } = useConnection();
   const offline = network === "offline";
   const wide = useMediaQuery("(min-width: 1024px)");
@@ -369,7 +368,7 @@ function GeofencesPageContent() {
             {...(staleLabel ? { staleLabel } : {})}
             cancelled={feed.cancelled}
             offline={offline}
-            canMutate={canMutate}
+            mutate={mutate}
             notFound={notFound}
             forbiddenAction={
               <Link

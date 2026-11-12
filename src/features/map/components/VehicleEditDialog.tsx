@@ -28,6 +28,7 @@ export interface VehicleEditDialogProps {
   onSaved: () => void;
   onRefresh: () => void;
   readOnly: boolean;
+  readOnlyReason?: string;
 }
 
 export function VehicleEditDialog({
@@ -37,6 +38,7 @@ export function VehicleEditDialog({
   onSaved,
   onRefresh,
   readOnly,
+  readOnlyReason,
 }: VehicleEditDialogProps) {
   const driversQuery = useDrivers();
   const write = useVehicleWrite(vehicle.id);
@@ -93,6 +95,8 @@ export function VehicleEditDialog({
       onClose();
     }
   }
+
+  const blockedReason = readOnlyReason ?? "Your role can't edit vehicles.";
 
   const driverItems = activeDrivers(driversQuery.data ?? []).map((driver) => ({
     id: driver.id,
@@ -155,7 +159,7 @@ export function VehicleEditDialog({
 
           {readOnly ? (
             <p className="mb-3 text-sm text-muted">
-              Your role can't edit vehicles. The fields are shown for reference.
+              {blockedReason} The fields are shown for reference.
             </p>
           ) : null}
 
@@ -192,7 +196,7 @@ export function VehicleEditDialog({
               error={driversQuery.error ? "Couldn't load drivers." : undefined}
               emptyMessage="No active drivers"
               disabled={readOnly}
-              disabledReason={readOnly ? "Your role can't edit vehicles." : undefined}
+              disabledReason={readOnly ? blockedReason : undefined}
             />
 
             <Input label="Vehicle type" disabled={readOnly} {...register("vehicle_type")} />

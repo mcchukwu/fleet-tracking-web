@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AppError } from "../../../errors/types";
+import { TooltipProvider } from "../../../ui/Tooltip";
 import { TripCreateDialog } from "./TripCreateDialog";
 
 const mocks = vi.hoisted(() => ({
@@ -62,16 +63,19 @@ vi.mock("../../../api/hooks/drivers", () => ({
   useDrivers: () => mocks.drivers,
 }));
 
-function renderDialog() {
+function renderDialog(disabledReason?: string) {
   const onCreated = vi.fn();
   const onClose = vi.fn();
   render(
-    <TripCreateDialog
-      open
-      knownTripIds={new Set(["trip-old"])}
-      onCreated={onCreated}
-      onClose={onClose}
-    />,
+    <TooltipProvider>
+      <TripCreateDialog
+        open
+        knownTripIds={new Set(["trip-old"])}
+        onCreated={onCreated}
+        onClose={onClose}
+        {...(disabledReason ? { disabledReason } : {})}
+      />
+    </TooltipProvider>,
   );
   return { onCreated, onClose };
 }
@@ -192,5 +196,15 @@ describe("TripCreateDialog", () => {
 
     await user.click(screen.getByRole("button", { name: "Discard" }));
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("disables creation with the offline reason", async () => {
+    const user = userEvent.setup();
+    renderDialog("You're offline.");
+    const action = screen.getByRole("button", { name: "Create trip" });
+
+    expect(action).toHaveAttribute("aria-disabled", "true");
+    await user.click(action);
+    expect(mocks.create).not.toHaveBeenCalled();
   });
 });

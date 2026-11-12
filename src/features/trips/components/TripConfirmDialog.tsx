@@ -13,6 +13,7 @@ export interface TripConfirmDialogProps {
   action: Extract<TripAction, "complete" | "cancel">;
   onClose: () => void;
   onFinished?: () => void;
+  disabledReason?: string;
 }
 
 export function TripConfirmDialog({
@@ -21,6 +22,7 @@ export function TripConfirmDialog({
   action,
   onClose,
   onFinished,
+  disabledReason,
 }: TripConfirmDialogProps) {
   const write = useTripWrite();
   const { reset } = write;
@@ -42,7 +44,7 @@ export function TripConfirmDialog({
   }, [write.error]);
 
   async function submit(): Promise<void> {
-    if (!trip || write.pending) return;
+    if (!trip || write.pending || disabledReason) return;
     const outcome = await write.transition(trip, transitionPayload(action), action);
     if (outcome.status === "done" || outcome.status === "gone" || outcome.status === "conflict") {
       onFinished?.();
@@ -76,6 +78,7 @@ export function TripConfirmDialog({
             variant={completing ? "primary" : "destructive"}
             onClick={() => void submit()}
             loading={write.pending}
+            {...(disabledReason ? { disabledReason } : {})}
           >
             {completing ? "Complete trip" : "Cancel trip"}
           </Button>

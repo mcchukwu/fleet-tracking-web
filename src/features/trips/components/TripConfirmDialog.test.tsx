@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Trip } from "../../../api/types";
+import { TooltipProvider } from "../../../ui/Tooltip";
 import { TripConfirmDialog } from "./TripConfirmDialog";
 
 const mocks = vi.hoisted(() => ({
@@ -32,17 +33,20 @@ const trip: Trip = {
   distance_km: 0,
 };
 
-function renderDialog(action: "complete" | "cancel") {
+function renderDialog(action: "complete" | "cancel", disabledReason?: string) {
   const onClose = vi.fn();
   const onFinished = vi.fn();
   render(
-    <TripConfirmDialog
-      open
-      trip={trip}
-      action={action}
-      onClose={onClose}
-      onFinished={onFinished}
-    />,
+    <TooltipProvider>
+      <TripConfirmDialog
+        open
+        trip={trip}
+        action={action}
+        onClose={onClose}
+        onFinished={onFinished}
+        {...(disabledReason ? { disabledReason } : {})}
+      />
+    </TooltipProvider>,
   );
   return { onClose, onFinished };
 }
@@ -54,8 +58,7 @@ describe("TripConfirmDialog", () => {
     mocks.error = null;
   });
 
-  it("completes with a confirm and keeps Cancel focused by default", async () => {
-    const user = userEvent.setup();
+  it("completes with a confirm and keeps Cancel focused by default", async () => {    const user = userEvent.setup();
     mocks.transition.mockResolvedValue({ status: "done", reconciled: false });
     const { onFinished, onClose } = renderDialog("complete");
 
@@ -108,5 +111,15 @@ describe("TripConfirmDialog", () => {
     expect(screen.getByText("It wasn't saved.")).toBeVisible();
     await user.click(screen.getByRole("button", { name: "Keep trip" }));
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("disables the confirming action with the offline reason", async () => {
+    const user = userEvent.setup();
+    renderDialog("complete", "You're offline.");
+    const action = screen.getByRole("button", { name: "Complete trip" });
+
+    expect(action).toHaveAttribute("aria-disabled", "true");
+    await user.click(action);
+    expect(mocks.transition).not.toHaveBeenCalled();
   });
 });

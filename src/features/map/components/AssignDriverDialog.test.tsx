@@ -73,7 +73,7 @@ const vehicle: Vehicle = {
   online: true,
 };
 
-function renderDialog(readOnly = false) {
+function renderDialog(readOnly = false, readOnlyReason?: string) {
   const onClose = vi.fn();
   const onSaved = vi.fn();
   render(
@@ -84,6 +84,7 @@ function renderDialog(readOnly = false) {
       onSaved={onSaved}
       onRefresh={vi.fn()}
       readOnly={readOnly}
+      {...(readOnlyReason ? { readOnlyReason } : {})}
     />,
   );
   return { onClose, onSaved };
@@ -144,6 +145,11 @@ describe("AssignDriverDialog", () => {
     renderDialog(true);
     expect(screen.getAllByText("Your role can't assign drivers.").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("button", { name: "Assign driver" })).toBeDisabled();
+  });
+
+  it("names the offline reason when the network blocks the write", () => {
+    renderDialog(true, "You're offline.");
+    expect(screen.getAllByText("You're offline.").length).toBeGreaterThanOrEqual(1);
   });
 
   it("explains a conflict and keeps the selection", () => {

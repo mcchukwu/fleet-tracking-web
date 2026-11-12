@@ -1,25 +1,26 @@
 import { Pencil, Trash2 } from "lucide-react";
 import type { Geofence } from "../../../api/types";
+import type { MutatePermission } from "../../../auth/useCanMutate";
 import { Button } from "../../../ui/Button";
 import { GeofenceKindBadge } from "./GeofenceKindBadge";
 
 export interface GeofenceToolbarProps {
   selected: Geofence | null;
-  canMutate: boolean;
-  offline: boolean;
+  mutate: MutatePermission;
   onEdit: () => void;
   onDelete: () => void;
 }
 
 export function GeofenceToolbar({
   selected,
-  canMutate,
-  offline,
+  mutate,
   onEdit,
   onDelete,
 }: GeofenceToolbarProps) {
-  const roleReason = canMutate ? null : "Your role can't change geofences.";
-  const reason = roleReason ?? (offline ? "You're offline." : null);
+  const reason =
+    mutate.blockedBy === "role"
+      ? "Your role can't change geofences."
+      : (mutate.reason ?? undefined);
 
   return (
     <div className="border-border flex h-11 shrink-0 items-center gap-2 border-b px-3">

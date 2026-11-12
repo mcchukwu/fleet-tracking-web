@@ -15,6 +15,7 @@ export interface TripAssignDriverDialogProps {
   trip: Trip | null;
   onClose: () => void;
   onFinished?: () => void;
+  disabledReason?: string;
 }
 
 export function TripAssignDriverDialog({
@@ -22,6 +23,7 @@ export function TripAssignDriverDialog({
   trip,
   onClose,
   onFinished,
+  disabledReason,
 }: TripAssignDriverDialogProps) {
   const driversQuery = useDrivers();
   const write = useTripWrite();
@@ -54,7 +56,7 @@ export function TripAssignDriverDialog({
   }
 
   async function submit(): Promise<void> {
-    if (!trip || !driverId || write.pending) return;
+    if (!trip || !driverId || write.pending || disabledReason) return;
     const outcome = await write.transition(
       trip,
       transitionPayload("assign", driverId),
@@ -86,6 +88,7 @@ export function TripAssignDriverDialog({
             onClick={() => void submit()}
             loading={write.pending}
             disabled={!driverId}
+            {...(disabledReason ? { disabledReason } : {})}
           >
             Assign driver
           </Button>

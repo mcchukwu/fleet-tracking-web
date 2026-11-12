@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { Geofence } from "../../../api/types";
+import type { MutatePermission } from "../../../auth/useCanMutate";
 import { TooltipProvider } from "../../../ui/Tooltip";
 import { GeofenceToolbar } from "./GeofenceToolbar";
 
@@ -12,13 +13,22 @@ const geofence: Geofence = {
   geometry: { type: "Polygon", coordinates: [] },
 };
 
+function permission(overrides: Partial<MutatePermission> = {}): MutatePermission {
+  return {
+    allowed: true,
+    roleAllowed: true,
+    blockedBy: null,
+    reason: null,
+    ...overrides,
+  };
+}
+
 function renderToolbar(overrides: Partial<Parameters<typeof GeofenceToolbar>[0]> = {}) {
   return render(
     <TooltipProvider>
       <GeofenceToolbar
         selected={null}
-        canMutate
-        offline={false}
+        mutate={permission()}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
         {...overrides}
@@ -43,19 +53,29 @@ describe("GeofenceToolbar", () => {
   });
 
   it("keeps actions focusable with a role reason", async () => {
-    renderToolbar({ selected: geofence, canMutate: false });
+    renderToolbar({
+      selected: geofence,
+      mutate: permission({ allowed: false, roleAllowed: false, blockedBy: "role" }),
+    });
     const edit = screen.getByRole("button", { name: "Edit" });
     expect(edit).toHaveAttribute("aria-disabled", "true");
     await userEvent.click(edit);
     expect(edit).toHaveAttribute("aria-disabled", "true");
   });
 
-  it("explains offline writes", () => {
-    renderToolbar({ selected: geofence, offline: true });
-    expect(screen.getByRole("button", { name: "Edit" })).toHaveAttribute(
-      "aria-disabled",
-      "true",
-    );
+  it("explains offline writes with the offline reason", async () => {
+    renderToolbar({
+      selected: geofence,
+      mutate: permission({
+        allowed: false,
+        blockedBy: "offline",
+        reason: "You're offline.",
+      }),
+    });
+    const edit = screen.getByRole("button", { name: "Edit" });
+    expect(edit).toHaveAttribute("aria-disabled", "true");
+    await userEvent.hover(edit);
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("You're offline.");
   });
 
   it("calls the handlers when enabled", async () => {

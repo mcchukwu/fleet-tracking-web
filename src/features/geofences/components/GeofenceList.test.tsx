@@ -2,8 +2,19 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { Geofence } from "../../../api/types";
+import type { MutatePermission } from "../../../auth/useCanMutate";
 import type { AppError } from "../../../errors/types";
 import { GeofenceList, type GeofenceListProps } from "./GeofenceList";
+
+function permission(overrides: Partial<MutatePermission> = {}): MutatePermission {
+  return {
+    allowed: true,
+    roleAllowed: true,
+    blockedBy: null,
+    reason: null,
+    ...overrides,
+  };
+}
 
 const rows: Geofence[] = [
   {
@@ -37,7 +48,7 @@ function renderList(overrides: Partial<GeofenceListProps> = {}) {
     state: "ready",
     cancelled: false,
     offline: false,
-    canMutate: true,
+    mutate: permission(),
     notFound: false,
     onSearch: vi.fn(),
     onSelect: vi.fn(),
@@ -99,7 +110,12 @@ describe("GeofenceList", () => {
   });
 
   it("hides creation from a read-only role", () => {
-    renderList({ geofences: [], total: 0, canMutate: false, state: "empty" });
+    renderList({
+      geofences: [],
+      total: 0,
+      mutate: permission({ allowed: false, roleAllowed: false, blockedBy: "role" }),
+      state: "empty",
+    });
     expect(screen.getByText("No geofences have been created.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Create geofence" })).toBeNull();
   });

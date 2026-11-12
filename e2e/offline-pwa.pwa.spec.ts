@@ -20,6 +20,23 @@ async function waitForCache(page: Page): Promise<void> {
     .not.toBeNull();
 }
 
+async function clearCachedQueries(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open("keyval-store");
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction("keyval", "readwrite");
+      transaction.objectStore("keyval").delete("fleet.query-cache");
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  });
+}
+
 async function warmOnline(page: Page): Promise<void> {
   await page.goto("/map");
   await waitForShell(page);
@@ -93,15 +110,40 @@ test.describe("offline and PWA", () => {
     pwa.setOffline(true);
     await context.setOffline(true);
 
-    const vehicleId = await page.evaluate(() => {
-      const snapshot = window.__FLEET_DEBUG__?.map;
-      return snapshot ? snapshot.targetVehicleCount : 0;
-    });
-    expect(vehicleId).toBeGreaterThan(0);
-
     await page.goto("/alerts");
     await expect(page.getByRole("heading", { name: "Alerts" })).toBeVisible();
     await expect(page.getByTestId("banner-region")).toContainText("You're offline");
+
+    await page.goto("/trips");
+    const create = page.getByRole("button", { name: "Create trip" });
+    await expect(create).toHaveAttribute("aria-disabled", "true");
+    await create.hover();
+    await expect(page.getByRole("tooltip")).toContainText("You're offline.");
+  });
+
+  test("boots offline with no cached data into neutral empty states", async ({
+    page,
+    context,
+    pwa,
+  }) => {
+    await warmOnline(page);
+    await clearCachedQueries(page);
+
+    pwa.setOffline(true);
+    await context.setOffline(true);
+    await page.reload();
+    await expectOfflineBoot(page);
+
+    await expect(page.getByText("No vehicles available offline")).toBeVisible();
+    await expect(page.getByLabel("Loading vehicles")).toHaveCount(0);
+
+    await page.getByRole("button", { name: `Account menu for ${sessionUser.name}` }).click();
+    await expect(page.getByText("Unverified offline")).toBeVisible();
+    await page.keyboard.press("Escape");
+
+    await page.goto("/alerts");
+    await expect(page.getByText("No alerts available offline")).toBeVisible();
+    await expect(page.getByLabel("Loading alerts")).toHaveCount(0);
   });
 
   test("verifies the session and resumes live data on reconnect", async ({
