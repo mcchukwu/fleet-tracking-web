@@ -44,7 +44,7 @@ export function useDriverFeed(): DriverFeedController {
 
   return {
     drivers,
-    isLoading: query.isPending && !cancelled,
+    isLoading: query.isLoading && !cancelled,
     isFetching: query.isFetching,
     error: query.error,
     dataUpdatedAt,

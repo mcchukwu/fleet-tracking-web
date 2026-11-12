@@ -107,7 +107,7 @@ export function VehicleEventsSection({ vehicleId, offline = false }: VehicleEven
   const query = useVehicleEvents(vehicleId, { from }, { refetchInterval: 60_000 });
   const events = query.data ? recentEvents(query.data) : [];
   const capLabel = query.data ? eventsCapLabel(query.data.length) : null;
-  const showSkeleton = useDelayedFlag(query.isPending);
+  const showSkeleton = useDelayedFlag(query.isLoading);
 
   function toggle(id: string): void {
     setExpanded((current) => {
@@ -120,7 +120,7 @@ export function VehicleEventsSection({ vehicleId, offline = false }: VehicleEven
 
   return (
     <VehicleSection title="Recent events">
-      {query.isPending ? (
+      {query.isLoading ? (
         showSkeleton ? (
           <div className="space-y-3" aria-busy="true">
             <Skeleton className="w-1/2" />
@@ -128,6 +128,8 @@ export function VehicleEventsSection({ vehicleId, offline = false }: VehicleEven
             <Skeleton className="w-1/3" />
           </div>
         ) : null
+      ) : offline && !query.data ? (
+        <p className="text-sm text-muted">Events need a connection.</p>
       ) : query.isError && !query.data ? (
         offline ? (
           <p className="text-sm text-muted">Events need a connection.</p>

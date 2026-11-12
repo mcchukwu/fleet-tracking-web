@@ -22,6 +22,7 @@ const trip: Trip = {
 
 const query: TripsResult = {
   isPending: false,
+  isLoading: false,
   isError: false,
   error: null,
   refetch: vi.fn(),
@@ -118,6 +119,18 @@ describe("VehicleTripSection", () => {
         offline
       />,
     );
+    expect(screen.getByText("Trip details need a connection.")).toBeVisible();
+  });
+
+  it("does not keep a skeleton for a paused offline query", () => {
+    renderSection(
+      <VehicleTripSection
+        tripId="trip-1"
+        tripQuery={{ ...query, isPending: true, isLoading: false }}
+        offline
+      />,
+    );
+    expect(screen.queryByText("Trip details unavailable.")).not.toBeInTheDocument();
     expect(screen.getByText("Trip details need a connection.")).toBeVisible();
   });
 });

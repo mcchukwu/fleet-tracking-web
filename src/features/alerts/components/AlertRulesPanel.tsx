@@ -24,7 +24,7 @@ export function AlertRulesPanel() {
   const state: StateBoundaryState =
     error?.kind === "forbidden"
       ? "forbidden"
-      : query.isPending
+      : query.isLoading
         ? "loading"
         : error
           ? "error"

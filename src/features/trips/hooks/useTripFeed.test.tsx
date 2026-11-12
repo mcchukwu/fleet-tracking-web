@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   query: {
     data: undefined as { pages: Trip[][] } | undefined,
     isPending: false,
+    isLoading: false,
     isFetching: false,
     isFetchingNextPage: false,
     hasNextPage: false,
@@ -51,6 +52,7 @@ describe("useTripFeed", () => {
     mocks.query.fetchNextPage.mockReset();
     mocks.query.refetch.mockReset();
     mocks.query.isPending = false;
+    mocks.query.isLoading = false;
     mocks.query.dataUpdatedAt = 0;
     mocks.query.data = { pages: [[trip(1), trip(2)], [trip(3)]] };
     mocks.query.hasNextPage = true;
@@ -86,6 +88,7 @@ describe("useTripFeed", () => {
 
   it("cancels the feed query and marks the loading state cancelled", async () => {
     mocks.query.isPending = true;
+    mocks.query.isLoading = true;
     const queryClient = new QueryClient();
     const cancel = vi.spyOn(queryClient, "cancelQueries").mockResolvedValue(undefined);
     const { result } = renderHook(() => useTripFeed({ status: "active" }), {
@@ -98,6 +101,18 @@ describe("useTripFeed", () => {
       queryKey: ["trips", "feed", { status: "active" }],
     });
     await waitFor(() => expect(result.current.cancelled).toBe(true));
+    expect(result.current.isLoading).toBe(false);
+    mocks.query.isPending = false;
+    mocks.query.isLoading = false;
+  });
+
+  it("treats a paused query as not loading", () => {
+    mocks.query.isPending = true;
+    mocks.query.isLoading = false;
+    const { result } = renderHook(() => useTripFeed({}), {
+      wrapper: wrapper(new QueryClient()),
+    });
+
     expect(result.current.isLoading).toBe(false);
     mocks.query.isPending = false;
   });

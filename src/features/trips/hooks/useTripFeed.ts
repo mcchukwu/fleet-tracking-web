@@ -80,7 +80,7 @@ export function useTripFeed(filters: TripServerFilters): TripFeedController {
     trips: incoming,
     loadedCount: incoming.length,
     hasMore: query.hasNextPage ?? false,
-    isLoading: query.isPending && !cancelled,
+    isLoading: query.isLoading && !cancelled,
     isFetching: query.isFetching,
     isFetchingNextPage: query.isFetchingNextPage,
     error: query.error,

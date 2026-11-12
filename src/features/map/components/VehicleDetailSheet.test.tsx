@@ -11,12 +11,13 @@ const mocks = vi.hoisted(() => ({
   vehicle: {
     data: undefined as Vehicle | undefined,
     isPending: false,
+    isLoading: false,
     isError: false,
     error: null as unknown,
     refetch: vi.fn(),
   },
-  trips: { data: [], isPending: false, isError: false, error: null, refetch: vi.fn() },
-  events: { data: [], isPending: false, isError: false, error: null, refetch: vi.fn() },
+  trips: { data: [], isPending: false, isLoading: false, isError: false, error: null, refetch: vi.fn() },
+  events: { data: [], isPending: false, isLoading: false, isError: false, error: null, refetch: vi.fn() },
 }));
 
 vi.mock("../../../api/hooks/vehicles", () => ({
@@ -103,8 +104,8 @@ function renderSheet(
 
 describe("VehicleDetailSheet", () => {
   beforeEach(() => {
-    mocks.vehicle = { ...mocks.vehicle, data: vehicle, isPending: false, isError: false, error: null };
-    mocks.events = { ...mocks.events, data: [], isPending: false, isError: false, error: null };
+    mocks.vehicle = { ...mocks.vehicle, data: vehicle, isPending: false, isLoading: false, isError: false, error: null };
+    mocks.events = { ...mocks.events, data: [], isPending: false, isLoading: false, isError: false, error: null };
   });
 
   it("shows the plate, status, actions and the same sections as the drawer", () => {

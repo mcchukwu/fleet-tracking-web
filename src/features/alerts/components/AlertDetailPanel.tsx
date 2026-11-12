@@ -26,7 +26,7 @@ import { AlertEvidenceSection } from "./AlertEvidenceSection";
 import { AlertPositionMap } from "./AlertPositionMap";
 import { AlertTripSection } from "./AlertTripSection";
 
-export type AlertLookupState = "loading" | "ready" | "not-found" | "error";
+export type AlertLookupState = "loading" | "ready" | "not-found" | "error" | "offline";
 
 export interface AlertDetailPanelProps {
   alert: Alert | null;
@@ -73,6 +73,14 @@ function MissingAlertPanel({
         </div>
       ) : lookup === "error" && lookupError ? (
         <ErrorState error={lookupError} onRetry={onRetryLookup} className="py-8" />
+      ) : lookup === "offline" ? (
+        <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+          <p className="text-base font-medium text-text">Alert isn't available offline</p>
+          <p className="text-sm text-muted">Reconnect to load this alert.</p>
+          <Button size="sm" onClick={onClose}>
+            Back to alerts
+          </Button>
+        </div>
       ) : (
         <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
           <p className="text-base font-medium text-text">Alert not found</p>
@@ -253,7 +261,10 @@ function ResolvedAlertDetail({
           <h3 id="alert-trip-heading" className="text-sm font-medium text-text">
             Trip
           </h3>
-          <AlertTripSection {...(alert.trip_id ? { tripId: alert.trip_id } : {})} />
+          <AlertTripSection
+            {...(alert.trip_id ? { tripId: alert.trip_id } : {})}
+            offline={offline}
+          />
         </section>
 
         <div className="border-t border-border pt-4">

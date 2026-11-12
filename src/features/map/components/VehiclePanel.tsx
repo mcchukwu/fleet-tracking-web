@@ -24,6 +24,7 @@ export interface VehiclePanelProps {
   error?: AppError | null;
   stale: boolean;
   staleLabel: string;
+  offline?: boolean;
   selectedKey: string | null;
   rowHeight: number;
   signature: string;
@@ -51,6 +52,7 @@ export function VehiclePanel({
   error = null,
   stale,
   staleLabel,
+  offline = false,
   selectedKey,
   rowHeight,
   signature,
@@ -93,10 +95,17 @@ export function VehiclePanel({
         }
       />
     ) : total === 0 ? (
-      <EmptyState
-        title="No vehicles yet"
-        description="They appear here after a device reports its first position."
-      />
+      offline ? (
+        <EmptyState
+          title="No vehicles available offline"
+          description="Reconnect to load the fleet."
+        />
+      ) : (
+        <EmptyState
+          title="No vehicles yet"
+          description="They appear here after a device reports its first position."
+        />
+      )
     ) : (
     <EmptyState
       title={

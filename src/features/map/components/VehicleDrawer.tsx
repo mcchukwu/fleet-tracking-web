@@ -74,7 +74,7 @@ export function VehicleDrawer({
   const lon = row?.lon ?? vehicle?.lon ?? null;
   const hasPosition = lat !== null && lon !== null;
   const hasDetail = vehicle !== undefined && !notFound;
-  const showDetailSkeleton = useDelayedFlag(vehicleQuery.isPending);
+  const showDetailSkeleton = useDelayedFlag(vehicleQuery.isLoading);
 
   function retryDetail(): void {
     void vehicleQuery.refetch();
@@ -134,7 +134,7 @@ export function VehicleDrawer({
         <>
           {row ? <VehicleCurrentState row={row} vehicle={vehicle} /> : null}
 
-          {vehicleQuery.isPending ? (
+          {vehicleQuery.isLoading ? (
             <>
               <SlowNotice
                 onRetry={retryDetail}

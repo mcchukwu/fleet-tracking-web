@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   rules: {
     data: [] as AlertRule[],
     isPending: false,
+    isLoading: false,
     error: null as unknown,
     refetch: vi.fn(),
   },
@@ -77,6 +78,7 @@ beforeEach(() => {
   mocks.canMutate = true;
   mocks.rules.data = [speeding, unknown];
   mocks.rules.isPending = false;
+  mocks.rules.isLoading = false;
   mocks.rules.error = null;
   mocks.write.pendingId = null;
   mocks.write.error = null;
@@ -155,10 +157,12 @@ describe("AlertRulesPanel", () => {
   it("renders loading, empty and error states", async () => {
     mocks.rules.data = [];
     mocks.rules.isPending = true;
+    mocks.rules.isLoading = true;
     const { rerender } = renderRules();
     await waitFor(() => expect(screen.getByLabelText("Loading")).toBeInTheDocument());
 
     mocks.rules.isPending = false;
+    mocks.rules.isLoading = false;
     rerender(
       <TooltipProvider>
         <AlertRulesPanel />

@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   vehicle: {
     data: undefined as Vehicle | undefined,
     isPending: false,
+    isLoading: false,
     isError: false,
     error: null as unknown,
     refetch: vi.fn(),
@@ -18,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   trips: {
     data: [] as unknown[],
     isPending: false,
+    isLoading: false,
     isError: false,
     error: null as unknown,
     refetch: vi.fn(),
@@ -25,6 +27,7 @@ const mocks = vi.hoisted(() => ({
   events: {
     data: [] as VehicleEvent[],
     isPending: false,
+    isLoading: false,
     isError: false,
     error: null as unknown,
     refetch: vi.fn(),
@@ -117,6 +120,7 @@ describe("VehicleDrawer", () => {
     mocks.vehicle = {
       data: vehicle,
       isPending: false,
+      isLoading: false,
       isError: false,
       error: null,
       refetch: vi.fn(),
@@ -124,6 +128,7 @@ describe("VehicleDrawer", () => {
     mocks.trips = {
       data: [],
       isPending: false,
+      isLoading: false,
       isError: false,
       error: null,
       refetch: vi.fn(),
@@ -133,6 +138,7 @@ describe("VehicleDrawer", () => {
         { kind: "geofence", type: "enter", name: "Refinery Gate", at: "2026-11-02T14:31:00Z" },
       ],
       isPending: false,
+      isLoading: false,
       isError: false,
       error: null,
       refetch: vi.fn(),
@@ -178,10 +184,17 @@ describe("VehicleDrawer", () => {
   });
 
   it("delays the detail skeleton by 200ms", async () => {
-    mocks.vehicle = { ...mocks.vehicle, data: undefined, isPending: true };
+    mocks.vehicle = { ...mocks.vehicle, data: undefined, isPending: true, isLoading: true };
     renderDrawer();
     expect(screen.queryByLabelText("Loading vehicle details")).not.toBeInTheDocument();
     expect(await screen.findByLabelText("Loading vehicle details")).toBeVisible();
+  });
+
+  it("does not keep a skeleton for a paused offline query", () => {
+    mocks.vehicle = { ...mocks.vehicle, data: undefined, isPending: true, isLoading: false };
+    renderDrawer({ offline: true });
+    expect(screen.queryByLabelText("Loading vehicle details")).not.toBeInTheDocument();
+    expect(screen.getByText("Geofence entry")).toBeVisible();
   });
 
   it("keeps the cached detail and offers a refresh when a refetch fails", () => {

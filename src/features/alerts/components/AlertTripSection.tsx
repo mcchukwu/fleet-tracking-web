@@ -8,22 +8,27 @@ import { Skeleton } from "../../../ui/StatePanel";
 
 export interface AlertTripSectionProps {
   tripId?: string;
+  offline?: boolean;
 }
 
-export function AlertTripSection({ tripId }: AlertTripSectionProps) {
+export function AlertTripSection({ tripId, offline = false }: AlertTripSectionProps) {
   const query = useTrips({ limit: 500 }, { enabled: Boolean(tripId) });
 
   if (!tripId) {
     return <p className="text-sm text-muted">No trip linked.</p>;
   }
 
-  if (query.isPending) {
+  if (query.isLoading) {
     return (
       <div aria-busy="true" aria-label="Loading trip" className="flex flex-col gap-2">
         <Skeleton className="w-1/2" />
         <Skeleton className="w-2/3" />
       </div>
     );
+  }
+
+  if (offline && !query.data) {
+    return <p className="text-sm text-muted">Trip details need a connection.</p>;
   }
 
   if (query.isError) {

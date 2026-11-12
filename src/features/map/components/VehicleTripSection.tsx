@@ -12,6 +12,7 @@ import { VehicleField, VehicleSection } from "./VehicleField";
 
 export interface TripsResult {
   isPending: boolean;
+  isLoading: boolean;
   isError: boolean;
   error: unknown;
   refetch: () => unknown;
@@ -32,7 +33,7 @@ export function VehicleTripSection({
   tripQuery,
   offline = false,
 }: VehicleTripSectionProps) {
-  const showSkeleton = useDelayedFlag(tripQuery.isPending);
+  const showSkeleton = useDelayedFlag(tripQuery.isLoading);
   const fallbackDestination = snapshotVehicle?.destination;
   const fallbackStatus = snapshotVehicle?.trip_status;
 
@@ -64,7 +65,7 @@ export function VehicleTripSection({
 
   const trip = trips?.find((item) => item.id === tripId);
 
-  if (tripQuery.isPending) {
+  if (tripQuery.isLoading) {
     return (
       <VehicleSection title="Trip">
         {showSkeleton ? (
@@ -78,7 +79,7 @@ export function VehicleTripSection({
     );
   }
 
-  if (!trip && tripQuery.isError && !trips) {
+  if (!trip && !trips && (offline || tripQuery.isError)) {
     if (offline) {
       return (
         <VehicleSection title="Trip">

@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   query: {
     data: undefined as Geofence[] | undefined,
     isPending: true,
+    isLoading: true,
     isFetching: true,
     error: null as unknown,
     dataUpdatedAt: 0,
@@ -40,6 +41,7 @@ describe("useGeofenceFeed", () => {
     mocks.query = {
       data: geofences,
       isPending: false,
+      isLoading: false,
       isFetching: false,
       error: null,
       dataUpdatedAt: 1,
@@ -58,6 +60,7 @@ describe("useGeofenceFeed", () => {
     mocks.query = {
       data: geofences,
       isPending: false,
+      isLoading: false,
       isFetching: false,
       error: null,
       dataUpdatedAt: 1,
@@ -84,6 +87,7 @@ describe("useGeofenceFeed", () => {
     mocks.query = {
       data: [],
       isPending: false,
+      isLoading: false,
       isFetching: false,
       error: null,
       dataUpdatedAt: 1,

@@ -31,6 +31,7 @@ const mocks = vi.hoisted(() => ({
       },
     ],
     isPending: false,
+    isLoading: false,
     isError: false,
     error: null,
     refetch: vi.fn(),

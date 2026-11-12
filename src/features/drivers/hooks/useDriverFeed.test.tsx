@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   query: {
     data: undefined as Driver[] | undefined,
     isPending: true,
+    isLoading: true,
     isFetching: true,
     error: null as unknown,
     dataUpdatedAt: 0,
@@ -42,6 +43,7 @@ describe("useDriverFeed", () => {
     mocks.query = {
       data: drivers,
       isPending: false,
+      isLoading: false,
       isFetching: false,
       error: null,
       dataUpdatedAt: 1,
@@ -60,6 +62,7 @@ describe("useDriverFeed", () => {
     mocks.query = {
       data: drivers,
       isPending: false,
+      isLoading: false,
       isFetching: false,
       error: null,
       dataUpdatedAt: 1,
@@ -84,6 +87,7 @@ describe("useDriverFeed", () => {
     mocks.query = {
       data: [],
       isPending: false,
+      isLoading: false,
       isFetching: false,
       error: null,
       dataUpdatedAt: 1,

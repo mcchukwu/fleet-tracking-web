@@ -118,6 +118,11 @@ describe("VehiclePanel", () => {
     expect(screen.getByText("No vehicles match these filters")).toBeInTheDocument();
   });
 
+  it("shows the neutral offline empty state when nothing is cached", () => {
+    renderPanel({ total: 0, rows: [], offline: true });
+    expect(screen.getByText("No vehicles available offline")).toBeInTheDocument();
+  });
+
   it("keeps an unknown depot from the URL visible and selected", () => {
     renderPanel({
       total: 1,

@@ -45,7 +45,7 @@ export function useGeofenceFeed(): GeofenceFeedController {
 
   return {
     geofences,
-    isLoading: query.isPending && !cancelled,
+    isLoading: query.isLoading && !cancelled,
     isFetching: query.isFetching,
     error: query.error,
     dataUpdatedAt,

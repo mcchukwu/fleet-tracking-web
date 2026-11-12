@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   trips: {
     data: undefined as unknown,
     isPending: false,
+    isLoading: false,
     isError: false,
     error: null as unknown,
     refetch: vi.fn(),
@@ -20,6 +21,7 @@ vi.mock("../../../api/hooks/trips", () => ({
 beforeEach(() => {
   mocks.trips.data = undefined;
   mocks.trips.isPending = false;
+  mocks.trips.isLoading = false;
   mocks.trips.isError = false;
   mocks.trips.error = null;
   mocks.trips.refetch.mockReset();
@@ -65,7 +67,16 @@ describe("AlertTripSection", () => {
 
   it("shows a loading skeleton", () => {
     mocks.trips.isPending = true;
+    mocks.trips.isLoading = true;
     render(<AlertTripSection tripId="trip-1" />);
     expect(screen.getByLabelText("Loading trip")).toBeInTheDocument();
+  });
+
+  it("does not keep a skeleton for a paused offline query", () => {
+    mocks.trips.isPending = true;
+    mocks.trips.isLoading = false;
+    render(<AlertTripSection tripId="trip-1" offline />);
+    expect(screen.queryByLabelText("Loading trip")).not.toBeInTheDocument();
+    expect(screen.getByText("Trip details need a connection.")).toBeVisible();
   });
 });

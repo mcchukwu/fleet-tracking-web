@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   result: {
     data: [] as unknown[] | undefined,
     isPending: false,
+    isLoading: false,
     isError: false,
     error: null as unknown,
     refetch: vi.fn(),
@@ -35,6 +36,7 @@ describe("VehicleEventsSection", () => {
     mocks.result = {
       data: [],
       isPending: false,
+      isLoading: false,
       isError: false,
       error: null,
       refetch: vi.fn(),
@@ -136,6 +138,15 @@ describe("VehicleEventsSection", () => {
     mocks.result.isError = true;
     mocks.result.error = new ApiError(500, "internal", "down");
     renderSection(true);
+    expect(screen.getByText("Events need a connection.")).toBeVisible();
+  });
+
+  it("does not keep a skeleton for a paused offline query", () => {
+    mocks.result.data = undefined;
+    mocks.result.isPending = true;
+    mocks.result.isLoading = false;
+    const { container } = renderSection(true);
+    expect(container.querySelector('[aria-busy="true"]')).toBeNull();
     expect(screen.getByText("Events need a connection.")).toBeVisible();
   });
 });

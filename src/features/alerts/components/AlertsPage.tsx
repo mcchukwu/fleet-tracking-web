@@ -89,13 +89,15 @@ function AlertsPageContent() {
       ? "ready"
       : selectedInFeed
         ? "ready"
-        : feed.isLoading || lookup.isPending
-          ? "loading"
-          : lookup.error
-            ? "error"
-            : lookup.data
-              ? "ready"
-              : "not-found";
+        : offline
+          ? "offline"
+          : feed.isLoading || lookup.isLoading
+            ? "loading"
+            : lookup.error
+              ? "error"
+              : lookup.data
+                ? "ready"
+                : "not-found";
 
   const geofenceNames = useMemo(
     () =>
