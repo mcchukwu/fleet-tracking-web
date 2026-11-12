@@ -1,12 +1,10 @@
 import { cn } from "../../../ui/cn";
-import type { HealthGroupId } from "../lib/constants";
+import {
+  HEALTH_GROUP_COLUMNS,
+  type HealthGroupId,
+} from "../lib/constants";
 import type { HealthItem } from "../lib/health";
 import { SystemHealthItem } from "./SystemHealthItem";
-
-const columnClasses = {
-  2: "sm:grid-cols-2",
-  4: "sm:grid-cols-2 lg:grid-cols-4",
-} as const;
 
 export interface SystemHealthGroupProps {
   id: HealthGroupId;
@@ -46,7 +44,7 @@ export function SystemHealthGroup({
         <ul
           className={cn(
             "border-border bg-border grid gap-px overflow-hidden rounded-lg border",
-            columnClasses[columns],
+            HEALTH_GROUP_COLUMNS[columns],
           )}
         >
           {items.map((item) => (

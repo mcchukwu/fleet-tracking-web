@@ -5,11 +5,12 @@ import { ErrorState } from "../../../errors/ErrorState";
 import { normalize } from "../../../errors/normalize";
 import { SlowNotice } from "../../../errors/SlowNotice";
 import { formatClockTime } from "../../../lib/format";
+import { useDelayedFlag } from "../../../lib/useDelayedFlag";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useNow } from "../../../lib/ticker";
 import { useConnection } from "../../../stores/connection";
 import { Button } from "../../../ui/Button";
-import { EmptyState } from "../../../ui/StatePanel";
+import { EmptyState, Skeleton } from "../../../ui/StatePanel";
 import {
   StateBoundary,
   type StateBoundaryState,
@@ -78,6 +79,8 @@ function SystemPageContent() {
               ? "stale"
               : "ready";
 
+  const showLoading = useDelayedFlag(state === "loading");
+
   useEffect(() => {
     if (cancelled) retryRef.current?.focus();
   }, [cancelled]);
@@ -102,6 +105,14 @@ function SystemPageContent() {
               showRefresh={refreshVisible}
               onRefresh={feed.refetch}
             />
+          </div>
+        ) : showLoading && !cancelled ? (
+          <div
+            data-health-header-skeleton
+            className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-touch w-24 md:h-control-sm" />
           </div>
         ) : null}
       </header>
