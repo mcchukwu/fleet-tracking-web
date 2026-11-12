@@ -2,18 +2,18 @@ import { Skeleton } from "../../../ui/StatePanel";
 
 export function ShellSkeleton() {
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-bg text-text">
+    <div className="bg-bg text-text flex h-dvh flex-col overflow-hidden">
       <output className="sr-only">Loading the console</output>
-      <div className="flex h-topbar shrink-0 items-center gap-2 border-b border-border bg-surface px-3">
+      <div className="h-topbar border-border bg-surface flex shrink-0 items-center gap-2 border-b px-3">
         <Skeleton className="size-control-sm" />
         <Skeleton className="h-3 w-28" />
         <div className="ml-auto flex items-center gap-2">
-          <Skeleton className="hidden h-control-md w-panel max-w-full md:block" />
+          <Skeleton className="h-control-md w-panel hidden max-w-full md:block" />
           <Skeleton className="size-control-md rounded-full" />
         </div>
       </div>
       <div className="flex min-h-0 flex-1">
-        <div className="hidden w-rail shrink-0 flex-col gap-2 border-r border-border bg-surface p-2 md:flex">
+        <div className="w-rail border-border bg-surface hidden shrink-0 flex-col gap-2 border-r p-2 md:flex">
           {Array.from({ length: 7 }).map((_, index) => (
             <Skeleton key={index} className="size-control-lg" />
           ))}

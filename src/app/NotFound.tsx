@@ -11,7 +11,7 @@ export function NotFound() {
       <PageFrame
         layout="scroll"
         align="center"
-        contentClassName="items-center px-4 py-12 text-center"
+        contentClassName="items-center px-4 pt-12 text-center"
       >
         <FileQuestion
           aria-hidden="true"

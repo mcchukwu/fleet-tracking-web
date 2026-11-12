@@ -94,7 +94,7 @@ function RouteError({ error, reset }: ErrorComponentProps) {
       <PageFrame
         layout="scroll"
         align="center"
-        contentClassName="px-4 py-6 sm:px-6"
+        contentClassName="px-4 pt-6 sm:px-6"
       >
         <h1 className="sr-only">Something went wrong</h1>
         <ErrorState
@@ -142,7 +142,7 @@ function ForbiddenPage() {
     <PageFrame
       layout="scroll"
       align="center"
-      contentClassName="items-center px-4 py-10 sm:px-6"
+      contentClassName="items-center px-4 pt-10 sm:px-6"
     >
       <h1 className="sr-only">Forbidden</h1>
       <ForbiddenState

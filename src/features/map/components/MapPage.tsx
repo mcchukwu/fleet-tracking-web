@@ -12,7 +12,11 @@ import { useAuthStore } from "../../../auth/store";
 import { errorCopy } from "../../../errors/catalog";
 import { ErrorBoundary } from "../../../errors/ErrorBoundary";
 import { normalize } from "../../../errors/normalize";
-import { formatAgeSeconds, formatClockTime, formatNumber } from "../../../lib/format";
+import {
+  formatAgeSeconds,
+  formatClockTime,
+  formatNumber,
+} from "../../../lib/format";
 import { STALE_AFTER_MS } from "../../../lib/status";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useMediaQuery } from "../../../lib/useMediaQuery";
@@ -24,6 +28,7 @@ import { pwaCopy } from "../../../pwa/copy";
 import { warmMap } from "../../../pwa/warmMap";
 import { Badge } from "../../../ui/Badge";
 import { Banner } from "../../../ui/Banner";
+import { PageFrame } from "../../../ui/PageFrame";
 import { useToast } from "../../../ui/Toast";
 import { cn } from "../../../ui/cn";
 import { useMapData } from "../hooks/useMapData";
@@ -65,7 +70,9 @@ export function MapPage() {
   const queryClient = useQueryClient();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const isXl = useMediaQuery("(min-width: 1280px)");
-  const authenticated = useAuthStore((state) => state.status === "authenticated");
+  const authenticated = useAuthStore(
+    (state) => state.status === "authenticated",
+  );
   const mutate = useCanMutate("mutate");
   const canMutate = mutate.allowed;
   const snapshotQuery = useLiveSnapshot(authenticated);
@@ -87,17 +94,25 @@ export function MapPage() {
   const { toast } = useToast();
 
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
-  const [hoverPoint, setHoverPoint] = useState<{ x: number; y: number } | null>(null);
+  const [hoverPoint, setHoverPoint] = useState<{ x: number; y: number } | null>(
+    null,
+  );
   const [loadingCancelled, setLoadingCancelled] = useState(false);
   const [viewport, setViewport] = useState<Viewport | null>(null);
   const bounds = viewport?.bounds ?? null;
   const [listSnap, setListSnap] = useState<SheetSnap>("peek");
   const [detailSnap, setDetailSnap] = useState<SheetSnap>("half");
   const [sheetObscured, setSheetObscured] = useState(false);
-  const [mapStyleState, setMapStyleState] = useState<MapStyleState | null>(null);
-  const [mapOfflineAvailable, setMapOfflineAvailable] = useState(() => mapOfflineHint());
+  const [mapStyleState, setMapStyleState] = useState<MapStyleState | null>(
+    null,
+  );
+  const [mapOfflineAvailable, setMapOfflineAvailable] = useState(() =>
+    mapOfflineHint(),
+  );
   const [mapReady, setMapReady] = useState(false);
-  const [styleAttribution, setStyleAttribution] = useState<readonly string[] | null>(null);
+  const [styleAttribution, setStyleAttribution] = useState<
+    readonly string[] | null
+  >(null);
   const [writeVehicle, setWriteVehicle] = useState<Vehicle | null>(null);
   const [writeMode, setWriteMode] = useState<"edit" | "assign" | null>(null);
   const adapterRef = useRef<MapAdapter | null>(null);
@@ -135,9 +150,11 @@ export function MapPage() {
 
   const depots = useMemo(
     () =>
-      [...new Set(data.rows.map((row) => row.depot).filter((depot) => depot !== ""))].sort((a, b) =>
-        a.localeCompare(b, "en"),
-      ),
+      [
+        ...new Set(
+          data.rows.map((row) => row.depot).filter((depot) => depot !== ""),
+        ),
+      ].sort((a, b) => a.localeCompare(b, "en")),
     [data.rows],
   );
 
@@ -156,12 +173,17 @@ export function MapPage() {
   const listOnly = offline && !mapOfflineAvailable;
   // Offline is a state, not an error: keep the cached map and rows and let the
   // banner and stale treatment explain why nothing is refreshing.
-  const snapshotError = !offline && snapshotQuery.error ? normalize(snapshotQuery.error) : null;
+  const snapshotError =
+    !offline && snapshotQuery.error ? normalize(snapshotQuery.error) : null;
   const geofenceError = useMemo(
-    () => (!offline && geofencesFailed && geofencesCause ? normalize(geofencesCause) : null),
+    () =>
+      !offline && geofencesFailed && geofencesCause
+        ? normalize(geofencesCause)
+        : null,
     [offline, geofencesFailed, geofencesCause],
   );
-  const alertsError = !offline && alertsQuery.error ? normalize(alertsQuery.error) : null;
+  const alertsError =
+    !offline && alertsQuery.error ? normalize(alertsQuery.error) : null;
   const hasData = data.total > 0;
   const loadingCancelledActive =
     loadingCancelled && !snapshotQuery.isFetching && !hasData;
@@ -245,9 +267,11 @@ export function MapPage() {
     (patch: Partial<MapFilterValues>) => {
       const next: Record<string, string | number | undefined> = {};
       if ("q" in patch) next.q = patch.q?.trim() || undefined;
-      if ("statuses" in patch) next.status = serializeStatuses(patch.statuses ?? []);
+      if ("statuses" in patch)
+        next.status = serializeStatuses(patch.statuses ?? []);
       if ("depot" in patch) next.depot = patch.depot ?? undefined;
-      if ("sort" in patch) next.sort = patch.sort === "plate" ? undefined : patch.sort;
+      if ("sort" in patch)
+        next.sort = patch.sort === "plate" ? undefined : patch.sort;
       if ("onlyInView" in patch) next.view = patch.onlyInView ? 1 : undefined;
       updateSearch(next);
     },
@@ -282,7 +306,9 @@ export function MapPage() {
           sheetHandleRef.current?.focus();
           return;
         }
-        const search = document.querySelector<HTMLElement>('input[name="vehicle-search"]');
+        const search = document.querySelector<HTMLElement>(
+          'input[name="vehicle-search"]',
+        );
         (search ?? mapRootRef.current)?.focus();
       });
     },
@@ -307,9 +333,13 @@ export function MapPage() {
           ? { lat: selectedRow.lat, lon: selectedRow.lon }
           : null);
       if (!adapter || !target) return;
-      adapter.flyTo([target.lon, target.lat], Math.max(adapter.getViewport().zoom, 13), {
-        padding,
-      });
+      adapter.flyTo(
+        [target.lon, target.lat],
+        Math.max(adapter.getViewport().zoom, 13),
+        {
+          padding,
+        },
+      );
       if (!isDesktop) setDetailSnap("peek");
     },
     [isDesktop, padding, selectedRow],
@@ -349,7 +379,8 @@ export function MapPage() {
       if (!root) return;
       const target = [...root.querySelectorAll<HTMLElement>("button")].find(
         (button) =>
-          button.textContent?.trim() === label || button.getAttribute("aria-label") === label,
+          button.textContent?.trim() === label ||
+          button.getAttribute("aria-label") === label,
       );
       target?.focus();
     });
@@ -382,9 +413,15 @@ export function MapPage() {
   const fitFleet = useCallback(() => {
     const adapter = adapterRef.current;
     if (!adapter) return;
-    const positioned = data.rows.filter((row) => row.lat !== null && row.lon !== null);
-    const lats = positioned.map((row) => row.lat).filter((value): value is number => value !== null);
-    const lons = positioned.map((row) => row.lon).filter((value): value is number => value !== null);
+    const positioned = data.rows.filter(
+      (row) => row.lat !== null && row.lon !== null,
+    );
+    const lats = positioned
+      .map((row) => row.lat)
+      .filter((value): value is number => value !== null);
+    const lons = positioned
+      .map((row) => row.lon)
+      .filter((value): value is number => value !== null);
     if (lats.length === 0 || lons.length === 0) return;
     const fleetBounds = {
       south: Math.min(...lats),
@@ -392,11 +429,18 @@ export function MapPage() {
       west: Math.min(...lons),
       east: Math.max(...lons),
     };
-    setMapDebug({ fitBounds: fleetBounds, fitCount: (readMapDebug().fitCount ?? 0) + 1 });
+    setMapDebug({
+      fitBounds: fleetBounds,
+      fitCount: (readMapDebug().fitCount ?? 0) + 1,
+    });
     adapter.fitBounds(fleetBounds, { padding, animate: true });
     const afterFit = adapter.getViewport();
     setMapDebug({
-      viewport: { center: afterFit.center, zoom: afterFit.zoom, bearing: afterFit.bearing },
+      viewport: {
+        center: afterFit.center,
+        zoom: afterFit.zoom,
+        bearing: afterFit.bearing,
+      },
       bearing: afterFit.bearing,
     });
   }, [data.rows, padding]);
@@ -404,7 +448,9 @@ export function MapPage() {
   const handleAdapterReady = useCallback((adapter: MapAdapter | null) => {
     adapterRef.current = adapter;
     setMapReady(adapter !== null);
-    setMapOfflineAvailable((current) => (adapter ? adapter.capabilities.offline : current));
+    setMapOfflineAvailable((current) =>
+      adapter ? adapter.capabilities.offline : current,
+    );
     if (import.meta.env.DEV && import.meta.env.VITE_MOCK === "1") {
       window.__FLEET_TEST_MAP__ = adapter;
     }
@@ -440,7 +486,10 @@ export function MapPage() {
 
   const zoomIn = useCallback(() => adapterRef.current?.zoomIn(), []);
   const zoomOut = useCallback(() => adapterRef.current?.zoomOut(), []);
-  const resetBearing = useCallback(() => adapterRef.current?.resetBearing(), []);
+  const resetBearing = useCallback(
+    () => adapterRef.current?.resetBearing(),
+    [],
+  );
 
   const closePanel = useCallback(() => {
     preferences.setPanelOpen(false);
@@ -464,7 +513,8 @@ export function MapPage() {
   }, []);
 
   useEffect(() => {
-    if (fittedOnce.current || !adapterRef.current || data.positioned === 0) return;
+    if (fittedOnce.current || !adapterRef.current || data.positioned === 0)
+      return;
     fittedOnce.current = true;
     fitFleet();
   }, [data.positioned, fitFleet]);
@@ -519,18 +569,26 @@ export function MapPage() {
       ...(snapshotUnavailable ? {} : { hint: "vehicles reporting" }),
       onClick: () => changeFilters({ statuses: ["moving", "idle", "alert"] }),
       ...(snapshotUnavailable
-        ? { error: true, retrying: snapshotQuery.isFetching, onRetry: retrySnapshot }
+        ? {
+            error: true,
+            retrying: snapshotQuery.isFetching,
+            onRetry: retrySnapshot,
+          }
         : {}),
     },
     {
       label: "Active trips",
       value: snapshotUnavailable ? "—" : formatNumber(data.activeTrips),
-      onClick: () => void navigate({ to: "/trips", search: { status: "active" } }),
+      onClick: () =>
+        void navigate({ to: "/trips", search: { status: "active" } }),
     },
     {
       label: "Open alerts",
-      value: alertsError ? "—" : openAlertCountLabel(openAlertCount, OPEN_ALERT_LIMIT),
-      onClick: () => void navigate({ to: "/alerts", search: { status: "open" } }),
+      value: alertsError
+        ? "—"
+        : openAlertCountLabel(openAlertCount, OPEN_ALERT_LIMIT),
+      onClick: () =>
+        void navigate({ to: "/alerts", search: { status: "open" } }),
       ...(alertsError
         ? {
             error: true,
@@ -545,7 +603,9 @@ export function MapPage() {
         snapshotUnavailable || freshness.ageSeconds === null
           ? "—"
           : formatAgeSeconds(freshness.ageSeconds),
-      ...(lastDataAt && !snapshotUnavailable ? { hint: formatClockTime(lastDataAt) } : {}),
+      ...(lastDataAt && !snapshotUnavailable
+        ? { hint: formatClockTime(lastDataAt) }
+        : {}),
       onClick: retrySnapshot,
     },
   ];
@@ -580,7 +640,9 @@ export function MapPage() {
   const kpiHidden = !isDesktop && sheetSnap === "full";
   const activeStyle = mapStyleState?.style ?? "standard";
   const loadingStyle =
-    mapStyleState?.status === "loading" ? mapStyleState.targetStyle ?? null : null;
+    mapStyleState?.status === "loading"
+      ? (mapStyleState.targetStyle ?? null)
+      : null;
   const hostedActive = isHostedMapStyle(activeStyle);
   const controlsProps = {
     bearing: viewport?.bearing ?? 0,
@@ -591,7 +653,9 @@ export function MapPage() {
     styleLoading: loadingStyle,
     panelOpen: panelVisible,
     panelToggleReason:
-      drawerOpen && !isXl ? "Close the vehicle drawer to show the list." : undefined,
+      drawerOpen && !isXl
+        ? "Close the vehicle drawer to show the list."
+        : undefined,
     geofencesVisible: preferences.geofencesVisible,
     fitDisabled: data.positioned === 0,
     panelToggleRef,
@@ -606,277 +670,294 @@ export function MapPage() {
   };
 
   return (
-    <div
-      ref={mapRootRef}
-      data-testid="map-root"
-      data-drawer-open={drawerOpen ? "true" : undefined}
-      tabIndex={-1}
-      className="map-root relative h-full min-h-0 focus:outline-none"
-    >
-      <h1 className="sr-only">Map</h1>
+    <PageFrame layout="fill" width="full">
+      <div
+        ref={mapRootRef}
+        data-testid="map-root"
+        data-drawer-open={drawerOpen ? "true" : undefined}
+        tabIndex={-1}
+        className="map-root relative h-full min-h-0 focus:outline-none"
+      >
+        <h1 className="sr-only">Map</h1>
 
-      {!listOnly ? (
-      <ErrorBoundary level="panel" resetKeys={[selectedKey]}>
-        <MapView
-          vehicles={mapVehicles}
-          geofences={mapGeofences}
-          selectedKey={selectedKey}
-          hoveredKey={hoveredKey}
-          hoveredRow={hoveredRow}
-          hoverPoint={hoverPoint}
-          dimmed={offline}
-          baseStyle={mapStyle.effectiveStyle}
-          loading={snapshotPending}
-          error={snapshotPending ? null : snapshotError}
-          hasData={hasData}
-          showErrorOverlay
-          onRetry={retrySnapshot}
-          onSelect={selectKey}
-          onHover={handleHover}
-          onViewport={setViewport}
-          onStyleChange={handleMapStyleChange}
-          onAdapterReady={handleAdapterReady}
-          flyPadding={padding}
-          drawerOpen={drawerOpen}
-        />
-      </ErrorBoundary>
-      ) : null}
-
-      {kpiHidden || listOnly ? null : (
-        <div
-          data-testid="map-kpi"
-          className={cn(
-            "map-kpi pointer-events-none absolute inset-x-0 top-3 z-panel flex justify-center pl-3 pr-14 lg:right-3 lg:px-3",
-            panelVisible ? "lg:left-93" : "lg:left-3",
-          )}
-        >
-          <div className="pointer-events-auto w-full max-w-md">
-            <ErrorBoundary level="panel">
-              <KpiStrip cells={kpiCells} compact={!isDesktop} loading={snapshotPending} />
-            </ErrorBoundary>
-          </div>
-        </div>
-      )}
-
-      {listOnly ? (
-        <div
-          data-testid="map-list-only"
-          className="absolute inset-3 z-panel flex flex-col gap-2"
-        >
-          <div data-testid="map-kpi" className="shrink-0">
-            <ErrorBoundary level="panel">
-              <KpiStrip cells={kpiCells} compact={!isDesktop} loading={snapshotPending} />
-            </ErrorBoundary>
-          </div>
-          <Banner tone="neutral" message={pwaCopy.mapOfflineTitle} />
-          <ErrorBoundary level="panel">
-            <VehiclePanel
-              {...panelProps}
-              className="min-h-0 flex-1 rounded-lg border border-border shadow-float"
-              showHeader
-              onClose={isDesktop ? closePanel : undefined}
+        {!listOnly ? (
+          <ErrorBoundary level="panel" resetKeys={[selectedKey]}>
+            <MapView
+              vehicles={mapVehicles}
+              geofences={mapGeofences}
+              selectedKey={selectedKey}
+              hoveredKey={hoveredKey}
+              hoveredRow={hoveredRow}
+              hoverPoint={hoverPoint}
+              dimmed={offline}
+              baseStyle={mapStyle.effectiveStyle}
+              loading={snapshotPending}
+              error={snapshotPending ? null : snapshotError}
+              hasData={hasData}
+              showErrorOverlay
+              onRetry={retrySnapshot}
+              onSelect={selectKey}
+              onHover={handleHover}
+              onViewport={setViewport}
+              onStyleChange={handleMapStyleChange}
+              onAdapterReady={handleAdapterReady}
+              flyPadding={padding}
+              drawerOpen={drawerOpen}
             />
           </ErrorBoundary>
-        </div>
-      ) : null}
+        ) : null}
 
-      {!listOnly && isDesktop && panelVisible ? (
-        <aside className="absolute bottom-3 left-3 top-3 z-panel w-panel">
-          <ErrorBoundary level="panel">
-            <VehiclePanel
-              {...panelProps}
-              className="h-full rounded-lg border border-border shadow-float"
-              showHeader
-              onClose={closePanel}
-            />
-          </ErrorBoundary>
-        </aside>
-      ) : null}
+        {kpiHidden || listOnly ? null : (
+          <div
+            data-testid="map-kpi"
+            className={cn(
+              "map-kpi z-panel pointer-events-none absolute inset-x-0 top-3 flex justify-center pr-14 pl-3 lg:right-3 lg:px-3",
+              panelVisible ? "lg:left-93" : "lg:left-3",
+            )}
+          >
+            <div className="pointer-events-auto w-full max-w-md">
+              <ErrorBoundary level="panel">
+                <KpiStrip
+                  cells={kpiCells}
+                  compact={!isDesktop}
+                  loading={snapshotPending}
+                />
+              </ErrorBoundary>
+            </div>
+          </div>
+        )}
 
-      {isDesktop && drawerOpen && selectedId ? (
-        <ErrorBoundary level="panel" resetKeys={[selectedId]}>
-          <VehicleDrawer
-            key={selectedId}
-            vehicleId={selectedId}
-            row={selectedRow}
-            snapshotVehicle={snapshotVehicle}
-            mapReady={viewport !== null && !listOnly}
-            canMutate={canMutate}
-            mutateReason={mutate.blockedBy === "role" ? null : mutate.reason}
-            offline={offline}
-            onClose={closeDrawer}
-            onCentre={centreSelected}
-            onPlayback={openPlayback}
-            onEdit={openEdit}
-            onAssign={openAssign}
-            returnFocus={() => focusOrigin(selectedKey)}
-          />
-        </ErrorBoundary>
-      ) : null}
+        {listOnly ? (
+          <div
+            data-testid="map-list-only"
+            className="z-panel absolute inset-3 flex flex-col gap-2"
+          >
+            <div data-testid="map-kpi" className="shrink-0">
+              <ErrorBoundary level="panel">
+                <KpiStrip
+                  cells={kpiCells}
+                  compact={!isDesktop}
+                  loading={snapshotPending}
+                />
+              </ErrorBoundary>
+            </div>
+            <Banner tone="neutral" message={pwaCopy.mapOfflineTitle} />
+            <ErrorBoundary level="panel">
+              <VehiclePanel
+                {...panelProps}
+                className="border-border shadow-float min-h-0 flex-1 rounded-lg border"
+                showHeader
+                onClose={isDesktop ? closePanel : undefined}
+              />
+            </ErrorBoundary>
+          </div>
+        ) : null}
 
-      {!isDesktop ? (
-        drawerOpen && selectedId ? (
+        {!listOnly && isDesktop && panelVisible ? (
+          <aside className="z-panel w-panel absolute top-3 bottom-3 left-3">
+            <ErrorBoundary level="panel">
+              <VehiclePanel
+                {...panelProps}
+                className="border-border shadow-float h-full rounded-lg border"
+                showHeader
+                onClose={closePanel}
+              />
+            </ErrorBoundary>
+          </aside>
+        ) : null}
+
+        {isDesktop && drawerOpen && selectedId ? (
           <ErrorBoundary level="panel" resetKeys={[selectedId]}>
-            <VehicleDetailSheet
+            <VehicleDrawer
               key={selectedId}
               vehicleId={selectedId}
               row={selectedRow}
               snapshotVehicle={snapshotVehicle}
-              snap={detailSnap}
-              onSnap={setDetailSnap}
               mapReady={viewport !== null && !listOnly}
               canMutate={canMutate}
               mutateReason={mutate.blockedBy === "role" ? null : mutate.reason}
               offline={offline}
-              onClose={closeDetailSheet}
+              onClose={closeDrawer}
               onCentre={centreSelected}
               onPlayback={openPlayback}
               onEdit={openEdit}
               onAssign={openAssign}
-              insetTarget={mapRootRef}
-              handleRef={sheetHandleRef}
-              onObscuredChange={setSheetObscured}
+              returnFocus={() => focusOrigin(selectedKey)}
             />
           </ErrorBoundary>
-        ) : !listOnly ? (
-          <MobileVehicleSheet
-            snap={listSnap}
-            onSnap={setListSnap}
-            shown={rows.length}
-            total={data.total}
-            filters={filters}
-            depots={depots}
-            geofencesVisible={preferences.geofencesVisible}
-            fitDisabled={data.positioned === 0}
-            insetTarget={mapRootRef}
-            handleRef={sheetHandleRef}
-            onFit={fitFleet}
-            onToggleGeofences={preferences.toggleGeofences}
-            onFilterChange={changeFilters}
-            onResetFilters={resetFilters}
-            onObscuredChange={setSheetObscured}
-          >
-            <ErrorBoundary level="panel">
-              <VehiclePanel
-                {...panelProps}
-                className="min-h-0 flex-1"
-                showHeader={false}
-                showFilters={false}
+        ) : null}
+
+        {!isDesktop ? (
+          drawerOpen && selectedId ? (
+            <ErrorBoundary level="panel" resetKeys={[selectedId]}>
+              <VehicleDetailSheet
+                key={selectedId}
+                vehicleId={selectedId}
+                row={selectedRow}
+                snapshotVehicle={snapshotVehicle}
+                snap={detailSnap}
+                onSnap={setDetailSnap}
+                mapReady={viewport !== null && !listOnly}
+                canMutate={canMutate}
+                mutateReason={
+                  mutate.blockedBy === "role" ? null : mutate.reason
+                }
+                offline={offline}
+                onClose={closeDetailSheet}
+                onCentre={centreSelected}
+                onPlayback={openPlayback}
+                onEdit={openEdit}
+                onAssign={openAssign}
+                insetTarget={mapRootRef}
+                handleRef={sheetHandleRef}
+                onObscuredChange={setSheetObscured}
               />
             </ErrorBoundary>
-          </MobileVehicleSheet>
-        ) : null
-      ) : null}
+          ) : !listOnly ? (
+            <MobileVehicleSheet
+              snap={listSnap}
+              onSnap={setListSnap}
+              shown={rows.length}
+              total={data.total}
+              filters={filters}
+              depots={depots}
+              geofencesVisible={preferences.geofencesVisible}
+              fitDisabled={data.positioned === 0}
+              insetTarget={mapRootRef}
+              handleRef={sheetHandleRef}
+              onFit={fitFleet}
+              onToggleGeofences={preferences.toggleGeofences}
+              onFilterChange={changeFilters}
+              onResetFilters={resetFilters}
+              onObscuredChange={setSheetObscured}
+            >
+              <ErrorBoundary level="panel">
+                <VehiclePanel
+                  {...panelProps}
+                  className="min-h-0 flex-1"
+                  showHeader={false}
+                  showFilters={false}
+                />
+              </ErrorBoundary>
+            </MobileVehicleSheet>
+          ) : null
+        ) : null}
 
-      {!listOnly ? (
-      <div
-        data-testid="map-footer"
-        className={cn(
-          "map-bottom-anchor pointer-events-none absolute left-3 right-3 z-map-controls flex flex-col items-end gap-2",
-          isDesktop
-            ? cn("map-inset-right", preferences.panelOpen ? "lg:left-93" : "lg:left-3")
-            : "map-inset-bottom",
-        )}
-      >
-        <ErrorBoundary
-          level="panel"
-          resetKeys={[preferences.panelOpen, preferences.geofencesVisible]}
-        >
-          <MapControls
-            {...controlsProps}
-            variant={isDesktop ? "desktop" : "mobile"}
-            obscured={!isDesktop && (sheetSnap === "full" || sheetObscured)}
-            className="pointer-events-auto shrink-0"
-          />
-        </ErrorBoundary>
+        {!listOnly ? (
+          <div
+            data-testid="map-footer"
+            className={cn(
+              "map-bottom-anchor z-map-controls pointer-events-none absolute right-3 left-3 flex flex-col items-end gap-2",
+              isDesktop
+                ? cn(
+                    "map-inset-right",
+                    preferences.panelOpen ? "lg:left-93" : "lg:left-3",
+                  )
+                : "map-inset-bottom",
+            )}
+          >
+            <ErrorBoundary
+              level="panel"
+              resetKeys={[preferences.panelOpen, preferences.geofencesVisible]}
+            >
+              <MapControls
+                {...controlsProps}
+                variant={isDesktop ? "desktop" : "mobile"}
+                obscured={!isDesktop && (sheetSnap === "full" || sheetObscured)}
+                className="pointer-events-auto shrink-0"
+              />
+            </ErrorBoundary>
 
-        <div className="pointer-events-none flex min-w-0 items-center justify-between gap-2">
-          {offline ? (
-            <span data-testid="map-stale-badge">
-              <Badge tone="neutral">{`${pwaCopy.stale} · ${staleLabel}`}</Badge>
+            <div className="pointer-events-none flex min-w-0 items-center justify-between gap-2">
+              {offline ? (
+                <span data-testid="map-stale-badge">
+                  <Badge tone="neutral">{`${pwaCopy.stale} · ${staleLabel}`}</Badge>
+                </span>
+              ) : null}
+              <MapAttribution
+                styleId={activeStyle}
+                attribution={hostedActive ? styleAttribution : null}
+              />
+            </div>
+          </div>
+        ) : null}
+
+        {!listOnly && hostedActive ? (
+          <div
+            data-testid="maptiler-logo-anchor"
+            className={cn(
+              "map-bottom-anchor z-map-controls pointer-events-none absolute left-3",
+              isDesktop
+                ? cn(preferences.panelOpen ? "lg:left-96" : "lg:left-3")
+                : "map-inset-bottom",
+            )}
+          >
+            <MapTilerLogo />
+          </div>
+        ) : null}
+
+        {!listOnly && !isDesktop && sheetSnap === "full" ? (
+          <button
+            type="button"
+            onClick={() => {
+              if (drawerOpen) setDetailSnap("half");
+              else setListSnap("half");
+              focusSheetHandle();
+            }}
+            className="z-map h-sheet-strip focus-visible:outline-focus-ring absolute inset-x-0 top-0 w-full focus-visible:outline-2 focus-visible:outline-offset-0"
+          >
+            <span className="sr-only">
+              {drawerOpen
+                ? "Collapse the vehicle details"
+                : "Collapse the vehicle list"}
             </span>
-          ) : null}
-          <MapAttribution
-            styleId={activeStyle}
-            attribution={hostedActive ? styleAttribution : null}
+          </button>
+        ) : null}
+
+        {writeVehicle && writeMode === "edit" && selectedId ? (
+          <VehicleEditDialog
+            open
+            vehicle={writeVehicle}
+            onClose={closeWrite}
+            onSaved={() =>
+              toast({
+                tone: "success",
+                title: "Vehicle updated.",
+                key: `vehicle-updated:${writeVehicle.id}`,
+              })
+            }
+            onRefresh={refreshWriteVehicle}
+            readOnly={!canMutate}
+            readOnlyReason={
+              mutate.blockedBy === "role"
+                ? "Your role can't edit vehicles."
+                : (mutate.reason ?? undefined)
+            }
           />
-        </div>
+        ) : null}
+
+        {writeVehicle && writeMode === "assign" && selectedId ? (
+          <AssignDriverDialog
+            open
+            vehicle={writeVehicle}
+            onClose={closeWrite}
+            onSaved={() =>
+              toast({
+                tone: "success",
+                title: "Driver assigned.",
+                key: `driver-assigned:${writeVehicle.id}`,
+              })
+            }
+            onRefresh={refreshWriteVehicle}
+            readOnly={!canMutate}
+            readOnlyReason={
+              mutate.blockedBy === "role"
+                ? "Your role can't assign drivers."
+                : (mutate.reason ?? undefined)
+            }
+          />
+        ) : null}
       </div>
-      ) : null}
-
-      {!listOnly && hostedActive ? (
-        <div
-          data-testid="maptiler-logo-anchor"
-          className={cn(
-            "map-bottom-anchor pointer-events-none absolute left-3 z-map-controls",
-            isDesktop
-              ? cn(preferences.panelOpen ? "lg:left-96" : "lg:left-3")
-              : "map-inset-bottom",
-          )}
-        >
-          <MapTilerLogo />
-        </div>
-      ) : null}
-
-      {!listOnly && !isDesktop && sheetSnap === "full" ? (
-        <button
-          type="button"
-          onClick={() => {
-            if (drawerOpen) setDetailSnap("half");
-            else setListSnap("half");
-            focusSheetHandle();
-          }}
-          className="absolute inset-x-0 top-0 z-map h-sheet-strip w-full focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring"
-        >
-          <span className="sr-only">
-            {drawerOpen ? "Collapse the vehicle details" : "Collapse the vehicle list"}
-          </span>
-        </button>
-      ) : null}
-
-      {writeVehicle && writeMode === "edit" && selectedId ? (
-        <VehicleEditDialog
-          open
-          vehicle={writeVehicle}
-          onClose={closeWrite}
-          onSaved={() =>
-            toast({
-              tone: "success",
-              title: "Vehicle updated.",
-              key: `vehicle-updated:${writeVehicle.id}`,
-            })
-          }
-          onRefresh={refreshWriteVehicle}
-          readOnly={!canMutate}
-          readOnlyReason={
-            mutate.blockedBy === "role"
-              ? "Your role can't edit vehicles."
-              : (mutate.reason ?? undefined)
-          }
-        />
-      ) : null}
-
-      {writeVehicle && writeMode === "assign" && selectedId ? (
-        <AssignDriverDialog
-          open
-          vehicle={writeVehicle}
-          onClose={closeWrite}
-          onSaved={() =>
-            toast({
-              tone: "success",
-              title: "Driver assigned.",
-              key: `driver-assigned:${writeVehicle.id}`,
-            })
-          }
-          onRefresh={refreshWriteVehicle}
-          readOnly={!canMutate}
-          readOnlyReason={
-            mutate.blockedBy === "role"
-              ? "Your role can't assign drivers."
-              : (mutate.reason ?? undefined)
-          }
-        />
-      ) : null}
-    </div>
+    </PageFrame>
   );
 }

@@ -14,6 +14,7 @@ import { formatClockTime } from "../../../lib/format";
 import { openAlertCountLabel } from "../../../lib/alerts";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useConnection } from "../../../stores/connection";
+import { PageFrame } from "../../../ui/PageFrame";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../ui/Tabs";
 import type { StateBoundaryState } from "../../../ui/StateBoundary";
 import { useAlertAck } from "../hooks/useAlertAck";
@@ -241,111 +242,113 @@ function AlertsPageContent() {
   }
 
   return (
-    <div
-      data-testid="alerts-page"
-      className="max-w-content text-text relative mx-auto flex h-full min-h-0 w-full flex-col px-4 py-6 sm:px-6"
-    >
-      <header className="flex shrink-0 flex-wrap items-end justify-between gap-2">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-text text-lg font-semibold">Alerts</h1>
-          <p className="text-muted text-sm">
-            <span className="tabular-nums">{openLabel}</span> open ·{" "}
-            <span className="tabular-nums">{feed.loadedCount}</span> loaded
-            {openError ? (
-              <span className="text-xs">
-                {" "}
-                · Count unavailable ·{" "}
-                <button
-                  type="button"
-                  onClick={() => void openAlerts.refetch()}
-                  className="text-accent-fg focus-visible:outline-focus-ring rounded-sm underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0"
-                >
-                  Retry count
-                </button>
-              </span>
-            ) : null}
-          </p>
-        </div>
-      </header>
-
-      <Tabs
-        value={tab}
-        onValueChange={changeTab}
-        className="mt-4 flex min-h-0 flex-1 flex-col"
+    <PageFrame layout="fill">
+      <div
+        data-testid="alerts-page"
+        className="text-text relative flex h-full min-h-0 w-full flex-col px-4 py-6 sm:px-6"
       >
-        <TabsList aria-label="Alerts sections" className="shrink-0">
-          <TabsTrigger value="alerts">Alerts</TabsTrigger>
-          <TabsTrigger value="rules">Alert rules</TabsTrigger>
-        </TabsList>
+        <header className="flex shrink-0 flex-wrap items-end justify-between gap-2">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-text text-lg font-semibold">Alerts</h1>
+            <p className="text-muted text-sm">
+              <span className="tabular-nums">{openLabel}</span> open ·{" "}
+              <span className="tabular-nums">{feed.loadedCount}</span> loaded
+              {openError ? (
+                <span className="text-xs">
+                  {" "}
+                  · Count unavailable ·{" "}
+                  <button
+                    type="button"
+                    onClick={() => void openAlerts.refetch()}
+                    className="text-accent-fg focus-visible:outline-focus-ring rounded-sm underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0"
+                  >
+                    Retry count
+                  </button>
+                </span>
+              ) : null}
+            </p>
+          </div>
+        </header>
 
-        <TabsContent value="alerts" className="flex min-h-0 flex-1 flex-col">
-          <AlertFilters
-            values={filters}
-            typeOptions={types}
-            onChange={changeFilters}
-            onReset={resetFilters}
-            disabled={tab !== "alerts"}
-            className="shrink-0"
-          />
-          <AlertTable
-            alerts={alerts}
-            state={state}
-            error={closedError}
-            onRetry={feed.refetch}
-            onCancelLoading={feed.cancel}
-            onOpen={openAlert}
-            onAck={(alert) => void acknowledge(alert, "row")}
-            pendingId={ack.pendingId}
-            disabledReason={disabledReason}
-            hasMore={feed.hasMore}
-            loadingMore={feed.isFetchingNextPage}
-            onLoadMore={feed.loadMore}
-            newCount={feed.newCount}
-            onRevealNew={feed.revealNew}
-            highlightIds={feed.highlightIds}
-            emptyReason={reason}
-            onClearFilters={resetFilters}
-            zoneFor={zoneFor}
-            tripFor={tripFor}
-            onScrollTopChange={feed.setAtTop}
-            resetKey={filterSignature(filters)}
-            ackError={ackOrigin === "row" ? ack.error : null}
+        <Tabs
+          value={tab}
+          onValueChange={changeTab}
+          className="mt-4 flex min-h-0 flex-1 flex-col"
+        >
+          <TabsList aria-label="Alerts sections" className="shrink-0">
+            <TabsTrigger value="alerts">Alerts</TabsTrigger>
+            <TabsTrigger value="rules">Alert rules</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="alerts" className="flex min-h-0 flex-1 flex-col">
+            <AlertFilters
+              values={filters}
+              typeOptions={types}
+              onChange={changeFilters}
+              onReset={resetFilters}
+              disabled={tab !== "alerts"}
+              className="shrink-0"
+            />
+            <AlertTable
+              alerts={alerts}
+              state={state}
+              error={closedError}
+              onRetry={feed.refetch}
+              onCancelLoading={feed.cancel}
+              onOpen={openAlert}
+              onAck={(alert) => void acknowledge(alert, "row")}
+              pendingId={ack.pendingId}
+              disabledReason={disabledReason}
+              hasMore={feed.hasMore}
+              loadingMore={feed.isFetchingNextPage}
+              onLoadMore={feed.loadMore}
+              newCount={feed.newCount}
+              onRevealNew={feed.revealNew}
+              highlightIds={feed.highlightIds}
+              emptyReason={reason}
+              onClearFilters={resetFilters}
+              zoneFor={zoneFor}
+              tripFor={tripFor}
+              onScrollTopChange={feed.setAtTop}
+              resetKey={filterSignature(filters)}
+              ackError={ackOrigin === "row" ? ack.error : null}
+              offline={offline}
+              staleLabel={lastDataAt ? formatClockTime(lastDataAt) : undefined}
+              forbiddenAction={
+                <Link
+                  to="/map"
+                  className="h-touch text-accent-fg md:h-control-md inline-flex items-center text-sm font-medium underline-offset-4 hover:underline"
+                >
+                  Go back
+                </Link>
+              }
+            />
+          </TabsContent>
+
+          <TabsContent value="rules" className="min-h-0 flex-1 overflow-y-auto">
+            <AlertRulesPanel />
+          </TabsContent>
+        </Tabs>
+
+        {selectedId ? (
+          <AlertDetailPanel
+            alert={selectedAlert}
+            lookup={lookupState}
+            lookupError={lookup.error ? normalize(lookup.error) : null}
+            geofences={geofences.data ?? []}
             offline={offline}
-            staleLabel={lastDataAt ? formatClockTime(lastDataAt) : undefined}
-            forbiddenAction={
-              <Link
-                to="/map"
-                className="h-touch text-accent-fg md:h-control-md inline-flex items-center text-sm font-medium underline-offset-4 hover:underline"
-              >
-                Go back
-              </Link>
-            }
+            pending={ack.pendingId === selectedId}
+            disabledReason={disabledReason}
+            ackError={ackOrigin === "detail" ? ack.error : null}
+            onClose={closeAlert}
+            onAck={() => {
+              if (selectedAlert) void acknowledge(selectedAlert, "detail");
+            }}
+            onRetryLookup={() => void lookup.refetch()}
+            returnFocus={() => focusRow(selectedId)}
           />
-        </TabsContent>
-
-        <TabsContent value="rules" className="min-h-0 flex-1 overflow-y-auto">
-          <AlertRulesPanel />
-        </TabsContent>
-      </Tabs>
-
-      {selectedId ? (
-        <AlertDetailPanel
-          alert={selectedAlert}
-          lookup={lookupState}
-          lookupError={lookup.error ? normalize(lookup.error) : null}
-          geofences={geofences.data ?? []}
-          offline={offline}
-          pending={ack.pendingId === selectedId}
-          disabledReason={disabledReason}
-          ackError={ackOrigin === "detail" ? ack.error : null}
-          onClose={closeAlert}
-          onAck={() => {
-            if (selectedAlert) void acknowledge(selectedAlert, "detail");
-          }}
-          onRetryLookup={() => void lookup.refetch()}
-          returnFocus={() => focusRow(selectedId)}
-        />
-      ) : null}
-    </div>
+        ) : null}
+      </div>
+    </PageFrame>
   );
 }

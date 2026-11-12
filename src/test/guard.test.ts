@@ -25,13 +25,21 @@ describe("design guard", () => {
     expect(result.stdout).toContain("GUARD FAIL: raw palette class");
     expect(result.stdout).toContain("GUARD FAIL: default export");
     expect(result.stdout).toContain("GUARD FAIL: viewport unit");
-    expect(result.stdout).toContain("GUARD FAIL: query isPending outside useQueryView");
+    expect(result.stdout).toContain(
+      "GUARD FAIL: query isPending outside useQueryView",
+    );
     expect(result.stdout).toContain(
       "GUARD FAIL: numeric or arbitrary z-index outside src/ui/layers.css",
     );
-    expect(result.stdout).toContain("GUARD FAIL: mutating capability outside useCanMutate");
-    expect(result.stdout).toContain("GUARD FAIL: navigator.onLine outside the connection store");
-    expect(result.stdout).toContain("GUARD FAIL: map SDK used outside src/map/providers");
+    expect(result.stdout).toContain(
+      "GUARD FAIL: mutating capability outside useCanMutate",
+    );
+    expect(result.stdout).toContain(
+      "GUARD FAIL: navigator.onLine outside the connection store",
+    );
+    expect(result.stdout).toContain(
+      "GUARD FAIL: map SDK used outside src/map/providers",
+    );
   });
 
   it("passes a guard-ignore line with a reason", () => {
@@ -39,7 +47,7 @@ describe("design guard", () => {
     try {
       writeFileSync(
         join(ignored, "sample.ts"),
-        'export const pending = mutation.isPending; // guard-ignore: mutation pending is a write.\n',
+        "export const pending = mutation.isPending; // guard-ignore: mutation pending is a write.\n",
       );
       const result = spawnSync("bash", ["scripts/guard.sh", ignored], {
         cwd: process.cwd(),

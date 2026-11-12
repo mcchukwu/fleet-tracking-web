@@ -74,6 +74,47 @@ export async function expectTheme(
     .toBe(theme);
 }
 
+/**
+ * The document never scrolls: it is exactly one viewport tall, and a scroll
+ * attempt leaves the page at the top.
+ */
+export async function expectLockedDocument(page: Page): Promise<void> {
+  const snapshot = await page.evaluate(() => ({
+    innerHeight: window.innerHeight,
+    rootHeight: document.documentElement.scrollHeight,
+    bodyHeight: document.body.scrollHeight,
+    scrollY: window.scrollY,
+  }));
+  expect(
+    snapshot.rootHeight,
+    "the document is taller than the viewport",
+  ).toBeLessThanOrEqual(snapshot.innerHeight + 1);
+  expect(
+    snapshot.bodyHeight,
+    "the body is taller than the viewport",
+  ).toBeLessThanOrEqual(snapshot.innerHeight + 1);
+  expect(snapshot.scrollY, "the document starts scrolled").toBe(0);
+
+  await page.evaluate(() => window.scrollTo(0, 240));
+  const afterScroll = await page.evaluate(() => window.scrollY);
+  expect(afterScroll, "the document scrolled").toBe(0);
+}
+
+/**
+ * Exactly one page frame per route, with the layout the route declares.
+ */
+export async function expectPageFrame(
+  page: Page,
+  layout: "fill" | "scroll",
+): Promise<Locator> {
+  const frames = page.locator("[data-page-frame]");
+  await expect(frames).toHaveCount(1);
+  const frame = frames.first();
+  await expect(frame).toHaveAttribute("data-page-frame", layout);
+  await expect(frame.locator("[data-page-frame-content]")).toHaveCount(1);
+  return frame;
+}
+
 export async function expectNoHorizontalScroll(page: Page): Promise<void> {
   const overflows = await page.evaluate(
     () => document.documentElement.scrollWidth > window.innerWidth,

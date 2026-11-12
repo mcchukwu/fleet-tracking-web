@@ -50,7 +50,7 @@ export function ComboboxLab() {
   return (
     <PageFrame
       layout="scroll"
-      contentClassName="text-text flex flex-col gap-6 p-4 sm:p-6"
+      contentClassName="text-text flex flex-col gap-6 px-4 pt-4 sm:px-6 sm:pt-6"
     >
       <h1 className="text-lg font-semibold">Combobox lab</h1>
       <p className="text-muted max-w-prose text-sm">

@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import { PageFrame } from "./PageFrame";
 
 function frame(): HTMLElement {
-  return document.querySelector<HTMLElement>("[data-page-frame]") as HTMLElement;
+  return document.querySelector<HTMLElement>(
+    "[data-page-frame]",
+  ) as HTMLElement;
 }
 
 function content(): HTMLElement {
@@ -36,6 +38,7 @@ describe("PageFrame", () => {
     expect(frame()).toHaveAttribute("data-page-frame", "scroll");
     expect(frame().className).toContain("overflow-y-auto");
     expect(content().className).toContain("page-frame-end");
+    expect(content().className).toContain("shrink-0");
     expect(content().className).not.toContain("min-h-screen");
   });
 
@@ -47,7 +50,9 @@ describe("PageFrame", () => {
     );
 
     expect(screen.getByText("Only child").parentElement).toBe(content());
-    expect(document.querySelectorAll("[data-page-frame-content]")).toHaveLength(1);
+    expect(document.querySelectorAll("[data-page-frame-content]")).toHaveLength(
+      1,
+    );
     expect(content().className).toContain("max-w-content");
     expect(content().className).toContain("mx-auto");
   });

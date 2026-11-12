@@ -5,10 +5,15 @@ import type { DriversSearch } from "../../../app/search";
 import { useCanMutate } from "../../../auth/useCanMutate";
 import { normalize } from "../../../errors/normalize";
 import { formatClockTime, formatCount } from "../../../lib/format";
-import { filterDrivers, sortDrivers, type DriverStatus } from "../../../lib/drivers";
+import {
+  filterDrivers,
+  sortDrivers,
+  type DriverStatus,
+} from "../../../lib/drivers";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useConnection } from "../../../stores/connection";
 import { Button } from "../../../ui/Button";
+import { PageFrame } from "../../../ui/PageFrame";
 import type { StateBoundaryState } from "../../../ui/StateBoundary";
 import { DriverCreateDialog } from "./DriverCreateDialog";
 import { DriverDrawer, type DriverLookupState } from "./DriverDrawer";
@@ -97,14 +102,20 @@ function DriversPageContent() {
             : "not-found";
 
   const staleLabel =
-    feed.drivers.length > 0 && (offline || state === "error") && feed.dataUpdatedAt
+    feed.drivers.length > 0 &&
+    (offline || state === "error") &&
+    feed.dataUpdatedAt
       ? formatClockTime(feed.dataUpdatedAt)
       : undefined;
 
   const createReason =
-    mutate.blockedBy === "role" ? "Your role can't create drivers." : (mutate.reason ?? undefined);
+    mutate.blockedBy === "role"
+      ? "Your role can't create drivers."
+      : (mutate.reason ?? undefined);
   const editReason =
-    mutate.blockedBy === "role" ? "Your role can't edit drivers." : (mutate.reason ?? undefined);
+    mutate.blockedBy === "role"
+      ? "Your role can't edit drivers."
+      : (mutate.reason ?? undefined);
 
   function updateSearch(patch: Partial<DriversSearch>, replace = true): void {
     void navigate({ to: "/drivers", search: { ...search, ...patch }, replace });
@@ -166,101 +177,117 @@ function DriversPageContent() {
   /** After a 404 refresh, close the stale form if the row is gone from the list. */
   async function refreshEditTarget(): Promise<void> {
     const rows = await feed.refetch();
-    if (rows && editDriver && !rows.some((driver) => driver.id === editDriver.id)) {
+    if (
+      rows &&
+      editDriver &&
+      !rows.some((driver) => driver.id === editDriver.id)
+    ) {
       setEditDriver(null);
     }
   }
 
   return (
-    <div
-      data-testid="drivers-page"
-      className="max-w-content text-text relative mx-auto flex h-full min-h-0 w-full flex-col px-4 py-6 sm:px-6"
-    >
-      <header className="flex shrink-0 flex-wrap items-end justify-between gap-2">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-text text-lg font-semibold">Drivers</h1>
-          <p className="text-muted text-sm">
-            <span className="tabular-nums">{formatCount(visible.length)}</span>
-            {filtered ? (
-              <>
-                {" of "}
-                <span className="tabular-nums">{formatCount(feed.drivers.length)}</span> drivers
-              </>
-            ) : (
-              " drivers"
-            )}
-          </p>
-        </div>
-        <Button
-          ref={createRef}
-          variant="primary"
-          data-create-driver
-          {...(createReason ? { disabledReason: createReason } : {})}
-          onClick={() => setCreateOpen(true)}
-        >
-          Create driver
-        </Button>
-      </header>
-
-      <DriverFilters values={filters} onChange={changeFilters} onReset={resetFilters} />
-
-      <DriverTable
-        drivers={visible}
-        state={state}
-        error={closedError}
-        onRetry={() => void feed.refetch()}
-        onCancelLoading={feed.cancel}
-        onOpen={openDriver}
-        emptyReason={emptyReason}
-        onClearFilters={resetFilters}
-        hasDrivers={feed.drivers.length > 0}
-        {...(staleLabel ? { staleLabel } : {})}
-        offline={offline}
-        cancelled={feed.cancelled}
-        forbiddenAction={
-          <Link
-            to="/map"
-            className="h-touch text-accent-fg md:h-control-md inline-flex items-center text-sm font-medium underline-offset-4 hover:underline"
+    <PageFrame layout="fill">
+      <div
+        data-testid="drivers-page"
+        className="text-text relative flex h-full min-h-0 w-full flex-col px-4 py-6 sm:px-6"
+      >
+        <header className="flex shrink-0 flex-wrap items-end justify-between gap-2">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-text text-lg font-semibold">Drivers</h1>
+            <p className="text-muted text-sm">
+              <span className="tabular-nums">
+                {formatCount(visible.length)}
+              </span>
+              {filtered ? (
+                <>
+                  {" of "}
+                  <span className="tabular-nums">
+                    {formatCount(feed.drivers.length)}
+                  </span>{" "}
+                  drivers
+                </>
+              ) : (
+                " drivers"
+              )}
+            </p>
+          </div>
+          <Button
+            ref={createRef}
+            variant="primary"
+            data-create-driver
+            {...(createReason ? { disabledReason: createReason } : {})}
+            onClick={() => setCreateOpen(true)}
           >
-            Go back
-          </Link>
-        }
-        resetKey={`${JSON.stringify(filters)}:${createScrollReset}`}
-      />
+            Create driver
+          </Button>
+        </header>
 
-      <DriverCreateDialog
-        open={createOpen}
-        knownDriverIds={new Set(feed.drivers.map((driver) => driver.id))}
-        {...(createReason ? { disabledReason: createReason } : {})}
-        onCreated={afterCreate}
-        onClose={() => setCreateOpen(false)}
-      />
-
-      <DriverEditDialog
-        key={editDriver?.id ?? "none"}
-        open={editDriver !== null}
-        driver={editDriver}
-        {...(editReason ? { disabledReason: editReason } : {})}
-        onSaved={focusDrawerAction}
-        onClose={() => setEditDriver(null)}
-        onRefresh={() => void refreshEditTarget()}
-      />
-
-      {selectedId ? (
-        <DriverDrawer
-          driver={selectedDriver}
-          lookup={lookup}
-          lookupError={closedError}
-          offline={offline}
-          {...(editReason ? { disabledReason: editReason } : {})}
-          onEdit={() => {
-            if (selectedDriver) setEditDriver(selectedDriver);
-          }}
-          onClose={closeDriver}
-          onRetryLookup={() => void feed.refetch()}
-          returnFocus={() => focusRow(selectedId)}
+        <DriverFilters
+          values={filters}
+          onChange={changeFilters}
+          onReset={resetFilters}
+          className="shrink-0"
         />
-      ) : null}
-    </div>
+
+        <DriverTable
+          drivers={visible}
+          state={state}
+          error={closedError}
+          onRetry={() => void feed.refetch()}
+          onCancelLoading={feed.cancel}
+          onOpen={openDriver}
+          emptyReason={emptyReason}
+          onClearFilters={resetFilters}
+          hasDrivers={feed.drivers.length > 0}
+          {...(staleLabel ? { staleLabel } : {})}
+          offline={offline}
+          cancelled={feed.cancelled}
+          forbiddenAction={
+            <Link
+              to="/map"
+              className="h-touch text-accent-fg md:h-control-md inline-flex items-center text-sm font-medium underline-offset-4 hover:underline"
+            >
+              Go back
+            </Link>
+          }
+          resetKey={`${JSON.stringify(filters)}:${createScrollReset}`}
+        />
+
+        <DriverCreateDialog
+          open={createOpen}
+          knownDriverIds={new Set(feed.drivers.map((driver) => driver.id))}
+          {...(createReason ? { disabledReason: createReason } : {})}
+          onCreated={afterCreate}
+          onClose={() => setCreateOpen(false)}
+        />
+
+        <DriverEditDialog
+          key={editDriver?.id ?? "none"}
+          open={editDriver !== null}
+          driver={editDriver}
+          {...(editReason ? { disabledReason: editReason } : {})}
+          onSaved={focusDrawerAction}
+          onClose={() => setEditDriver(null)}
+          onRefresh={() => void refreshEditTarget()}
+        />
+
+        {selectedId ? (
+          <DriverDrawer
+            driver={selectedDriver}
+            lookup={lookup}
+            lookupError={closedError}
+            offline={offline}
+            {...(editReason ? { disabledReason: editReason } : {})}
+            onEdit={() => {
+              if (selectedDriver) setEditDriver(selectedDriver);
+            }}
+            onClose={closeDriver}
+            onRetryLookup={() => void feed.refetch()}
+            returnFocus={() => focusRow(selectedId)}
+          />
+        ) : null}
+      </div>
+    </PageFrame>
   );
 }

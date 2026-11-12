@@ -10,6 +10,7 @@ import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useNow } from "../../../lib/ticker";
 import { useConnection } from "../../../stores/connection";
 import { Button } from "../../../ui/Button";
+import { PageFrame } from "../../../ui/PageFrame";
 import { EmptyState, Skeleton } from "../../../ui/StatePanel";
 import {
   StateBoundary,
@@ -60,24 +61,22 @@ function SystemPageContent() {
         : [],
     [feed.data, feed.trend, lastDataAt, now],
   );
-  const summary: HealthSummary = useMemo(
-    () => healthSummary(groups),
-    [groups],
-  );
+  const summary: HealthSummary = useMemo(() => healthSummary(groups), [groups]);
 
-  const state: StateBoundaryState = !feed.online && !cached
-    ? "empty"
-    : forbidden
-      ? "forbidden"
-      : !cached && error
-        ? "error"
-        : !cached && (feed.isLoading || feed.isFetching)
-          ? "loading"
-          : error
-            ? "error"
-            : !feed.online && cached
-              ? "stale"
-              : "ready";
+  const state: StateBoundaryState =
+    !feed.online && !cached
+      ? "empty"
+      : forbidden
+        ? "forbidden"
+        : !cached && error
+          ? "error"
+          : !cached && (feed.isLoading || feed.isFetching)
+            ? "loading"
+            : error
+              ? "error"
+              : !feed.online && cached
+                ? "stale"
+                : "ready";
 
   const showLoading = useDelayedFlag(state === "loading");
 
@@ -88,62 +87,64 @@ function SystemPageContent() {
   const refreshVisible = cached && !error;
 
   return (
-    <div
-      data-testid="system-page"
-      className="max-w-content text-text mx-auto flex w-full flex-col gap-4 px-4 py-6 sm:px-6"
-    >
-      <header className="flex flex-col gap-2">
-        <h1 className="text-text text-lg font-semibold">System health</h1>
-        {feed.data && !forbidden ? (
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <SystemSummary summary={summary} />
-            <SystemUpdated
-              at={feed.dataUpdatedAt}
-              now={now}
-              online={feed.online}
-              fetching={feed.isFetching}
-              showRefresh={refreshVisible}
-              onRefresh={feed.refetch}
-            />
-          </div>
-        ) : showLoading && !cancelled ? (
-          <div
-            data-health-header-skeleton
-            className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
-          >
-            <Skeleton className="h-5 w-40" />
-            <Skeleton className="h-touch w-24 md:h-control-sm" />
-          </div>
+    <PageFrame layout="scroll" contentClassName="px-4 pt-6 sm:px-6">
+      <div
+        data-testid="system-page"
+        className="text-text flex w-full flex-col gap-4"
+      >
+        <header className="flex flex-col gap-2">
+          <h1 className="text-text text-lg font-semibold">System health</h1>
+          {feed.data && !forbidden ? (
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <SystemSummary summary={summary} />
+              <SystemUpdated
+                at={feed.dataUpdatedAt}
+                now={now}
+                online={feed.online}
+                fetching={feed.isFetching}
+                showRefresh={refreshVisible}
+                onRefresh={feed.refetch}
+              />
+            </div>
+          ) : showLoading && !cancelled ? (
+            <div
+              data-health-header-skeleton
+              className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-touch md:h-control-sm w-24" />
+            </div>
+          ) : null}
+        </header>
+
+        {pendingFirstLoad ? (
+          <SlowNotice onCancel={feed.cancel} onRetry={feed.refetch} />
         ) : null}
-      </header>
 
-      {pendingFirstLoad ? (
-        <SlowNotice onCancel={feed.cancel} onRetry={feed.refetch} />
-      ) : null}
-
-      {cancelled ? (
-        <div className="border-border bg-surface flex items-center justify-between gap-2 rounded-lg border px-4 py-3">
-          <p className="text-muted text-sm">Loading cancelled</p>
-          <Button
-            ref={retryRef}
-            size="sm"
-            variant="ghost"
-            onClick={feed.refetch}
-          >
-            Retry
-          </Button>
-        </div>
-      ) : (
-        <Boundary
-          state={state}
-          feed={feed}
-          error={error}
-          storm={storm}
-          groups={groups}
-          cached={cached}
-        />
-      )}
-    </div>
+        {cancelled ? (
+          <div className="border-border bg-surface flex items-center justify-between gap-2 rounded-lg border px-4 py-3">
+            <p className="text-muted text-sm">Loading cancelled</p>
+            <Button
+              ref={retryRef}
+              size="sm"
+              variant="ghost"
+              onClick={feed.refetch}
+            >
+              Retry
+            </Button>
+          </div>
+        ) : (
+          <Boundary
+            state={state}
+            feed={feed}
+            error={error}
+            storm={storm}
+            groups={groups}
+            cached={cached}
+          />
+        )}
+      </div>
+    </PageFrame>
   );
 }
 
@@ -179,9 +180,7 @@ function Boundary({
       error={error}
       onRetry={feed.refetch}
       loading={<SystemSkeleton />}
-      {...(cached
-        ? { staleLabel: formatClockTime(feed.dataUpdatedAt) }
-        : {})}
+      {...(cached ? { staleLabel: formatClockTime(feed.dataUpdatedAt) } : {})}
       empty={
         <EmptyState
           title="System health isn't available offline"

@@ -18,9 +18,7 @@ const firstAlertId = alertsFixture[0]?.id ?? "alert-1";
 function CrashPanel() {
   const [crashed, setCrashed] = useState(false);
   if (crashed) throw new Error("Injected panel crash");
-  return (
-    <Button onClick={() => setCrashed(true)}>Crash this panel</Button>
-  );
+  return <Button onClick={() => setCrashed(true)}>Crash this panel</Button>;
 }
 
 function AlertsPanel() {
@@ -36,7 +34,7 @@ function AlertsPanel() {
 
   return (
     <section aria-labelledby="fault-alerts" className="flex flex-col gap-2">
-      <h2 id="fault-alerts" className="text-base font-medium text-text">
+      <h2 id="fault-alerts" className="text-text text-base font-medium">
         Alerts query
       </h2>
       <Button size="sm" onClick={() => void alerts.refetch()}>
@@ -49,7 +47,7 @@ function AlertsPanel() {
         emptyReason="no-results"
       >
         {rows.length > 0 ? (
-          <ul className="flex flex-col gap-1 text-sm text-text">
+          <ul className="text-text flex flex-col gap-1 text-sm">
             {rows.map((alert) => (
               <li key={alert.id}>
                 {alert.plate} · {alertTypeLabel(alert.type)}
@@ -72,7 +70,7 @@ function HealthPanel() {
 
   return (
     <section aria-labelledby="fault-health" className="flex flex-col gap-2">
-      <h2 id="fault-health" className="text-base font-medium text-text">
+      <h2 id="fault-health" className="text-text text-base font-medium">
         Health query
       </h2>
       <StateBoundary
@@ -81,8 +79,9 @@ function HealthPanel() {
         onRetry={() => void health.refetch()}
       >
         {health.data ? (
-          <p className="text-sm text-text">
-            {health.data.vehicles} vehicles · {health.data.open_alerts} open alerts
+          <p className="text-text text-sm">
+            {health.data.vehicles} vehicles · {health.data.open_alerts} open
+            alerts
           </p>
         ) : null}
       </StateBoundary>
@@ -95,7 +94,7 @@ function WritePanel() {
 
   return (
     <section aria-labelledby="fault-write" className="flex flex-col gap-2">
-      <h2 id="fault-write" className="text-base font-medium text-text">
+      <h2 id="fault-write" className="text-text text-base font-medium">
         Write action
       </h2>
       <Button
@@ -121,15 +120,16 @@ export function FaultLab() {
   return (
     <PageFrame
       layout="scroll"
-      contentClassName="flex flex-col gap-6 p-4 text-text sm:p-6"
+      contentClassName="text-text flex flex-col gap-6 px-4 pt-4 sm:px-6 sm:pt-6"
     >
       <h1 className="text-lg font-semibold">Fault lab</h1>
-      <p className="text-sm text-muted">
-        Development-only page. Add ?fault=resource:kind to the URL to force failures.
+      <p className="text-muted text-sm">
+        Development-only page. Add ?fault=resource:kind to the URL to force
+        failures.
       </p>
 
       <section aria-labelledby="fault-crash" className="flex flex-col gap-2">
-        <h2 id="fault-crash" className="text-base font-medium text-text">
+        <h2 id="fault-crash" className="text-text text-base font-medium">
           Panel boundary
         </h2>
         <p>Sibling region is still working</p>
@@ -143,10 +143,10 @@ export function FaultLab() {
       <WritePanel />
 
       <section aria-labelledby="fault-enum" className="flex flex-col gap-2">
-        <h2 id="fault-enum" className="text-base font-medium text-text">
+        <h2 id="fault-enum" className="text-text text-base font-medium">
           Unknown enum
         </h2>
-        <p className="text-sm text-text">{alertTypeLabel("solar_flare")}</p>
+        <p className="text-text text-sm">{alertTypeLabel("solar_flare")}</p>
       </section>
     </PageFrame>
   );

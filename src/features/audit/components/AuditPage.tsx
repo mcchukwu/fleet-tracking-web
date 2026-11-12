@@ -7,6 +7,7 @@ import { useDelayedFlag } from "../../../lib/useDelayedFlag";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import type { AuditSearch } from "../../../app/search";
 import { Button } from "../../../ui/Button";
+import { PageFrame } from "../../../ui/PageFrame";
 import { Skeleton } from "../../../ui/StatePanel";
 import type { StateBoundaryState } from "../../../ui/StateBoundary";
 import { useAuditFeed } from "../hooks/useAuditFeed";
@@ -44,14 +45,16 @@ function AuditPageContent() {
     [search.action, search.q],
   );
 
-  const entries = useMemo(() => filterAuditEntries(feed.entries, filters), [feed.entries, filters]);
+  const entries = useMemo(
+    () => filterAuditEntries(feed.entries, filters),
+    [feed.entries, filters],
+  );
   const actionOptions = useMemo(
     () => auditActionOptions(feed.entries, filters.action),
     [feed.entries, filters.action],
   );
 
-  const selectedId =
-    search.entry === undefined ? null : String(search.entry);
+  const selectedId = search.entry === undefined ? null : String(search.entry);
   const selectedInFeed = findAuditEntry(feed.entries, selectedId);
   const lookupEnabled =
     selectedId !== null && selectedInFeed === null && !feed.isLoading;
@@ -170,81 +173,85 @@ function AuditPageContent() {
       : undefined;
 
   return (
-    <div
-      data-testid="audit-page"
-      className="max-w-content text-text relative mx-auto flex h-full min-h-0 w-full flex-col px-4 py-6 sm:px-6"
-    >
-      <header className="flex shrink-0 flex-wrap items-end justify-between gap-2">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-text text-lg font-semibold">Audit</h1>
-          {showCountLine ? (
-            <div className="flex h-5 items-center">
-              {countLoading ? (
-                <Skeleton className="h-3 w-24" />
-              ) : showCountText ? (
-                <p className="text-muted text-sm tabular-nums">{countLabel}</p>
-              ) : null}
-            </div>
+    <PageFrame layout="fill">
+      <div
+        data-testid="audit-page"
+        className="text-text relative flex h-full min-h-0 w-full flex-col px-4 py-6 sm:px-6"
+      >
+        <header className="flex shrink-0 flex-wrap items-end justify-between gap-2">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-text text-lg font-semibold">Audit</h1>
+            {showCountLine ? (
+              <div className="flex h-5 items-center">
+                {countLoading ? (
+                  <Skeleton className="h-3 w-24" />
+                ) : showCountText ? (
+                  <p className="text-muted text-sm tabular-nums">
+                    {countLabel}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+          {state !== "forbidden" ? (
+            <Button
+              variant="secondary"
+              data-refresh-audit
+              loading={feed.isFetching && !feed.isFetchingNextPage}
+              {...(offline ? { disabledReason: "You're offline." } : {})}
+              onClick={feed.refetch}
+            >
+              Refresh
+            </Button>
           ) : null}
-        </div>
-        {state !== "forbidden" ? (
-          <Button
-            variant="secondary"
-            data-refresh-audit
-            loading={feed.isFetching && !feed.isFetchingNextPage}
-            {...(offline ? { disabledReason: "You're offline." } : {})}
-            onClick={feed.refetch}
-          >
-            Refresh
-          </Button>
-        ) : null}
-      </header>
+        </header>
 
-      <AuditFilters
-        values={filters}
-        actionOptions={actionOptions}
-        onChange={changeFilters}
-        onReset={resetFilters}
-        className="shrink-0"
-      />
-
-      <AuditTable
-        entries={entries}
-        state={state}
-        error={closedError}
-        onRetry={feed.refetch}
-        onCancelLoading={feed.cancel}
-        onOpen={openEntry}
-        onLoadMore={feed.loadMore}
-        hasMore={feed.hasMore}
-        loadingMore={feed.isFetchingNextPage}
-        offline={offline}
-        cancelled={feed.cancelled}
-        {...(staleLabel ? { staleLabel } : {})}
-        emptyReason={emptyReason}
-        onClearFilters={resetFilters}
-        selectedId={selectedId}
-        resetKey={`${filters.action ?? ""}:${filters.q}`}
-        forbiddenAction={
-          <Link
-            to="/map"
-            className="h-touch text-accent-fg md:h-control-md inline-flex items-center text-sm font-medium underline-offset-4 hover:underline"
-          >
-            Go back
-          </Link>
-        }
-      />
-
-      {selectedId && state !== "forbidden" ? (
-        <AuditDetailPanel
-          entry={selectedEntry}
-          lookup={lookupState}
-          lookupError={lookup.error ? normalize(lookup.error) : null}
-          onClose={closeEntry}
-          onRetryLookup={() => void lookup.refetch()}
-          returnFocus={() => focusRow(selectedId)}
+        <AuditFilters
+          values={filters}
+          actionOptions={actionOptions}
+          onChange={changeFilters}
+          onReset={resetFilters}
+          className="shrink-0"
         />
-      ) : null}
-    </div>
+
+        <AuditTable
+          entries={entries}
+          state={state}
+          error={closedError}
+          onRetry={feed.refetch}
+          onCancelLoading={feed.cancel}
+          onOpen={openEntry}
+          onLoadMore={feed.loadMore}
+          hasMore={feed.hasMore}
+          loadingMore={feed.isFetchingNextPage}
+          offline={offline}
+          cancelled={feed.cancelled}
+          {...(staleLabel ? { staleLabel } : {})}
+          emptyReason={emptyReason}
+          onClearFilters={resetFilters}
+          selectedId={selectedId}
+          resetKey={`${filters.action ?? ""}:${filters.q}`}
+          forbiddenAction={
+            <Link
+              to="/map"
+              className="h-touch text-accent-fg md:h-control-md inline-flex items-center text-sm font-medium underline-offset-4 hover:underline"
+            >
+              Go back
+            </Link>
+          }
+        />
+
+        {selectedId && state !== "forbidden" ? (
+          <AuditDetailPanel
+            entry={selectedEntry}
+            lookup={lookupState}
+            lookupError={lookup.error ? normalize(lookup.error) : null}
+            onClose={closeEntry}
+            onRetryLookup={() => void lookup.refetch()}
+            returnFocus={() => focusRow(selectedId)}
+          />
+        ) : null}
+      </div>
+    </PageFrame>
   );
 }

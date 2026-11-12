@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ImportResult } from "../../../api/types";
 import { useCanMutate } from "../../../auth/useCanMutate";
 import { Button } from "../../../ui/Button";
+import { PageFrame } from "../../../ui/PageFrame";
 import { LoadingBar, ForbiddenState } from "../../../ui/StatePanel";
 import { SlowNotice } from "../../../errors/SlowNotice";
 import { FOCUS_SEARCH_EVENT } from "../../../lib/keyboard";
@@ -12,7 +13,12 @@ import type { RecentImport } from "../../../lib/importHistory";
 import { useImportPreview } from "../hooks/useImportPreview";
 import { useImportUpload } from "../hooks/useImportUpload";
 import { useRecentImports } from "../hooks/useRecentImports";
-import { errorsCsv, errorsCsvFileName, sampleCsv, sampleCsvFileName } from "../lib/csv";
+import {
+  errorsCsv,
+  errorsCsvFileName,
+  sampleCsv,
+  sampleCsvFileName,
+} from "../lib/csv";
 import { downloadText } from "../lib/download";
 import { previewIssueCopy } from "../lib/copy";
 import { ImportExpectedHeaders } from "./ImportExpectedHeaders";
@@ -137,7 +143,9 @@ function ImportPageContent() {
     mutate.blockedBy === "role"
       ? "Your role can't import vehicles."
       : (mutate.reason ??
-        (preview.state !== "ready" ? "Choose a valid .csv file first." : undefined));
+        (preview.state !== "ready"
+          ? "Choose a valid .csv file first."
+          : undefined));
 
   const statusText =
     upload.status === "uploading"
@@ -154,124 +162,132 @@ function ImportPageContent() {
 
   if (!mutate.roleAllowed) {
     return (
-      <div
-        data-testid="import-page"
-        className="max-w-content text-text mx-auto flex w-full flex-col gap-4 px-4 py-6 sm:px-6"
-      >
-        <h1 className="text-lg font-semibold">Import</h1>
-        <ForbiddenState
-          action={
-            <Link
-              to="/map"
-              className="text-accent-fg h-touch md:h-control-md inline-flex items-center text-sm font-medium underline-offset-4 hover:underline"
-            >
-              Back to the map
-            </Link>
-          }
-        />
-      </div>
+      <PageFrame layout="scroll" contentClassName="px-4 pt-6 sm:px-6">
+        <div
+          data-testid="import-page"
+          className="text-text flex w-full flex-col gap-4"
+        >
+          <h1 className="text-lg font-semibold">Import</h1>
+          <ForbiddenState
+            action={
+              <Link
+                to="/map"
+                className="text-accent-fg h-touch md:h-control-md inline-flex items-center text-sm font-medium underline-offset-4 hover:underline"
+              >
+                Back to the map
+              </Link>
+            }
+          />
+        </div>
+      </PageFrame>
     );
   }
 
   return (
-    <div
-      data-testid="import-page"
-      className="max-w-content text-text mx-auto flex w-full flex-col gap-6 px-4 py-6 sm:px-6"
-    >
-      <header className="flex flex-col gap-1">
-        <h1 className="text-lg font-semibold">Import</h1>
-        <p className="text-muted max-w-prose text-sm">
-          Add or update vehicles from a comma-separated file. Only{" "}
-          <span className="font-mono text-xs">imei</span> is required, and
-          re-uploading the same file is safe.
-        </p>
-      </header>
+    <PageFrame layout="scroll" contentClassName="px-4 pt-6 sm:px-6">
+      <div
+        data-testid="import-page"
+        className="text-text flex w-full flex-col gap-6"
+      >
+        <header className="flex flex-col gap-1">
+          <h1 className="text-lg font-semibold">Import</h1>
+          <p className="text-muted max-w-prose text-sm">
+            Add or update vehicles from a comma-separated file. Only{" "}
+            <span className="font-mono text-xs">imei</span> is required, and
+            re-uploading the same file is safe.
+          </p>
+        </header>
 
-      <div className="flex flex-col gap-4">
-        <div className="max-w-dialog flex w-full flex-col gap-4">
-          <ImportFilePicker
-            file={selectedFile}
-            disabled={upload.pending}
-            disabledReason="An upload is in progress."
-            onSelect={selectFile}
-            onClear={clearFile}
-            chooseButtonRef={chooseButtonRef}
-            emphasized={preview.state === "error"}
-          />
-          <ImportExpectedHeaders
+        <div className="flex flex-col gap-4">
+          <div className="max-w-dialog flex w-full flex-col gap-4">
+            <ImportFilePicker
+              file={selectedFile}
+              disabled={upload.pending}
+              disabledReason="An upload is in progress."
+              onSelect={selectFile}
+              onClear={clearFile}
+              chooseButtonRef={chooseButtonRef}
+              emphasized={preview.state === "error"}
+            />
+            <ImportExpectedHeaders
+              preview={preview.preview}
+              onDownloadSample={() =>
+                downloadText(sampleCsvFileName(), sampleCsv())
+              }
+            />
+          </div>
+
+          <ImportPreview
             preview={preview.preview}
-            onDownloadSample={() =>
-              downloadText(sampleCsvFileName(), sampleCsv())
-            }
+            state={preview.state === "parsing" ? "loading" : preview.state}
+            error={preview.issue ? previewIssueCopy(preview.issue) : null}
+            errorRef={previewErrorRef}
           />
-        </div>
 
-        <ImportPreview
-          preview={preview.preview}
-          state={preview.state === "parsing" ? "loading" : preview.state}
-          error={preview.issue ? previewIssueCopy(preview.issue) : null}
-          errorRef={previewErrorRef}
-        />
+          <div className="max-w-dialog flex w-full flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                variant={result ? "secondary" : "primary"}
+                data-import-upload
+                onClick={() => void runUpload()}
+                loading={upload.pending}
+                {...(uploadReason ? { disabledReason: uploadReason } : {})}
+              >
+                Upload file
+              </Button>
+              <output
+                aria-live="polite"
+                data-testid="import-status"
+                className="text-muted text-sm"
+              >
+                {statusText}
+              </output>
+            </div>
+            <div className="h-0.5">
+              {upload.pending ? (
+                <LoadingBar label="Uploading vehicles" />
+              ) : null}
+            </div>
+            {upload.pending ? (
+              <SlowNotice onCancel={upload.cancel} onRetry={upload.retry} />
+            ) : null}
+          </div>
 
-        <div className="max-w-dialog flex w-full flex-col gap-2">
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              variant={result ? "secondary" : "primary"}
-              data-import-upload
-              onClick={() => void runUpload()}
-              loading={upload.pending}
-              {...(uploadReason ? { disabledReason: uploadReason } : {})}
-            >
-              Upload file
-            </Button>
-            <output
-              aria-live="polite"
-              data-testid="import-status"
-              className="text-muted text-sm"
-            >
-              {statusText}
-            </output>
-          </div>
-          <div className="h-0.5">
-            {upload.pending ? <LoadingBar label="Uploading vehicles" /> : null}
-          </div>
-          {upload.pending ? (
-            <SlowNotice onCancel={upload.cancel} onRetry={upload.retry} />
+          {upload.status === "error" && upload.error ? (
+            <div className="max-w-dialog w-full">
+              <ImportFailureNotice
+                error={upload.error}
+                fileName={selectedFile?.name ?? ""}
+                onRetry={() => void runUpload()}
+                onChooseAnother={() => chooseButtonRef.current?.click()}
+                onBack={searchPlate}
+                noticeRef={failureRef}
+              />
+            </div>
+          ) : null}
+
+          {result ? (
+            <ImportResultPanel
+              result={result.result}
+              fileName={result.fileName}
+              onSearchPlate={searchPlate}
+              onImportAnother={importAnother}
+              onDownloadErrors={() =>
+                downloadErrors(result.result, result.fileName)
+              }
+              headingRef={resultHeadingRef}
+            />
           ) : null}
         </div>
 
-        {upload.status === "error" && upload.error ? (
-          <div className="max-w-dialog w-full">
-            <ImportFailureNotice
-              error={upload.error}
-              fileName={selectedFile?.name ?? ""}
-              onRetry={() => void runUpload()}
-              onChooseAnother={() => chooseButtonRef.current?.click()}
-              onBack={searchPlate}
-              noticeRef={failureRef}
-            />
-          </div>
-        ) : null}
-
-        {result ? (
-          <ImportResultPanel
-            result={result.result}
-            fileName={result.fileName}
-            onSearchPlate={searchPlate}
-            onImportAnother={importAnother}
-            onDownloadErrors={() => downloadErrors(result.result, result.fileName)}
-            headingRef={resultHeadingRef}
-          />
-        ) : null}
+        <ImportRecentList
+          entries={recent.entries}
+          state={recent.state}
+          error={recent.error}
+          onView={viewRecent}
+          onRetry={() => void recent.retry()}
+        />
       </div>
-
-      <ImportRecentList
-        entries={recent.entries}
-        state={recent.state}
-        error={recent.error}
-        onView={viewRecent}
-        onRetry={() => void recent.retry()}
-      />
-    </div>
+    </PageFrame>
   );
 }

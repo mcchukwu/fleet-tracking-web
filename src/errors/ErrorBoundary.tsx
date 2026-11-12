@@ -23,14 +23,20 @@ function route(): string {
   return typeof window === "undefined" ? "/" : window.location.pathname;
 }
 
-function sameKeys(previous: readonly unknown[], next: readonly unknown[]): boolean {
+function sameKeys(
+  previous: readonly unknown[],
+  next: readonly unknown[],
+): boolean {
   return (
     previous.length === next.length &&
     previous.every((key, index) => Object.is(key, next[index]))
   );
 }
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   state: ErrorBoundaryState = {
     error: null,
     resetKeys: this.props.resetKeys ?? [],
@@ -68,8 +74,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
     if (this.props.level === "app") {
       return (
-        <main className="h-dvh bg-bg">
-          <PageFrame layout="scroll" align="center" contentClassName="px-4 py-6">
+        <main className="bg-bg h-dvh">
+          <PageFrame
+            layout="scroll"
+            align="center"
+            contentClassName="px-4 pt-6"
+          >
             <h1 className="sr-only">Something went wrong</h1>
             <ErrorState
               error={error}

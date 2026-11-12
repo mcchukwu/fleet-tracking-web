@@ -13,6 +13,7 @@ import { toMapGeofences } from "../../../map/geofences";
 import type { MapAdapter } from "../../../map/types";
 import { useConnection } from "../../../stores/connection";
 import { Button } from "../../../ui/Button";
+import { PageFrame } from "../../../ui/PageFrame";
 import type { StateBoundaryState } from "../../../ui/StateBoundary";
 import { GeofenceDeleteDialog } from "./GeofenceDeleteDialog";
 import { GeofenceEditor } from "./GeofenceEditor";
@@ -70,14 +71,19 @@ function GeofencesPageContent() {
     [feed.geofences, q],
   );
   const selected = useMemo(
-    () => (selectedId ? (feed.geofences.find((row) => row.id === selectedId) ?? null) : null),
+    () =>
+      selectedId
+        ? (feed.geofences.find((row) => row.id === selectedId) ?? null)
+        : null,
     [feed.geofences, selectedId],
   );
 
   useDocumentTitle("Geofences");
 
   const editingGeofence = editor.kind === "edit" ? editor.geofence : null;
-  const editingRing = editingGeofence ? exteriorRing(editingGeofence.geometry) : null;
+  const editingRing = editingGeofence
+    ? exteriorRing(editingGeofence.geometry)
+    : null;
   const editingRings = editingGeofence?.geometry.coordinates.length ?? 0;
   const drawingUnavailable = adapter !== null && !adapter.capabilities.drawing;
   const geometryEditable = editingGeofence
@@ -121,7 +127,9 @@ function GeofencesPageContent() {
     feed.dataUpdatedAt > 0 &&
     selected === null;
   const staleLabel =
-    feed.geofences.length > 0 && (offline || state === "error") && feed.dataUpdatedAt
+    feed.geofences.length > 0 &&
+    (offline || state === "error") &&
+    feed.dataUpdatedAt
       ? formatClockTime(feed.dataUpdatedAt)
       : undefined;
 
@@ -140,7 +148,11 @@ function GeofencesPageContent() {
 
   const updateSearch = useCallback(
     (patch: Partial<GeofencesSearch>, replace = true): void => {
-      void navigate({ to: "/geofences", search: { ...search, ...patch }, replace });
+      void navigate({
+        to: "/geofences",
+        search: { ...search, ...patch },
+        replace,
+      });
     },
     [navigate, search],
   );
@@ -149,7 +161,8 @@ function GeofencesPageContent() {
     () => toMapGeofences(feed.geofences, selectedId),
     [feed.geofences, selectedId],
   );
-  const editingMapId = editingGeofence && drawing.status === "ready" ? editingGeofence.id : null;
+  const editingMapId =
+    editingGeofence && drawing.status === "ready" ? editingGeofence.id : null;
 
   const fitPadding = wide ? FIT_PADDING_DESKTOP : FIT_PADDING_MOBILE;
 
@@ -174,8 +187,13 @@ function GeofencesPageContent() {
     if (!adapter) return;
     const offFence = adapter.on("geofenceClick", ({ id }) => {
       if (editorOpen) return;
-      const hiddenBySearch = filterGeofences(feed.geofences, q).every((row) => row.id !== id);
-      updateSearch(hiddenBySearch ? { q: undefined, selected: id } : { selected: id }, false);
+      const hiddenBySearch = filterGeofences(feed.geofences, q).every(
+        (row) => row.id !== id,
+      );
+      updateSearch(
+        hiddenBySearch ? { q: undefined, selected: id } : { selected: id },
+        false,
+      );
     });
     const offMap = adapter.on("mapClick", () => {
       if (!editorOpen) updateSearch({ selected: undefined });
@@ -204,7 +222,8 @@ function GeofencesPageContent() {
     setMapDebug({
       mapLoaded: adapter !== null,
       provider: adapter?.id ?? null,
-      geofenceCount: mapGeofences.filter((row) => row.id !== editingMapId).length,
+      geofenceCount: mapGeofences.filter((row) => row.id !== editingMapId)
+        .length,
       selectedKey: selectedId,
       baseStyle: adapter?.getStyleState().style ?? null,
       styleState: adapter?.getStyleState().status ?? null,
@@ -257,7 +276,9 @@ function GeofencesPageContent() {
     drawing.cancel();
     setEditor({ kind: "closed" });
     setTimeout(() => {
-      const editButton = document.querySelector<HTMLElement>("[data-edit-geofence]");
+      const editButton = document.querySelector<HTMLElement>(
+        "[data-edit-geofence]",
+      );
       if (editButton) {
         editButton.focus();
         return;
@@ -276,14 +297,20 @@ function GeofencesPageContent() {
 
   async function refreshEditTarget(): Promise<void> {
     const rows = await feed.refetch();
-    if (editor.kind === "edit" && !rows?.some((row) => row.id === editor.geofence.id)) {
+    if (
+      editor.kind === "edit" &&
+      !rows?.some((row) => row.id === editor.geofence.id)
+    ) {
       closeEditor();
     }
   }
 
   async function refreshDeleteTarget(): Promise<void> {
     const rows = await feed.refetch();
-    if (editor.kind === "delete" && !rows?.some((row) => row.id === editor.geofence.id)) {
+    if (
+      editor.kind === "delete" &&
+      !rows?.some((row) => row.id === editor.geofence.id)
+    ) {
       setEditor({ kind: "closed" });
       updateSearch({ selected: undefined });
     }
@@ -306,118 +333,131 @@ function GeofencesPageContent() {
         : undefined;
 
   return (
-    <div
-      data-testid="geofences-page"
-      className="text-text flex h-full min-h-0 w-full flex-col"
-    >
-      <header className="flex shrink-0 flex-wrap items-end justify-between gap-2 px-4 py-4 sm:px-6">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-text text-lg font-semibold">Geofences</h1>
-          <p className="text-muted text-sm">
-            {q.trim() !== "" ? (
-              <>
-                Showing <span className="tabular-nums">{formatCount(visible.length)}</span>
-                {" of "}
-                <span className="tabular-nums">{formatCount(feed.geofences.length)}</span>
-              </>
-            ) : (
-              <>
-                <span className="tabular-nums">{formatCount(visible.length)}</span> geofences
-              </>
-            )}
-          </p>
-        </div>
-        <Button
-          ref={createRef}
-          variant="primary"
-          className="min-w-touch md:min-w-0"
-          aria-label="Create geofence"
-          leadingIcon={<Plus aria-hidden="true" className="size-4" strokeWidth={1.5} />}
-          data-create-geofence
-          {...(createReason ? { disabledReason: createReason } : {})}
-          onClick={() => setEditor({ kind: "create" })}
-        >
-          <span className="hidden md:inline">Create geofence</span>
-        </Button>
-      </header>
-
-      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <div className="border-border order-2 flex min-h-0 basis-2/5 flex-col border-t lg:order-1 lg:w-panel lg:shrink-0 lg:basis-auto lg:border-t-0 lg:border-r">
-          {editorOpen ? (
-            <GeofenceEditor
-              mode={editor.kind === "edit" ? "edit" : "create"}
-              geofence={editingGeofence}
-              drawing={drawing}
-              write={write}
-              knownIds={new Set(feed.geofences.map((row) => row.id))}
-              geometryEditable={geometryEditable}
-              {...(geometryNote ? { geometryNote } : {})}
-              {...(editReason ? { disabledReason: editReason } : {})}
-              onClose={closeEditor}
-              onSaved={afterSaved}
-              onRefresh={() => void refreshEditTarget()}
-            />
-          ) : (
-            <GeofenceList
-            geofences={visible}
-            total={feed.geofences.length}
-            q={q}
-            selected={selected}
-            state={state}
-            error={closedError}
-            {...(staleLabel ? { staleLabel } : {})}
-            cancelled={feed.cancelled}
-            offline={offline}
-            mutate={mutate}
-            notFound={notFound}
-            forbiddenAction={
-              <Link
-                to="/map"
-                className="h-touch text-accent-fg md:h-control-md inline-flex items-center text-sm font-medium underline-offset-4 hover:underline"
-              >
-                Go back
-              </Link>
+    <PageFrame layout="fill" width="full">
+      <div
+        data-testid="geofences-page"
+        className="text-text flex h-full min-h-0 w-full flex-col"
+      >
+        <header className="flex shrink-0 flex-wrap items-end justify-between gap-2 px-4 py-4 sm:px-6">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-text text-lg font-semibold">Geofences</h1>
+            <p className="text-muted text-sm">
+              {q.trim() !== "" ? (
+                <>
+                  Showing{" "}
+                  <span className="tabular-nums">
+                    {formatCount(visible.length)}
+                  </span>
+                  {" of "}
+                  <span className="tabular-nums">
+                    {formatCount(feed.geofences.length)}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="tabular-nums">
+                    {formatCount(visible.length)}
+                  </span>{" "}
+                  geofences
+                </>
+              )}
+            </p>
+          </div>
+          <Button
+            ref={createRef}
+            variant="primary"
+            className="min-w-touch md:min-w-0"
+            aria-label="Create geofence"
+            leadingIcon={
+              <Plus aria-hidden="true" className="size-4" strokeWidth={1.5} />
             }
-            onSearch={changeSearch}
-            onSelect={selectRow}
-            onEdit={() => {
-              if (selected) setEditor({ kind: "edit", geofence: selected });
-            }}
-            onDelete={() => {
-              if (selected) setEditor({ kind: "delete", geofence: selected });
-            }}
-            onCreate={() => setEditor({ kind: "create" })}
-            onClearSelection={clearSelection}
-            onRetry={() => void feed.retry()}
-            onCancelLoading={feed.cancel}
-            resetKey={`${q}:${selectionReset}`}
+            data-create-geofence
+            {...(createReason ? { disabledReason: createReason } : {})}
+            onClick={() => setEditor({ kind: "create" })}
+          >
+            <span className="hidden md:inline">Create geofence</span>
+          </Button>
+        </header>
+
+        <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+          <div className="border-border lg:w-panel order-2 flex min-h-0 basis-2/5 flex-col border-t lg:order-1 lg:shrink-0 lg:basis-auto lg:border-t-0 lg:border-r">
+            {editorOpen ? (
+              <GeofenceEditor
+                mode={editor.kind === "edit" ? "edit" : "create"}
+                geofence={editingGeofence}
+                drawing={drawing}
+                write={write}
+                knownIds={new Set(feed.geofences.map((row) => row.id))}
+                geometryEditable={geometryEditable}
+                {...(geometryNote ? { geometryNote } : {})}
+                {...(editReason ? { disabledReason: editReason } : {})}
+                onClose={closeEditor}
+                onSaved={afterSaved}
+                onRefresh={() => void refreshEditTarget()}
+              />
+            ) : (
+              <GeofenceList
+                geofences={visible}
+                total={feed.geofences.length}
+                q={q}
+                selected={selected}
+                state={state}
+                error={closedError}
+                {...(staleLabel ? { staleLabel } : {})}
+                cancelled={feed.cancelled}
+                offline={offline}
+                mutate={mutate}
+                notFound={notFound}
+                forbiddenAction={
+                  <Link
+                    to="/map"
+                    className="h-touch text-accent-fg md:h-control-md inline-flex items-center text-sm font-medium underline-offset-4 hover:underline"
+                  >
+                    Go back
+                  </Link>
+                }
+                onSearch={changeSearch}
+                onSelect={selectRow}
+                onEdit={() => {
+                  if (selected) setEditor({ kind: "edit", geofence: selected });
+                }}
+                onDelete={() => {
+                  if (selected)
+                    setEditor({ kind: "delete", geofence: selected });
+                }}
+                onCreate={() => setEditor({ kind: "create" })}
+                onClearSelection={clearSelection}
+                onRetry={() => void feed.retry()}
+                onCancelLoading={feed.cancel}
+                resetKey={`${q}:${selectionReset}`}
+              />
+            )}
+          </div>
+
+          <div className="order-1 flex min-h-48 flex-1 flex-col lg:order-2">
+            <GeofenceMap
+              geofences={mapGeofences}
+              editingId={editingMapId}
+              adapter={adapter}
+              offline={offline}
+              {...(hint ? { hint } : {})}
+              fitDisabled={feed.geofences.length === 0}
+              onAdapter={setAdapter}
+              onFitAll={fitAll}
             />
-          )}
+          </div>
         </div>
 
-        <div className="order-1 flex min-h-48 flex-1 flex-col lg:order-2">
-          <GeofenceMap
-            geofences={mapGeofences}
-            editingId={editingMapId}
-            adapter={adapter}
-            offline={offline}
-            {...(hint ? { hint } : {})}
-            fitDisabled={feed.geofences.length === 0}
-            onAdapter={setAdapter}
-            onFitAll={fitAll}
-          />
-        </div>
+        <GeofenceDeleteDialog
+          geofence={editor.kind === "delete" ? editor.geofence : null}
+          open={editor.kind === "delete"}
+          write={deletion}
+          {...(editReason ? { disabledReason: editReason } : {})}
+          onClose={() => setEditor({ kind: "closed" })}
+          onDeleted={afterDelete}
+          onRefresh={refreshDeleteTarget}
+        />
       </div>
-
-      <GeofenceDeleteDialog
-        geofence={editor.kind === "delete" ? editor.geofence : null}
-        open={editor.kind === "delete"}
-        write={deletion}
-        {...(editReason ? { disabledReason: editReason } : {})}
-        onClose={() => setEditor({ kind: "closed" })}
-        onDeleted={afterDelete}
-        onRefresh={refreshDeleteTarget}
-      />
-    </div>
+    </PageFrame>
   );
 }

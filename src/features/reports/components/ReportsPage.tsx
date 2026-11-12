@@ -11,6 +11,7 @@ import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useConnection } from "../../../stores/connection";
 import { Button } from "../../../ui/Button";
 import { DateRangeDialog } from "../../../ui/DateRangeDialog";
+import { PageFrame } from "../../../ui/PageFrame";
 import { EmptyState } from "../../../ui/StatePanel";
 import {
   StateBoundary,
@@ -155,75 +156,77 @@ function ReportsPageContent() {
   ) : null;
 
   return (
-    <div
-      data-testid="reports-page"
-      className="max-w-content text-text mx-auto flex w-full flex-col gap-4 px-4 py-6 sm:px-6"
-    >
-      <header className="flex flex-col gap-1">
-        <h1 className="text-text text-lg font-semibold">Reports</h1>
-        <p className="text-muted text-sm tabular-nums">
-          {validation.valid
-            ? formatRangeLabel(from, to)
-            : "Fleet activity for a time range."}
-        </p>
-      </header>
+    <PageFrame layout="scroll" contentClassName="px-4 pt-6 sm:px-6">
+      <div
+        data-testid="reports-page"
+        className="text-text flex w-full flex-col gap-4"
+      >
+        <header className="flex flex-col gap-1">
+          <h1 className="text-text text-lg font-semibold">Reports</h1>
+          <p className="text-muted text-sm tabular-nums">
+            {validation.valid
+              ? formatRangeLabel(from, to)
+              : "Fleet activity for a time range."}
+          </p>
+        </header>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <ReportsRangePicker
-          preset={preset}
-          onPreset={selectPreset}
-          onCustom={() => setCustomOpen(true)}
-          triggerRef={triggerRef}
+        <div className="flex flex-wrap items-center gap-2">
+          <ReportsRangePicker
+            preset={preset}
+            onPreset={selectPreset}
+            onCustom={() => setCustomOpen(true)}
+            triggerRef={triggerRef}
+          />
+        </div>
+
+        {pendingFirstLoad ? (
+          <SlowNotice onCancel={cancel} onRetry={retry} />
+        ) : null}
+
+        {cancelled && !cached && hasRange ? (
+          <div className="border-border bg-surface flex items-center justify-between gap-2 rounded-lg border px-4 py-3">
+            <p className="text-muted text-sm">{reportsCopy.loadingCancelled}</p>
+            <Button size="sm" variant="ghost" onClick={retry}>
+              Retry
+            </Button>
+          </div>
+        ) : (
+          <StateBoundary
+            state={state}
+            {...(error ? { error } : {})}
+            onRetry={retry}
+            loading={<ReportsSkeleton />}
+            staleLabel={staleLabel}
+            empty={emptyState({
+              hasRange,
+              valid: validation.valid,
+              offline,
+              onReset: useLastSevenDays,
+            })}
+            forbiddenAction={
+              <Link
+                to="/map"
+                className="h-touch text-accent-fg md:h-control-md inline-flex items-center text-sm font-medium underline-offset-4 hover:underline"
+              >
+                Go back
+              </Link>
+            }
+          >
+            {content}
+          </StateBoundary>
+        )}
+
+        <DateRangeDialog
+          open={customOpen}
+          from={from || initialRange.from}
+          to={to || initialRange.to}
+          title="Report range"
+          validate={validateReportsRange}
+          onApply={applyCustom}
+          onClose={closeCustom}
         />
       </div>
-
-      {pendingFirstLoad ? (
-        <SlowNotice onCancel={cancel} onRetry={retry} />
-      ) : null}
-
-      {cancelled && !cached && hasRange ? (
-        <div className="border-border bg-surface flex items-center justify-between gap-2 rounded-lg border px-4 py-3">
-          <p className="text-muted text-sm">{reportsCopy.loadingCancelled}</p>
-          <Button size="sm" variant="ghost" onClick={retry}>
-            Retry
-          </Button>
-        </div>
-      ) : (
-        <StateBoundary
-          state={state}
-          {...(error ? { error } : {})}
-          onRetry={retry}
-          loading={<ReportsSkeleton />}
-          staleLabel={staleLabel}
-          empty={emptyState({
-            hasRange,
-            valid: validation.valid,
-            offline,
-            onReset: useLastSevenDays,
-          })}
-          forbiddenAction={
-            <Link
-              to="/map"
-              className="h-touch text-accent-fg md:h-control-md inline-flex items-center text-sm font-medium underline-offset-4 hover:underline"
-            >
-              Go back
-            </Link>
-          }
-        >
-          {content}
-        </StateBoundary>
-      )}
-
-      <DateRangeDialog
-        open={customOpen}
-        from={from || initialRange.from}
-        to={to || initialRange.to}
-        title="Report range"
-        validate={validateReportsRange}
-        onApply={applyCustom}
-        onClose={closeCustom}
-      />
-    </div>
+    </PageFrame>
   );
 }
 

@@ -34,7 +34,7 @@ export function LoginPage() {
         align="center"
         width="full"
         className="flex-1"
-        contentClassName="px-4 py-8"
+        contentClassName="px-4 pt-6"
       >
         <main className="flex w-full justify-center">
           <div className="w-panel max-w-full space-y-4">
