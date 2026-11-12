@@ -58,7 +58,8 @@ describe("TripConfirmDialog", () => {
     mocks.error = null;
   });
 
-  it("completes with a confirm and keeps Cancel focused by default", async () => {    const user = userEvent.setup();
+  it("completes with a confirm and keeps Cancel focused by default", async () => {
+    const user = userEvent.setup();
     mocks.transition.mockResolvedValue({ status: "done", reconciled: false });
     const { onFinished, onClose } = renderDialog("complete");
 
