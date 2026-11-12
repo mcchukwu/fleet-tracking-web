@@ -1,6 +1,17 @@
+import { onlineManager } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FleetApiClient } from "./client";
 import type { AppError } from "../errors/types";
+
+const connectivity = vi.hoisted(() => ({
+  reachable: vi.fn(),
+  unreachable: vi.fn(),
+}));
+
+vi.mock("../stores/connection", () => ({
+  reportFetchReachable: connectivity.reachable,
+  reportFetchUnreachable: connectivity.unreachable,
+}));
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -26,6 +37,9 @@ async function caught(promise: Promise<unknown>): Promise<AppError> {
 
 afterEach(() => {
   vi.useRealTimers();
+  onlineManager.setOnline(true);
+  connectivity.reachable.mockReset();
+  connectivity.unreachable.mockReset();
 });
 
 describe("api client", () => {
@@ -113,6 +127,52 @@ describe("api client", () => {
     client.setSessionHandlers({ onSessionExpired });
     expect((await caught(client.vehicles())).kind).toBe("unauthenticated");
     expect(onSessionExpired).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects an offline write before it reaches fetch", async () => {
+    onlineManager.setOnline(false);
+    const fetcher = vi.fn();
+    const client = new FleetApiClient("", fetcher as unknown as typeof fetch);
+
+    const error = await caught(client.updateVehicle("id", { plate: "X" }));
+
+    expect(error.kind).toBe("offline");
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("reports a transport failure as unreachable", async () => {
+    const client = new FleetApiClient(
+      "",
+      fetcherOf(() => Promise.reject(new TypeError("Failed to fetch"))),
+    );
+    await caught(client.vehicles());
+    expect(connectivity.unreachable).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports any HTTP response as reachable", async () => {
+    const client = new FleetApiClient(
+      "",
+      fetcherOf(jsonResponse({ error: { code: "forbidden", message: "no" } }, 403)),
+    );
+    await caught(client.vehicles());
+    expect(connectivity.reachable).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not treat a timeout as unreachable", async () => {
+    vi.useFakeTimers();
+    const fetcher = vi.fn(
+      (_input: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            reject(new DOMException("aborted", "AbortError"));
+          });
+        }),
+    ) as unknown as typeof fetch;
+    const client = new FleetApiClient("", fetcher);
+    const request = caught(client.vehicles({}, { timeoutMs: 50 }));
+    await vi.advanceTimersByTimeAsync(60);
+    await request;
+    expect(connectivity.unreachable).not.toHaveBeenCalled();
   });
 
   it("marks a rejected write as failed, not uncertain", async () => {

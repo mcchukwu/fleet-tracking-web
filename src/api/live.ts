@@ -41,25 +41,17 @@ export class LiveSocketManager {
 
   constructor(options: LiveSocketOptions) {
     this.options = options;
-    this.online = options.isOnline ?? (() => navigator.onLine);
+    this.online = options.isOnline ?? (() => true);
   }
 
   start(): void {
     if (!this.stopped) return;
     this.stopped = false;
-    if (typeof window !== "undefined") {
-      window.addEventListener("online", this.handleOnline);
-      window.addEventListener("offline", this.handleOffline);
-    }
     this.connect();
   }
 
   stop(): void {
     this.stopped = true;
-    if (typeof window !== "undefined") {
-      window.removeEventListener("online", this.handleOnline);
-      window.removeEventListener("offline", this.handleOffline);
-    }
     this.clearTimer();
     this.buffer = [];
     this.resyncing = false;
@@ -78,15 +70,16 @@ export class LiveSocketManager {
     this.connect();
   }
 
+  /** The connectivity store went offline: close quietly, no retry storm. */
+  notifyOffline(): void {
+    this.handleOffline();
+  }
+
   retryNow(): void {
     if (this.stopped || this.socket) return;
     this.clearTimer();
     this.connect();
   }
-
-  private readonly handleOnline = () => {
-    this.connect();
-  };
 
   private readonly handleOffline = () => {
     this.clearTimer();

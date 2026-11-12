@@ -7,6 +7,7 @@ import { useAuthStore } from "../../../auth/store";
 import { ApiError } from "../../../errors/types";
 import { ThemeProvider } from "../../../theme/ThemeProvider";
 import { ToastProvider } from "../../../ui/Toast";
+import { resetInstallPromptForTests } from "../../../pwa/install";
 import { UserMenu } from "./UserMenu";
 
 const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }));
@@ -44,10 +45,51 @@ beforeEach(() => {
   document.documentElement.classList.remove("dark");
   delete document.documentElement.dataset.theme;
   delete document.documentElement.dataset.accent;
-  useAuthStore.setState({ user, csrfToken: "token", status: "authenticated" });
+  useAuthStore.setState({
+    user,
+    csrfToken: "token",
+    status: "authenticated",
+    sessionVerified: true,
+  });
+  resetInstallPromptForTests();
 });
 
+class FakeInstallEvent extends Event {
+  readonly platforms = ["web"];
+  readonly userChoice = Promise.resolve({ outcome: "accepted" as const, platform: "web" });
+  readonly prompt = vi.fn().mockResolvedValue(undefined);
+  constructor() {
+    super("beforeinstallprompt", { cancelable: true });
+  }
+}
+
 describe("UserMenu", () => {
+  it("offers Install app only while the prompt is available", async () => {
+    const userEventApi = userEvent.setup();
+    renderMenu();
+    window.dispatchEvent(new FakeInstallEvent());
+
+    await userEventApi.click(
+      screen.getByRole("button", { name: `Account menu for ${user.name}` }),
+    );
+    await userEventApi.click(screen.getByRole("menuitem", { name: "Install app" }));
+
+    expect(screen.queryByRole("menuitem", { name: "Install app" })).not.toBeInTheDocument();
+  });
+
+  it("marks an offline boot as an unverified session", async () => {
+    useAuthStore.setState({ sessionVerified: false });
+    const userEventApi = userEvent.setup();
+    renderMenu();
+
+    await userEventApi.click(
+      screen.getByRole("button", { name: `Account menu for ${user.name}` }),
+    );
+
+    expect(screen.getByText("Unverified offline")).toBeVisible();
+    expect(screen.getByText("Reconnect to verify your session.")).toBeInTheDocument();
+  });
+
   it("shows the name, email and role and invokes shortcuts", async () => {
     const userEventApi = userEvent.setup();
     const { onShortcuts } = renderMenu();

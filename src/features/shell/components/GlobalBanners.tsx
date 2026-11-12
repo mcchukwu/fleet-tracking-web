@@ -8,6 +8,7 @@ import {
   useConnectionStore,
   type SocketState,
 } from "../../../stores/connection";
+import { activateUpdate } from "../../../pwa/update";
 import { Banner } from "../../../ui/Banner";
 import { highestPriorityBanner, type BannerKind } from "./bannerPriority";
 
@@ -155,7 +156,7 @@ export function GlobalBanners() {
       <Banner
         tone="info"
         message="A new version is available."
-        action={{ label: "Reload", onClick: () => window.location.reload() }}
+        action={{ label: "Reload", onClick: () => activateUpdate() }}
       />
     );
   }

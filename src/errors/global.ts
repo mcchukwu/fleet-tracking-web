@@ -126,13 +126,15 @@ export function createQueryClient(): QueryClient {
       queries: {
         retry: (failureCount, error) => failureCount < 2 && isAutoRetryable(error),
         retryDelay: (failureCount, error) => retryDelay(failureCount, error),
-        networkMode: "offlineFirst",
+        // Offline the persisted cache is the answer; never fire a first request.
+        networkMode: "online",
         staleTime: 30_000,
         refetchOnWindowFocus: false,
       },
       mutations: {
         retry: false,
-        networkMode: "offlineFirst",
+        // The API client rejects offline writes before dispatch; nothing queues.
+        networkMode: "always",
       },
     },
   });

@@ -1,4 +1,4 @@
-import { clear, get, set } from "idb-keyval";
+import { clear, del, get, set } from "idb-keyval";
 import { z } from "zod";
 import { StorageError } from "../errors/types";
 
@@ -73,7 +73,7 @@ export async function claimImportHistory(userId: string): Promise<string | null>
   if (owner === userId) return null;
 
   try {
-    await clear();
+    await del(IMPORT_HISTORY_KEY);
     await set(IMPORT_HISTORY_OWNER_KEY, userId);
   } catch {
     throw storageFailure();
@@ -82,6 +82,20 @@ export async function claimImportHistory(userId: string): Promise<string | null>
 }
 
 export async function clearImportHistory(): Promise<void> {
+  try {
+    await del(IMPORT_HISTORY_KEY);
+    await del(IMPORT_HISTORY_OWNER_KEY);
+  } catch {
+    throw storageFailure();
+  }
+}
+
+/**
+ * Sign-out and user change wipe every device-local record: the persisted query
+ * cache, the offline profile and import history. Only this path may clear the
+ * whole store.
+ */
+export async function wipeDeviceData(): Promise<void> {
   try {
     await clear();
   } catch {

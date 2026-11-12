@@ -163,6 +163,38 @@ describe("live socket manager", () => {
     manager.stop();
   });
 
+  it("quiets on an offline notification and only resumes when online", () => {
+    vi.useFakeTimers();
+    let online = true;
+    const sockets: FakeSocket[] = [];
+    const manager = new LiveSocketManager({
+      createSocket: () => {
+        const socket = new FakeSocket();
+        sockets.push(socket);
+        return socket;
+      },
+      onFrame: vi.fn(),
+      resync: () => Promise.resolve(),
+      isOnline: () => online,
+    });
+    manager.start();
+    expect(sockets).toHaveLength(1);
+
+    online = false;
+    manager.notifyOffline();
+    expect(manager.getState()).toBe("down");
+    vi.advanceTimersByTime(30_000);
+    expect(sockets).toHaveLength(1);
+
+    manager.notifyOnline();
+    expect(sockets).toHaveLength(1);
+
+    online = true;
+    manager.notifyOnline();
+    expect(sockets).toHaveLength(2);
+    manager.stop();
+  });
+
   it("backs off when the snapshot resync keeps failing", async () => {
     vi.useFakeTimers();
     const sockets: FakeSocket[] = [];

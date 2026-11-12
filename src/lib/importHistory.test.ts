@@ -5,18 +5,21 @@ import {
   claimImportHistory,
   clearImportHistory,
   readImportHistory,
+  wipeDeviceData,
   type RecentImport,
 } from "./importHistory";
 
 const mocks = vi.hoisted(() => ({
   get: vi.fn(),
   set: vi.fn(),
+  del: vi.fn(),
   clear: vi.fn(),
 }));
 
 vi.mock("idb-keyval", () => ({
   get: mocks.get,
   set: mocks.set,
+  del: mocks.del,
   clear: mocks.clear,
 }));
 
@@ -35,8 +38,10 @@ function entry(jobId: string, completedAt = "2026-11-11T12:00:00Z"): RecentImpor
 beforeEach(() => {
   mocks.get.mockReset();
   mocks.set.mockReset();
+  mocks.del.mockReset();
   mocks.clear.mockReset();
   mocks.set.mockResolvedValue(undefined);
+  mocks.del.mockResolvedValue(undefined);
   mocks.clear.mockResolvedValue(undefined);
 });
 
@@ -88,6 +93,7 @@ describe("import history", () => {
 
     await expect(claimImportHistory("user-1")).resolves.toBeNull();
     expect(mocks.clear).not.toHaveBeenCalled();
+    expect(mocks.del).not.toHaveBeenCalled();
     expect(mocks.set).not.toHaveBeenCalled();
   });
 
@@ -95,7 +101,8 @@ describe("import history", () => {
     mocks.get.mockResolvedValue("user-1");
 
     await expect(claimImportHistory("user-2")).resolves.toBe("user-1");
-    expect(mocks.clear).toHaveBeenCalledTimes(1);
+    expect(mocks.clear).not.toHaveBeenCalled();
+    expect(mocks.del).toHaveBeenCalledWith("fleet.import-history");
     expect(mocks.set).toHaveBeenCalledWith(
       "fleet.import-history-owner",
       "user-2",
@@ -106,7 +113,8 @@ describe("import history", () => {
     mocks.get.mockResolvedValue(undefined);
 
     await expect(claimImportHistory("user-1")).resolves.toBeNull();
-    expect(mocks.clear).toHaveBeenCalledTimes(1);
+    expect(mocks.clear).not.toHaveBeenCalled();
+    expect(mocks.del).toHaveBeenCalledWith("fleet.import-history");
     expect(mocks.set).toHaveBeenCalledWith(
       "fleet.import-history-owner",
       "user-1",
@@ -123,7 +131,7 @@ describe("import history", () => {
       StorageError,
     );
 
-    mocks.clear.mockRejectedValue(new Error("blocked"));
+    mocks.del.mockRejectedValue(new Error("blocked"));
     await expect(clearImportHistory()).rejects.toBeInstanceOf(StorageError);
 
     mocks.get.mockRejectedValue(new Error("idb unavailable"));
@@ -132,8 +140,15 @@ describe("import history", () => {
     );
   });
 
-  it("clears the store", async () => {
+  it("clears only its own keys", async () => {
     await clearImportHistory();
+    expect(mocks.clear).not.toHaveBeenCalled();
+    expect(mocks.del).toHaveBeenCalledWith("fleet.import-history");
+    expect(mocks.del).toHaveBeenCalledWith("fleet.import-history-owner");
+  });
+
+  it("wipes the whole device store on sign-out", async () => {
+    await wipeDeviceData();
     expect(mocks.clear).toHaveBeenCalledTimes(1);
   });
 });

@@ -46,6 +46,8 @@ function retryableKind(kind: AppErrorKind): boolean {
 }
 
 function browserIsOffline(): boolean {
+  // guard-ignore: last-resort fallback for callers without a connectivity hint;
+  // the API client passes onlineManager's probe-backed state instead.
   return typeof navigator === "undefined" ? false : navigator.onLine === false;
 }
 

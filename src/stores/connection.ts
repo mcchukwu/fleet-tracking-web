@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
+import { onlineManager } from "@tanstack/react-query";
 import { useNow } from "../lib/ticker";
 
 export type NetworkState = "online" | "offline";
@@ -17,6 +18,21 @@ export interface ConnectionState {
   markData: (at: number) => void;
 }
 
+export interface ConnectivityOptions {
+  probe?: () => Promise<boolean>;
+  probeIntervalMs?: number;
+}
+
+export interface ConnectivityController {
+  start: () => () => void;
+  reportReachable: () => void;
+  reportUnreachable: () => void;
+  probeNow: () => Promise<void>;
+}
+
+const PROBE_INTERVAL_MS = 15_000;
+const PROBE_TIMEOUT_MS = 5_000;
+
 const noRetry = () => undefined;
 let retryTarget: () => void = noRetry;
 let frozen = false;
@@ -26,8 +42,12 @@ export function freezeConnection(value: boolean): void {
   frozen = value;
 }
 
+function browserOnline(): boolean {
+  return typeof navigator === "undefined" || navigator.onLine !== false;
+}
+
 export const useConnectionStore = create<ConnectionState>((set) => ({
-  network: typeof navigator === "undefined" || navigator.onLine ? "online" : "offline",
+  network: browserOnline() ? "online" : "offline",
   socket: "down",
   lastDataAt: null,
   socketDownAt: null,
@@ -55,12 +75,14 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
 export function resetConnection(): void {
   retryTarget = noRetry;
   frozen = false;
+  const network = browserOnline() ? "online" : "offline";
   useConnectionStore.setState({
-    network: typeof navigator === "undefined" || navigator.onLine ? "online" : "offline",
+    network,
     socket: "down",
     lastDataAt: null,
     socketDownAt: null,
   });
+  onlineManager.setOnline(network === "online");
 }
 
 export function useConnection() {
@@ -81,19 +103,144 @@ export function useDataAge(): number | null {
   return Math.max(0, Math.floor((now - lastDataAt) / 1000));
 }
 
+function applyNetwork(next: NetworkState): void {
+  const before = useConnectionStore.getState().network;
+  useConnectionStore.getState().setNetwork(next);
+  const after = useConnectionStore.getState().network;
+  onlineManager.setOnline(after === "online");
+  if (after === before) return;
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("fleet:connectivity", { detail: { online: after === "online" } }));
+  }
+}
+
+async function fetchProbe(): Promise<boolean> {
+  if (typeof fetch !== "function") return false;
+  const base = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
+  try {
+    await fetch(`${base}/api/v1/me`, {
+      method: "GET",
+      credentials: "include",
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export function createConnectivity(options: ConnectivityOptions = {}): ConnectivityController {
+  const probe = options.probe ?? fetchProbe;
+  const intervalMs = options.probeIntervalMs ?? PROBE_INTERVAL_MS;
+  let timer: ReturnType<typeof setInterval> | null = null;
+  let inFlight = false;
+  let started = false;
+
+  const stopLoop = () => {
+    if (timer !== null) {
+      clearInterval(timer);
+      timer = null;
+    }
+  };
+
+  const startLoop = () => {
+    if (timer !== null) return;
+    timer = setInterval(() => void probeNow(), intervalMs);
+  };
+
+  const probeNow = async (): Promise<void> => {
+    if (inFlight) return;
+    inFlight = true;
+    let reachable = false;
+    try {
+      reachable = await probe();
+    } finally {
+      inFlight = false;
+    }
+    if (reachable) {
+      stopLoop();
+      applyNetwork("online");
+    } else {
+      applyNetwork("offline");
+      startLoop();
+    }
+  };
+
+  const reportReachable = () => {
+    stopLoop();
+    applyNetwork("online");
+  };
+
+  const reportUnreachable = () => {
+    applyNetwork("offline");
+    startLoop();
+  };
+
+  const handleOffline = () => {
+    applyNetwork("offline");
+    startLoop();
+  };
+
+  const handleOnline = () => {
+    void probeNow();
+  };
+
+  const handleVisibility = () => {
+    if (document.visibilityState === "visible" && useConnectionStore.getState().network === "offline") {
+      void probeNow();
+    }
+  };
+
+  const start = (): (() => void) => {
+    if (!started && typeof window !== "undefined") {
+      started = true;
+      window.addEventListener("offline", handleOffline);
+      window.addEventListener("online", handleOnline);
+      document.addEventListener("visibilitychange", handleVisibility);
+      onlineManager.setOnline(useConnectionStore.getState().network === "online");
+      if (!browserOnline()) {
+        applyNetwork("offline");
+        startLoop();
+      } else {
+        void probeNow();
+      }
+    }
+
+    return () => {
+      started = false;
+      stopLoop();
+      if (typeof window !== "undefined") {
+        window.removeEventListener("offline", handleOffline);
+        window.removeEventListener("online", handleOnline);
+        document.removeEventListener("visibilitychange", handleVisibility);
+      }
+    };
+  };
+
+  return { start, reportReachable, reportUnreachable, probeNow };
+}
+
+const defaultConnectivity = createConnectivity();
+
+/** Browser events, failed fetches and the periodic probe are the only source of truth. */
 export function installNetworkListeners(): () => void {
-  const update = () => {
-    useConnectionStore
-      .getState()
-      .setNetwork(navigator.onLine ? "online" : "offline");
-  };
+  return defaultConnectivity.start();
+}
 
-  update();
-  window.addEventListener("online", update);
-  window.addEventListener("offline", update);
+/** A reachable HTTP response, whatever its status, proves the server is there. */
+export function reportFetchReachable(): void {
+  defaultConnectivity.reportReachable();
+}
 
-  return () => {
-    window.removeEventListener("online", update);
-    window.removeEventListener("offline", update);
-  };
+export function reportFetchUnreachable(): void {
+  defaultConnectivity.reportUnreachable();
+}
+
+export function probeConnectivityNow(): Promise<void> {
+  return defaultConnectivity.probeNow();
 }

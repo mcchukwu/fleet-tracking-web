@@ -1,17 +1,29 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { api } from "../api/instance";
+import { useConnectionStore } from "../stores/connection";
 import { AuthProvider, handleSessionExpired } from "./AuthProvider";
 import { useAuthStore } from "./store";
 
 const mocks = vi.hoisted(() => ({
-  clearImportHistory: vi.fn(),
+  saveOfflineProfile: vi.fn(),
   claimImportHistory: vi.fn(),
+  wipeDeviceData: vi.fn(),
+  stopPersistedCache: vi.fn(),
 }));
 
 vi.mock("../lib/importHistory", () => ({
-  clearImportHistory: mocks.clearImportHistory,
   claimImportHistory: mocks.claimImportHistory,
+  wipeDeviceData: mocks.wipeDeviceData,
+}));
+
+vi.mock("./offlineProfile", () => ({
+  saveOfflineProfile: mocks.saveOfflineProfile,
+}));
+
+vi.mock("../api/persistedCache", () => ({
+  stopPersistedCache: mocks.stopPersistedCache,
 }));
 
 const user = {
@@ -23,15 +35,20 @@ const user = {
 };
 
 beforeEach(() => {
-  useAuthStore.setState({ user: null, csrfToken: null, status: "unknown" });
-  mocks.clearImportHistory.mockReset();
-  mocks.clearImportHistory.mockResolvedValue(undefined);
+  useAuthStore.setState({ user: null, csrfToken: null, status: "unknown", sessionVerified: false });
+  useConnectionStore.setState({ network: "online" });
+  mocks.saveOfflineProfile.mockReset();
+  mocks.saveOfflineProfile.mockResolvedValue(undefined);
   mocks.claimImportHistory.mockReset();
   mocks.claimImportHistory.mockResolvedValue(null);
+  mocks.wipeDeviceData.mockReset();
+  mocks.wipeDeviceData.mockResolvedValue(undefined);
+  mocks.stopPersistedCache.mockReset();
 });
 
 afterEach(() => {
-  useAuthStore.setState({ user: null, csrfToken: null, status: "unknown" });
+  useAuthStore.setState({ user: null, csrfToken: null, status: "unknown", sessionVerified: false });
+  useConnectionStore.setState({ network: "online" });
 });
 
 describe("session expiry handler", () => {
@@ -78,7 +95,7 @@ describe("AuthProvider", () => {
     expect(cancel).toHaveBeenCalledTimes(1);
   });
 
-  it("clears this device's import history on logout", () => {
+  it("wipes device data and stops persistence on logout", () => {
     useAuthStore.getState().setSession(user, "token");
     render(
       <QueryClientProvider client={new QueryClient()}>
@@ -92,7 +109,42 @@ describe("AuthProvider", () => {
       useAuthStore.getState().clear();
     });
 
-    expect(mocks.clearImportHistory).toHaveBeenCalledTimes(1);
+    expect(mocks.stopPersistedCache).toHaveBeenCalledTimes(1);
+    expect(mocks.wipeDeviceData).toHaveBeenCalledTimes(1);
+  });
+
+  it("saves the minimal profile after a verified session", async () => {
+    useAuthStore.getState().setSession(user, "token");
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <AuthProvider>
+          <div />
+        </AuthProvider>
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => expect(mocks.saveOfflineProfile).toHaveBeenCalledWith(user));
+  });
+
+  it("verifies an unverified profile when the connection returns", async () => {
+    useAuthStore.getState().setOfflineProfile(user);
+    useConnectionStore.setState({ network: "offline" });
+    const me = vi.spyOn(api, "me").mockResolvedValue({ user, csrf_token: "token" });
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <AuthProvider>
+          <div />
+        </AuthProvider>
+      </QueryClientProvider>,
+    );
+
+    act(() => {
+      useConnectionStore.setState({ network: "online" });
+    });
+
+    await waitFor(() => expect(me).toHaveBeenCalled());
+    await waitFor(() => expect(useAuthStore.getState().sessionVerified).toBe(true));
+    me.mockRestore();
   });
 
   it("clears the query cache when a different user signs in", async () => {
@@ -117,8 +169,9 @@ describe("AuthProvider", () => {
       );
     });
 
-    expect(mocks.claimImportHistory).toHaveBeenCalledWith("user-2");
+    await waitFor(() => expect(mocks.claimImportHistory).toHaveBeenCalledWith("user-2"));
     expect(clear).toHaveBeenCalled();
+    expect(mocks.wipeDeviceData).toHaveBeenCalled();
   });
 
   it("claims the device history on the first user of a fresh load", async () => {
@@ -157,6 +210,6 @@ describe("AuthProvider", () => {
       useAuthStore.getState().setSession({ ...user, name: "Renamed" }, "token-2");
     });
 
-    expect(mocks.clearImportHistory).not.toHaveBeenCalled();
+    expect(mocks.wipeDeviceData).not.toHaveBeenCalled();
   });
 });

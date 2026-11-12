@@ -6,13 +6,18 @@ import { useAuthStore } from "../../../auth/store";
 import { useConnectionStore } from "../../../stores/connection";
 import { GlobalBanners } from "./GlobalBanners";
 
-const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }));
+const { navigate, activateUpdate } = vi.hoisted(() => ({
+  navigate: vi.fn(),
+  activateUpdate: vi.fn(),
+}));
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@tanstack/react-router")>();
   return { ...actual, useNavigate: () => navigate };
 });
+
+vi.mock("../../../pwa/update", () => ({ activateUpdate }));
 
 function storm(): void {
   recordRequestFailure("alerts", "server");
@@ -88,6 +93,22 @@ describe("GlobalBanners", () => {
     expect(screen.getByRole("status")).toHaveTextContent(
       "Reconnecting to live updates…",
     );
+  });
+
+  it("asks the waiting worker to activate when Reload is pressed", () => {
+    render(<GlobalBanners />);
+
+    act(() => {
+      window.dispatchEvent(new CustomEvent("fleet:update-available"));
+    });
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "A new version is available.",
+    );
+
+    act(() => {
+      screen.getByRole("button", { name: "Reload" }).click();
+    });
+    expect(activateUpdate).toHaveBeenCalledTimes(1);
   });
 
   it("shows the error storm ahead of a reconnect", () => {

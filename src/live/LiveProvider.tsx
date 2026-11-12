@@ -199,12 +199,19 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
       onState: (state: SocketState) => useConnectionStore.getState().setSocket(state),
       onHandshakeFailure: recordLiveHandshakeFailure,
       onHandshakeSuccess: recordLiveHandshakeSuccess,
-      isOnline: () => navigator.onLine,
+      isOnline: () => useConnectionStore.getState().network === "online",
     });
+    const onConnectivity = (event: Event) => {
+      const online = (event as CustomEvent<{ online: boolean }>).detail.online;
+      if (online) manager.notifyOnline();
+      else manager.notifyOffline();
+    };
+    window.addEventListener("fleet:connectivity", onConnectivity);
     useConnectionStore.getState().setRetryLive(() => manager.retryNow());
     manager.start();
 
     return () => {
+      window.removeEventListener("fleet:connectivity", onConnectivity);
       activeRef.current = false;
       useConnectionStore.getState().setRetryLive(null);
       manager.stop();

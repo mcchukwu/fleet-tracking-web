@@ -1,16 +1,29 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/instance";
+import { meQueryOptions } from "../api/hooks/auth";
+import { stopPersistedCache } from "../api/persistedCache";
 import { normalize } from "../errors/normalize";
 import { recordError } from "../errors/report";
-import { claimImportHistory, clearImportHistory } from "../lib/importHistory";
+import { claimImportHistory, wipeDeviceData } from "../lib/importHistory";
+import { useConnectionStore } from "../stores/connection";
+import { saveOfflineProfile } from "./offlineProfile";
 import { useAuthStore } from "./store";
 
-function reportHistoryFailure(cause: unknown): void {
+function reportStorageFailure(cause: unknown): void {
   recordError(
     normalize(cause, {
-      action: "clear import history",
-      resource: "import history",
+      action: "clear device data",
+      resource: "device storage",
+    }),
+  );
+}
+
+function reportProfileFailure(cause: unknown): void {
+  recordError(
+    normalize(cause, {
+      action: "save the offline profile",
+      resource: "device storage",
     }),
   );
 }
@@ -36,8 +49,14 @@ api.setSessionHandlers({
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const user = useAuthStore((state) => state.user);
+  const userId = user?.id ?? null;
+  const status = useAuthStore((state) => state.status);
+  const verified = useAuthStore((state) => state.sessionVerified);
+  const network = useConnectionStore((state) => state.network);
   const previousUserId = useRef<string | null>(null);
+  const resetRef = useRef<Promise<void>>(Promise.resolve());
+  const verifying = useRef(false);
 
   useEffect(() => {
     const previous = previousUserId.current;
@@ -45,20 +64,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (userId === null) {
       if (previous !== null) {
+        stopPersistedCache();
         queryClient.clear();
-        void clearImportHistory().catch(reportHistoryFailure);
+        resetRef.current = wipeDeviceData().catch(reportStorageFailure);
       }
       return;
     }
 
-    if (previous !== null && previous !== userId) queryClient.clear();
+    if (previous !== null && previous !== userId) {
+      stopPersistedCache();
+      queryClient.clear();
+      resetRef.current = wipeDeviceData().catch(reportStorageFailure);
+    }
 
-    void claimImportHistory(userId)
-      .then((previousOwner) => {
-        if (previousOwner !== null && previousOwner !== userId) queryClient.clear();
-      })
-      .catch(reportHistoryFailure);
+    void resetRef.current.then(() =>
+      claimImportHistory(userId)
+        .then((previousOwner) => {
+          if (previousOwner !== null && previousOwner !== userId) queryClient.clear();
+        })
+        .catch(reportStorageFailure),
+    );
   }, [userId, queryClient]);
+
+  useEffect(() => {
+    if (status !== "authenticated" || !verified || !user) return;
+    void resetRef.current
+      .then(() => {
+        const current = useAuthStore.getState().user;
+        if (current?.id !== user.id) return;
+        return saveOfflineProfile(current);
+      })
+      .catch(reportProfileFailure);
+  }, [status, verified, user]);
+
+  useEffect(() => {
+    if (status !== "authenticated" || verified || network !== "online") return;
+    if (verifying.current) return;
+    verifying.current = true;
+    void queryClient
+      .fetchQuery({ ...meQueryOptions(), staleTime: 0 })
+      .then((response) => {
+        api.setCsrfToken(response.csrf_token);
+        useAuthStore.getState().setSession(response.user, response.csrf_token);
+      })
+      .catch((cause: unknown) => {
+        const error = normalize(cause, { action: "verify the session", resource: "me" });
+        if (error.kind === "unauthenticated") handleSessionExpired();
+      })
+      .finally(() => {
+        verifying.current = false;
+      });
+  }, [status, verified, network, queryClient]);
 
   useEffect(() => {
     const onExpired = () => {

@@ -1,4 +1,5 @@
 import type { ZodType } from "zod";
+import { onlineManager } from "@tanstack/react-query";
 import {
   ApiError,
   ContractError,
@@ -9,6 +10,7 @@ import {
 import { normalize } from "../errors/normalize";
 import { recordError, recordSessionCheckSuccess } from "../errors/report";
 import { endpointTimeouts } from "./timeouts";
+import { reportFetchReachable, reportFetchUnreachable } from "../stores/connection";
 import { parseDrivers } from "./drivers";
 import {
   errorResponseSchema,
@@ -131,13 +133,25 @@ export class FleetApiClient {
     body?: unknown,
     options: RequestOptions = {},
   ): Promise<T> {
+    // A write is never attempted or queued offline. The UI disables the control;
+    // this guard makes a programmatic call fail immediately as well.
+    if (method !== "GET" && !onlineManager.isOnline()) {
+      throw normalize(new TypeError("offline"), {
+        route: currentRoute(),
+        resource: path.split("?")[0],
+        action: method.toLowerCase(),
+      }, { offline: true });
+    }
     try {
       return await this.send<T>(method, path, body, options, true);
     } catch (cause) {
       const error = normalize(
         cause,
         { route: currentRoute(), resource: path.split("?")[0] },
-        { outcome: method === "GET" ? "failed" : "unknown" },
+        {
+          outcome: method === "GET" ? "failed" : "unknown",
+          offline: !onlineManager.isOnline(),
+        },
       );
       if (
         method !== "GET" &&
@@ -190,11 +204,14 @@ export class FleetApiClient {
         if (options.signal?.aborted) throw new DOMException("aborted", "AbortError");
         throw new TimeoutError(`Request exceeded ${timeoutMs}ms`);
       }
+      reportFetchUnreachable();
       throw cause;
     } finally {
       clearTimeout(timeout);
       options.signal?.removeEventListener("abort", abortFromCaller);
     }
+
+    reportFetchReachable();
 
     if (response.status === 401 && path !== "/auth/login") {
       this.handlers.onSessionExpired?.();

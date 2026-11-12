@@ -36,6 +36,13 @@ export interface FleetDebugLiveState {
   unknownKeys: number;
 }
 
+export interface FleetDebugPwaState {
+  cacheSavedAt: number | null;
+  mapCachedAt: number | null;
+  updateAvailable: boolean;
+  serviceWorker: "unsupported" | "registering" | "ready" | "error";
+}
+
 export interface FleetDebugSnapshot {
   live: FleetDebugLiveState;
   connection: {
@@ -46,6 +53,7 @@ export interface FleetDebugSnapshot {
   };
   map: FleetDebugMapState;
   playback: FleetDebugPlaybackState;
+  pwa: FleetDebugPwaState;
 }
 
 export interface FleetDebugPlaybackState {
@@ -109,8 +117,21 @@ const emptyPlaybackState: FleetDebugPlaybackState = {
 
 let playbackState: FleetDebugPlaybackState = { ...emptyPlaybackState };
 
+const emptyPwaState: FleetDebugPwaState = {
+  cacheSavedAt: null,
+  mapCachedAt: null,
+  updateAvailable: false,
+  serviceWorker: "unsupported",
+};
+
+let pwaState: FleetDebugPwaState = { ...emptyPwaState };
+
+export function debugEnabled(): boolean {
+  return import.meta.env.DEV || import.meta.env.VITE_FLEET_DEBUG === "1";
+}
+
 export function setMapDebug(patch: Partial<FleetDebugMapState>): void {
-  if (!import.meta.env.DEV) return;
+  if (!debugEnabled()) return;
   mapState = { ...mapState, ...patch };
 }
 
@@ -123,7 +144,7 @@ export function readMapDebug(): FleetDebugMapState {
 }
 
 export function setPlaybackDebug(patch: Partial<FleetDebugPlaybackState>): void {
-  if (!import.meta.env.DEV) return;
+  if (!debugEnabled()) return;
   playbackState = { ...playbackState, ...patch };
 }
 
@@ -135,8 +156,21 @@ export function readPlaybackDebug(): FleetDebugPlaybackState {
   return playbackState;
 }
 
+export function setPwaDebug(patch: Partial<FleetDebugPwaState>): void {
+  if (!debugEnabled()) return;
+  pwaState = { ...pwaState, ...patch };
+}
+
+export function resetPwaDebug(): void {
+  pwaState = { ...emptyPwaState };
+}
+
+export function readPwaDebug(): FleetDebugPwaState {
+  return pwaState;
+}
+
 export function registerDebugSnapshot(next: DebugReader): () => void {
-  if (!import.meta.env.DEV) return () => undefined;
+  if (!debugEnabled()) return () => undefined;
   reader = next;
   Object.defineProperty(window, "__FLEET_DEBUG__", {
     configurable: true,

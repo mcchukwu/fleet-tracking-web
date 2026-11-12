@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  createQueryClient,
   getErrorStorm,
   handleGlobalError,
   isErrorStorm,
@@ -12,6 +13,18 @@ import {
 import { clearDiagnostics, diagnostics } from "./report";
 import { normalize } from "./normalize";
 import { ApiError } from "./types";
+
+describe("query client defaults", () => {
+  it("serves cached data offline and never queues a mutation", () => {
+    const client = createQueryClient();
+    const queries = client.getDefaultOptions().queries;
+    const mutations = client.getDefaultOptions().mutations;
+
+    expect(queries?.networkMode).toBe("online");
+    expect(mutations?.networkMode).toBe("always");
+    expect(mutations?.retry).toBe(false);
+  });
+});
 
 describe("error storm control", () => {
   beforeEach(() => {

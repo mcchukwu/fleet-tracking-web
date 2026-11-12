@@ -1,5 +1,13 @@
-import { ChevronDown, Keyboard, LogOut, UserRound } from "lucide-react";
+import { ChevronDown, Download, Keyboard, LogOut, UserRound } from "lucide-react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useAuthStore } from "../../../auth/store";
+import {
+  captureInstallPrompt,
+  installAvailable,
+  promptInstall,
+  subscribeInstall,
+} from "../../../pwa/install";
+import { pwaCopy } from "../../../pwa/copy";
 import { AppearanceControls } from "../../../theme/AppearanceControls";
 import { Badge } from "../../../ui/Badge";
 import {
@@ -18,8 +26,20 @@ export interface UserMenuProps {
 
 export function UserMenu({ onShortcuts }: UserMenuProps) {
   const user = useAuthStore((state) => state.user);
+  const verified = useAuthStore((state) => state.sessionVerified);
   const { signOut, pending } = useSignOut();
+  const installReady = useSyncExternalStore(subscribeInstall, installAvailable, () => false);
+  const [installPending, setInstallPending] = useState(false);
+
+  useEffect(() => captureInstallPrompt(), []);
+
   if (!user) return null;
+
+  const install = () => {
+    if (installPending) return;
+    setInstallPending(true);
+    void promptInstall().finally(() => setInstallPending(false));
+  };
 
   return (
     <div className="contents">
@@ -65,9 +85,17 @@ export function UserMenu({ onShortcuts }: UserMenuProps) {
             >
               {user.email}
             </span>
-            <Badge tone="accent" className="mt-1 capitalize">
-              {user.role}
-            </Badge>
+            <span className="mt-1 flex flex-wrap items-center gap-1">
+              <Badge tone="accent" className="capitalize">
+                {user.role}
+              </Badge>
+              {verified ? null : (
+                <span title={pwaCopy.unverifiedDescription}>
+                  <Badge tone="neutral">{pwaCopy.unverifiedOffline}</Badge>
+                  <span className="sr-only">{pwaCopy.unverifiedDescription}</span>
+                </span>
+              )}
+            </span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
 
@@ -85,6 +113,12 @@ export function UserMenu({ onShortcuts }: UserMenuProps) {
             </DropdownMenuItem>
           ) : null}
           <DropdownMenuSeparator />
+          {installReady ? (
+            <DropdownMenuItem onSelect={install} disabled={installPending}>
+              <Download aria-hidden="true" className="size-4" strokeWidth={1.5} />
+              {installPending ? pwaCopy.installing : pwaCopy.install}
+            </DropdownMenuItem>
+          ) : null}
           <DropdownMenuItem
             onSelect={() => void signOut()}
             disabled={pending}

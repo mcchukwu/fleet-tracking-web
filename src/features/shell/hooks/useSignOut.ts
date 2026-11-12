@@ -2,7 +2,10 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useLogoutMutation } from "../../../api/hooks/auth";
+import { stopPersistedCache } from "../../../api/persistedCache";
+import { wipeDeviceData } from "../../../lib/importHistory";
 import { normalize } from "../../../errors/normalize";
+import { recordError } from "../../../errors/report";
 import type { AppErrorKind } from "../../../errors/types";
 import { useToast } from "../../../ui/Toast";
 import { resetConnection } from "../../../stores/connection";
@@ -45,7 +48,11 @@ export function useSignOut(): SignOutResult {
 
       useLiveStore.getState().reset();
       resetConnection();
+      stopPersistedCache();
       queryClient.clear();
+      void wipeDeviceData().catch((cause: unknown) => {
+        recordError(normalize(cause, { action: "wipe device data", resource: "device storage" }));
+      });
 
       await navigate(
         redirect === undefined ? { to: "/login" } : { to: "/login", search: { redirect } },

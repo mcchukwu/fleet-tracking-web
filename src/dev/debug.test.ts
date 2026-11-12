@@ -28,6 +28,12 @@ const snapshot: FleetDebugSnapshot = {
     geofenceCount: 0,
     stale: false,
   },
+  pwa: {
+    cacheSavedAt: null,
+    mapCachedAt: null,
+    updateAvailable: false,
+    serviceWorker: "unsupported",
+  },
   playback: {
     vehicleId: null,
     from: null,

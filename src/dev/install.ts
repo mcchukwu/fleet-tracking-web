@@ -1,6 +1,8 @@
 import {
+  debugEnabled,
   readMapDebug,
   readPlaybackDebug,
+  readPwaDebug,
   registerDebugSnapshot,
 } from "./debug";
 import { recordRequestFailure, resetErrorStorm } from "../errors/global";
@@ -44,10 +46,11 @@ export function installDebugHook(): () => void {
       },
       map: readMapDebug(),
       playback: readPlaybackDebug(),
+      pwa: readPwaDebug(),
     };
   });
 
-  if (!import.meta.env.DEV) return unregister;
+  if (!debugEnabled()) return unregister;
   Object.defineProperty(window, "__FLEET_TEST_CONNECTION__", {
     configurable: true,
     enumerable: false,

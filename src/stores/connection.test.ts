@@ -1,84 +1,140 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { onlineManager } from "@tanstack/react-query";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  installNetworkListeners,
+  createConnectivity,
   resetConnection,
   useConnectionStore,
-  type ConnectionState,
 } from "./connection";
-import { resetTicker } from "../lib/ticker";
+
+const connectivityListeners: Array<() => void> = [];
+
+beforeEach(() => {
+  resetConnection();
+  onlineManager.setOnline(true);
+});
 
 afterEach(() => {
-  resetTicker();
-  useConnectionStore.getState().setRetryLive(null);
-  useConnectionStore.setState({ network: "online", socket: "down", lastDataAt: null, socketDownAt: null });
+  for (const stop of connectivityListeners.splice(0)) stop();
   vi.useRealTimers();
 });
 
-describe("connection store", () => {
-  it("records socket and data age changes", () => {
-    useConnectionStore.getState().setSocket("live");
-    useConnectionStore.getState().markData(1_000);
-    const state: ConnectionState = useConnectionStore.getState();
-    expect(state.socket).toBe("live");
-    expect(state.lastDataAt).toBe(1_000);
+function startWithProbe(probe: () => Promise<boolean>, interval = 1_000) {
+  const controller = createConnectivity({ probe, probeIntervalMs: interval });
+  connectivityListeners.push(controller.start());
+  return controller;
+}
+
+describe("connectivity truth", () => {
+  it("starts online when the probe succeeds", async () => {
+    const probe = vi.fn().mockResolvedValue(true);
+    startWithProbe(probe);
+
+    await vi.waitFor(() => expect(probe).toHaveBeenCalled());
+    expect(useConnectionStore.getState().network).toBe("online");
   });
 
-  it("follows browser online and offline events", () => {
-    vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
-    const cleanup = installNetworkListeners();
-    expect(useConnectionStore.getState().network).toBe("online");
+  it("goes offline when the browser goes offline", async () => {
+    startWithProbe(vi.fn().mockResolvedValue(true));
+    await vi.waitFor(() => expect(useConnectionStore.getState().network).toBe("online"));
 
-    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    window.dispatchEvent(new Event("offline"));
+    expect(useConnectionStore.getState().network).toBe("offline");
+  });
+
+  it("keeps a lying navigator.onLine offline until a probe succeeds", async () => {
+    vi.useFakeTimers();
+    const probe = vi.fn().mockResolvedValue(false);
+    startWithProbe(probe, 1_000);
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(window.navigator.onLine).toBe(true);
+    expect(useConnectionStore.getState().network).toBe("offline");
+
+    probe.mockResolvedValue(true);
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(useConnectionStore.getState().network).toBe("online");
+  });
+
+  it("probes on the browser online event without trusting it", async () => {
+    vi.useFakeTimers();
+    const probe = vi.fn().mockResolvedValue(false);
+    startWithProbe(probe, 1_000);
+    await vi.advanceTimersByTimeAsync(0);
+
     window.dispatchEvent(new Event("offline"));
     expect(useConnectionStore.getState().network).toBe("offline");
 
-    vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
     window.dispatchEvent(new Event("online"));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(useConnectionStore.getState().network).toBe("offline");
+
+    probe.mockResolvedValue(true);
+    await vi.advanceTimersByTimeAsync(1_000);
     expect(useConnectionStore.getState().network).toBe("online");
-    cleanup();
   });
 
-  it("stamps when the socket drops and clears it when live", () => {
+  it("starts the probe loop after a failed fetch and stops it on recovery", async () => {
     vi.useFakeTimers();
-    vi.setSystemTime(1_000);
-    const store = useConnectionStore.getState();
+    const probe = vi.fn().mockResolvedValue(false);
+    const controller = startWithProbe(probe, 1_000);
+    await vi.advanceTimersByTimeAsync(0);
 
-    store.setSocket("live");
-    expect(useConnectionStore.getState().socketDownAt).toBeNull();
+    controller.reportUnreachable();
+    expect(useConnectionStore.getState().network).toBe("offline");
 
-    vi.setSystemTime(5_000);
-    store.setSocket("reconnecting");
-    expect(useConnectionStore.getState().socketDownAt).toBe(5_000);
+    const before = probe.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(probe.mock.calls.length).toBeGreaterThan(before);
 
-    vi.setSystemTime(8_000);
-    store.setSocket("down");
-    expect(useConnectionStore.getState().socketDownAt).toBe(5_000);
+    probe.mockResolvedValue(true);
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(useConnectionStore.getState().network).toBe("online");
 
-    store.setSocket("live");
-    expect(useConnectionStore.getState().socketDownAt).toBeNull();
+    const settled = probe.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect(probe.mock.calls.length).toBe(settled);
   });
 
-  it("forwards a manual retry and restarts the down clock", () => {
+  it("treats any HTTP response as reachable", async () => {
     vi.useFakeTimers();
-    vi.setSystemTime(10_000);
-    const retry = vi.fn();
-    useConnectionStore.getState().setRetryLive(retry);
-    useConnectionStore.getState().setSocket("reconnecting");
+    const controller = startWithProbe(vi.fn().mockResolvedValue(false), 1_000);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(useConnectionStore.getState().network).toBe("offline");
 
-    vi.setSystemTime(70_000);
-    useConnectionStore.getState().retryLive();
-
-    expect(retry).toHaveBeenCalledTimes(1);
-    expect(useConnectionStore.getState().socketDownAt).toBe(70_000);
+    controller.reportReachable();
+    expect(useConnectionStore.getState().network).toBe("online");
   });
 
-  it("resets connection state on sign-out", () => {
-    useConnectionStore.getState().setSocket("live");
-    useConnectionStore.getState().markData(1_000);
-    resetConnection();
-    const state = useConnectionStore.getState();
-    expect(state.socket).toBe("down");
-    expect(state.lastDataAt).toBeNull();
-    expect(state.socketDownAt).toBeNull();
+  it("keeps TanStack Query's online manager in sync and announces transitions", async () => {
+    vi.useFakeTimers();
+    const events: boolean[] = [];
+    const listener = (event: Event) => {
+      events.push((event as CustomEvent<{ online: boolean }>).detail.online);
+    };
+    window.addEventListener("fleet:connectivity", listener);
+
+    const controller = startWithProbe(vi.fn().mockResolvedValue(false), 1_000);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(onlineManager.isOnline()).toBe(false);
+
+    controller.reportReachable();
+    expect(onlineManager.isOnline()).toBe(true);
+    expect(events).toEqual([false, true]);
+
+    window.removeEventListener("fleet:connectivity", listener);
+  });
+
+  it("stops listening and probing after cleanup", async () => {
+    vi.useFakeTimers();
+    const probe = vi.fn().mockResolvedValue(false);
+    const controller = createConnectivity({ probe, probeIntervalMs: 1_000 });
+    const stop = controller.start();
+    await vi.advanceTimersByTimeAsync(0);
+    stop();
+
+    const calls = probe.mock.calls.length;
+    window.dispatchEvent(new Event("online"));
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect(probe.mock.calls.length).toBe(calls);
   });
 });
