@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   saveOfflineProfile: vi.fn(),
   claimImportHistory: vi.fn(),
   wipeDeviceData: vi.fn(),
+  startPersistedCache: vi.fn(),
   stopPersistedCache: vi.fn(),
 }));
 
@@ -23,6 +24,7 @@ vi.mock("./offlineProfile", () => ({
 }));
 
 vi.mock("../api/persistedCache", () => ({
+  startPersistedCache: mocks.startPersistedCache,
   stopPersistedCache: mocks.stopPersistedCache,
 }));
 
@@ -44,6 +46,8 @@ beforeEach(() => {
   mocks.wipeDeviceData.mockReset();
   mocks.wipeDeviceData.mockResolvedValue(undefined);
   mocks.stopPersistedCache.mockReset();
+  mocks.startPersistedCache.mockReset();
+  mocks.startPersistedCache.mockReturnValue(vi.fn());
 });
 
 afterEach(() => {
@@ -109,8 +113,30 @@ describe("AuthProvider", () => {
       useAuthStore.getState().clear();
     });
 
-    expect(mocks.stopPersistedCache).toHaveBeenCalledTimes(1);
+    expect(mocks.stopPersistedCache).toHaveBeenCalled();
     expect(mocks.wipeDeviceData).toHaveBeenCalledTimes(1);
+  });
+
+  it("restarts persistence after signing out and back in", async () => {
+    useAuthStore.getState().setSession(user, "token");
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <AuthProvider>
+          <div />
+        </AuthProvider>
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => expect(mocks.startPersistedCache).toHaveBeenCalledTimes(1));
+
+    act(() => {
+      useAuthStore.getState().clear();
+    });
+    act(() => {
+      useAuthStore.getState().setSession(user, "token-2");
+    });
+
+    await waitFor(() => expect(mocks.startPersistedCache).toHaveBeenCalledTimes(2));
   });
 
   it("saves the minimal profile after a verified session", async () => {
@@ -144,6 +170,41 @@ describe("AuthProvider", () => {
 
     await waitFor(() => expect(me).toHaveBeenCalled());
     await waitFor(() => expect(useAuthStore.getState().sessionVerified).toBe(true));
+    me.mockRestore();
+  });
+
+  it("ignores a late /me response after sign-out", async () => {
+    useAuthStore.getState().setOfflineProfile(user);
+    useConnectionStore.setState({ network: "offline" });
+    let resolveMe: (value: { user: typeof user; csrf_token: string }) => void = () => undefined;
+    const me = vi.spyOn(api, "me").mockReturnValue(
+      new Promise((resolve) => {
+        resolveMe = resolve;
+      }),
+    );
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <AuthProvider>
+          <div />
+        </AuthProvider>
+      </QueryClientProvider>,
+    );
+
+    act(() => {
+      useConnectionStore.setState({ network: "online" });
+    });
+    await waitFor(() => expect(me).toHaveBeenCalled());
+
+    act(() => {
+      useAuthStore.getState().clear();
+    });
+    await act(async () => {
+      resolveMe({ user, csrf_token: "late-token" });
+      await Promise.resolve();
+    });
+
+    expect(useAuthStore.getState().status).toBe("anonymous");
+    expect(useAuthStore.getState().user).toBeNull();
     me.mockRestore();
   });
 

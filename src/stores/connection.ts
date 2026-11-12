@@ -76,7 +76,8 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
 export function resetConnection(): void {
   retryTarget = noRetry;
   frozen = false;
-  const network = browserOnline() ? "online" : "offline";
+  // Keep the probe-backed network state; only reset the session-scoped fields.
+  const { network } = useConnectionStore.getState();
   useConnectionStore.setState({
     network,
     socket: "down",

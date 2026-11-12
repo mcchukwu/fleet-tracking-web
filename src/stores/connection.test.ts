@@ -9,6 +9,7 @@ import {
 const connectivityListeners: Array<() => void> = [];
 
 beforeEach(() => {
+  useConnectionStore.setState({ network: "online" });
   resetConnection();
   onlineManager.setOnline(true);
 });
@@ -122,6 +123,22 @@ describe("connectivity truth", () => {
     expect(events).toEqual([false, true]);
 
     window.removeEventListener("fleet:connectivity", listener);
+  });
+
+  it("keeps the probe-backed state instead of re-reading navigator.onLine on reset", () => {
+    const onLine = vi.spyOn(navigator, "onLine", "get");
+    useConnectionStore.setState({ network: "offline" });
+    onLine.mockReturnValue(true);
+    resetConnection();
+    expect(useConnectionStore.getState().network).toBe("offline");
+    expect(onlineManager.isOnline()).toBe(false);
+
+    useConnectionStore.setState({ network: "online" });
+    onLine.mockReturnValue(false);
+    resetConnection();
+    expect(useConnectionStore.getState().network).toBe("online");
+    expect(onlineManager.isOnline()).toBe(true);
+    onLine.mockRestore();
   });
 
   it("stops listening and probing after cleanup", async () => {

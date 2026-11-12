@@ -3,7 +3,7 @@ import { cleanup } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
 import { resetMockState } from "../mocks/handlers";
 import { server } from "../mocks/server";
-import { resetConnection } from "../stores/connection";
+import { resetConnection, useConnectionStore } from "../stores/connection";
 
 if (!window.matchMedia) {
   Object.defineProperty(window, "matchMedia", {
@@ -29,6 +29,7 @@ afterEach(() => {
   cleanup();
   server.resetHandlers();
   resetMockState();
+  useConnectionStore.setState({ network: "online" });
   resetConnection();
   localStorage.removeItem("fleet.mockSession"); // guard-ignore: test-only mock session reset.
   localStorage.removeItem("fleet.mockRole"); // guard-ignore: test-only mock session reset.

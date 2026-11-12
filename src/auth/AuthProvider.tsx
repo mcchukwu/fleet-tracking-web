@@ -2,7 +2,8 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/instance";
 import { meQueryOptions } from "../api/hooks/auth";
-import { stopPersistedCache } from "../api/persistedCache";
+import { queryKeys } from "../api/keys";
+import { startPersistedCache, stopPersistedCache } from "../api/persistedCache";
 import { normalize } from "../errors/normalize";
 import { recordError } from "../errors/report";
 import { claimImportHistory, wipeDeviceData } from "../lib/importHistory";
@@ -65,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (userId === null) {
       if (previous !== null) {
         stopPersistedCache();
+        void queryClient.cancelQueries({ queryKey: queryKeys.me });
         queryClient.clear();
         resetRef.current = wipeDeviceData().catch(reportStorageFailure);
       }
@@ -73,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (previous !== null && previous !== userId) {
       stopPersistedCache();
+      void queryClient.cancelQueries({ queryKey: queryKeys.me });
       queryClient.clear();
       resetRef.current = wipeDeviceData().catch(reportStorageFailure);
     }
@@ -85,6 +88,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .catch(reportStorageFailure),
     );
   }, [userId, queryClient]);
+
+  useEffect(() => {
+    if (status !== "authenticated" || userId === null) {
+      stopPersistedCache();
+      return;
+    }
+    return startPersistedCache(queryClient);
+  }, [status, userId, queryClient]);
 
   useEffect(() => {
     if (status !== "authenticated" || !verified || !user) return;
@@ -104,6 +115,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void queryClient
       .fetchQuery({ ...meQueryOptions(), staleTime: 0 })
       .then((response) => {
+        const current = useAuthStore.getState();
+        if (current.status !== "authenticated" || current.user?.id !== userId) return;
         api.setCsrfToken(response.csrf_token);
         useAuthStore.getState().setSession(response.user, response.csrf_token);
       })
@@ -114,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => {
         verifying.current = false;
       });
-  }, [status, verified, network, queryClient]);
+  }, [status, verified, network, queryClient, userId]);
 
   useEffect(() => {
     const onExpired = () => {

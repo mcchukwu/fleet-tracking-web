@@ -6,7 +6,7 @@ import "./index.css";
 import { App } from "./App";
 import { loadOfflineProfile } from "./auth/offlineProfile";
 import { useAuthStore } from "./auth/store";
-import { restorePersistedCache, reportStorageUnavailable, startPersistedCache } from "./api/persistedCache";
+import { restorePersistedCache, reportStorageUnavailable } from "./api/persistedCache";
 import { createQueryClient, installPreloadErrorHandler, installWindowErrorHandlers } from "./errors/global";
 import { normalize } from "./errors/normalize";
 import { recordError } from "./errors/report";
@@ -63,7 +63,6 @@ async function bootstrap(): Promise<void> {
     </StrictMode>,
   );
 
-  startPersistedCache(queryClient);
   startPwa();
 }
 
