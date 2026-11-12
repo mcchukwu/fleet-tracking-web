@@ -83,11 +83,6 @@ export function VehicleDetailBody({
           />
           {showDetailSkeleton ? <VehicleDrawerSkeleton /> : null}
         </>
-      ) : view.state === "offline-empty" ? (
-        <EmptyState
-          title="Vehicle details aren't available offline"
-          description="Reconnect to load the full record."
-        />
       ) : view.state === "error" || view.state === "empty" ? (
         detailError && !vehicle && !row ? (
           <div className="p-4">
@@ -144,7 +139,13 @@ export function VehicleDetailBody({
             driverName={vehicle?.driver_name ?? row?.driverName}
             driverPhone={vehicle?.driver_phone}
           />
-          {vehicle ? <VehicleDetailsSection vehicle={vehicle} /> : null}
+          {vehicle ? (
+            <VehicleDetailsSection vehicle={vehicle} />
+          ) : view.state === "offline-empty" ? (
+            <p className="border-b border-border px-4 py-2 text-xs text-muted">
+              Full vehicle details need a connection.
+            </p>
+          ) : null}
           <VehicleEventsSection vehicleId={vehicleId} offline={offline} />
         </>
       )}

@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SnapshotVehicle, Vehicle } from "../../../api/types";
+import type { SnapshotVehicle, Vehicle, VehicleEvent } from "../../../api/types";
 import { ApiError } from "../../../errors/types";
 import { ToastProvider } from "../../../ui/Toast";
 import { TooltipProvider } from "../../../ui/Tooltip";
@@ -28,18 +28,19 @@ const mocks = vi.hoisted(() => ({
     error: null as unknown,
     refetch: vi.fn(),
   },
+  events: {
+    data: [] as VehicleEvent[],
+    isPending: false,
+    isLoading: false,
+    isError: false,
+    error: null as unknown,
+    refetch: vi.fn(),
+  },
 }));
 
 vi.mock("../../../api/hooks/vehicles", () => ({
   useVehicle: () => mocks.vehicle,
-  useVehicleEvents: () => ({
-    data: [],
-    isPending: false,
-    isLoading: false,
-    isError: false,
-    error: null,
-    refetch: vi.fn(),
-  }),
+  useVehicleEvents: () => mocks.events,
 }));
 vi.mock("../../../api/hooks/trips", () => ({ useTrips: () => mocks.trips }));
 
@@ -122,6 +123,14 @@ describe("VehicleDetailBody", () => {
       error: null,
     };
     mocks.trips = { ...mocks.trips, data: [], isPending: false, isLoading: false, fetchStatus: "idle" };
+    mocks.events = {
+      data: [],
+      isPending: false,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    };
   });
 
   it("renders the record, live state and the detail sections", () => {
@@ -133,7 +142,7 @@ describe("VehicleDetailBody", () => {
     expect(screen.getByRole("heading", { name: "Recent events" })).toBeVisible();
   });
 
-  it("shows the offline empty state for a paused query instead of a skeleton", () => {
+  it("shows the scoped details notice for a paused query instead of a skeleton", () => {
     mocks.vehicle = {
       ...mocks.vehicle,
       data: undefined,
@@ -143,12 +152,12 @@ describe("VehicleDetailBody", () => {
     };
     renderBody({ offline: true });
 
-    expect(screen.getByText("Vehicle details aren't available offline")).toBeVisible();
+    expect(screen.getByText("Full vehicle details need a connection.")).toBeVisible();
     expect(screen.queryByLabelText("Loading vehicle details")).not.toBeInTheDocument();
     expect(screen.queryByText("Still working…")).not.toBeInTheDocument();
   });
 
-  it("keeps the live row visible beside the offline empty state", () => {
+  it("keeps the cached row, snapshot trip and events beside the scoped notice", () => {
     mocks.vehicle = {
       ...mocks.vehicle,
       data: undefined,
@@ -156,10 +165,28 @@ describe("VehicleDetailBody", () => {
       isLoading: false,
       fetchStatus: "paused",
     };
-    renderBody({ row, snapshotVehicle: snapshot, offline: true });
+    mocks.events = {
+      ...mocks.events,
+      data: [
+        { kind: "geofence", type: "enter", name: "Refinery Gate", at: "2026-11-02T14:31:00Z" },
+      ],
+    };
+    renderBody({
+      row,
+      snapshotVehicle: {
+        ...snapshot,
+        destination: "Ibadan Customer",
+        trip_status: "active",
+      },
+      offline: true,
+    });
 
     expect(screen.getByText("62 km/h")).toBeVisible();
-    expect(screen.getByText("Vehicle details aren't available offline")).toBeVisible();
+    expect(screen.getByText("Adebayo Okafor")).toBeVisible();
+    expect(screen.getByText("Ibadan Customer")).toBeVisible();
+    expect(screen.getByText("Geofence entry")).toBeVisible();
+    expect(screen.getByText("Full vehicle details need a connection.")).toBeVisible();
+    expect(screen.queryByLabelText("Loading vehicle details")).not.toBeInTheDocument();
   });
 
   it("shows the skeleton only while the query is actually loading", async () => {

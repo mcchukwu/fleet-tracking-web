@@ -146,7 +146,7 @@ test.describe("offline and PWA", () => {
     await expect(page.getByLabel("Loading alerts")).toHaveCount(0);
   });
 
-  test("a cold offline vehicle deep link shows the neutral empty state, not a skeleton", async ({
+  test("a cold offline vehicle deep link shows no skeleton and no invented error", async ({
     page,
     context,
     pwa,
@@ -166,9 +166,34 @@ test.describe("offline and PWA", () => {
 
     await page.waitForTimeout(1_000);
     await expect(page.getByLabel("Loading vehicle details")).toHaveCount(0);
-    await expect(page.getByText("Vehicle details aren't available offline")).toBeVisible();
+    await expect(page.getByText("Full vehicle details need a connection.")).toBeVisible();
     await expect(page.getByText("Still working…")).toHaveCount(0);
     await expect(page.getByText("Taking longer than usual")).toHaveCount(0);
+  });
+
+  test("a cold offline vehicle deep link keeps the cached snapshot row and its driver", async ({
+    page,
+    context,
+    pwa,
+  }) => {
+    test.skip(page.viewportSize()?.width !== 390, "The mobile detail sheet is the surface under test.");
+    await warmOnline(page);
+
+    const vehicleId = "4324a768-9b14-4223-a299-eb8da4d8d309";
+    expect(
+      pwa.apiRequests.filter((request) => request.path === `/vehicles/${vehicleId}`),
+    ).toHaveLength(0);
+
+    pwa.setOffline(true);
+    await context.setOffline(true);
+    await page.goto(`/?v=${vehicleId}`);
+
+    await expectOfflineBoot(page);
+    const sheet = page.getByTestId("vehicle-detail-sheet");
+    await expect(sheet).toBeVisible();
+    await expect(sheet.getByText("Adebayo Okafor")).toBeVisible();
+    await expect(sheet.getByText("Full vehicle details need a connection.")).toBeVisible();
+    await expect(page.getByLabel("Loading vehicle details")).toHaveCount(0);
   });
 
   test("verifies the session and resumes live data on reconnect", async ({

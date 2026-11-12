@@ -194,7 +194,7 @@ describe("VehicleDrawer", () => {
     mocks.vehicle = { ...mocks.vehicle, data: undefined, isPending: true, isLoading: false };
     renderDrawer({ offline: true });
     expect(screen.queryByLabelText("Loading vehicle details")).not.toBeInTheDocument();
-    expect(screen.getByText("Vehicle details aren't available offline")).toBeVisible();
+    expect(screen.getByText("Geofence entry")).toBeVisible();
   });
 
   it("keeps the cached detail and offers a refresh when a refetch fails", () => {
