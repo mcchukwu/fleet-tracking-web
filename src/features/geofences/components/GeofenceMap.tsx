@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { MapAdapter, MapGeofence } from "../../../map/types";
+import { mapOfflineConfigured } from "../../../map/config";
 import { FleetMap } from "../../../map/FleetMap";
 import { MapAttribution } from "../../../map/MapAttribution";
 import { GeofenceMapControls } from "./GeofenceMapControls";
@@ -38,7 +39,7 @@ export function GeofenceMap({
     [],
   );
 
-  const offlinePanel = offline && (adapter === null || !adapter.capabilities.offline);
+  const offlinePanel = offline && !(adapter?.capabilities.offline ?? mapOfflineConfigured());
   const styleState = adapter?.getStyleState();
   const drawn = editingId ? geofences.filter((row) => row.id !== editingId) : geofences;
 

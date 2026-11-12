@@ -43,6 +43,11 @@ vi.mock("../../../map/FleetMap", () => ({
   ),
 }));
 
+vi.mock("../../../map/config", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../map/config")>();
+  return { ...actual, mapOfflineConfigured: () => true };
+});
+
 function renderMap(element: ReactElement) {
   return render(<TooltipProvider>{element}</TooltipProvider>);
 }
@@ -97,6 +102,20 @@ describe("GeofenceMap", () => {
       />,
     );
     expect(screen.getByTestId("fleet-map")).toHaveAttribute("data-dimmed", "true");
+  });
+
+  it("mounts the map offline before an adapter exists when a local pack is configured", () => {
+    renderMap(
+      <GeofenceMap
+        geofences={[]}
+        adapter={null}
+        offline
+        onAdapter={vi.fn()}
+        onFitAll={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId("fleet-map")).toHaveAttribute("data-dimmed", "true");
+    expect(screen.queryByText("Map isn't available offline")).toBeNull();
   });
 
   it("replaces an offline-incapable map with a neutral notice", () => {

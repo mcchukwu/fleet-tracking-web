@@ -6,7 +6,7 @@ const tokens = contractTokens;
 
 describe("basemap flavor", () => {
   it("takes every colour group from the design tokens", () => {
-    const flavor = basemapFlavor(tokens);
+    const flavor = basemapFlavor(tokens, "light");
 
     expect(flavor.background).toBe(tokens.basemap.background);
     expect(flavor.earth).toBe(tokens.basemap.earth);
@@ -21,10 +21,18 @@ describe("basemap flavor", () => {
   });
 
   it("uses the self-hosted font stacks", () => {
-    const flavor = basemapFlavor(tokens);
+    const flavor = basemapFlavor(tokens, "light");
     expect(flavor.regular).toBe("Noto Sans Regular");
     expect(flavor.bold).toBe("Noto Sans Medium");
     expect(flavor.italic).toBe("Noto Sans Italic");
+  });
+
+  it("keeps the theme's landcover and point-of-interest colours", () => {
+    const light = basemapFlavor(tokens, "light");
+    const dark = basemapFlavor(tokens, "dark");
+
+    expect(dark.landcover?.forest).not.toBe(light.landcover?.forest);
+    expect(dark.pois?.green).not.toBe(light.pois?.green);
   });
 });
 

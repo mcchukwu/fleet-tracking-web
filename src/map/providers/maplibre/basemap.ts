@@ -15,8 +15,8 @@ export const BASEMAP_FONTS = {
  * Protomaps' flavor is a flat colour map. Start from its shape and replace
  * every visible group with the design tokens, so the adapter holds no hex.
  */
-export function basemapFlavor(tokens: MapTokens): Flavor {
-  const base = namedFlavor("light");
+export function basemapFlavor(tokens: MapTokens, theme: "light" | "dark"): Flavor {
+  const base = namedFlavor(theme);
   const b = tokens.basemap;
   return {
     ...base,
@@ -116,6 +116,6 @@ export function buildBasemapStyle(
         attribution: BASEMAP_ATTRIBUTION,
       },
     },
-    layers: layers(BASEMAP_SOURCE, basemapFlavor(tokens), { lang: "en" }),
+    layers: layers(BASEMAP_SOURCE, basemapFlavor(tokens, theme), { lang: "en" }),
   } as StyleSpecification;
 }
