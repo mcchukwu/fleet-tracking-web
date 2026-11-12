@@ -400,7 +400,11 @@ const auditRowSchema = z.object({
   created_at: timestamp,
 });
 
-export type AuditParseResult = { entries: AuditEntry[]; rejected: number };
+export type AuditParseResult = {
+  entries: AuditEntry[];
+  rejected: number;
+  received: number;
+};
 
 /**
  * `/audit` is `type: object` in the spec, so the client contract is this
@@ -431,10 +435,11 @@ export function parseAuditResponse(payload: unknown): AuditParseResult {
     });
   }
 
-  if (envelope.data.data.length > 0 && entries.length === 0) {
+  const received = envelope.data.data.length;
+  if (received > 0 && entries.length === 0) {
     throw new ContractError("No audit row matched the expected shape");
   }
-  return { entries, rejected };
+  return { entries, rejected, received };
 }
 
 export const systemHealthSchema = z.object({

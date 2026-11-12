@@ -9,12 +9,12 @@ export function auditFeedQueryOptions(enabled = true) {
   return infiniteQueryOptions({
     queryKey: queryKeys.auditFeed,
     queryFn: ({ pageParam, signal }: { pageParam: number; signal: AbortSignal }) =>
-      api
-        .audit({ limit: AUDIT_PAGE_SIZE, offset: pageParam }, { signal })
-        .then((response) => response.data),
+      api.audit({ limit: AUDIT_PAGE_SIZE, offset: pageParam }, { signal }),
     initialPageParam: 0,
+    // A dropped malformed row shrinks the parsed page, so page from the raw
+    // count the server returned; otherwise one bad row hides older entries.
     getNextPageParam: (lastPage, _pages, lastPageParam) =>
-      lastPage.length === AUDIT_PAGE_SIZE
+      lastPage.received >= AUDIT_PAGE_SIZE
         ? lastPageParam + AUDIT_PAGE_SIZE
         : undefined,
     staleTime: 0,

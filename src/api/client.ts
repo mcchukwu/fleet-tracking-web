@@ -449,7 +449,7 @@ export class FleetApiClient {
     );
     const result = this.parse(payload, "/audit", parseAuditResponse);
     this.noteRejectedRows("/audit", result.rejected);
-    return { data: result.entries };
+    return { data: result.entries, received: result.received };
   }
 
   importVehicles(file: File, options: RequestOptions = {}): Promise<ImportResult> {

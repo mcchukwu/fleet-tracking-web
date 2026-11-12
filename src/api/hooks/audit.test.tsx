@@ -28,12 +28,11 @@ describe("audit feed query", () => {
   it("requests 100 rows, pages by offset and stops on a short page", async () => {
     const audit = vi.spyOn(api, "audit").mockImplementation((filters) => {
       const offset = filters.offset;
-      return Promise.resolve({
-        data: Array.from(
-          { length: offset === 0 ? 100 : 5 },
-          (_, index) => row(offset + index),
-        ),
-      });
+      const data = Array.from(
+        { length: offset === 0 ? 100 : 5 },
+        (_, index) => row(offset + index),
+      );
+      return Promise.resolve({ data, received: data.length });
     });
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
@@ -60,11 +59,43 @@ describe("audit feed query", () => {
     );
     expect(result.current.hasNextPage).toBe(false);
   });
+
+  it("keeps paging when a full page dropped a malformed row", async () => {
+    const audit = vi.spyOn(api, "audit").mockImplementation((filters) => {
+      const offset = filters.offset;
+      if (offset === 0) {
+        return Promise.resolve({
+          data: Array.from({ length: 99 }, (_, index) => row(index + 1)),
+          received: 100,
+        });
+      }
+      return Promise.resolve({ data: [row(101)], received: 1 });
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const { result } = renderHook(() => useAuditFeedQuery(), {
+      wrapper: wrapperFor(queryClient),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.hasNextPage).toBe(true);
+
+    await act(async () => {
+      await result.current.fetchNextPage();
+    });
+
+    await waitFor(() => expect(result.current.data?.pages).toHaveLength(2));
+    expect(audit).toHaveBeenLastCalledWith(
+      { limit: 100, offset: 100 },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+  });
 });
 
 describe("audit lookup query", () => {
   it("stays idle without an id, finds an entry and returns null for a stranger", async () => {
-    const audit = vi.spyOn(api, "audit").mockResolvedValue({ data: [row(7)] });
+    const audit = vi.spyOn(api, "audit").mockResolvedValue({ data: [row(7)], received: 1 });
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });

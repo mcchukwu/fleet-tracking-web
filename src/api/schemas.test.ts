@@ -204,6 +204,26 @@ describe("contract schemas", () => {
 
     expect(result.entries).toHaveLength(1);
     expect(result.rejected).toBe(2);
+    expect(result.received).toBe(3);
+  });
+
+  it("counts a full page before dropping a malformed row", () => {
+    const rows: unknown[] = Array.from({ length: 100 }, (_, index) => ({
+      id: index + 1,
+      action: "auth.login",
+      entity: "user",
+      entity_id: `u-${index + 1}`,
+      user_name: "Demo",
+      metadata: {},
+      created_at: "2026-11-12T02:03:55Z",
+    }));
+    rows[42] = { id: 43, action: "auth.login" };
+
+    const result = parseAuditResponse({ data: rows });
+
+    expect(result.received).toBe(100);
+    expect(result.entries).toHaveLength(99);
+    expect(result.rejected).toBe(1);
   });
 
   it("rejects a bad audit envelope and a page where every row is invalid", () => {
@@ -211,7 +231,11 @@ describe("contract schemas", () => {
     expect(() => parseAuditResponse({ data: [{ unexpected: true }] })).toThrow(
       "No audit row matched the expected shape",
     );
-    expect(parseAuditResponse({ data: [] })).toMatchObject({ entries: [], rejected: 0 });
+    expect(parseAuditResponse({ data: [] })).toMatchObject({
+      entries: [],
+      rejected: 0,
+      received: 0,
+    });
   });
 
   it("accepts both null and an array for import errors", () => {
