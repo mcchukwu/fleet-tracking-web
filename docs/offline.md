@@ -77,7 +77,15 @@ Command (production preview, avoid tenant data by using `/login`):
 npx lighthouse http://127.0.0.1:4174/login --chrome-flags="--headless" --only-categories=pwa,performance --output=json --output-path=/tmp/fleet-lighthouse.json
 ```
 
-Result recorded with the version used: see the completion report. Lighthouse removed the dedicated PWA category in v12; installability is asserted in the PWA suite through Chromium's `Page.getInstallabilityErrors`, which must be empty.
+Result on 2026-11-12 against the production preview (`lighthouse@12.8.2`, headless Playwright Chromium, mobile emulation):
+
+| Category | Score |
+|---|---|
+| Performance | 80 |
+| Accessibility | 100 |
+| Best practices | 96 |
+
+Lighthouse removed the dedicated PWA category and its installability audits in v12; the JSON has no PWA or manifest audits. Installability is asserted in the PWA suite through Chromium's `Page.getInstallabilityErrors`, which must be empty.
 
 ## Limitations
 

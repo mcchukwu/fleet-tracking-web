@@ -641,7 +641,7 @@ export function MapPage() {
       </ErrorBoundary>
       ) : null}
 
-      {kpiHidden ? null : (
+      {kpiHidden || listOnly ? null : (
         <div
           data-testid="map-kpi"
           className={cn(
@@ -660,8 +660,13 @@ export function MapPage() {
       {listOnly ? (
         <div
           data-testid="map-list-only"
-          className="absolute inset-x-3 bottom-3 top-20 z-panel flex flex-col gap-2"
+          className="absolute inset-3 z-panel flex flex-col gap-2"
         >
+          <div data-testid="map-kpi" className="shrink-0">
+            <ErrorBoundary level="panel">
+              <KpiStrip cells={kpiCells} compact={!isDesktop} loading={snapshotPending} />
+            </ErrorBoundary>
+          </div>
           <Banner tone="neutral" message={pwaCopy.mapOfflineTitle} />
           <ErrorBoundary level="panel">
             <VehiclePanel

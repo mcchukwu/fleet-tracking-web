@@ -4,7 +4,6 @@ import {
   captureForReview,
   expectNoAxeViolations,
   expectNoHorizontalScroll,
-  expectNoOverlap,
 } from "./helpers";
 
 async function goOffline(page: Page): Promise<void> {
@@ -49,12 +48,12 @@ test.describe("offline presentation", () => {
     await expect(page.getByTestId("map-attribution")).toHaveCount(0);
     await expectNoHorizontalScroll(page);
     await expectNoAxeViolations(page);
-    await expectNoOverlap(page.getByTestId("map-kpi"), page.getByTestId("map-list-only"));
+    await expect(page.getByTestId("map-list-only").getByTestId("map-kpi")).toBeVisible();
 
-    const viewport = page.viewportSize();
+    const root = await page.getByTestId("map-root").boundingBox();
     const box = await page.getByTestId("map-list-only").boundingBox();
-    if (viewport && box) {
-      expect(box.width).toBeGreaterThanOrEqual(viewport.width - 32);
+    if (root && box) {
+      expect(box.width).toBeGreaterThanOrEqual(root.width - 32);
     }
 
     await captureForReview(page, "13-offline-map-list-only");
