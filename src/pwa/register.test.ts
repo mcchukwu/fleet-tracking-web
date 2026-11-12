@@ -11,7 +11,7 @@ const registerMock = vi.mocked(registerSW);
 function optionsOf() {
   const call = registerMock.mock.calls[0];
   if (!call) throw new Error("registerSW was not called");
-  return call[0];
+  return call[0]!;
 }
 
 describe("service worker registration", () => {

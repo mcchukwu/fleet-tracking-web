@@ -51,7 +51,6 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: 'prompt',
         injectRegister: false,
-        includeAssets: ['favicon.svg', 'favicon-32.png', 'apple-touch-icon.png'],
         manifest: manifestFromTokens(tokensCss),
         devOptions: { enabled: swDev },
         workbox: {
