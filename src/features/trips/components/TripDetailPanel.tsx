@@ -20,7 +20,7 @@ import { Drawer } from "../../../ui/Drawer";
 import { Skeleton } from "../../../ui/StatePanel";
 import { Timestamp } from "../../../ui/Timestamp";
 
-export type TripLookupState = "loading" | "ready" | "not-found" | "error";
+export type TripLookupState = "loading" | "ready" | "not-found" | "error" | "offline";
 
 export interface TripActionErrorState {
   error: AppError;
@@ -113,6 +113,14 @@ function MissingTripPanel({
         </div>
       ) : lookup === "error" && lookupError ? (
         <ErrorState error={lookupError} onRetry={onRetryLookup} className="py-8" />
+      ) : lookup === "offline" ? (
+        <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+          <p className="text-text text-base font-medium">Trip isn't available offline</p>
+          <p className="text-muted text-sm">Reconnect to load this trip.</p>
+          <Button size="sm" onClick={onClose}>
+            Back to trips
+          </Button>
+        </div>
       ) : (
         <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
           <p className="text-text text-base font-medium">Trip not found</p>
