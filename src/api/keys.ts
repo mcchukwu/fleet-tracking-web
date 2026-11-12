@@ -1,7 +1,6 @@
 import type {
   AlertFilters,
   AlertServerFilters,
-  AuditFilters,
   HistoryRange,
   TripFilters,
   TripServerFilters,
@@ -27,7 +26,8 @@ export const queryKeys = {
   geofences: ["geofences"] as const,
   reports: (from: string, to: string) => ["reports", from, to] as const,
   systemHealth: ["system-health"] as const,
-  audit: (filters: AuditFilters) => ["audit", filters] as const,
+  auditFeed: ["audit", "feed"] as const,
+  auditLookup: (id: string) => ["audit", "lookup", id] as const,
 } as const;
 
 export const persistedQueryRoots = [

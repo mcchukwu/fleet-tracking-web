@@ -5,6 +5,7 @@ import { can } from "../auth/roles";
 import type {
   Alert,
   AlertRule,
+  AuditEntry,
   Driver,
   Geofence,
   Trip,
@@ -26,7 +27,9 @@ import { isGeofenceKind } from "../features/geofences/lib/kinds";
 import { generateHistory, historyFixture } from "./fixtures/history";
 import { tripsFixture } from "./fixtures/trips";
 import {
+  auditLargeFixture,
   auditResponseFixture,
+  auditUnknownFixture,
   reportSummaryBadRowFixture,
   reportSummaryFixture,
   reportSummaryHugeChartFixture,
@@ -103,6 +106,7 @@ interface MockState {
   trips: Trip[];
   geofences: Geofence[];
   drivers: Driver[];
+  audit: AuditEntry[];
 }
 
 function createState(): MockState {
@@ -121,6 +125,7 @@ function createState(): MockState {
     trips: structuredClone(tripsFixture),
     geofences: structuredClone(geofencesFixture),
     drivers: structuredClone(driversFixture),
+    audit: structuredClone(auditResponseFixture.data),
   };
 }
 
@@ -174,6 +179,7 @@ const MOCK_ROLE_KEY = "fleet.mockRole";
 const MOCK_AUTH_KEY = "fleet.mockAuth";
 const MOCK_REPORTS_KEY = "fleet.mockReports";
 const MOCK_SYSTEM_KEY = "fleet.mockSystem";
+const MOCK_AUDIT_KEY = "fleet.mockAudit";
 let systemHealthRequests = 0;
 const DEFAULT_EMAIL = "dispatcher@demo.ftb";
 
@@ -215,6 +221,13 @@ function systemHealthForScenario() {
     return systemHealthRisingFixture(systemHealthRequests - 1);
   }
   return systemHealthFixture;
+}
+
+function auditForScenario(): AuditEntry[] {
+  const scenario = readOverride(MOCK_AUDIT_KEY);
+  if (scenario === "large") return auditLargeFixture.data;
+  if (scenario === "unknown") return auditUnknownFixture.data;
+  return state.audit;
 }
 
 function reportSummaryForScenario() {
@@ -1277,10 +1290,59 @@ export const handlers = [
 
   http.get(`${API}/audit`, ({ request }) => {
     return withFault("audit", request, () => {
-      const user = mockCurrentUser();
+      const user = resolveUser();
+      if (!user) {
+        return HttpResponse.json(
+          { error: { code: "unauthorized", message: "login required" } },
+          { status: 401 },
+        );
+      }
       if (user.role !== "admin" && user.role !== "security") return forbidden();
-      return HttpResponse.json(auditResponseFixture);
+
+      const url = new URL(request.url);
+      const pageEmpty =
+        typeof window !== "undefined" &&
+        new URLSearchParams(window.location.search).get("empty") === "audit";
+      if (url.searchParams.get("empty") === "audit" || pageEmpty) {
+        return HttpResponse.json({ data: [] });
+      }
+
+      const limitParam = Number.parseInt(url.searchParams.get("limit") ?? "", 10);
+      const offsetParam = Number.parseInt(url.searchParams.get("offset") ?? "", 10);
+      const limit = Number.isFinite(limitParam)
+        ? Math.min(500, Math.max(1, limitParam))
+        : 100;
+      const offset = Number.isFinite(offsetParam) ? Math.max(0, offsetParam) : 0;
+      const data = auditForScenario();
+      return HttpResponse.json({ data: data.slice(offset, offset + limit) });
     });
+  }),
+
+  http.post(`${API}/__mock/audit`, async ({ request }) => {
+    const user = resolveUser();
+    if (!user) {
+      return HttpResponse.json(
+        { error: { code: "unauthorized", message: "login required" } },
+        { status: 401 },
+      );
+    }
+    const body =
+      (await readJson(request)) as Partial<Omit<AuditEntry, "id" | "created_at">> | null;
+    const newest = state.audit.reduce((max, entry) => {
+      const id = typeof entry.id === "number" ? entry.id : 0;
+      return Math.max(max, id);
+    }, 0);
+    const entry: AuditEntry = {
+      id: newest + 1,
+      action: body?.action ?? "auth.login",
+      entity: body?.entity ?? "user",
+      entity_id: body?.entity_id ?? "",
+      user_name: body?.user_name ?? user.name,
+      metadata: body?.metadata ?? {},
+      created_at: new Date().toISOString(),
+    };
+    state.audit = [entry, ...state.audit];
+    return HttpResponse.json({ data: entry });
   }),
 
   http.post(`${API}/import/vehicles`, async ({ request }) => {

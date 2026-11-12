@@ -56,7 +56,9 @@ export const reportsSearchSchema = z.object({
 });
 
 export const auditSearchSchema = z.object({
-  offset: z.coerce.number().int().min(0).optional().catch(undefined),
+  q: text,
+  action: text,
+  entry: text,
 });
 
 export const loginSearchSchema = z.object({

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   auditResponseSchema,
+  parseAuditResponse,
   historyResponseSchema,
   liveMessageSchema,
   parseAlerts,
@@ -113,6 +114,104 @@ describe("contract schemas", () => {
     if (parsed.success) {
       expect(parsed.data.data[0]?.action).toBe("auth.login");
     }
+  });
+
+  it("parses every valid audit row and keeps unknown actions and entities", () => {
+    const result = parseAuditResponse({
+      data: [
+        {
+          id: 207,
+          action: "user.role_change",
+          entity: "maintenance_job",
+          entity_id: "00000000-0000-0000-0000-000000000101",
+          user_name: "Demo Admin",
+          metadata: { from: "viewer", to: "admin" },
+          created_at: "2026-11-12T02:03:55Z",
+        },
+        {
+          id: "audit-string-id",
+          action: "auth.login",
+          entity: "user",
+          entity_id: "00000000-0000-0000-0000-000000000102",
+          user_name: "Demo Security",
+          metadata: {},
+          created_at: "2026-11-12T00:32:15Z",
+        },
+      ],
+    });
+
+    expect(result.rejected).toBe(0);
+    expect(result.entries.map((entry) => entry.id)).toEqual([
+      207,
+      "audit-string-id",
+    ]);
+    expect(result.entries[0]).toMatchObject({
+      action: "user.role_change",
+      entity: "maintenance_job",
+    });
+  });
+
+  it("normalises a missing or null entity id, actor and metadata", () => {
+    const result = parseAuditResponse({
+      data: [
+        {
+          id: 1,
+          action: "trip.create",
+          entity: "trip",
+          entity_id: null,
+          user_name: null,
+          metadata: null,
+          created_at: "2026-11-12T02:03:55Z",
+        },
+        {
+          id: 2,
+          action: "trip.update",
+          entity: "trip",
+          created_at: "2026-11-12T01:03:55Z",
+        },
+      ],
+    });
+
+    expect(result.rejected).toBe(0);
+    expect(result.entries[0]).toMatchObject({
+      entity_id: "",
+      user_name: "",
+      metadata: {},
+    });
+    expect(result.entries[1]).toMatchObject({
+      entity_id: "",
+      user_name: "",
+      metadata: {},
+    });
+  });
+
+  it("drops a malformed audit row and keeps the rest", () => {
+    const result = parseAuditResponse({
+      data: [
+        {
+          id: 3,
+          action: "auth.login",
+          entity: "user",
+          entity_id: "u",
+          user_name: "Demo",
+          metadata: {},
+          created_at: "2026-11-12T02:03:55Z",
+        },
+        { id: 4, action: "auth.login", entity: "user", created_at: "not a date" },
+        { nope: true },
+      ],
+    });
+
+    expect(result.entries).toHaveLength(1);
+    expect(result.rejected).toBe(2);
+  });
+
+  it("rejects a bad audit envelope and a page where every row is invalid", () => {
+    expect(() => parseAuditResponse({ rows: [] })).toThrow();
+    expect(() => parseAuditResponse({ data: [{ unexpected: true }] })).toThrow(
+      "No audit row matched the expected shape",
+    );
+    expect(parseAuditResponse({ data: [] })).toMatchObject({ entries: [], rejected: 0 });
   });
 
   it("accepts both null and an array for import errors", () => {

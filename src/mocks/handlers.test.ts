@@ -6,6 +6,7 @@ import { perfVehicles } from "./perf";
 import { tripsFixture } from "./fixtures/trips";
 import { driversFixture } from "./fixtures/drivers";
 import { geofencesFixture } from "./fixtures/geofences";
+import { auditResponseFixture } from "./fixtures/untyped";
 
 const API = `${window.location.origin}/api/v1`;
 const vehicleId = vehiclesFixture[0]?.id ?? "";
@@ -980,5 +981,115 @@ describe("mock system health scenarios", () => {
     };
     expect(afterReset.ingest.dropped).toBe(0);
     localStorage.removeItem("fleet.mockSystem"); // guard-ignore: test-only mock scenario.
+  });
+});
+
+describe("mock audit", () => {
+  afterEach(() => {
+    localStorage.removeItem("fleet.mockAudit"); // guard-ignore: test-only mock scenario.
+    localStorage.removeItem("fleet.mockRole"); // guard-ignore: test-only mock role override.
+    resetMockState();
+  });
+
+  async function asRole(role: string): Promise<void> {
+    localStorage.setItem("fleet.mockRole", role); // guard-ignore: test-only mock role override.
+    resetMockState();
+  }
+
+  it("allows admin and security and forbids dispatcher and viewer", async () => {
+    await asRole("admin");
+    expect((await fetch(`${API}/audit`)).status).toBe(200);
+    await asRole("security");
+    expect((await fetch(`${API}/audit`)).status).toBe(200);
+    await asRole("dispatcher");
+    expect((await fetch(`${API}/audit`)).status).toBe(403);
+    await asRole("viewer");
+    expect((await fetch(`${API}/audit`)).status).toBe(403);
+  });
+
+  it("returns 401 when the mock session is anonymous", async () => {
+    localStorage.setItem("fleet.mockAuth", "anonymous"); // guard-ignore: test-only mock session override.
+    const response = await fetch(`${API}/audit`);
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: "unauthorized" },
+    });
+    localStorage.removeItem("fleet.mockAuth"); // guard-ignore: test-only mock session override.
+  });
+
+  it("pages with limit and offset, defaults to 100 and caps at 500", async () => {
+    await asRole("admin");
+    const first = (await (await fetch(`${API}/audit`)).json()) as {
+      data: Array<{ id: number }>;
+    };
+    expect(first.data).toHaveLength(Math.min(100, auditResponseFixture.data.length));
+
+    const page = (await (await fetch(`${API}/audit?limit=2&offset=1`)).json()) as {
+      data: Array<{ id: number }>;
+    };
+    expect(page.data.map((entry) => entry.id)).toEqual([
+      auditResponseFixture.data[1]?.id,
+      auditResponseFixture.data[2]?.id,
+    ]);
+
+    const capped = (await (await fetch(`${API}/audit?limit=500`)).json()) as {
+      data: unknown[];
+    };
+    expect(capped.data.length).toBeLessThanOrEqual(500);
+  });
+
+  it("serves the large and unknown scenarios and the empty page", async () => {
+    await asRole("admin");
+    localStorage.setItem("fleet.mockAudit", "large"); // guard-ignore: test-only mock scenario.
+    const first = (await (await fetch(`${API}/audit`)).json()) as { data: unknown[] };
+    expect(first.data).toHaveLength(100);
+    const rest = (await (await fetch(`${API}/audit?limit=500`)).json()) as {
+      data: unknown[];
+    };
+    expect(rest.data).toHaveLength(205);
+
+    localStorage.setItem("fleet.mockAudit", "unknown"); // guard-ignore: test-only mock scenario.
+    const unknown = (await (await fetch(`${API}/audit`)).json()) as {
+      data: Array<{ action: string; entity: string }>;
+    };
+    expect(unknown.data[0]).toMatchObject({
+      action: "user.role_change",
+      entity: "maintenance_job",
+    });
+
+    const empty = (await (await fetch(`${API}/audit?empty=audit`)).json()) as {
+      data: unknown[];
+    };
+    expect(empty.data).toEqual([]);
+  });
+
+  it("appends a mock entry newest first and resets with the state", async () => {
+    await asRole("admin");
+    const append = await fetch(`${API}/__mock/audit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "vehicle.update",
+        entity: "vehicle",
+        entity_id: "vehicle-1",
+        user_name: "Demo Admin",
+        metadata: { depot: "Apapa Depot" },
+      }),
+    });
+    expect(append.status).toBe(200);
+
+    const page = (await (await fetch(`${API}/audit?limit=1`)).json()) as {
+      data: Array<{ action: string; metadata: Record<string, unknown> }>;
+    };
+    expect(page.data[0]).toMatchObject({
+      action: "vehicle.update",
+      metadata: { depot: "Apapa Depot" },
+    });
+
+    resetMockState();
+    const afterReset = (await (await fetch(`${API}/audit?limit=1`)).json()) as {
+      data: Array<{ action: string }>;
+    };
+    expect(afterReset.data[0]?.action).toBe(auditResponseFixture.data[0]?.action);
   });
 });

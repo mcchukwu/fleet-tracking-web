@@ -78,10 +78,21 @@ describe("route search schemas", () => {
     expect(playbackSearchSchema.parse({ vehicle: "demo-imei-0001" }).vehicle).toBeUndefined();
   });
 
-  it("coerces the audit offset and rejects negatives", () => {
-    expect(auditSearchSchema.parse({ offset: "12" }).offset).toBe(12);
-    expect(auditSearchSchema.parse({ offset: -1 }).offset).toBeUndefined();
-    expect(auditSearchSchema.parse({}).offset).toBeUndefined();
+  it("keeps audit search, action and selected entry", () => {
+    expect(
+      auditSearchSchema.parse({
+        q: "trip.create",
+        action: "trip.create",
+        entry: "207",
+      }),
+    ).toEqual({ q: "trip.create", action: "trip.create", entry: "207" });
+    expect(auditSearchSchema.parse({})).toEqual({});
+  });
+
+  it("drops repeated and malformed audit values", () => {
+    expect(
+      auditSearchSchema.parse({ q: ["LSD", "trip"], action: 42, entry: ["1", "2"] }),
+    ).toEqual({});
   });
 
   it("recovers a malformed or repeated login redirect", () => {

@@ -5,7 +5,7 @@ import type { AuditFilters } from "../types";
 
 export function useAudit(filters: AuditFilters, enabled = true) {
   return useQuery({
-    queryKey: queryKeys.audit(filters),
+    queryKey: queryKeys.auditFeed,
     queryFn: ({ signal }) => api.audit(filters, { signal }).then((response) => response.data),
     enabled,
     placeholderData: keepPreviousData,

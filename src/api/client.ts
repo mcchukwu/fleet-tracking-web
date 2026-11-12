@@ -11,12 +11,12 @@ import { recordError, recordSessionCheckSuccess } from "../errors/report";
 import { endpointTimeouts } from "./timeouts";
 import { parseDrivers } from "./drivers";
 import {
-  auditResponseSchema,
   errorResponseSchema,
   historyResponseSchema,
   importResultSchema,
   loginResponseSchema,
   parseAlertRules,
+  parseAuditResponse,
   parseAlerts,
   parseGeofences,
   parseReportSummary,
@@ -25,7 +25,6 @@ import {
   parseVehicleEventsResponse,
   parseVehicleResponse,
   systemHealthSchema,
-  type AuditResponse,
   type SystemHealth,
 } from "./schemas";
 import type {
@@ -441,11 +440,16 @@ export class FleetApiClient {
     return this.validated(this.request<unknown>("GET", "/system/health", undefined, options), systemHealthSchema);
   }
 
-  audit(filters: AuditFilters, options: RequestOptions = {}): Promise<AuditResponse> {
-    return this.validated(
-      this.request<unknown>("GET", `/audit${queryString(filters)}`, undefined, options),
-      auditResponseSchema,
+  async audit(filters: AuditFilters, options: RequestOptions = {}) {
+    const payload = await this.request<unknown>(
+      "GET",
+      `/audit${queryString(filters)}`,
+      undefined,
+      options,
     );
+    const result = this.parse(payload, "/audit", parseAuditResponse);
+    this.noteRejectedRows("/audit", result.rejected);
+    return { data: result.entries };
   }
 
   importVehicles(file: File, options: RequestOptions = {}): Promise<ImportResult> {

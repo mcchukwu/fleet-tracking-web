@@ -33,6 +33,15 @@ describe("query keys", () => {
   });
 });
 
+describe("audit keys", () => {
+  it("keeps the feed and lookup under one audit root", () => {
+    expect(queryKeys.auditFeed).toEqual(["audit", "feed"]);
+    expect(queryKeys.auditLookup("a")).toEqual(["audit", "lookup", "a"]);
+    expect(queryKeys.auditFeed[0]).toBe("audit");
+    expect(queryKeys.auditLookup("a")).not.toEqual(queryKeys.auditLookup("b"));
+  });
+});
+
 describe("trip feed key", () => {
   it("stays under the trips root so one invalidation reaches the feed and detail lookups", () => {
     const feed = queryKeys.tripsFeed({ status: "active" });

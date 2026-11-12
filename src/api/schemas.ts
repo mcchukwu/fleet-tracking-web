@@ -8,6 +8,7 @@ import {
   alertTypeField,
 } from "./alerts";
 import type {
+  AuditEntry,
   Geofence,
   GeofenceKind,
   Point,
@@ -388,6 +389,53 @@ export const auditEntrySchema = z.object({
 export const auditResponseSchema = z.object({
   data: z.array(auditEntrySchema),
 });
+
+const auditRowSchema = z.object({
+  id: z.union([z.number(), z.string().min(1)]),
+  action: z.string().min(1),
+  entity: z.string().min(1),
+  entity_id: z.string().nullish(),
+  user_name: z.string().nullish(),
+  metadata: z.record(z.string(), z.unknown()).nullish(),
+  created_at: timestamp,
+});
+
+export type AuditParseResult = { entries: AuditEntry[]; rejected: number };
+
+/**
+ * `/audit` is `type: object` in the spec, so the client contract is this
+ * parser. A malformed row must not blank a security log: drop it, count it,
+ * and fail only when every non-empty page is unusable.
+ */
+export function parseAuditResponse(payload: unknown): AuditParseResult {
+  const envelope = z.object({ data: z.array(z.unknown()) }).safeParse(payload);
+  if (!envelope.success) throw new ContractError("Audit envelope is not { data: [] }");
+
+  const entries: AuditEntry[] = [];
+  let rejected = 0;
+  for (const row of envelope.data.data) {
+    const parsed = auditRowSchema.safeParse(row);
+    if (!parsed.success) {
+      rejected += 1;
+      continue;
+    }
+    const data = parsed.data;
+    entries.push({
+      id: data.id,
+      action: data.action,
+      entity: data.entity,
+      entity_id: data.entity_id ?? "",
+      user_name: data.user_name ?? "",
+      metadata: data.metadata ?? {},
+      created_at: data.created_at,
+    });
+  }
+
+  if (envelope.data.data.length > 0 && entries.length === 0) {
+    throw new ContractError("No audit row matched the expected shape");
+  }
+  return { entries, rejected };
+}
 
 export const systemHealthSchema = z.object({
   active_trips: z.number(),

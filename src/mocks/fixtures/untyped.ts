@@ -49,25 +49,181 @@ export function systemHealthRisingFixture(step: number) {
   };
 }
 
+// Captured shapes from staging on 2026-11-12: seven fields, newest first.
 export const auditResponseFixture = {
   data: [
     {
-      id: 50,
+      id: 207,
       action: "auth.login",
       entity: "user",
       entity_id: "00000000-0000-0000-0000-000000000101",
       user_name: "Demo Admin",
       metadata: {},
-      created_at: "2026-11-03T08:13:02Z",
+      created_at: "2026-11-12T02:03:55Z",
     },
     {
-      id: 49,
-      action: "auth.login",
-      entity: "user",
-      entity_id: "00000000-0000-0000-0000-000000000102",
+      id: 206,
+      action: "import.vehicles",
+      entity: "import_job",
+      entity_id: "00000000-0000-0000-0000-000000000401",
+      user_name: "Demo Dispatcher",
+      metadata: { imported: 12, failed: 2 },
+      created_at: "2026-11-12T01:48:20Z",
+    },
+    {
+      id: 205,
+      action: "trip.create",
+      entity: "trip",
+      entity_id: "00000000-0000-0000-0000-000000000501",
+      user_name: "Demo Dispatcher",
+      metadata: { vehicle_id: "00000000-0000-0000-0000-000000000301" },
+      created_at: "2026-11-12T01:31:04Z",
+    },
+    {
+      id: 204,
+      action: "trip.update",
+      entity: "trip",
+      entity_id: "00000000-0000-0000-0000-000000000501",
+      user_name: "Demo Dispatcher",
+      metadata: { status: "active" },
+      created_at: "2026-11-12T01:29:11Z",
+    },
+    {
+      id: 203,
+      action: "alert.ack",
+      entity: "alert",
+      entity_id: "00000000-0000-0000-0000-000000000601",
+      user_name: "Demo Security",
+      metadata: {},
+      created_at: "2026-11-12T00:55:47Z",
+    },
+    {
+      id: 202,
+      action: "geofence.create",
+      entity: "geofence",
+      entity_id: "00000000-0000-0000-0000-000000000201",
+      user_name: "Demo Admin",
+      metadata: {},
+      created_at: "2026-11-11T23:40:33Z",
+    },
+    {
+      id: 201,
+      action: "geofence.update",
+      entity: "geofence",
+      entity_id: "00000000-0000-0000-0000-000000000202",
+      user_name: "Demo Admin",
+      metadata: {},
+      created_at: "2026-11-11T22:12:09Z",
+    },
+    {
+      id: 200,
+      action: "geofence.delete",
+      entity: "geofence",
+      entity_id: "00000000-0000-0000-0000-000000000203",
+      user_name: "Demo Admin",
+      metadata: {},
+      created_at: "2026-11-11T21:03:58Z",
+    },
+    {
+      id: 199,
+      action: "driver.create",
+      entity: "driver",
+      entity_id: "00000000-0000-0000-0000-000000000701",
       user_name: "Demo Dispatcher",
       metadata: {},
-      created_at: "2026-11-03T07:19:10Z",
+      created_at: "2026-11-11T19:44:26Z",
+    },
+    {
+      id: 198,
+      action: "driver.update",
+      entity: "driver",
+      entity_id: "00000000-0000-0000-0000-000000000702",
+      user_name: "Demo Dispatcher",
+      metadata: {},
+      created_at: "2026-11-11T18:20:14Z",
+    },
+    {
+      id: 197,
+      action: "vehicle.update",
+      entity: "vehicle",
+      entity_id: "00000000-0000-0000-0000-000000000301",
+      user_name: "Demo Dispatcher",
+      metadata: { depot: "Apapa Depot" },
+      created_at: "2026-11-11T17:05:42Z",
+    },
+    {
+      id: 196,
+      action: "trip.complete",
+      entity: "trip",
+      entity_id: "00000000-0000-0000-0000-000000000502",
+      user_name: "Demo Dispatcher",
+      metadata: {},
+      created_at: "2026-11-11T16:30:10Z",
+    },
+  ],
+};
+
+const auditActions = [
+  "auth.login",
+  "alert.ack",
+  "driver.create",
+  "driver.update",
+  "geofence.create",
+  "geofence.update",
+  "geofence.delete",
+  "import.vehicles",
+  "trip.create",
+  "trip.update",
+  "trip.complete",
+  "vehicle.update",
+] as const;
+
+const auditEntityByAction: Record<(typeof auditActions)[number], string> = {
+  "auth.login": "user",
+  "alert.ack": "alert",
+  "driver.create": "driver",
+  "driver.update": "driver",
+  "geofence.create": "geofence",
+  "geofence.update": "geofence",
+  "geofence.delete": "geofence",
+  "import.vehicles": "import_job",
+  "trip.create": "trip",
+  "trip.update": "trip",
+  "trip.complete": "trip",
+  "vehicle.update": "vehicle",
+};
+
+/** Deterministic 205-entry log for the paging test. */
+export const auditLargeFixture = {
+  data: Array.from({ length: 205 }, (_, index) => {
+    const action = auditActions[index % auditActions.length] ?? "auth.login";
+    return {
+      id: 1_205 - index,
+      action,
+      entity: auditEntityByAction[action],
+      entity_id: `00000000-0000-0000-0000-${String(1_000 + index).padStart(12, "0")}`,
+      user_name: index % 3 === 0 ? "Demo Security" : "Demo Admin",
+      metadata: action === "import.vehicles" ? { imported: index % 9, failed: 1 } : {},
+      created_at: new Date(Date.UTC(2026, 10, 12, 2, 0, 0) - index * 300_000).toISOString(),
+    };
+  }),
+};
+
+/** New backend actions must render humanised, never disappear or crash. */
+export const auditUnknownFixture = {
+  data: [
+    {
+      id: 900,
+      action: "user.role_change",
+      entity: "maintenance_job",
+      entity_id: "00000000-0000-0000-0000-000000000901",
+      user_name: "Demo Admin",
+      metadata: {
+        from: "viewer",
+        to: "admin",
+        nested: { reason: "promotion" },
+      },
+      created_at: "2026-11-12T03:00:00Z",
     },
   ],
 };
