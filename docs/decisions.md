@@ -748,7 +748,7 @@ The local Protomaps style needs more colours than the status `MapTokens`. Ten de
 
 ## 2026-11-12: Panels derive loading from `useQueryView`, never a query's `isPending`
 
-TanStack Query keeps `isPending` true for a query paused by `networkMode: "online"`, so a cold offline panel that branched on it showed a skeleton forever. `useQueryView` maps loading, offline-empty, error, empty and ready in one place; `npm run guard` rejects `.isPending` outside it, except on a mutation (a write in progress). The desktop drawer and the mobile sheet share `VehicleDetailBody`, so their five states cannot drift apart. Trade-off: a panel that also needs stale or forbidden maps those from the data it already has.
+TanStack Query keeps `isPending` true for a query paused by `networkMode: "online"`, so a cold offline panel that branched on it showed a skeleton forever. `useQueryView` maps loading, offline-empty, error, empty and ready in one place; `npm run guard` rejects `.isPending` outside it; a mutation that genuinely needs a pending flag carries a reason-bearing `guard-ignore`. The desktop drawer and the mobile sheet share `VehicleDetailBody`, so their five states cannot drift apart. Trade-off: a panel that also needs stale or forbidden maps those from the data it already has.
 
 ## 2026-11-12: The index route keeps its search string
 
