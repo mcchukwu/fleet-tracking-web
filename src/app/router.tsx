@@ -22,6 +22,7 @@ import { recordError } from "../errors/report";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
 import { LoginPage } from "../features/login/components/LoginPage";
 import { AlertsPage } from "../features/alerts/components/AlertsPage";
+import { AuditPage } from "../features/audit/components/AuditPage";
 import { DriversPage } from "../features/drivers/components/DriversPage";
 import { GeofencesPage } from "../features/geofences/components/GeofencesPage";
 import { ImportPage } from "../features/import/components/ImportPage";
@@ -36,7 +37,6 @@ import { SystemPage } from "../features/system/components/SystemPage";
 import { TripsPage } from "../features/trips/components/TripsPage";
 import { ForbiddenState } from "../ui/StatePanel";
 import { NotFound } from "./NotFound";
-import { PlaceholderPage } from "./PlaceholderPage";
 import { safeRedirect } from "./redirect";
 import {
   alertsSearchSchema,
@@ -190,12 +190,6 @@ const appRoute = createRoute({
   }),
 });
 
-function placeholder(title: string, description: string) {
-  return function Placeholder() {
-    return <PlaceholderPage title={title} description={description} />;
-  };
-}
-
 const mapRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/map",
@@ -263,7 +257,7 @@ const auditRoute = createRoute({
   path: "/audit",
   validateSearch: auditSearchSchema,
   beforeLoad: ({ context }) => requireCapability(context.user, "audit"),
-  component: placeholder("Audit", "The audit log ships in Slice 12."),
+  component: AuditPage,
 });
 
 const playbackRoute = createRoute({
