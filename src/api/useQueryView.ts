@@ -43,12 +43,14 @@ export function useQueryView<TData>(
 ): QueryView<TData> {
   const { network } = useConnection();
   const offline = options.offline ?? network === "offline";
-  const hasData = query.data !== undefined;
+  const data = query.data;
+  const hasData = data !== undefined;
   const isLoading = query.isLoading;
   const isPaused = query.fetchStatus === "paused";
   const isOfflineEmpty = !hasData && !isLoading && (offline || isPaused);
   const isError = !offline && !hasData && !isLoading && query.error != null;
-  const isEmpty = hasData && (options.isEmpty?.(query.data as TData) ?? defaultIsEmpty(query.data));
+  const isEmpty =
+    data !== undefined && (options.isEmpty?.(data) ?? defaultIsEmpty(data));
 
   const state: QueryViewState = isLoading
     ? "loading"
