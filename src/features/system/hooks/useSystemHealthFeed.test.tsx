@@ -75,6 +75,38 @@ describe("useSystemHealthFeed", () => {
     expect(health).toHaveBeenCalledTimes(3);
   });
 
+  it("keeps the previous sample so a refresh can have a rate", async () => {
+    vi.useRealTimers();
+    let calls = 0;
+    const health = vi.spyOn(api, "systemHealth").mockImplementation(async () => {
+      calls += 1;
+      return {
+        ...systemHealthFixture,
+        ingest: { ...systemHealthFixture.ingest, dropped: calls === 1 ? 0 : 3 },
+      };
+    });
+    const { result } = renderHook(() => useSystemHealthFeed(), {
+      wrapper: wrapperFor(client()),
+    });
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    });
+    expect(health).toHaveBeenCalledTimes(1);
+    expect(result.current.trend.first).not.toBeNull();
+    expect(result.current.trend.previous).toBeNull();
+
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    act(() => result.current.refetch());
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    });
+    expect(health).toHaveBeenCalledTimes(2);
+    expect(result.current.data?.ingest.dropped).toBe(3);
+    expect(result.current.trend.first?.data.ingest.dropped).toBe(0);
+    expect(result.current.trend.previous).not.toBeNull();
+  });
+
   it("does not poll a document that was hidden before mount", async () => {
     setVisibility("hidden", false);
     const health = vi

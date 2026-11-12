@@ -35,6 +35,7 @@ export interface HealthSample {
 
 export interface HealthTrend {
   first: HealthSample | null;
+  current: HealthSample | null;
   previous: HealthSample | null;
   reset: boolean;
 }
@@ -371,7 +372,9 @@ export function buildHealthGroups(
       title: "Ingest",
       description:
         "Cumulative counters. Rates and changes are measured from consecutive polls since this page opened.",
-      items: sortHealthItems(ingestItems(data, trend, now)),
+      items: sortHealthItems(
+        ingestItems(data, trend, trend.current?.at ?? now),
+      ),
       columns: 4,
     },
   ];

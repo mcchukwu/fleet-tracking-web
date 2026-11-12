@@ -32,7 +32,7 @@ function feed(overrides: Partial<SystemHealthFeed> = {}): SystemHealthFeed {
     error: null,
     cancelled: false,
     online: true,
-    trend: { first: null, previous: null, reset: false },
+    trend: { first: null, current: null, previous: null, reset: false },
     refetch: vi.fn(),
     cancel: vi.fn(),
     ...overrides,

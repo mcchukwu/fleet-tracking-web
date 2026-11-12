@@ -28,7 +28,7 @@ export function SystemUpdated({
       <Tooltip label={formatTimeTooltip(iso)}>
         <button
           type="button"
-          className="text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring rounded-sm text-xs"
+          className="text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring inline-flex h-touch items-center rounded-sm text-xs md:h-control-sm"
         >
           <time dateTime={iso} className="tabular-nums">
             {updatedLabel(at, now)}

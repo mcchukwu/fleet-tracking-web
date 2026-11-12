@@ -8,7 +8,12 @@ export interface UseHealthTrendOptions {
   mountedAt: number;
 }
 
-const emptyTrend: HealthTrend = { first: null, previous: null, reset: false };
+const emptyTrend: HealthTrend = {
+  first: null,
+  current: null,
+  previous: null,
+  reset: false,
+};
 
 /**
  * Tracks the first sample after the page opened and the sample before the
@@ -40,6 +45,7 @@ export function useHealthTrend({
         sample.data.ingest.received < prior.data.ingest.received;
       return {
         first: reset ? sample : (state.first ?? sample),
+        current: sample,
         previous: prior,
         reset,
       };

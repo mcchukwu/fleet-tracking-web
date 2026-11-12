@@ -28,7 +28,7 @@ function withIngest(
 }
 
 function emptyTrend(): HealthTrend {
-  return { first: null, previous: null, reset: false };
+  return { first: null, current: null, previous: null, reset: false };
 }
 
 function trend(
@@ -38,6 +38,7 @@ function trend(
 ): HealthTrend {
   return {
     first: first ? { data: first, at: now - 20_000 } : null,
+    current: null,
     previous: previous ? { data: previous, at: now - 10_000 } : null,
     reset,
   };
@@ -178,6 +179,28 @@ describe("health groups", () => {
     expect(item(groups, "dropped")).toMatchObject({
       value: "30",
       hint: "+20 · 2/s",
+      tone: "warning",
+    });
+  });
+
+  it("derives the rate from sample times, not the render clock", () => {
+    const first = withIngest({ dropped: 0 });
+    const previous = withIngest({ dropped: 0 });
+    const current = withIngest({ dropped: 3 });
+    const renderClock = now - 60_000;
+    const groups = buildHealthGroups(
+      current,
+      now,
+      {
+        first: { data: first, at: now - 10_000 },
+        current: { data: current, at: now },
+        previous: { data: previous, at: now - 10_000 },
+        reset: false,
+      },
+      renderClock,
+    );
+    expect(item(groups, "dropped")).toMatchObject({
+      hint: "+3 · 0.3/s",
       tone: "warning",
     });
   });
