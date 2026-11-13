@@ -22,6 +22,8 @@ export interface StateBoundaryProps {
   staleLabel?: string;
   pending?: boolean;
   className?: string;
+  /** Test hook for a fill page's designated scrollport. */
+  testId?: string;
   children?: ReactNode;
 }
 
@@ -44,6 +46,7 @@ export function StateBoundary({
   staleLabel,
   pending = false,
   className,
+  testId,
   children,
 }: StateBoundaryProps) {
   const storm = useErrorStorm();
@@ -51,7 +54,7 @@ export function StateBoundary({
 
   if (state === "loading") {
     return (
-      <div className={className}>
+      <div data-testid={testId} className={className}>
         {showLoading ? (loading ?? <LoadingState />) : null}
       </div>
     );
@@ -59,7 +62,7 @@ export function StateBoundary({
 
   if (state === "empty") {
     return (
-      <div className={className}>
+      <div data-testid={testId} className={className}>
         {empty ??
           (emptyReason === "no-results" ? (
             <EmptyState
@@ -78,7 +81,7 @@ export function StateBoundary({
 
   if (state === "forbidden") {
     return (
-      <div className={className}>
+      <div data-testid={testId} className={className}>
         <ForbiddenState action={forbiddenAction} />
       </div>
     );
@@ -88,13 +91,13 @@ export function StateBoundary({
     const resolved = error ?? fallbackError;
     if (!children) {
       return (
-        <div className={className}>
+        <div data-testid={testId} className={className}>
           <ErrorState error={resolved} onRetry={onRetry} compact={storm} />
         </div>
       );
     }
     return (
-      <div className={className}>
+      <div data-testid={testId} className={className}>
         <div className="border-border flex items-center justify-between gap-2 border-b px-3 py-2">
           <div className="flex min-w-0 items-center gap-2">
             <p className="text-muted text-sm">Couldn't refresh</p>
@@ -115,6 +118,7 @@ export function StateBoundary({
 
   return (
     <div
+      data-testid={testId}
       className={cn(pending && "opacity-60", className)}
       aria-busy={pending || undefined}
     >

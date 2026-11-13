@@ -440,7 +440,8 @@ export function TripTable({
       empty={empty}
       staleLabel={staleLabel}
       forbiddenAction={forbiddenAction}
-      className="flex min-h-0 flex-1 flex-col"
+      testId="trips-table-body"
+      className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain"
     >
       {state === "error" && trips.length === 0 ? null : (
         <div className="flex min-h-0 flex-1 flex-col">

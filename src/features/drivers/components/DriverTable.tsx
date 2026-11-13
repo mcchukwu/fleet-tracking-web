@@ -237,7 +237,8 @@ export function DriverTable({
       empty={empty}
       staleLabel={staleLabel}
       forbiddenAction={forbiddenAction}
-      className="flex min-h-0 flex-1 flex-col"
+      testId="drivers-table-body"
+      className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain"
     >
       {state === "error" && drivers.length === 0 ? null : (
         <div className={cn("flex min-h-0 flex-1 flex-col", (offline || state === "error") && "opacity-80")}>
