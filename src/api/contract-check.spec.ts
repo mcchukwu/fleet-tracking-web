@@ -81,8 +81,17 @@ describe.skipIf(missing.length > 0)("staging contract check", () => {
   let userId = "";
 
   beforeAll(async () => {
-    const login = await client.login(EMAIL ?? "", PASSWORD ?? "");
-    userId = login.user.id;
+    try {
+      const login = await client.login(EMAIL ?? "", PASSWORD ?? "");
+      userId = login.user.id;
+    } catch (cause) {
+      const detail = cause instanceof Error ? cause.message.split("\n")[0] : String(cause);
+      const failure = new Error(
+        `Could not reach staging at ${BASE_URL}: ${detail}. Check FLEET_STAGING_BASE_URL and network access.`,
+      );
+      failure.stack = failure.message;
+      throw failure;
+    }
   });
 
   it("logs in and restores the session with a real CSRF token", async () => {

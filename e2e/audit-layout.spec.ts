@@ -190,37 +190,43 @@ test.describe("audit layout", { tag: "@theme" }, () => {
     await captureForReview(page, "12-audit-layout-360");
   });
 
-  test("captures and axe-checks the empty, no-results, error, stale and forbidden states", async ({
-    page,
-  }) => {
+  test("axe-checks the empty state", async ({ page }) => {
     await gotoAudit(page, "empty=audit");
     await expect(page.getByText("No audit entries yet")).toBeVisible();
     await expectNoAxeViolations(page);
     await captureForReview(page, "12-audit-empty");
+  });
 
+  test("axe-checks the no-results state", async ({ page }) => {
     await gotoAudit(page, "q=zzzz-nothing");
     await expect(page.getByText("No entries match")).toBeVisible();
     await expectNoAxeViolations(page);
     await captureForReview(page, "12-audit-no-results");
+  });
 
+  test("axe-checks the error state", async ({ page }) => {
     await page.goto("/audit?fault=audit%3Aserver");
     await expect(page.getByText("Something went wrong on our side")).toBeVisible({
       timeout: 15_000,
     });
     await expectNoAxeViolations(page);
     await captureForReview(page, "12-audit-error");
+  });
 
+  test("axe-checks the forbidden state", async ({ page }) => {
     await page.goto("/audit?fault=audit%3Aforbidden");
     await expect(page.getByText("You don't have access to this.")).toBeVisible();
     await expectNoAxeViolations(page);
+  });
 
-    await page.goto("/audit");
+  test("axe-checks the stale offline state", async ({ page, context }) => {
+    await gotoAudit(page);
     await expect(page.getByTestId("audit-page")).toContainText("12 entries loaded");
-    await page.context().setOffline(true);
+    await context.setOffline(true);
     await expect(page.getByText(/Stale ·/)).toBeVisible({ timeout: 15_000 });
     await expectNoAxeViolations(page);
     await captureForReview(page, "12-audit-stale");
-    await page.context().setOffline(false);
+    await context.setOffline(false);
   });
 
   test("the drawer passes axe in this theme", async ({ page }) => {

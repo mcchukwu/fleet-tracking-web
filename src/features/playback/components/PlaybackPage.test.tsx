@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -11,6 +11,18 @@ import { TooltipProvider } from "../../../ui/Tooltip";
 import { PlaybackPage } from "./PlaybackPage";
 
 const vehicleId = "4324a768-9b14-4223-a299-eb8da4d8d309";
+
+const markerRenders = vi.hoisted(() => ({ count: 0 }));
+
+vi.mock("./PlaybackEventMarkers", async () => {
+  const { createElement, memo } = await import("react");
+  return {
+    PlaybackEventMarkers: memo(function MockEventMarkers() {
+      markerRenders.count += 1;
+      return createElement("div", { "data-testid": "event-marker-stub" });
+    }),
+  };
+});
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
@@ -262,5 +274,60 @@ describe("PlaybackPage", () => {
     };
     renderPage();
     expect(screen.getByText("This part of the page stopped working")).toBeVisible();
+  });
+
+  it("does not re-render the memoised event list on clock ticks", async () => {
+    const frames: FrameRequestCallback[] = [];
+    const originalFrame = globalThis.requestAnimationFrame;
+    const originalCancel = globalThis.cancelAnimationFrame;
+    let clockMs = 0;
+    const now = vi.spyOn(performance, "now").mockImplementation(() => clockMs);
+    globalThis.requestAnimationFrame = (callback) => {
+      frames.push(callback);
+      return frames.length;
+    };
+    globalThis.cancelAnimationFrame = () => undefined;
+
+    try {
+      mocks.search = {
+        vehicle: vehicleId,
+        from: "2026-11-08T14:00:00Z",
+        to: "2026-11-08T16:00:00Z",
+        resolution: "30s",
+      };
+      mocks.history.data = { data: points, resolution: "30s" };
+      mocks.events.data = [
+        {
+          kind: "alert",
+          type: "speeding",
+          severity: "high",
+          status: "open",
+          at: "2026-11-08T14:00:30Z",
+        },
+      ];
+      markerRenders.count = 0;
+      renderPage();
+
+      const play = await screen.findByRole("button", { name: "Play" });
+      expect(markerRenders.count).toBe(1);
+      const slider = screen.getByRole("slider", { name: "Playback position" }) as HTMLInputElement;
+      const startValue = slider.value;
+
+      await userEvent.click(play);
+      await act(async () => {
+        for (let index = 0; index < 40; index += 1) {
+          clockMs += 100;
+          frames.shift()?.(clockMs);
+        }
+      });
+
+      expect(screen.getByRole("button", { name: "Pause" })).toBeVisible();
+      expect(slider.value).not.toBe(startValue);
+      expect(markerRenders.count).toBe(1);
+    } finally {
+      now.mockRestore();
+      globalThis.requestAnimationFrame = originalFrame;
+      globalThis.cancelAnimationFrame = originalCancel;
+    }
   });
 });
