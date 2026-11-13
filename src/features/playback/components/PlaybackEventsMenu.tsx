@@ -65,7 +65,7 @@ export function PlaybackEventsMenu({
       <DropdownMenuContent
         align="end"
         collisionPadding={12}
-        className="w-events-menu max-h-menu flex flex-col gap-0.5 overflow-y-auto"
+        className="w-events-menu max-h-menu flex flex-col gap-1 overflow-y-auto"
       >
         {events.map((event) => (
           <DropdownMenuItem

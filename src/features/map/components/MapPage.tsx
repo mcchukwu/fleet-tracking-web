@@ -655,8 +655,8 @@ export function MapPage() {
           <div
             data-testid="map-kpi"
             className={cn(
-              "map-kpi z-panel pointer-events-none absolute inset-x-0 top-3 flex justify-center pr-14 pl-3 lg:right-3 lg:px-3",
-              panelVisible ? "lg:left-93" : "lg:left-3",
+              "map-kpi z-panel pr-control-stack pointer-events-none absolute inset-x-0 top-3 flex justify-center pl-3 lg:right-3 lg:px-3",
+              panelVisible ? "lg:left-panel-offset" : "lg:left-3",
             )}
           >
             <div className="pointer-events-auto w-full max-w-md">
@@ -780,7 +780,10 @@ export function MapPage() {
             className={cn(
               "map-bottom-anchor z-map-controls pointer-events-none absolute right-3 left-3 flex flex-col items-end gap-2",
               isDesktop
-                ? cn("map-inset-right", preferences.panelOpen ? "lg:left-93" : "lg:left-3")
+                ? cn(
+                    "map-inset-right",
+                    preferences.panelOpen ? "lg:left-panel-offset" : "lg:left-3",
+                  )
                 : "map-inset-bottom",
             )}
           >

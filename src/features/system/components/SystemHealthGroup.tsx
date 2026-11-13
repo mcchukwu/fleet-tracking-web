@@ -21,7 +21,7 @@ export function SystemHealthGroup({
   const headingId = `health-${id}`;
   return (
     <section aria-labelledby={headingId} data-health-group={id} className="flex flex-col gap-2">
-      <div className="flex flex-col gap-0.5">
+      <div className="flex flex-col gap-1">
         <h2 id={headingId} className="text-text text-sm font-semibold">
           {title}
         </h2>

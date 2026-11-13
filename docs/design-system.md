@@ -287,7 +287,7 @@ Neutrals are the zinc scale. One accent. Status colours carry meaning and are us
 
 Nested actions inside a 56px vehicle row keep a 24px visual line but still offer the 44px touch target: the action grows symmetrically and negative vertical margins keep its layout contribution at one text line. The row's 56px selection button remains the primary target.
 
-Shell and dialog sizes are tokens: `--spacing-touch: 44px`, `--spacing-rail-expanded: 200px`, `--spacing-topbar-offset: 60px` (48px top bar + 12px gap), `--container-dialog: 480px`, `--container-content: 1440px`. Use `size-touch`/`h-touch` below `md`, `max-w-dialog` for dialogs and `max-w-content` for non-map page content.
+Shell and dialog sizes are tokens: `--spacing-touch: 44px`, `--spacing-rail-expanded: 200px`, `--spacing-topbar-offset: 60px` (48px top bar + 12px gap), `--container-dialog: 480px`, `--container-content: 1440px`. Shared offsets that more than one component needs are tokens too: `--spacing-panel-offset: 372px` (the 360px vehicle panel plus one 12px inset), `--spacing-search-trailing: 56px` (the trailing slot in `Input` and `SearchField`) and `--spacing-control-stack: 56px` (the map control column the KPI strip must clear). No component writes the numeric offset inline. Use `size-touch`/`h-touch` below `md`, `max-w-dialog` for dialogs and `max-w-content` for non-map page content.
 
 ### 5.2 App layout
 

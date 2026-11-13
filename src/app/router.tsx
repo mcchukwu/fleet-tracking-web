@@ -348,7 +348,7 @@ export function createAppRouter(queryClient: QueryClient) {
     defaultPreload: "intent",
     defaultErrorComponent: RouteError,
     defaultPendingComponent: RouteLoading,
-    defaultPendingMs: 0,
+    defaultPendingMs: 200,
   });
 }
 

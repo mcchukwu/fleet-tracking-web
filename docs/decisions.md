@@ -790,9 +790,11 @@ Trade-off: one large mechanical commit in the history. A suppression comment tha
 
 ## 2026-11-13: Every feature route is its own chunk
 
-The shell, login, route error and forbidden surfaces stay in the entry graph; every feature page and the styleguide use `lazyRouteComponent`. `RouteLoading` is the one pending surface (the 2px indeterminate bar) and `defaultPendingMs: 0` makes navigation feedback immediate. The Vite manifest feeds `scripts/bundle-report.mjs`, which runs in `npm run build` and fails on breach.
+The shell, login, route error and forbidden surfaces stay in the entry graph; every feature page and the styleguide use `lazyRouteComponent`. `RouteLoading` is the one pending surface (the 2px indeterminate bar), shown after 200ms so a fast chunk does not flash it. The Vite manifest feeds `scripts/bundle-report.mjs`, which runs in `npm run build` and fails on breach.
 
 Measured on 2026-11-13: entry 243.6 KB gzip (budget 350), largest route chunk 43.1 KB (budget 200), MapLibre provider 299.4 KB plus worker 144.4 KB = 443.8 KB (budget 500), CSS 23.4 KB (budget 25). The numbers live in `docs/bundle-report.md`.
+
+`defaultPendingMs` is 200ms, not 0. At 0 the router mounts the route's component while the lazy chunk is still pending, aborts that mount and remounts it; TanStack Query then leaves the remounted query idle instead of refetching stale data (Reports stopped refetching after a back navigation). At 200ms the pending component is skipped for a cached chunk and the real mount owns the query.
 
 Trade-off: a first direct load of a route pays one extra module request and Vite transform. `e2e/global-setup.ts` warms every route once before the workers, and Playwright's expect timeout is 10s rather than 5s, so the extra request does not turn into a flaky timeout.
 
@@ -815,3 +817,15 @@ Trade-off: an alert can only reach the map through the REST list and the provisi
 `playwright.config.ts` uses `min(4, CPU cores - 1)` locally and writes `test-results/playwright-report.json` for `npm run e2e:slowest`. The recorded full-suite failures were cold-compile and parallel-load timeouts, not product defects; four workers keeps the host below the memory cliff while CI can still shard.
 
 Trade-off: a local T3 run takes longer than the old unbounded worker count. That is the price of a signal that means something.
+
+## 2026-11-13: Off-scale utilities become named tokens
+
+`lg:left-93` became `lg:left-panel-offset` (`--spacing-panel-offset: 372px`), the `pr-14` in `Input`/`SearchField` became `pr-search-trailing` (`--spacing-search-trailing: 56px`), and the KPI strip's clearance for the map control column became `pr-control-stack` (`--spacing-control-stack: 56px`). The remaining `gap-0.5`/`px-1.5` classes moved to the 4px scale (`gap-1`, `px-2`).
+
+Trade-off: the panel, search and control offsets now have one owner in `tokens.css`; adding a new inset means adding a token rather than inventing a utility.
+
+## 2026-11-13: The shared Input error is an alert
+
+Both `Input` and `SearchField` render their error text with `role="alert"` and keep `aria-describedby` pointing at it. A field error is announced once, when it appears, and the field remains linked for later focus.
+
+Trade-off: a form that already wraps its errors in an alert could double-announce; the form-level surface owns submission errors, and field-level errors stay on the field.

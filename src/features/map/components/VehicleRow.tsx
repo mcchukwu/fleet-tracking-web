@@ -53,7 +53,7 @@ export function VehicleRow({ row, height, selected, onSelect, onHover }: Vehicle
         onFocus={() => onHover(row.key)}
         onBlur={() => onHover(null)}
       />
-      <div className="pointer-events-none relative flex h-full flex-col justify-center gap-0.5 px-3">
+      <div className="pointer-events-none relative flex h-full flex-col justify-center gap-1 px-3">
         <div className="flex min-w-0 items-center gap-2">
           <StatusPill status={row.status} />
           <span data-row-inline-action className="pointer-events-auto inline-flex shrink-0">

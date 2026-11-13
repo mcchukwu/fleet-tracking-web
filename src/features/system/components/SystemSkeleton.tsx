@@ -45,7 +45,7 @@ export function SystemSkeleton() {
         const cells = skeletonCells[spec.id];
         return (
           <section key={spec.id} data-health-group={spec.id} className="flex flex-col gap-2">
-            <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-1">
               <h2 className="text-text text-sm font-semibold">{spec.title}</h2>
               <p className="text-muted text-xs">{spec.description}</p>
             </div>

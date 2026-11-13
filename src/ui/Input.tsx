@@ -51,7 +51,7 @@ export function Input({
           className={cn(
             "h-touch bg-surface md:h-control-md text-text placeholder:text-subtle focus-visible:ring-focus-ring/30 disabled:bg-surface-2 disabled:text-muted w-full rounded-md border px-4 text-base transition-colors duration-100 focus-visible:ring-1 focus-visible:outline-none focus-visible:ring-inset disabled:cursor-not-allowed",
             leadingIcon ? "pl-10" : "",
-            trailing ? "pr-14" : "",
+            trailing ? "pr-search-trailing" : "",
             error
               ? "border-danger focus-visible:border-danger"
               : "border-border-strong focus-visible:border-accent",
@@ -69,7 +69,7 @@ export function Input({
         </p>
       ) : null}
       {error ? (
-        <p id={`${id}-error`} className="text-danger flex items-center gap-1 text-xs">
+        <p id={`${id}-error`} role="alert" className="text-danger flex items-center gap-1 text-xs">
           <CircleAlert aria-hidden="true" className="size-3" strokeWidth={1.5} />
           {error}
         </p>

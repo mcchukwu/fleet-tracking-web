@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { captureForReview, expectNoAxeViolations } from "./helpers";
+import { captureForReview, expectNoAxeViolations, primeOfflineSession } from "./helpers";
 
 const FROM = "2026-11-01T00:00:00Z";
 const TO = "2026-11-08T00:00:00Z";
@@ -68,6 +68,16 @@ test.describe("reports faults", () => {
     expect(unexpectedConsole(errors)).toEqual([]);
   });
 
+  test("a not-found report shows the not-found state with a way back", async ({ page }) => {
+    await gotoFault(page, "reports:not_found");
+    await expect(page.getByText("Not found", { exact: true }).first()).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByRole("button", { name: "Go back", exact: true }).first()).toBeVisible();
+    await expect(page.getByTestId("reports-stats")).toHaveCount(0);
+    await expectNoAxeViolations(page);
+  });
+
   test("a refresh error keeps the cached report and labels it stale", async ({ page }) => {
     test.setTimeout(45_000);
     await page.goto(rangeUrl());
@@ -79,6 +89,7 @@ test.describe("reports faults", () => {
     }
     await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Map" }).click();
     await expect(page).toHaveURL(/\/map/);
+    await expect(page.getByTestId("map-root")).toBeVisible({ timeout: 20_000 });
     await page.goBack();
 
     await expect(page.getByText("Couldn't refresh")).toBeVisible({ timeout: 20_000 });
@@ -106,9 +117,7 @@ test.describe("reports faults", () => {
   });
 
   test("offline with no cache shows the neutral offline state", async ({ page }) => {
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator, "onLine", { configurable: true, get: () => false });
-    });
+    await primeOfflineSession(page);
     await page.goto(`${rangeUrl()}&fault=${encodeURIComponent("reports:network")}`);
 
     await expect(page.getByText("You're offline")).toBeVisible({ timeout: 15_000 });
@@ -139,9 +148,17 @@ test.describe("reports faults", () => {
   });
 
   test("a session expiry shows the dialog and keeps the range", async ({ page }) => {
-    await gotoFault(page, "reports:unauthenticated");
+    await page.goto(rangeUrl());
+    await expect(page.getByTestId("reports-stats")).toBeVisible({ timeout: 15_000 });
+    await setFault(page, "reports:unauthenticated");
+    if ((page.viewportSize()?.width ?? 1440) < 768) {
+      await page.getByRole("button", { name: "Open navigation" }).click();
+    }
+    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Map" }).click();
+    await expect(page.getByTestId("map-root")).toBeVisible({ timeout: 20_000 });
+    await page.goBack();
     const dialog = page.getByRole("dialog", { name: "Your session expired" });
-    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    await expect(dialog).toBeVisible({ timeout: 20_000 });
     await expect
       .poll(() => dialog.evaluate((element) => element.contains(document.activeElement)))
       .toBe(true);

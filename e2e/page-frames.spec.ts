@@ -192,6 +192,14 @@ test.describe("page frames", { tag: "@theme" }, () => {
               Math.abs(after.height - before.height),
               `${route.path} top bar changed height`,
             ).toBeLessThanOrEqual(1);
+            expect(
+              Math.abs(after.x - before.x),
+              `${route.path} top bar moved horizontally`,
+            ).toBeLessThanOrEqual(1);
+            expect(
+              Math.abs(after.width - before.width),
+              `${route.path} top bar changed width`,
+            ).toBeLessThanOrEqual(1);
           }
         }
         await frame.evaluate((element) => {

@@ -56,7 +56,7 @@ export function SearchField({
           aria-describedby={describedBy}
           className={cn(
             "h-touch bg-surface text-text placeholder:text-subtle focus-visible:ring-focus-ring/30 disabled:bg-surface-2 disabled:text-muted md:h-control-md w-full rounded-md border pr-3 pl-10 text-base transition-colors duration-100 focus-visible:ring-1 focus-visible:outline-none focus-visible:ring-inset disabled:cursor-not-allowed",
-            trailing ? "pr-14" : undefined,
+            trailing ? "pr-search-trailing" : undefined,
             isInvalid
               ? "border-danger focus-visible:border-danger"
               : "border-border-strong focus-visible:border-accent",
@@ -74,7 +74,7 @@ export function SearchField({
         </p>
       ) : null}
       {error ? (
-        <p id={`${id}-error`} className="text-danger flex items-center gap-1 text-xs">
+        <p id={`${id}-error`} role="alert" className="text-danger flex items-center gap-1 text-xs">
           <CircleAlert aria-hidden="true" className="size-3" strokeWidth={1.5} />
           {error}
         </p>

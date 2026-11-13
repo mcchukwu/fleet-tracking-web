@@ -57,7 +57,7 @@ export function VehicleFilters({
               aria-pressed={active}
               onClick={() => toggleStatus(status)}
               className={cn(
-                "h-touch focus-visible:outline-focus-ring md:h-control-sm rounded-full border px-1.5 focus-visible:outline-2 focus-visible:outline-offset-0",
+                "h-touch focus-visible:outline-focus-ring md:h-control-sm rounded-full border px-2 focus-visible:outline-2 focus-visible:outline-offset-0",
                 active ? "border-accent bg-accent-soft" : "hover:bg-surface-2 border-transparent",
               )}
             >

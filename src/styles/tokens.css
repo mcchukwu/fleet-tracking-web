@@ -287,6 +287,9 @@
   --spacing-rail: 56px;
   --spacing-rail-expanded: 200px;
   --spacing-panel: 360px;
+  --spacing-panel-offset: 372px;
+  --spacing-search-trailing: 56px;
+  --spacing-control-stack: 56px;
   --spacing-drawer: 420px;
   --spacing-touch: 44px;
   --spacing-page: 24px;

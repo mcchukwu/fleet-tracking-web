@@ -96,7 +96,7 @@ export function ImportRecentList({
               data-recent-import={entry.jobId}
               className="border-border flex h-14 items-center justify-between gap-2 border-b last:border-b-0"
             >
-              <div className="flex min-w-0 flex-col gap-0.5">
+              <div className="flex min-w-0 flex-col gap-1">
                 <span className="text-text truncate font-mono text-xs" title={entry.fileName}>
                   {entry.fileName}
                 </span>

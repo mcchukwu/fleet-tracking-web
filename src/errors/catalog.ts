@@ -181,7 +181,9 @@ export function errorCopy(error: AppError, hints: CopyHints = {}): ErrorCopy {
 
   if (error.kind === "not_found") {
     const resource = hints.resource ?? error.context.resource;
-    return { ...copy, title: `${capitalize(resource ?? "Item")} not found` };
+    // Endpoint paths are implementation detail, never copy.
+    const label = resource && !resource.includes("/") ? capitalize(resource) : null;
+    return { ...copy, title: label ? `${label} not found` : copy.title };
   }
 
   if (error.kind === "conflict") {

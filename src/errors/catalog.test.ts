@@ -54,6 +54,12 @@ describe("error catalog", () => {
     expect(copy.title).toBe("Vehicle not found");
   });
 
+  it("never turns an endpoint path into not-found copy", () => {
+    const copy = errorCopy(error({ kind: "not_found" }), { resource: "/reports/summary" });
+    expect(copy.title).toBe("Not found");
+    expect(copy.title).not.toContain("/");
+  });
+
   it("shows a server message only for allowlisted codes", () => {
     expect(isSafeServerCode("in_use")).toBe(true);
     expect(isSafeServerCode("geofence_has_events")).toBe(false);
