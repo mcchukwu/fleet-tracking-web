@@ -31,7 +31,8 @@ export async function primeOfflineSession(page: Page): Promise<void> {
     async ({ key }) => {
       const db = await new Promise<IDBDatabase>((resolve, reject) => {
         const request = indexedDB.open("keyval-store");
-        request.onupgradeneeded = () => request.result.createObjectStore("keyval");
+        request.onupgradeneeded = () =>
+          request.result.createObjectStore("keyval");
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
       });
@@ -115,6 +116,59 @@ export async function expectPageFrame(
   return frame;
 }
 
+export interface PickerHandle {
+  presentation: "popover" | "sheet";
+  /** The overlay that contains the options. */
+  scope: Locator;
+  /** The search field that owns the keyboard (the trigger in the popover). */
+  search: Locator;
+  trigger: Locator;
+}
+
+/**
+ * Opens a picker and reports which presentation the viewport selected. The
+ * same calls work on the popover and on the modal sheet.
+ */
+export async function openPicker(
+  page: Page,
+  label: string,
+  scope?: Locator,
+): Promise<PickerHandle> {
+  const trigger = (scope ?? page)
+    .getByRole("combobox", { name: label, exact: true })
+    .first();
+  await trigger.click();
+  const sheet = page.locator("[data-picker-sheet]");
+  const shell = page.locator("[data-combobox-shell]");
+  await expect(sheet.or(shell).first()).toBeVisible();
+  if ((await sheet.count()) > 0) {
+    return {
+      presentation: "sheet",
+      scope: sheet,
+      search: sheet.getByRole("combobox", { name: label, exact: true }),
+      trigger,
+    };
+  }
+  return { presentation: "popover", scope: shell, search: trigger, trigger };
+}
+
+/**
+ * Opens a picker, optionally filters it, and chooses an option. Works in both
+ * presentations, so a spec never has to know which one the viewport gets.
+ */
+export async function choosePickerOption(
+  page: Page,
+  label: string,
+  option: string | RegExp,
+  query?: string,
+  scope?: Locator,
+): Promise<void> {
+  const picker = await openPicker(page, label, scope);
+  if (query !== undefined) await picker.search.fill(query);
+  await picker.scope.getByRole("option", { name: option }).first().click();
+  await expect(page.locator("[data-picker-sheet]")).toHaveCount(0);
+}
+
 export async function expectNoHorizontalScroll(page: Page): Promise<void> {
   const overflows = await page.evaluate(
     () => document.documentElement.scrollWidth > window.innerWidth,
@@ -183,44 +237,47 @@ export async function expectTouchTargets(
   minimum = 44,
   exclude?: string,
 ): Promise<void> {
-  const tooSmall = await page.evaluate(({ size, skip }) => {
-    const selector =
-      'a[href],button,input:not([type="hidden"]),select,textarea,[role="button"],[role="link"],[tabindex]:not([tabindex="-1"])';
-    return Array.from(document.querySelectorAll<HTMLElement>(selector))
-      .filter((element) => {
-        const rect = element.getBoundingClientRect();
-        const style = window.getComputedStyle(element);
-        if (
-          rect.width === 0 ||
-          rect.height === 0 ||
-          style.visibility === "hidden" ||
-          (skip !== null && element.matches(skip))
-        )
-          return false;
-        // A checkbox or radio is one target with its wrapping label.
-        const label = element.closest("label");
-        if (
-          label &&
-          element.matches('input[type="checkbox"], input[type="radio"]')
-        ) {
-          const box = label.getBoundingClientRect();
-          if (box.width >= size && box.height >= size) return false;
-        }
-        return true;
-      })
-      .map((element) => {
-        const rect = element.getBoundingClientRect();
-        return {
-          label:
-            element.getAttribute("aria-label") ??
-            element.textContent?.trim() ??
-            element.tagName,
-          width: Math.round(rect.width),
-          height: Math.round(rect.height),
-        };
-      })
-      .filter((target) => target.width < size || target.height < size);
-  }, { size: minimum, skip: exclude ?? null });
+  const tooSmall = await page.evaluate(
+    ({ size, skip }) => {
+      const selector =
+        'a[href],button,input:not([type="hidden"]),select,textarea,[role="button"],[role="link"],[tabindex]:not([tabindex="-1"])';
+      return Array.from(document.querySelectorAll<HTMLElement>(selector))
+        .filter((element) => {
+          const rect = element.getBoundingClientRect();
+          const style = window.getComputedStyle(element);
+          if (
+            rect.width === 0 ||
+            rect.height === 0 ||
+            style.visibility === "hidden" ||
+            (skip !== null && element.matches(skip))
+          )
+            return false;
+          // A checkbox or radio is one target with its wrapping label.
+          const label = element.closest("label");
+          if (
+            label &&
+            element.matches('input[type="checkbox"], input[type="radio"]')
+          ) {
+            const box = label.getBoundingClientRect();
+            if (box.width >= size && box.height >= size) return false;
+          }
+          return true;
+        })
+        .map((element) => {
+          const rect = element.getBoundingClientRect();
+          return {
+            label:
+              element.getAttribute("aria-label") ??
+              element.textContent?.trim() ??
+              element.tagName,
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+          };
+        })
+        .filter((target) => target.width < size || target.height < size);
+    },
+    { size: minimum, skip: exclude ?? null },
+  );
   expect(tooSmall, `touch targets below ${minimum}px`).toEqual([]);
 }
 
@@ -560,6 +617,7 @@ export async function emulateSoftwareKeyboard(
       configurable: true,
       value: fake,
     });
+    window.dispatchEvent(new Event("resize"));
     fake.dispatchEvent(new Event("resize"));
   }, height);
 }
@@ -568,9 +626,7 @@ export async function emulateSoftwareKeyboard(
  * Pans the emulated visual viewport the way a mobile browser does to reveal
  * the focused field. Used when the picker sits low on a long page.
  */
-export async function revealInVisualViewport(
-  locator: Locator,
-): Promise<void> {
+export async function revealInVisualViewport(locator: Locator): Promise<void> {
   await locator.evaluate((element) => {
     const viewport = window.__FLEET_TEST_VISUAL_VIEWPORT__;
     if (!viewport) return;

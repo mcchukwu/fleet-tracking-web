@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import {
   captureForReview,
+  choosePickerOption,
   expectNoAxeViolations,
   expectNoHorizontalScroll,
   expectNoOverlap,
@@ -31,10 +32,7 @@ async function waitForPoints(page: Page, minimum = 1): Promise<void> {
 }
 
 async function openVehicle(page: Page, plate: string): Promise<void> {
-  const combo = page.getByRole("combobox", { name: "Vehicle" });
-  await combo.click();
-  await combo.fill(plate);
-  await page.getByRole("option").filter({ hasText: plate }).first().click();
+  await choosePickerOption(page, "Vehicle", new RegExp(plate), plate);
 }
 
 test.describe("playback", () => {
@@ -226,7 +224,9 @@ test.describe("playback", () => {
     const marker = page.getByTestId("playback-event-marker").nth(1);
     await expect(marker).toBeVisible();
     const label = await marker.getAttribute("aria-label");
-    expect(label).toMatch(/ at \d{2}:\d{2}:\d{2}$/);
+    // A range that crosses local midnight carries the date, so this is stable
+    // whenever the suite runs.
+    expect(label).toMatch(/ at (?:\d{1,2} [A-Z][a-z]{2} )?\d{2}:\d{2}:\d{2}$/);
     const time = label?.slice(label.lastIndexOf(" at ") + 4) ?? "";
 
     await marker.focus();
@@ -307,28 +307,30 @@ test.describe("playback", () => {
     await captureForReview(page, "05-playback-real-route");
   });
 
-  test("keeps the header and controls apart on both viewports", { tag: "@theme" }, async ({
-    page,
-  }) => {
-    await gotoPlayback(page, `vehicle=${VEHICLE}`);
-    await waitForPoints(page, 10);
+  test(
+    "keeps the header and controls apart on both viewports",
+    { tag: "@theme" },
+    async ({ page }) => {
+      await gotoPlayback(page, `vehicle=${VEHICLE}`);
+      await waitForPoints(page, 10);
 
-    await expectNoHorizontalScroll(page);
-    const controls = page.getByRole("region", { name: "Playback controls" });
-    await expectNoOverlap(
-      page.locator('[data-testid="playback-page"] header'),
-      controls,
-    );
-    await expectNoOverlap(page.getByTestId("map-attribution"), controls);
-    const viewport = page.viewportSize();
-    const band = page.getByTestId("playback-event-band");
-    const bandBox = await band.boundingBox();
-    expect(bandBox?.height ?? 0).toBeGreaterThanOrEqual(
-      (viewport?.width ?? 1440) < 768 ? 44 : 28,
-    );
-    if ((viewport?.width ?? 1440) < 768) {
-      await expectTouchTargets(page, 44);
-    }
-    await captureForReview(page, "05-playback-controls");
-  });
+      await expectNoHorizontalScroll(page);
+      const controls = page.getByRole("region", { name: "Playback controls" });
+      await expectNoOverlap(
+        page.locator('[data-testid="playback-page"] header'),
+        controls,
+      );
+      await expectNoOverlap(page.getByTestId("map-attribution"), controls);
+      const viewport = page.viewportSize();
+      const band = page.getByTestId("playback-event-band");
+      const bandBox = await band.boundingBox();
+      expect(bandBox?.height ?? 0).toBeGreaterThanOrEqual(
+        (viewport?.width ?? 1440) < 768 ? 44 : 28,
+      );
+      if ((viewport?.width ?? 1440) < 768) {
+        await expectTouchTargets(page, 44);
+      }
+      await captureForReview(page, "05-playback-controls");
+    },
+  );
 });

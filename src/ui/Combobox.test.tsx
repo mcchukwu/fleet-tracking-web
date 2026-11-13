@@ -258,6 +258,7 @@ describe("Combobox sheet", () => {
     const search = within(dialog).getByRole("combobox", { name: "Driver" });
     expect(search).toHaveFocus();
     expect(within(dialog).getAllByRole("option")).toHaveLength(3);
+    expect(search.getAttribute("aria-activedescendant")).toContain("d1");
   });
 
   it("filters and selects by keyboard, then returns focus to the trigger", async () => {

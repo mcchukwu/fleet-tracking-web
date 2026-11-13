@@ -425,6 +425,61 @@ test.describe("layers", { tag: "@theme" }, () => {
     const list = page.locator("[data-combobox-list]");
     await expect(list).toBeVisible();
 
+    const sheet = page.locator("[data-picker-sheet]");
+    if ((await sheet.count()) > 0) {
+      // The sheet presentation is modal: it is portalled above the dialog and
+      // covers the dialog's own close by design, offering its own instead.
+      const layering = await page.evaluate(() => {
+        const sheetElement = document.querySelector<HTMLElement>(
+          "[data-picker-sheet]",
+        );
+        const dialogs = [
+          ...document.querySelectorAll<HTMLElement>('[role="dialog"]'),
+        ];
+        const parentDialog = dialogs.find(
+          (dialog) => !dialog.contains(sheetElement),
+        );
+        if (!sheetElement || !parentDialog) return null;
+        const sheetLayer = sheetElement.closest<HTMLElement>(
+          "[data-layer-portal]",
+        );
+        const dialogLayer = parentDialog.closest<HTMLElement>(
+          "[data-layer-portal]",
+        );
+        return {
+          sheetZ: sheetLayer ? Number(getComputedStyle(sheetLayer).zIndex) : 0,
+          dialogZ: dialogLayer
+            ? Number(getComputedStyle(dialogLayer).zIndex)
+            : 0,
+        };
+      });
+      expect(layering).not.toBeNull();
+      expect(layering?.sheetZ).toBeGreaterThan(layering?.dialogZ ?? 0);
+      const close = sheet.getByRole("button", { name: "Close picker" });
+      await expect(close).toBeVisible();
+      const closeBox = await close.boundingBox();
+      expect(closeBox).not.toBeNull();
+      if (closeBox) {
+        const hit = await page.evaluate(
+          ({ x, y }) =>
+            document
+              .elementFromPoint(x, y)
+              ?.closest('[aria-label="Close picker"]') !== null,
+          {
+            x: closeBox.x + closeBox.width / 2,
+            y: closeBox.y + closeBox.height / 2,
+          },
+        );
+        expect(hit, "the sheet close is hit-testable").toBe(true);
+      }
+      await page.keyboard.press("Escape");
+      await expect(sheet).toHaveCount(0);
+      await expect(dialog).toBeVisible();
+      await captureForReview(page, "layers-dialog-combobox");
+      await expectNoHorizontalScroll(page);
+      return;
+    }
+
     const layering = await page.evaluate(() => {
       const listElement = document.querySelector<HTMLElement>(
         "[data-combobox-list]",

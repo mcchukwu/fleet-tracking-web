@@ -125,10 +125,15 @@ describe("TripCreateDialog", () => {
     const user = userEvent.setup();
     renderDialog();
 
-    await user.click(screen.getByRole("button", { name: "Retry vehicles" }));
+    await user.click(screen.getByRole("combobox", { name: "Vehicle" }));
+    await user.click(screen.getByRole("button", { name: "Retry" }));
     expect(mocks.snapshot.refetch).toHaveBeenCalledTimes(1);
+    await user.keyboard("{Escape}");
 
-    await user.click(screen.getByRole("button", { name: "Retry drivers" }));
+    await user.click(
+      screen.getByRole("combobox", { name: "Driver (optional)" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Retry" }));
     expect(mocks.drivers.refetch).toHaveBeenCalledTimes(1);
   });
 

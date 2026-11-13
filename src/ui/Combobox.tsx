@@ -299,6 +299,11 @@ export function Combobox({
     setActiveIndex(0);
   }
 
+  function closeSheet(): void {
+    closeList();
+    focusTrigger();
+  }
+
   function select(item: ComboboxItem): void {
     onChange(item.id);
     closeList();
@@ -478,7 +483,7 @@ export function Combobox({
         activeIndex={activeIndexClamped}
         onActive={setActiveIndex}
         onSelect={select}
-        onClose={closeList}
+        onClose={closeSheet}
         clearable={clearable}
         {...(onClear ? { onClear: selectClear } : {})}
         clearLabel={clearLabel}

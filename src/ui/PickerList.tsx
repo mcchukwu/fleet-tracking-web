@@ -150,7 +150,7 @@ export function PickerList({
           data-index={index}
           data-active={isActive || undefined}
           onMouseDown={(event) => event.preventDefault()}
-          onMouseEnter={() => onActive(0)}
+          onMouseMove={() => onActive(0)}
           onClick={() => {
             clear.onClear();
           }}
@@ -180,7 +180,7 @@ export function PickerList({
         data-index={index}
         data-active={isActive || undefined}
         onMouseDown={(event) => event.preventDefault()}
-        onMouseEnter={() => onActive(index)}
+        onMouseMove={() => onActive(index)}
         onClick={() => onSelect(item)}
         style={rowCss}
         className={cn(
@@ -241,7 +241,7 @@ export function PickerList({
         role="listbox"
         aria-label={label}
         data-combobox-list
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+        className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain"
         style={style}
       >
         {status === "empty" ? (

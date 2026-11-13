@@ -3,198 +3,37 @@ import { expect, test } from "./fixtures";
 import {
   captureForReview,
   emulateSoftwareKeyboard,
+  expectNoAxeViolations,
   expectNoHorizontalScroll,
-  revealInVisualViewport,
+  openPicker,
 } from "./helpers";
 
 /**
- * The picker overlay across 1440x900, 390x844 and 360x640, light and dark, with
- * 3, 25 and 500 options and the software keyboard open. The dev combobox page
- * makes the option count deterministic; the assertions are measurements.
+ * The picker across every supported viewport, both themes and 3, 25 and 500
+ * options. Wide fine-pointer viewports get an anchored popover with 44px rows
+ * capped at 360px; narrow or coarse ones get a 56px-row modal sheet capped at
+ * 85% of the visual viewport. The dev combobox page makes the option count
+ * deterministic.
  */
 
 const VIEWPORTS = [
   { width: 1440, height: 900 },
+  { width: 1024, height: 768 },
+  { width: 412, height: 915 },
   { width: 390, height: 844 },
   { width: 360, height: 640 },
+  { width: 320, height: 568 },
 ] as const;
 const COUNTS = [3, 25, 500] as const;
 const KEYBOARD = 260;
-const TOLERANCE = 0.75;
+const TOLERANCE = 1;
 
-interface OverlayMeasurement {
-  list: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    bottom: number;
-    position: string;
-    overflowY: string;
-    maxHeight: number;
-    clientHeight: number;
-    scrollHeight: number;
-    portalled: boolean;
-    side: "below" | "above";
-    gap: number;
-  };
-  hits: Array<{ label: string; inside: boolean; overlap: number }>;
-  viewport: { width: number; height: number };
-  visualViewport: { width: number; height: number; offsetTop: number };
-  scrollY: number;
-}
-
-async function measureOverlay(input: Locator): Promise<OverlayMeasurement> {
-  return input.evaluate((element) => {
-    const round = (value: number) => Math.round(value * 100) / 100;
-    const inputRect = element.getBoundingClientRect();
-    const scope = element.closest<HTMLElement>('[role="dialog"]');
-    const list = document.querySelector<HTMLElement>("[data-combobox-list]");
-    const listRect = list?.getBoundingClientRect() ?? null;
-    const style = list ? window.getComputedStyle(list) : null;
-
-    const hits: Array<{
-      label: string;
-      inside: boolean;
-      overlap: number;
-    }> = [];
-    if (scope && listRect) {
-      for (const button of scope.querySelectorAll<HTMLElement>("button")) {
-        const label =
-          button.getAttribute("aria-label") ??
-          button.textContent?.trim() ??
-          "(button)";
-        if (!/^(Cancel|Close dialog)$/.test(label)) continue;
-        if (button.hasAttribute("disabled")) continue;
-        const buttonRect = button.getBoundingClientRect();
-        const hit = document.elementFromPoint(
-          buttonRect.x + buttonRect.width / 2,
-          buttonRect.y + buttonRect.height / 2,
-        );
-        hits.push({
-          label,
-          inside: hit !== null && (hit === button || button.contains(hit)),
-          overlap: round(
-            Math.max(
-              0,
-              Math.min(listRect.right, buttonRect.right) -
-                Math.max(listRect.left, buttonRect.left),
-            ) *
-              Math.max(
-                0,
-                Math.min(listRect.bottom, buttonRect.bottom) -
-                  Math.max(listRect.top, buttonRect.top),
-              ),
-          ),
-        });
-      }
-    }
-
-    const viewport = window.visualViewport;
-    return {
-      list: {
-        x: round(listRect?.x ?? 0),
-        y: round(listRect?.y ?? 0),
-        width: round(listRect?.width ?? 0),
-        height: round(listRect?.height ?? 0),
-        bottom: round(listRect?.bottom ?? 0),
-        position: style?.position ?? "",
-        overflowY: style?.overflowY ?? "",
-        maxHeight: Number.parseFloat(style?.maxHeight ?? "0") || 0,
-        clientHeight: list?.clientHeight ?? 0,
-        scrollHeight: list?.scrollHeight ?? 0,
-        portalled: list?.closest('[data-layer-portal="popover"]') !== null,
-        side:
-          listRect && listRect.top >= inputRect.bottom
-            ? ("below" as const)
-            : ("above" as const),
-        gap: listRect
-          ? listRect.top >= inputRect.bottom
-            ? round(listRect.top - inputRect.bottom)
-            : round(inputRect.top - listRect.bottom)
-          : 0,
-      },
-      hits,
-      viewport: { width: window.innerWidth, height: window.innerHeight },
-      visualViewport: {
-        width: viewport?.width ?? window.innerWidth,
-        height: viewport?.height ?? window.innerHeight,
-        offsetTop: viewport?.offsetTop ?? 0,
-      },
-      scrollY: window.scrollY,
-    };
-  });
-}
-
-async function measureBefore(input: Locator) {
-  return input.evaluate((element) => {
-    const scope = element.closest<HTMLElement>('[role="dialog"]');
-    const round = (value: number) => Math.round(value * 100) / 100;
-    const toBox = (value: DOMRect) => ({
-      x: round(value.x),
-      y: round(value.y),
-      width: round(value.width),
-      height: round(value.height),
-    });
-    return {
-      input: toBox(element.getBoundingClientRect()),
-      dialog: scope ? toBox(scope.getBoundingClientRect()) : null,
-    };
-  });
-}
-
-function expectStable(
-  before: { x: number; y: number; width: number; height: number } | null,
-  after: { x: number; y: number; width: number; height: number },
-  label: string,
-): void {
-  expect(before).not.toBeNull();
-  for (const key of ["x", "y", "width", "height"] as const) {
-    expect(
-      Math.abs((before?.[key] ?? 0) - after[key]),
-      `${label} ${key} is stable when the list opens`,
-    ).toBeLessThanOrEqual(TOLERANCE);
-  }
-}
-
-async function expectOverlayFits(
-  page: Page,
-  input: Locator,
-): Promise<{ measured: OverlayMeasurement; after: { x: number; y: number; width: number; height: number } }> {
-  await input.scrollIntoViewIfNeeded();
-  const scrollBefore = await page.evaluate(() => window.scrollY);
-  const before = await measureBefore(input);
-  await input.click();
-  await expect(page.locator("[data-combobox-list]")).toBeVisible();
-  const measured = await measureOverlay(input);
-  const after = await measureBefore(input);
-  expectStable(before.input, after.input, "the input");
-  if (before.dialog) {
-    expectStable(before.dialog, after.dialog ?? before.dialog, "the dialog");
-  }
-
-  const list = measured.list;
-  expect(list.position).toBe("fixed");
-  expect(list.portalled, "the list renders in the popover layer").toBe(true);
-  expect(["auto", "scroll"]).toContain(list.overflowY);
-  expect(list.width).toBeCloseTo(
-    Math.max(240, Math.min(after.input.width, measured.viewport.width - 16)),
-    1,
-  );
-  expect(list.gap).toBeCloseTo(4, 1);
-
-  const visibleTop = measured.visualViewport.offsetTop;
-  const visibleBottom = visibleTop + measured.visualViewport.height;
-  expect(list.y).toBeGreaterThanOrEqual(visibleTop - TOLERANCE);
-  expect(list.bottom).toBeLessThanOrEqual(visibleBottom + TOLERANCE);
-  expect(list.maxHeight).toBeLessThanOrEqual(
-    visibleBottom - visibleTop + TOLERANCE,
-  );
-  expect(measured.scrollY, "opening the list did not scroll the page").toBe(
-    scrollBefore,
-  );
-
-  return { measured, after: after.input };
+interface Box {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  bottom: number;
 }
 
 async function openLab(page: Page): Promise<void> {
@@ -204,197 +43,269 @@ async function openLab(page: Page): Promise<void> {
   ).toBeVisible();
 }
 
+async function box(locator: Locator): Promise<Box> {
+  const measured = await locator.boundingBox();
+  expect(measured, "the element has no box").not.toBeNull();
+  if (!measured) throw new Error("missing box");
+  return { ...measured, bottom: measured.y + measured.height };
+}
+
+async function rowHeights(scope: Locator): Promise<number[]> {
+  return scope
+    .getByRole("option")
+    .evaluateAll((options) =>
+      options.map((option) => option.getBoundingClientRect().height),
+    );
+}
+
+async function visibleRowCount(scope: Locator): Promise<number> {
+  return scope.evaluate((element) => {
+    const list = element.querySelector<HTMLElement>('[role="listbox"]');
+    if (!list) return 0;
+    const listBox = list.getBoundingClientRect();
+    return [...list.querySelectorAll('[role="option"]')].filter((option) => {
+      const rect = option.getBoundingClientRect();
+      return rect.top >= listBox.top - 1 && rect.bottom <= listBox.bottom + 1;
+    }).length;
+  });
+}
+
+async function scrollTop(scope: Locator): Promise<number> {
+  return scope.locator('[role="listbox"]').evaluate((list) => list.scrollTop);
+}
+
+async function touchSwipeUp(page: Page, target: Locator): Promise<void> {
+  const targetBox = await target.boundingBox();
+  if (!targetBox) throw new Error("the picker list has no box");
+  const client = await page.context().newCDPSession(page);
+  const x = Math.round(targetBox.x + targetBox.width / 2);
+  const startY = Math.round(targetBox.y + targetBox.height - 24);
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x, y: startY }],
+  });
+  for (const offset of [30, 60, 90, 120]) {
+    await client.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ x, y: startY - offset }],
+    });
+    await page.waitForTimeout(16);
+  }
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
+  await client.detach();
+}
+
+async function touchTap(page: Page, target: Locator): Promise<void> {
+  const targetBox = await target.boundingBox();
+  if (!targetBox) throw new Error("the target has no box");
+  const client = await page.context().newCDPSession(page);
+  const x = Math.round(targetBox.x + targetBox.width / 2);
+  const y = Math.round(targetBox.y + targetBox.height / 2);
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x, y }],
+  });
+  await client.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
+  await client.detach();
+}
+
 test.describe(
   "picker overlay across viewports, themes and option counts",
   { tag: "@theme" },
   () => {
     for (const viewport of VIEWPORTS) {
-      test(`standalone picker keeps its box at ${viewport.width}x${viewport.height}`, async ({
+      test(`the picker is correct at ${viewport.width}x${viewport.height}`, async ({
         page,
       }) => {
         await page.setViewportSize(viewport);
         await openLab(page);
+        // The coarse-pointer projects keep the sheet even at a wide viewport.
+        const sheetExpected = !(await page.evaluate(
+          () =>
+            window.matchMedia("(min-width: 768px) and (pointer: fine)").matches,
+        ));
 
-        for (const keyboard of viewport.width < 768 ? [false, true] : [false]) {
-          if (keyboard) await emulateSoftwareKeyboard(page, KEYBOARD);
-          for (const count of COUNTS) {
-            const input = page.getByRole("combobox", {
-              name: `Vehicle (${count} options)`,
-            });
-            await revealInVisualViewport(input);
-            const { measured } = await expectOverlayFits(page, input);
+        for (const count of COUNTS) {
+          const picker = await openPicker(page, `Vehicle (${count} options)`);
+          expect(picker.presentation).toBe(sheetExpected ? "sheet" : "popover");
+
+          const heights = await rowHeights(picker.scope);
+          expect(heights.length).toBeGreaterThan(0);
+          for (const height of heights) {
             expect(
-              measured.list.scrollHeight >= measured.list.clientHeight,
-            ).toBe(true);
-            expect(measured.list.maxHeight).toBeLessThanOrEqual(256);
-            await expect(input).toBeFocused();
-            await page.keyboard.press("Escape");
-            await expect(page.locator("[data-combobox-list]")).toBeHidden();
-            await captureForReview(
-              page,
-              `combobox-standalone-${count}${keyboard ? "-keyboard" : ""}-${viewport.width}`,
-            );
+              Math.abs(height - (sheetExpected ? 56 : 44)),
+              `row height at ${count} options`,
+            ).toBeLessThanOrEqual(TOLERANCE);
           }
-          await expectNoHorizontalScroll(page);
+
+          if (count === 500) {
+            expect(
+              await picker.scope
+                .locator("[data-picker-list]")
+                .getAttribute("data-virtualized"),
+            ).toBe("true");
+            expect(heights.length).toBeLessThan(500);
+          } else {
+            expect(heights.length).toBe(count);
+          }
+
+          if (sheetExpected) {
+            const sheet = picker.scope;
+            const sheetBox = await box(sheet);
+            const maxHeight = await sheet.evaluate(
+              (element) => Number.parseFloat(element.style.maxHeight) || 0,
+            );
+            expect(sheetBox.y).toBeGreaterThanOrEqual(0);
+            expect(sheetBox.bottom).toBeLessThanOrEqual(
+              viewport.height + TOLERANCE,
+            );
+            expect(maxHeight).toBeLessThanOrEqual(viewport.height * 0.85 + 1);
+            await expect(picker.search).toBeFocused();
+            if (count >= 25) {
+              expect(await visibleRowCount(sheet)).toBeGreaterThanOrEqual(4);
+            }
+            await expect(
+              sheet.getByRole("button", { name: "Close picker" }),
+            ).toBeVisible();
+          } else {
+            const shell = picker.scope;
+            const shellBox = await box(shell);
+            const maxHeight = await shell.evaluate((element) =>
+              Number.parseFloat(window.getComputedStyle(element).maxHeight),
+            );
+            expect(maxHeight).toBeLessThanOrEqual(360 + TOLERANCE);
+            expect(shellBox.y).toBeGreaterThanOrEqual(0);
+            expect(shellBox.bottom).toBeLessThanOrEqual(
+              viewport.height + TOLERANCE,
+            );
+            await expect(picker.trigger).toBeFocused();
+          }
+
+          await expect(picker.trigger).toHaveAttribute("aria-expanded", "true");
+          await page.keyboard.press("Escape");
+          await expect(page.locator("[data-picker-sheet]")).toHaveCount(0);
+          await expect(page.locator("[data-combobox-shell]")).toHaveCount(0);
+          await expect(picker.trigger).toHaveAttribute(
+            "aria-expanded",
+            "false",
+          );
+          await expect(picker.trigger).toBeFocused();
         }
+
+        await expectNoHorizontalScroll(page);
+        await captureForReview(
+          page,
+          `13b-picker-${sheetExpected ? "sheet" : "popover"}-${viewport.width}`,
+        );
       });
     }
-
-    test("a dialog picker with the software keyboard open stays put", async ({
-      page,
-    }) => {
-      await page.setViewportSize({ width: 360, height: 640 });
-      await openLab(page);
-      await page.getByRole("button", { name: "Open 500-option dialog" }).click();
-      const dialog = page.getByRole("dialog");
-      await expect(dialog).toBeVisible();
-      const input = dialog.getByRole("combobox", {
-        name: "Vehicle",
-        exact: true,
-      });
-
-      const beforeKeyboard = await measureBefore(input);
-      await emulateSoftwareKeyboard(page, KEYBOARD);
-      const afterKeyboard = await measureBefore(input);
-      if (beforeKeyboard.dialog) {
-        expectStable(beforeKeyboard.dialog, afterKeyboard.dialog ?? beforeKeyboard.dialog, "the dialog");
-      }
-      expectStable(beforeKeyboard.input, afterKeyboard.input, "the input");
-
-      const { measured, after } = await expectOverlayFits(page, input);
-      expect(measured.list.side, "the list flips above short space").toBe(
-        "above",
-      );
-      expect(measured.hits.map((hit) => hit.label).sort()).toEqual([
-        "Cancel",
-        "Close dialog",
-      ]);
-      for (const hit of measured.hits) {
-        expect(hit.inside, `${hit.label} stays clickable`).toBe(true);
-        expect(hit.overlap, `${hit.label} is not covered`).toBe(0);
-      }
-      const visibleBottom =
-        measured.visualViewport.offsetTop + measured.visualViewport.height;
-      expect(after.y + after.height).toBeLessThan(
-        visibleBottom,
-      );
-      await captureForReview(page, "combobox-dialog-keyboard-360");
-    });
   },
 );
 
-test.describe("picker keyboard contract", () => {
-  test("arrow keys, Home, End and Enter move the active option and keep focus", async ({
+test.describe("picker interaction", { tag: "@theme" }, () => {
+  test("the list scrolls by wheel, touch and keyboard", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openLab(page);
+
+    let picker = await openPicker(page, "Vehicle (500 options)");
+    let list = picker.scope.locator('[role="listbox"]');
+    const listBox = await box(list);
+    await page.mouse.move(listBox.x + listBox.width / 2, listBox.y + 40);
+    await page.mouse.wheel(0, 500);
+    await expect.poll(() => scrollTop(picker.scope)).toBeGreaterThan(0);
+    await page.keyboard.press("Escape");
+
+    picker = await openPicker(page, "Vehicle (500 options)");
+    list = picker.scope.locator('[role="listbox"]');
+    await touchSwipeUp(page, list);
+    await expect.poll(() => scrollTop(picker.scope)).toBeGreaterThan(0);
+    await page.keyboard.press("Escape");
+
+    picker = await openPicker(page, "Vehicle (500 options)");
+    await page.keyboard.press("End");
+    await expect.poll(() => scrollTop(picker.scope)).toBeGreaterThan(0);
+    await page.keyboard.press("Home");
+    await expect.poll(() => scrollTop(picker.scope)).toBe(0);
+    await page.keyboard.press("Escape");
+  });
+
+  test("selection works by keyboard, mouse and touch and returns focus", async ({
     page,
   }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
     await openLab(page);
-    const input = page.getByRole("combobox", {
-      name: "Vehicle (500 options)",
-    });
-    await input.click();
-    const list = page.locator("[data-combobox-list]");
-    await expect(list).toBeVisible();
-    await expect(input).toHaveAttribute("aria-expanded", "true");
-    await expect(input).toHaveAttribute("aria-haspopup", "listbox");
 
-    const active = async (): Promise<string | null> =>
-      input.getAttribute("aria-activedescendant");
-    const first = await active();
-    expect(first).toContain("vehicle-001");
-
-    await page.keyboard.press("ArrowDown");
-    expect(await active()).toContain("vehicle-002");
-    await page.keyboard.press("End");
-    expect(await active()).toContain("vehicle-500");
-    expect(await list.evaluate((element) => element.scrollTop)).toBeGreaterThan(
-      0,
-    );
-    await page.keyboard.press("Home");
-    expect(await active()).toContain("vehicle-001");
-    expect(await list.evaluate((element) => element.scrollTop)).toBe(0);
-
+    let picker = await openPicker(page, "Vehicle (25 options)");
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("Enter");
-    await expect(list).toBeHidden();
-    await expect(input).toHaveValue("LSD-002-AA");
-    await expect(input).toBeFocused();
-  });
-});
+    await expect(picker.trigger).toHaveValue("LSD-002-AA");
+    await expect(picker.trigger).toBeFocused();
 
-test.describe("shared search anatomy", () => {
-  test("the plate search and every picker use the same control", async ({
+    picker = await openPicker(page, "Vehicle (25 options)");
+    await picker.search.fill("LSD-005");
+    await picker.scope.getByRole("option", { name: /LSD-005-AA/ }).click();
+    await expect(picker.trigger).toHaveValue("LSD-005-AA");
+    await expect(picker.trigger).toBeFocused();
+
+    picker = await openPicker(page, "Vehicle (25 options)");
+    const option = picker.scope
+      .getByRole("option", { name: /LSD-007-AA/ })
+      .first();
+    await touchTap(page, option);
+    await expect(picker.trigger).toHaveValue("LSD-007-AA");
+  });
+
+  test("the sheet follows the software keyboard and keeps four rows", async ({
     page,
   }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
     await openLab(page);
-    const anatomy = await page.evaluate(() => {
-      const round = (value: number) => Math.round(value * 100) / 100;
-      const describe = (input: HTMLInputElement) => {
-        const control = input.parentElement;
-        const icon = control?.querySelector("svg") ?? null;
-        const inputRect = input.getBoundingClientRect();
-        const iconRect = icon?.getBoundingClientRect() ?? null;
-        const style = window.getComputedStyle(input);
-        return {
-          height: round(inputRect.height),
-          paddingLeft: style.paddingLeft,
-          paddingRight: style.paddingRight,
-          fontSize: style.fontSize,
-          placeholder: window.getComputedStyle(input, "::placeholder").color,
-          icon: iconRect
-            ? {
-                width: round(iconRect.width),
-                height: round(iconRect.height),
-                left: round(iconRect.left - inputRect.left),
-                centre: round(
-                  iconRect.top +
-                    iconRect.height / 2 -
-                    (inputRect.top + inputRect.height / 2),
-                ),
-              }
-            : null,
-        };
-      };
-      const search = document.querySelector<HTMLInputElement>(
-        '[data-testid="lab-search"] input',
-      );
-      const picker = document.querySelector<HTMLInputElement>(
-        '[data-combobox-count="3"] input',
-      );
-      return {
-        search: search ? describe(search) : null,
-        picker: picker ? describe(picker) : null,
-      };
-    });
-    expect(anatomy.search).not.toBeNull();
-    expect(anatomy.picker).not.toBeNull();
-    expect(anatomy.picker).toEqual(anatomy.search);
-    expect(anatomy.search?.icon?.width).toBe(16);
-    expect(anatomy.search?.icon?.height).toBe(16);
-    expect(anatomy.search?.icon?.centre).toBe(0);
+    const picker = await openPicker(page, "Vehicle (25 options)");
+    expect(picker.presentation).toBe("sheet");
+
+    await emulateSoftwareKeyboard(page, KEYBOARD);
+    const visual = await page.evaluate(() => ({
+      height: window.visualViewport?.height ?? window.innerHeight,
+      offsetTop: window.visualViewport?.offsetTop ?? 0,
+    }));
+    const sheetBox = await box(picker.scope);
+    expect(sheetBox.y).toBeGreaterThanOrEqual(0);
+    expect(sheetBox.bottom).toBeLessThanOrEqual(
+      visual.offsetTop + visual.height + TOLERANCE,
+    );
+    await expect(picker.search).toBeFocused();
+    expect(await visibleRowCount(picker.scope)).toBeGreaterThanOrEqual(4);
+    const clear = picker.scope.getByRole("button", { name: "Close picker" });
+    const clearBox = await box(clear);
+    const hit = await page.evaluate(
+      ({ x, y }) => {
+        const element = document.elementFromPoint(x, y);
+        return element?.closest('[aria-label="Close picker"]') !== null;
+      },
+      {
+        x: clearBox.x + clearBox.width / 2,
+        y: clearBox.y + clearBox.height / 2,
+      },
+    );
+    expect(hit, "the sheet close stays hit-testable").toBe(true);
+    await captureForReview(page, "13b-picker-sheet-keyboard-390");
   });
 
-  test("both controls take the same focus ring", async ({ page }) => {
+  test("the open and closed picker states are axe clean", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
     await openLab(page);
-    const rings = await page.evaluate(() => {
-      const search = document.querySelector<HTMLInputElement>(
-        '[data-testid="lab-search"] input',
-      );
-      const picker = document.querySelector<HTMLInputElement>(
-        '[data-combobox-count="3"] input',
-      );
-      const ring = (input: HTMLInputElement | null) => {
-        input?.focus();
-        if (!input) return null;
-        const style = window.getComputedStyle(input);
-        return {
-          boxShadow: style.boxShadow,
-          borderColor: style.borderColor,
-          outline: style.outlineStyle,
-        };
-      };
-      return { search: ring(search), picker: ring(picker) };
-    });
-    expect(rings.search).not.toBeNull();
-    expect(rings.picker).toEqual(rings.search);
+    await expectNoAxeViolations(page);
+    const picker = await openPicker(page, "Vehicle (25 options)");
+    await expectNoAxeViolations(page);
+    await page.keyboard.press("Escape");
+    await expect(page.locator("[data-picker-sheet]")).toHaveCount(0);
+    await expectNoAxeViolations(page);
+    expect(picker.presentation).toBe("sheet");
   });
 });

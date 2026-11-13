@@ -165,16 +165,10 @@ export function TripCreateDialog({
               onChange={(id) => setValue("vehicle_id", id, { shouldDirty: true, shouldValidate: true })}
               loading={snapshot.isLoading}
               error={vehicleError}
+              onRetry={() => void snapshot.refetch()}
               emptyMessage="No vehicles"
               placeholder="Search by plate, depot or IMEI"
             />
-            {snapshot.error ? (
-              <div className="flex justify-end sm:col-span-2">
-                <Button size="sm" variant="ghost" onClick={() => void snapshot.refetch()}>
-                  Retry vehicles
-                </Button>
-              </div>
-            ) : null}
 
             <Combobox
               className="sm:col-span-2"
@@ -184,16 +178,12 @@ export function TripCreateDialog({
               onChange={(id) => setValue("driver_id", id, { shouldDirty: true })}
               loading={driversQuery.isLoading}
               error={driverError}
+              onRetry={() => void driversQuery.refetch()}
+              clearable
+              onClear={() => setValue("driver_id", "", { shouldDirty: true })}
               emptyMessage="No active drivers"
               placeholder="Search by name, phone or licence"
             />
-            {driversQuery.error ? (
-              <div className="flex justify-end sm:col-span-2">
-                <Button size="sm" variant="ghost" onClick={() => void driversQuery.refetch()}>
-                  Retry drivers
-                </Button>
-              </div>
-            ) : null}
 
             <Input
               label="Origin"

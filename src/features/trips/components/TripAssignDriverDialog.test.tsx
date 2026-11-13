@@ -178,7 +178,8 @@ describe("TripAssignDriverDialog", () => {
     const user = userEvent.setup();
     renderDialog();
 
-    await user.click(screen.getByRole("button", { name: "Retry drivers" }));
+    await user.click(screen.getByRole("combobox", { name: "Driver" }));
+    await user.click(screen.getByRole("button", { name: "Retry" }));
     expect(mocks.drivers.refetch).toHaveBeenCalledTimes(1);
   });
 

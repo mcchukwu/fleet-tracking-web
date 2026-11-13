@@ -118,16 +118,10 @@ export function TripAssignDriverDialog({
         onChange={setDriverId}
         loading={driversQuery.isLoading}
         error={driversQuery.error ? "Couldn't load drivers." : undefined}
+        onRetry={() => void driversQuery.refetch()}
         emptyMessage="No active drivers"
         placeholder="Search by name, phone or licence"
       />
-      {driversQuery.error ? (
-        <div className="mt-2 flex justify-end">
-          <Button size="sm" variant="ghost" onClick={() => void driversQuery.refetch()}>
-            Retry drivers
-          </Button>
-        </div>
-      ) : null}
     </Dialog>
   );
 }

@@ -194,6 +194,7 @@ export function VehicleEditDialog({
               onChange={(id) => setValue("driver_id", id, { shouldDirty: true })}
               loading={driversQuery.isLoading}
               error={driversQuery.error ? "Couldn't load drivers." : undefined}
+              onRetry={() => void driversQuery.refetch()}
               emptyMessage="No active drivers"
               disabled={readOnly}
               disabledReason={readOnly ? blockedReason : undefined}

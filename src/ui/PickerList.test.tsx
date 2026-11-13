@@ -38,7 +38,7 @@ describe("PickerList", () => {
     expect(options[0]?.style.height).toBe("44px");
   });
 
-  it("selects an option and reports the active row on hover", async () => {
+  it("selects an option and reports the active row on pointer movement", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     const onActive = vi.fn();

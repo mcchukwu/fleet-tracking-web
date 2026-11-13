@@ -14,8 +14,11 @@ import { chromium, type Locator, type Page } from "@playwright/test";
 const BASE_URL = process.env.BASE_URL ?? "http://127.0.0.1:4173";
 const VIEWPORTS = [
   { width: 1440, height: 900 },
+  { width: 1024, height: 768 },
+  { width: 412, height: 915 },
   { width: 390, height: 844 },
   { width: 360, height: 640 },
+  { width: 320, height: 568 },
 ] as const;
 const THEMES = ["light", "dark"] as const;
 const KEYBOARD = 260;
@@ -71,16 +74,23 @@ interface Measurement {
   dialogAfter: Box | null;
   leading: IconBox | null;
   trailing: IconBox | null;
-  list: (Box & {
-    position: string;
-    width: number;
-    maxHeight: number;
-    clientHeight: number;
-    scrollHeight: number;
-    overflowY: string;
-    gap: number;
-    side: "below" | "above";
-  }) | null;
+  list:
+    | (Box & {
+        position: string;
+        width: number;
+        maxHeight: number;
+        clientHeight: number;
+        scrollHeight: number;
+        overflowY: string;
+        gap: number;
+        side: "below" | "above";
+      })
+    | null;
+  presentation: "popover" | "sheet";
+  sheet: Box | null;
+  close: { hit: boolean; box: Box } | null;
+  rows: { mounted: number; visible: number; height: number };
+  header: Box | null;
   listWidthTarget: number | null;
   elements: ElementRow[];
   hits: Hit[];
@@ -100,7 +110,12 @@ async function measure(
   dialogSelector: string,
 ): Promise<Measurement> {
   return page.evaluate(
-    ({ stateName, themeName, inputSelector: inputSel, dialogSelector: dialogSel }) => {
+    ({
+      stateName,
+      themeName,
+      inputSelector: inputSel,
+      dialogSelector: dialogSel,
+    }) => {
       const rounder = (value: number) => Math.round(value * 100) / 100;
       const toBox = (rect: DOMRect) => ({
         x: rounder(rect.x),
@@ -224,8 +239,75 @@ async function measure(
       ].filter((row): row is NonNullable<typeof row> => row !== null);
 
       const viewport = window.visualViewport;
+      const sheetElement = document.querySelector<HTMLElement>(
+        "[data-picker-sheet]",
+      );
+      const sheetRect = sheetElement?.getBoundingClientRect() ?? null;
+      const closeElement = sheetElement?.querySelector<HTMLElement>(
+        '[aria-label="Close picker"]',
+      );
+      const closeRect = closeElement?.getBoundingClientRect() ?? null;
+      const closeHit =
+        closeRect && closeElement
+          ? (() => {
+              const hit = document.elementFromPoint(
+                closeRect.x + closeRect.width / 2,
+                closeRect.y + closeRect.height / 2,
+              );
+              return hit !== null && closeElement.contains(hit);
+            })()
+          : false;
+      const header = sheetElement?.querySelector<HTMLElement>(
+        "[data-picker-sheet] > div",
+      );
+      const options = resolvedList
+        ? [...resolvedList.querySelectorAll<HTMLElement>('[role="option"]')]
+        : [];
+      const listBox = resolvedList?.getBoundingClientRect() ?? null;
+      const visibleRows = listBox
+        ? options.filter((option) => {
+            const rect = option.getBoundingClientRect();
+            return (
+              rect.top >= listBox.top - 1 && rect.bottom <= listBox.bottom + 1
+            );
+          }).length
+        : 0;
 
       return {
+        presentation: sheetElement ? "sheet" : "popover",
+        sheet: sheetRect
+          ? {
+              x: rounder(sheetRect.x),
+              y: rounder(sheetRect.y),
+              width: rounder(sheetRect.width),
+              height: rounder(sheetRect.height),
+            }
+          : null,
+        close:
+          closeRect !== null
+            ? {
+                hit: closeHit,
+                box: {
+                  x: rounder(closeRect.x),
+                  y: rounder(closeRect.y),
+                  width: rounder(closeRect.width),
+                  height: rounder(closeRect.height),
+                },
+              }
+            : null,
+        rows: {
+          mounted: options.length,
+          visible: visibleRows,
+          height: rounder(options[0]?.getBoundingClientRect().height ?? 0),
+        },
+        header: header
+          ? {
+              x: rounder(header.getBoundingClientRect().x),
+              y: rounder(header.getBoundingClientRect().y),
+              width: rounder(header.getBoundingClientRect().width),
+              height: rounder(header.getBoundingClientRect().height),
+            }
+          : null,
         state: stateName,
         theme: themeName as "light" | "dark",
         viewport: { width: window.innerWidth, height: window.innerHeight },
@@ -297,6 +379,14 @@ function log(measurement: Measurement, failures: string[]): void {
       `  icons  leading.centre=${measurement.leading?.centerOffset ?? "-"} trailing.centre=${measurement.trailing?.centerOffset ?? "-"}`,
     );
   }
+  console.log(
+    `  picker presentation=${measurement.presentation} rows mounted=${measurement.rows.mounted} visible=${measurement.rows.visible} rowH=${measurement.rows.height}`,
+  );
+  if (measurement.sheet) {
+    console.log(
+      `  sheet  ${measurement.sheet.x},${measurement.sheet.y} ${measurement.sheet.width}x${measurement.sheet.height} headerH=${measurement.header?.height ?? "-"} closeHit=${measurement.close?.hit ?? "-"}`,
+    );
+  }
   if (measurement.list) {
     const list = measurement.list;
     console.log(
@@ -349,7 +439,34 @@ function failuresFor(measurement: Measurement): string[] {
       `dialog moved: ${JSON.stringify(measurement.dialogBefore)} -> ${JSON.stringify(measurement.dialogAfter)}`,
     );
   }
-  if (measurement.list) {
+  if (measurement.presentation === "sheet") {
+    const sheet = measurement.sheet;
+    const visibleTop = measurement.visualViewport.offsetTop;
+    const visibleBottom = visibleTop + measurement.visualViewport.height;
+    if (!sheet) failures.push("the sheet has no box");
+    if (sheet && sheet.y < visibleTop - 0.5) {
+      failures.push("the sheet top is above the visual viewport");
+    }
+    if (sheet && sheet.y + sheet.height > visibleBottom + 0.5) {
+      failures.push("the sheet bottom is below the visual viewport");
+    }
+    if (!measurement.close?.hit) {
+      failures.push("the sheet close is not hit-testable");
+    }
+    if (Math.abs(measurement.rows.height - 56) > 0.5) {
+      failures.push(
+        `sheet row height is ${measurement.rows.height}px, not 56px`,
+      );
+    }
+    if (measurement.rows.mounted >= 4 && measurement.rows.visible < 4) {
+      failures.push(`only ${measurement.rows.visible} rows are visible`);
+    }
+  } else if (measurement.list) {
+    if (Math.abs(measurement.rows.height - 44) > 0.5) {
+      failures.push(
+        `popover row height is ${measurement.rows.height}px, not 44px`,
+      );
+    }
     if (measurement.listWidthTarget !== null) {
       const expected = Math.max(
         240,
@@ -383,14 +500,15 @@ function failuresFor(measurement: Measurement): string[] {
       failures.push("the list overflows without scrolling inside itself");
     }
   }
-  for (const hit of measurement.hits) {
-    if (!hit.inside) {
-      failures.push(`${hit.label} is not hit-testable: ${hit.hit}`);
+  if (measurement.presentation === "popover")
+    for (const hit of measurement.hits) {
+      if (!hit.inside) {
+        failures.push(`${hit.label} is not hit-testable: ${hit.hit}`);
+      }
+      if (hit.overlap > 0) {
+        failures.push(`${hit.label} overlaps the list by ${hit.overlap}px²`);
+      }
     }
-    if (hit.overlap > 0) {
-      failures.push(`${hit.label} overlaps the list by ${hit.overlap}px²`);
-    }
-  }
   return failures;
 }
 
@@ -434,10 +552,11 @@ async function revealInVisualViewport(
 ): Promise<void> {
   await page.evaluate((inputSelector) => {
     const viewport = window.visualViewport as
-      | (VisualViewport & { offsetTop: number })
-      | null;
+      (VisualViewport & { offsetTop: number }) | null;
     const fake = (
-      window as unknown as { __FAKE_VV__?: { offsetTop: number; height: number } }
+      window as unknown as {
+        __FAKE_VV__?: { offsetTop: number; height: number };
+      }
     ).__FAKE_VV__;
     const input = inputSelector
       ? document.querySelector<HTMLElement>(inputSelector)
@@ -483,8 +602,12 @@ async function measureBeforeAfter(
         ? document.querySelector<HTMLElement>(dialogSel)
         : null;
       return {
-        input: inputElement ? toBox(inputElement.getBoundingClientRect()) : null,
-        dialog: dialogElement ? toBox(dialogElement.getBoundingClientRect()) : null,
+        input: inputElement
+          ? toBox(inputElement.getBoundingClientRect())
+          : null,
+        dialog: dialogElement
+          ? toBox(dialogElement.getBoundingClientRect())
+          : null,
       };
     },
     { inputSel: inputSelector, dialogSel: dialogSelector },
@@ -575,12 +698,16 @@ async function main(): Promise<void> {
               theme,
               viewport,
               keyboard,
-              page.getByRole("combobox", { name: `Vehicle (${count} options)` }),
+              page.getByRole("combobox", {
+                name: `Vehicle (${count} options)`,
+              }),
               `[aria-label="${count} options"] input`,
               "",
             );
             await page.keyboard.press("Escape");
-            await page.getByRole("button", { name: `Open ${count}-option dialog` }).click();
+            await page
+              .getByRole("button", { name: `Open ${count}-option dialog` })
+              .click();
             await page.getByRole("dialog").waitFor();
             await measureBeforeAfter(
               page,
@@ -630,7 +757,10 @@ async function main(): Promise<void> {
           await page.getByRole("button", { name: "Cancel" }).click();
           await page.getByRole("dialog").waitFor({ state: "hidden" });
 
-          await page.getByRole("button", { name: "Edit", exact: true }).first().click();
+          await page
+            .getByRole("button", { name: "Edit", exact: true })
+            .first()
+            .click();
           await page.getByRole("dialog").waitFor();
           await measureBeforeAfter(
             page,

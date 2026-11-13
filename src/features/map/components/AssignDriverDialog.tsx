@@ -127,6 +127,7 @@ export function AssignDriverDialog({
         onChange={setDriverId}
         loading={driversQuery.isLoading}
         error={driversQuery.error ? "Couldn't load drivers." : undefined}
+        onRetry={() => void driversQuery.refetch()}
         emptyMessage="No active drivers"
         disabled={readOnly}
         disabledReason={readOnly ? blockedReason : undefined}
