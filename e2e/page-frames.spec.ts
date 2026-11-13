@@ -275,6 +275,7 @@ test.describe("page frames", { tag: "@theme" }, () => {
         element.scrollTop = element.scrollHeight;
       });
       await expect(clear).toBeInViewport();
+      await captureForReview(page, "13b-alerts-no-results");
       await clear.click();
       await expect(page).toHaveURL((url) => !url.searchParams.has("q"));
     });
@@ -303,6 +304,7 @@ test.describe("page frames", { tag: "@theme" }, () => {
       scrollHeight: element.scrollHeight,
     }));
     expect(metrics.scrollHeight).toBeGreaterThan(metrics.clientHeight);
+    await captureForReview(page, "13b-alerts-loading");
   });
 
   test("a collapsing mobile toolbar leaves no gap", async ({ page }) => {
