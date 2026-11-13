@@ -90,7 +90,7 @@ function RouteError({ error, reset }: ErrorComponentProps) {
         : undefined;
 
   return (
-    <main className="bg-bg text-text h-dvh">
+    <div className="bg-bg text-text h-dvh">
       <PageFrame
         layout="scroll"
         align="center"
@@ -104,7 +104,7 @@ function RouteError({ error, reset }: ErrorComponentProps) {
           onAction={action}
         />
       </PageFrame>
-    </main>
+    </div>
   );
 }
 
