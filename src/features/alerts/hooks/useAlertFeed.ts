@@ -78,10 +78,12 @@ export function useAlertFeed(filters: AlertFilterValues): AlertFeedController {
   );
 
   const loadMore = useCallback(() => {
+    setCancelled(false);
     void query.fetchNextPage();
   }, [query]);
 
   const refetch = useCallback(() => {
+    setCancelled(false);
     void query.refetch();
   }, [query]);
 

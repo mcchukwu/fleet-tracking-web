@@ -934,6 +934,10 @@ export const handlers = [
   http.get(`${API}/alerts`, ({ request }) => {
     return withFault("alerts", request, () => {
       const url = new URL(request.url);
+      const pageEmpty =
+        typeof window !== "undefined" &&
+        new URLSearchParams(window.location.search).get("empty") === "alerts";
+      if (pageEmpty) return HttpResponse.json({ data: [] });
       const status = url.searchParams.get("status");
       const type = url.searchParams.get("type");
       const limitParam = Number.parseInt(url.searchParams.get("limit") ?? "", 10);

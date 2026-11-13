@@ -98,6 +98,25 @@ test.describe("alerts faults", { tag: "@fault" }, () => {
     });
   });
 
+  test("Retry after Cancel recovers when the retry returns no rows", async ({ page }) => {
+    test.setTimeout(30_000);
+    await gotoFault(page, "alerts:slow");
+    await expect(page.getByText("Still working…")).toBeVisible({ timeout: 8_000 });
+    await page.getByRole("button", { name: "Cancel" }).click();
+    await expect(page.getByText("Loading cancelled")).toBeVisible();
+
+    await page.evaluate(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("fault");
+      url.searchParams.set("empty", "alerts");
+      history.replaceState({}, "", `${url.pathname}${url.search}`);
+    });
+    await page.getByRole("button", { name: "Retry", exact: true }).click();
+
+    await expect(page.getByText("Loading cancelled")).toHaveCount(0);
+    await expect(page.getByText("No alerts yet")).toBeVisible({ timeout: 15_000 });
+  });
+
   test("a forbidden list shows the forbidden state", async ({ page }) => {
     await gotoFault(page, "alerts:forbidden");
     await expect(page.getByText("You don't have access to this.")).toBeVisible();
