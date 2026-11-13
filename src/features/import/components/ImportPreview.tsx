@@ -69,12 +69,7 @@ function PreviewSkeleton() {
   );
 }
 
-export function ImportPreview({
-  preview,
-  state,
-  error = null,
-  errorRef,
-}: ImportPreviewProps) {
+export function ImportPreview({ preview, state, error = null, errorRef }: ImportPreviewProps) {
   const showSkeleton = useDelayedFlag(state === "loading");
 
   if (state === "idle") return null;
@@ -86,13 +81,9 @@ export function ImportPreview({
         tabIndex={-1}
         role="alert"
         data-testid="import-preview-error"
-        className="text-danger flex items-start gap-2 rounded-md border border-border-strong bg-surface p-3 text-sm outline-none"
+        className="text-danger border-border-strong bg-surface flex items-start gap-2 rounded-md border p-3 text-sm outline-none"
       >
-        <TriangleAlert
-          aria-hidden="true"
-          className="mt-0.5 size-4 shrink-0"
-          strokeWidth={1.5}
-        />
+        <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" strokeWidth={1.5} />
         <div className="min-w-0">
           {error ? (
             <>

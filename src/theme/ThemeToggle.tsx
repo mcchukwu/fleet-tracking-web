@@ -14,7 +14,7 @@ export function ThemeToggle() {
   return (
     <fieldset
       aria-label="Colour theme"
-      className="m-0 inline-flex h-control-md items-center rounded-md border border-border bg-surface"
+      className="h-control-md border-border bg-surface m-0 inline-flex items-center rounded-md border"
     >
       {options.map(({ mode: value, label, Icon }) => {
         const active = mode === value;
@@ -28,7 +28,9 @@ export function ThemeToggle() {
             onClick={() => setMode(value)}
             className={cn(
               "inline-flex h-full w-8 items-center justify-center rounded-sm transition-colors duration-100",
-              active ? "bg-accent-soft text-accent-fg" : "text-muted hover:bg-surface-2 hover:text-text",
+              active
+                ? "bg-accent-soft text-accent-fg"
+                : "text-muted hover:bg-surface-2 hover:text-text",
             )}
           >
             <Icon aria-hidden="true" className="size-4" strokeWidth={1.5} />

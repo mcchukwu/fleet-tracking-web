@@ -66,9 +66,7 @@ describe("event presentation", () => {
 
   it("labels the 500-row cap honestly and stays silent below it", () => {
     expect(eventsCapLabel(EVENTS_PAGE_CAP - 1)).toBeNull();
-    expect(eventsCapLabel(EVENTS_PAGE_CAP)).toBe(
-      "Showing the 20 most recent of the latest 500.",
-    );
+    expect(eventsCapLabel(EVENTS_PAGE_CAP)).toBe("Showing the 20 most recent of the latest 500.");
   });
 
   it("builds a 24h window from the current time", () => {

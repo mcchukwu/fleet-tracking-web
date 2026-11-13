@@ -93,7 +93,9 @@ const row = {
 function renderBody(overrides: Partial<Parameters<typeof VehicleDetailBody>[0]> = {}) {
   const onClose = vi.fn();
   render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
       <TooltipProvider>
         <ToastProvider>
           <VehicleDetailBody
@@ -122,7 +124,13 @@ describe("VehicleDetailBody", () => {
       isError: false,
       error: null,
     };
-    mocks.trips = { ...mocks.trips, data: [], isPending: false, isLoading: false, fetchStatus: "idle" };
+    mocks.trips = {
+      ...mocks.trips,
+      data: [],
+      isPending: false,
+      isLoading: false,
+      fetchStatus: "idle",
+    };
     mocks.events = {
       data: [],
       isPending: false,
@@ -207,7 +215,13 @@ describe("VehicleDetailBody", () => {
       ...mocks.vehicle,
       data: undefined,
       isError: true,
-      error: { kind: "not_found", retryable: false, outcome: "failed", context: { route: "/map" }, at: 0 },
+      error: {
+        kind: "not_found",
+        retryable: false,
+        outcome: "failed",
+        context: { route: "/map" },
+        at: 0,
+      },
     };
     renderBody();
     expect(screen.getByText("Vehicle not found")).toBeVisible();

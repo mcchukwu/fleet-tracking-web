@@ -13,9 +13,7 @@ const unknownLength = 60;
 const inset = 12;
 const tolerance = 1;
 
-test("a long unknown badge ellipsizes in every table column", async ({
-  page,
-}) => {
+test("a long unknown badge ellipsizes in every table column", async ({ page }) => {
   await page.goto("/styleguide#badge-overflow");
 
   const table = page.getByRole("table", { name: "Unknown values in cells" });
@@ -70,20 +68,10 @@ test("a long unknown badge ellipsizes in every table column", async ({
     expect(metrics.labelTextOverflow).toBe("ellipsis");
     expect(metrics.labelScrollWidth).toBeGreaterThan(metrics.labelClientWidth);
 
-    expect(metrics.contentScrollWidth).toBeLessThanOrEqual(
-      metrics.contentClientWidth + tolerance,
-    );
-    expect(metrics.cellScrollWidth).toBeLessThanOrEqual(
-      metrics.cellClientWidth + tolerance,
-    );
-    expect(metrics.badgeRight).toBeLessThanOrEqual(
-      metrics.contentRight + tolerance,
-    );
-    expect(metrics.badgeLeft - metrics.cellLeft).toBeGreaterThanOrEqual(
-      inset - tolerance,
-    );
-    expect(metrics.cellRight - metrics.badgeRight).toBeGreaterThanOrEqual(
-      inset - tolerance,
-    );
+    expect(metrics.contentScrollWidth).toBeLessThanOrEqual(metrics.contentClientWidth + tolerance);
+    expect(metrics.cellScrollWidth).toBeLessThanOrEqual(metrics.cellClientWidth + tolerance);
+    expect(metrics.badgeRight).toBeLessThanOrEqual(metrics.contentRight + tolerance);
+    expect(metrics.badgeLeft - metrics.cellLeft).toBeGreaterThanOrEqual(inset - tolerance);
+    expect(metrics.cellRight - metrics.badgeRight).toBeGreaterThanOrEqual(inset - tolerance);
   }
 });

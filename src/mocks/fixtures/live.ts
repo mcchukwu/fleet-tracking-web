@@ -60,9 +60,29 @@ export const handoffAlertFrame: AlertMessage = {
 export const malformedLiveFrames: unknown[] = [
   null,
   "{not json",
-  { type: "position", tenant_id: "tenant-demo", lat: 6.5, lon: 3.4, recorded_at: "2026-11-03T08:13:29Z" },
-  { type: "position", tenant_id: "tenant-demo", vehicle_id: "demo-imei-0019", lat: "6.5", lon: 3.4, recorded_at: "2026-11-03T08:13:29Z" },
-  { type: "position", tenant_id: "tenant-demo", vehicle_id: "demo-imei-0019", lat: 6.5, lon: 3.4, recorded_at: "not-a-date" },
+  {
+    type: "position",
+    tenant_id: "tenant-demo",
+    lat: 6.5,
+    lon: 3.4,
+    recorded_at: "2026-11-03T08:13:29Z",
+  },
+  {
+    type: "position",
+    tenant_id: "tenant-demo",
+    vehicle_id: "demo-imei-0019",
+    lat: "6.5",
+    lon: 3.4,
+    recorded_at: "2026-11-03T08:13:29Z",
+  },
+  {
+    type: "position",
+    tenant_id: "tenant-demo",
+    vehicle_id: "demo-imei-0019",
+    lat: 6.5,
+    lon: 3.4,
+    recorded_at: "not-a-date",
+  },
   { type: "alert", tenant_id: "tenant-demo" },
   { type: "unknown", tenant_id: "tenant-demo" },
 ];

@@ -22,9 +22,7 @@ describe("PlaybackStates", () => {
   it("explains an empty range without calling it an error", () => {
     render(<PlaybackStates variant="empty" onResetRange={() => undefined} />);
     expect(screen.getByText("No positions in this range")).toBeVisible();
-    expect(
-      screen.getByText("Try a wider range or choose another vehicle."),
-    ).toBeVisible();
+    expect(screen.getByText("Try a wider range or choose another vehicle.")).toBeVisible();
   });
 
   it("shows the honest offline and cancelled states", () => {
@@ -33,11 +31,17 @@ describe("PlaybackStates", () => {
     );
     expect(screen.getByText("Not available offline")).toBeVisible();
     expect(
-      screen.getByText("Reconnect to load this range. Ranges you've already viewed stay available."),
+      screen.getByText(
+        "Reconnect to load this range. Ranges you've already viewed stay available.",
+      ),
     ).toBeVisible();
 
     rerender(
-      <PlaybackStates variant="cancelled" onRetry={() => undefined} onResetRange={() => undefined} />,
+      <PlaybackStates
+        variant="cancelled"
+        onRetry={() => undefined}
+        onResetRange={() => undefined}
+      />,
     );
     expect(screen.getByText("Playback cancelled")).toBeVisible();
     expect(screen.getByRole("button", { name: "Retry" })).toBeVisible();

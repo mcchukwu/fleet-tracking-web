@@ -28,7 +28,9 @@ describe("ErrorState", () => {
   it("renders a compact scope for a failed panel with the catalog title", () => {
     render(<ErrorState error={error()} compact onRetry={vi.fn()} />);
     expect(screen.getByText("Something went wrong on our side")).toBeInTheDocument();
-    expect(screen.queryByText("Try again in a moment. If it keeps happening, check System.")).toBeNull();
+    expect(
+      screen.queryByText("Try again in a moment. If it keeps happening, check System."),
+    ).toBeNull();
   });
 
   it("replaces only the title when a caller needs different copy", () => {
@@ -41,20 +43,13 @@ describe("ErrorState", () => {
     );
     expect(screen.getByText("Can't reach the API")).toBeInTheDocument();
     expect(screen.queryByText("Can't reach the server")).not.toBeInTheDocument();
-    expect(
-      screen.getByText("Check your connection. Your data is safe."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Check your connection. Your data is safe.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
 
   it("keeps the override in the compact variant", () => {
     render(
-      <ErrorState
-        error={error()}
-        compact
-        titleOverride="Can't reach the API"
-        onRetry={vi.fn()}
-      />,
+      <ErrorState error={error()} compact titleOverride="Can't reach the API" onRetry={vi.fn()} />,
     );
     expect(screen.getByText("Can't reach the API")).toBeInTheDocument();
   });

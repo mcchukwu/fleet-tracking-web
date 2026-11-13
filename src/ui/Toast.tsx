@@ -58,9 +58,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const viewportRef = useRef<HTMLOListElement>(null);
 
   const dismiss = useCallback((id?: number) => {
-    setItems((current) =>
-      id === undefined ? [] : current.filter((item) => item.id !== id),
-    );
+    setItems((current) => (id === undefined ? [] : current.filter((item) => item.id !== id)));
   }, []);
 
   const toast = useCallback((options: ToastOptions) => {
@@ -89,10 +87,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         when the queue empties, so a manual close can pause every later toast.
         Remount that provider whenever the queue drains, without remounting the app.
       */}
-      <ToastPrimitive.Provider
-        key={items.length === 0 ? "idle" : "active"}
-        swipeDirection="right"
-      >
+      <ToastPrimitive.Provider key={items.length === 0 ? "idle" : "active"} swipeDirection="right">
         <LayerPortal layer="toast">
           {items.map((item) => {
             const Icon = toneIcon[item.tone];
@@ -101,20 +96,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 key={item.id}
                 open={item.open}
                 duration={item.tone === "error" ? Infinity : 4_000}
-                type={
-                  item.tone === "error" || item.assertive
-                    ? "foreground"
-                    : "background"
-                }
+                type={item.tone === "error" || item.assertive ? "foreground" : "background"}
                 onOpenChange={(open) => {
                   if (!open) {
                     // Radix parks focus on the viewport when a toast closes and then
                     // never resumes its pause, so every later toast would stay open.
                     const active = document.activeElement;
-                    if (
-                      active instanceof HTMLElement &&
-                      viewportRef.current?.contains(active)
-                    ) {
+                    if (active instanceof HTMLElement && viewportRef.current?.contains(active)) {
                       active.blur();
                     }
                     dismiss(item.id);
@@ -155,13 +143,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   <IconButton
                     label="Dismiss"
                     size="sm"
-                    icon={
-                      <X
-                        aria-hidden="true"
-                        className="size-icon-sm"
-                        strokeWidth={1.5}
-                      />
-                    }
+                    icon={<X aria-hidden="true" className="size-icon-sm" strokeWidth={1.5} />}
                   />
                 </ToastPrimitive.Close>
               </ToastPrimitive.Root>

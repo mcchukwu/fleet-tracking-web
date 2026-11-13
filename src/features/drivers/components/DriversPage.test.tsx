@@ -270,7 +270,13 @@ describe("DriversPage", () => {
     mocks.feed = {
       ...mocks.feed,
       isLoading: false,
-      error: { kind: "network", retryable: true, outcome: "failed", context: { route: "/drivers" }, at: 0 },
+      error: {
+        kind: "network",
+        retryable: true,
+        outcome: "failed",
+        context: { route: "/drivers" },
+        at: 0,
+      },
     };
     rerender(
       <TooltipProvider>
@@ -281,7 +287,13 @@ describe("DriversPage", () => {
 
     mocks.feed = {
       ...mocks.feed,
-      error: { kind: "forbidden", retryable: false, outcome: "failed", context: { route: "/drivers" }, at: 0 },
+      error: {
+        kind: "forbidden",
+        retryable: false,
+        outcome: "failed",
+        context: { route: "/drivers" },
+        at: 0,
+      },
     };
     rerender(
       <TooltipProvider>

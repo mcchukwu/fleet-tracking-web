@@ -12,8 +12,7 @@ const { navigate, activateUpdate } = vi.hoisted(() => ({
 }));
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@tanstack/react-router")>();
+  const actual = await importOriginal<typeof import("@tanstack/react-router")>();
   return { ...actual, useNavigate: () => navigate };
 });
 
@@ -55,12 +54,8 @@ describe("GlobalBanners", () => {
 
     render(<GlobalBanners />);
 
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "You're offline. Changes are disabled.",
-    );
-    expect(
-      screen.queryByText(/trouble reaching the server/),
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("You're offline. Changes are disabled.");
+    expect(screen.queryByText(/trouble reaching the server/)).not.toBeInTheDocument();
   });
 
   it("includes the last data time when one exists", () => {
@@ -71,9 +66,7 @@ describe("GlobalBanners", () => {
 
     render(<GlobalBanners />);
 
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Showing data from 14:02",
-    );
+    expect(screen.getByRole("status")).toHaveTextContent("Showing data from 14:02");
   });
 
   it("waits ten seconds before showing the reconnecting banner", () => {
@@ -84,15 +77,11 @@ describe("GlobalBanners", () => {
     });
     render(<GlobalBanners />);
 
-    expect(
-      screen.queryByText("Reconnecting to live updates…"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Reconnecting to live updates…")).not.toBeInTheDocument();
     act(() => {
       vi.advanceTimersByTime(10_000);
     });
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Reconnecting to live updates…",
-    );
+    expect(screen.getByRole("status")).toHaveTextContent("Reconnecting to live updates…");
   });
 
   it("asks the waiting worker to activate when Reload is pressed", () => {
@@ -101,9 +90,7 @@ describe("GlobalBanners", () => {
     act(() => {
       window.dispatchEvent(new CustomEvent("fleet:update-available"));
     });
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "A new version is available.",
-    );
+    expect(screen.getByRole("status")).toHaveTextContent("A new version is available.");
 
     act(() => {
       screen.getByRole("button", { name: "Reload" }).click();
@@ -160,9 +147,7 @@ describe("GlobalBanners", () => {
       vi.advanceTimersByTime(60_000);
     });
 
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Live updates are unavailable.",
-    );
+    expect(screen.getByRole("status")).toHaveTextContent("Live updates are unavailable.");
   });
 
   it("retries immediately and restarts the reconnect clock", () => {
@@ -184,9 +169,7 @@ describe("GlobalBanners", () => {
 
     expect(retry).toHaveBeenCalledTimes(1);
     expect(useConnectionStore.getState().socketDownAt).toBe(Date.now());
-    expect(
-      screen.queryByText(/Live updates are unavailable/),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Live updates are unavailable/)).not.toBeInTheDocument();
   });
 
   it("shows reconnecting on the next tick when it has already been down ten seconds", () => {
@@ -199,9 +182,7 @@ describe("GlobalBanners", () => {
     act(() => {
       vi.advanceTimersByTime(0);
     });
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Reconnecting to live updates…",
-    );
+    expect(screen.getByRole("status")).toHaveTextContent("Reconnecting to live updates…");
   });
 
   it("shows the error-storm banner in the warning tone and links to System", () => {
@@ -209,9 +190,7 @@ describe("GlobalBanners", () => {
     render(<GlobalBanners />);
 
     const banner = screen.getByRole("status");
-    expect(banner).toHaveTextContent(
-      "We're having trouble reaching the server",
-    );
+    expect(banner).toHaveTextContent("We're having trouble reaching the server");
     expect(banner).toHaveClass("border-idle");
     expect(screen.getByRole("button", { name: "Open System" })).toBeVisible();
   });
@@ -223,9 +202,7 @@ describe("GlobalBanners", () => {
       window.dispatchEvent(new CustomEvent("fleet:update-available"));
     });
 
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "A new version is available.",
-    );
+    expect(screen.getByRole("status")).toHaveTextContent("A new version is available.");
     expect(screen.getByRole("button", { name: "Reload" })).toBeVisible();
   });
 
@@ -234,9 +211,7 @@ describe("GlobalBanners", () => {
     useConnectionStore.setState({ network: "offline", lastDataAt: null });
     render(<GlobalBanners />);
 
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Your session expired. Sign in again.",
-    );
+    expect(screen.getByRole("status")).toHaveTextContent("Your session expired. Sign in again.");
     expect(screen.queryByText(/You're offline/)).not.toBeInTheDocument();
     useAuthStore.setState({ status: "unknown" });
   });
@@ -244,9 +219,6 @@ describe("GlobalBanners", () => {
   it("collapses the banner region when everything is healthy", () => {
     render(<GlobalBanners />);
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    expect(screen.getByTestId("banner-region")).toHaveAttribute(
-      "data-visible",
-      "false",
-    );
+    expect(screen.getByTestId("banner-region")).toHaveAttribute("data-visible", "false");
   });
 });

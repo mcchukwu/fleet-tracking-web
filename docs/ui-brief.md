@@ -8,12 +8,12 @@ Visual brand is configured in the frontend project. This document is about scree
 
 ## Users
 
-| Role | Uses it for |
-|---|---|
+| Role       | Uses it for                                                  |
+| ---------- | ------------------------------------------------------------ |
 | Dispatcher | Assign trips, watch progress, acknowledge operational alerts |
-| Security | Review incidents, replay a vehicle, check who did what |
-| Admin | Vehicles, drivers, geofences, users, import |
-| Viewer | Read-only oversight |
+| Security   | Review incidents, replay a vehicle, check who did what       |
+| Admin      | Vehicles, drivers, geofences, users, import                  |
+| Viewer     | Read-only oversight                                          |
 
 ## Screens
 

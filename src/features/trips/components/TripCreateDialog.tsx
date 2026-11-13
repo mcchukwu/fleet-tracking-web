@@ -10,12 +10,7 @@ import { Button } from "../../../ui/Button";
 import { Combobox } from "../../../ui/Combobox";
 import { Dialog } from "../../../ui/Dialog";
 import { Input } from "../../../ui/Input";
-import {
-  createTripFormSchema,
-  emptyTripForm,
-  toTripInput,
-  type TripFormValues,
-} from "../lib/form";
+import { createTripFormSchema, emptyTripForm, toTripInput, type TripFormValues } from "../lib/form";
 import { tripWriteCopy, useTripWrite } from "../hooks/useTripWrite";
 
 export interface TripCreateDialogProps {
@@ -142,10 +137,7 @@ export function TripCreateDialog({
           </>
         }
       >
-        <form
-          id="trip-create-form"
-          onSubmit={(event) => void handleSubmit(onSubmit)(event)}
-        >
+        <form id="trip-create-form" onSubmit={(event) => void handleSubmit(onSubmit)(event)}>
           {write.pending ? <SlowNotice /> : null}
 
           <div ref={errorRef} tabIndex={-1} className="focus:outline-none">
@@ -162,7 +154,9 @@ export function TripCreateDialog({
               label="Vehicle"
               items={vehicleItems}
               value={vehicleId || null}
-              onChange={(id) => setValue("vehicle_id", id, { shouldDirty: true, shouldValidate: true })}
+              onChange={(id) =>
+                setValue("vehicle_id", id, { shouldDirty: true, shouldValidate: true })
+              }
               loading={snapshot.isLoading}
               error={vehicleError}
               onRetry={() => void snapshot.refetch()}

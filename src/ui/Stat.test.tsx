@@ -14,17 +14,11 @@ describe("Stat", () => {
 
   it("renders a leading indicator before the label", () => {
     render(
-      <Stat
-        label="Postgres"
-        value="Up"
-        leading={<span data-testid="health-dot">dot</span>}
-      />,
+      <Stat label="Postgres" value="Up" leading={<span data-testid="health-dot">dot</span>} />,
     );
     const dot = screen.getByTestId("health-dot");
     const label = screen.getByText("Postgres");
-    expect(
-      dot.compareDocumentPosition(label) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    expect(dot.compareDocumentPosition(label) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("keeps the value tabular for changing numbers", () => {

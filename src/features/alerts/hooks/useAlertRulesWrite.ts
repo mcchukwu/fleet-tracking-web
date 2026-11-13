@@ -53,11 +53,7 @@ async function findRule(id: string): Promise<AlertRule | "missing"> {
   return response.data.find((row) => row.id === id) ?? "missing";
 }
 
-export function useAlertRulesWrite({
-  canMutate,
-}: {
-  canMutate: boolean;
-}): RuleWriteController {
+export function useAlertRulesWrite({ canMutate }: { canMutate: boolean }): RuleWriteController {
   const mutation = useUpdateAlertRule();
   const queryClient = useQueryClient();
   const { run } = useActionError();

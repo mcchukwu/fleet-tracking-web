@@ -6,16 +6,10 @@ import {
   registerDebugSnapshot,
 } from "./debug";
 import { recordRequestFailure, resetErrorStorm } from "../errors/global";
-import {
-  freezeConnection,
-  useConnectionStore,
-  type ConnectionState,
-} from "../stores/connection";
+import { freezeConnection, useConnectionStore, type ConnectionState } from "../stores/connection";
 import { useLiveStore } from "../stores/live";
 
-type ConnectionPatch = Partial<
-  Pick<ConnectionState, "network" | "socket" | "socketDownAt">
->;
+type ConnectionPatch = Partial<Pick<ConnectionState, "network" | "socket" | "socketDownAt">>;
 
 declare global {
   interface Window {

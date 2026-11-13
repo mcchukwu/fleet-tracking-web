@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Driver } from "../../../api/types";
 import type { AppError } from "../../../errors/types";
-import {
-  driverWriteCopy,
-  reconcileCreatedDriver,
-  reconcileDriverUpdate,
-} from "./reconcile";
+import { driverWriteCopy, reconcileCreatedDriver, reconcileDriverUpdate } from "./reconcile";
 
 const drivers: Driver[] = [
   {
@@ -41,9 +37,9 @@ describe("driver reconciliation", () => {
       status: "active",
       vehicles: 0,
     };
-    expect(
-      reconcileCreatedDriver([...drivers, created], { name: "  Ada Obi " }, before),
-    ).toBe("saved");
+    expect(reconcileCreatedDriver([...drivers, created], { name: "  Ada Obi " }, before)).toBe(
+      "saved",
+    );
     expect(
       reconcileCreatedDriver(
         [...drivers, { ...created, phone: "0803 100 0010" }],
@@ -78,7 +74,12 @@ describe("driver reconciliation", () => {
 describe("driver write copy", () => {
   it("covers validation with the safe server message", () => {
     const copy = driverWriteCopy(
-      error({ kind: "validation", status: 400, code: "invalid_status", serverMessage: "status must be active or inactive" }),
+      error({
+        kind: "validation",
+        status: 400,
+        code: "invalid_status",
+        serverMessage: "status must be active or inactive",
+      }),
       "update",
     );
     expect(copy.detail).toContain("status must be active or inactive");
@@ -97,9 +98,9 @@ describe("driver write copy", () => {
     );
     expect(driverWriteCopy(error({ kind: "network" }), "update").title).toBe("It wasn't saved.");
     expect(driverWriteCopy(error({ kind: "timeout" }), "create").detail).toBe("Try again.");
-    expect(
-      driverWriteCopy(error({ kind: "network", outcome: "unknown" }), "create").title,
-    ).toBe("We couldn't confirm that it saved.");
+    expect(driverWriteCopy(error({ kind: "network", outcome: "unknown" }), "create").title).toBe(
+      "We couldn't confirm that it saved.",
+    );
   });
 
   it("covers an expired session", () => {

@@ -183,22 +183,27 @@ export function FleetMap({
       aria-label={label}
       aria-busy={!loaded && !error ? true : undefined}
       className={cn(
-        "relative overflow-hidden bg-surface-2",
+        "bg-surface-2 relative overflow-hidden",
         variant === "full" ? "h-full min-h-48 w-full" : "h-48 w-full",
         dimmed && "opacity-60",
         className,
       )}
     >
       <div className="absolute inset-0">
-        <div ref={canvasRef} data-testid="fleet-map-canvas" aria-hidden="true" className="h-full w-full" />
+        <div
+          ref={canvasRef}
+          data-testid="fleet-map-canvas"
+          aria-hidden="true"
+          className="h-full w-full"
+        />
       </div>
       {!loaded && !error ? (
-        <div className="absolute inset-x-0 top-0 z-map-controls bg-surface">
+        <div className="z-map-controls bg-surface absolute inset-x-0 top-0">
           <LoadingBar label="Loading map" />
         </div>
       ) : null}
       {error ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-surface">
+        <div className="bg-surface absolute inset-0 flex items-center justify-center">
           <ErrorState error={error} onRetry={retry} compact={storm} />
         </div>
       ) : null}

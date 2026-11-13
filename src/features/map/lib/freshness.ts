@@ -37,10 +37,7 @@ export function mapFreshness({
   if (offline) return { ageSeconds, stale: true, reason: "offline" };
 
   const silent = socket === "live" && ageMs !== null && ageMs > socketGraceMs;
-  const down =
-    socket !== "live" &&
-    socketDownAt !== null &&
-    now - socketDownAt > socketGraceMs;
+  const down = socket !== "live" && socketDownAt !== null && now - socketDownAt > socketGraceMs;
   const old = ageMs !== null && ageMs > staleAfterMs;
 
   return {

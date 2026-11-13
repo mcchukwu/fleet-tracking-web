@@ -69,9 +69,7 @@ describe("UserMenu", () => {
     renderMenu();
     window.dispatchEvent(new FakeInstallEvent());
 
-    await userEventApi.click(
-      screen.getByRole("button", { name: `Account menu for ${user.name}` }),
-    );
+    await userEventApi.click(screen.getByRole("button", { name: `Account menu for ${user.name}` }));
     await userEventApi.click(screen.getByRole("menuitem", { name: "Install app" }));
 
     expect(screen.queryByRole("menuitem", { name: "Install app" })).not.toBeInTheDocument();
@@ -82,9 +80,7 @@ describe("UserMenu", () => {
     const userEventApi = userEvent.setup();
     renderMenu();
 
-    await userEventApi.click(
-      screen.getByRole("button", { name: `Account menu for ${user.name}` }),
-    );
+    await userEventApi.click(screen.getByRole("button", { name: `Account menu for ${user.name}` }));
 
     expect(screen.getByText("Unverified offline")).toBeVisible();
     expect(screen.getByText("Reconnect to verify your session.")).toBeInTheDocument();
@@ -136,9 +132,7 @@ describe("UserMenu", () => {
 
   it("distinguishes a rejected logout from an unreachable server", async () => {
     const userEventApi = userEvent.setup();
-    vi.spyOn(api, "logout").mockRejectedValue(
-      new ApiError(403, "forbidden", "forbidden"),
-    );
+    vi.spyOn(api, "logout").mockRejectedValue(new ApiError(403, "forbidden", "forbidden"));
     renderMenu();
 
     await userEventApi.click(screen.getByRole("button", { name: `Account menu for ${user.name}` }));

@@ -15,7 +15,9 @@ function browserStorage(): Storage | undefined {
   }
 }
 
-export function createGuardedStorage(storage: Storage | undefined = browserStorage()): GuardedStorage {
+export function createGuardedStorage(
+  storage: Storage | undefined = browserStorage(),
+): GuardedStorage {
   return {
     get(key) {
       try {

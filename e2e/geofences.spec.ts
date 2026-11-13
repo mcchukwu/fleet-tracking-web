@@ -1,10 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import {
-  captureForReview,
-  expectNoAxeViolations,
-  expectNoHorizontalScroll,
-} from "./helpers";
+import { captureForReview, expectNoAxeViolations, expectNoHorizontalScroll } from "./helpers";
 
 // This file drives several full navigations, axe runs and screenshots per test;
 // 30s is too tight for the four-project parallel gate on a loaded host.
@@ -113,9 +109,7 @@ test.describe("geofences", () => {
 
   test("selects a polygon on the map and clears a hiding search", async ({ page }) => {
     await gotoGeofences(page, "q=border");
-    const viewport = await page.evaluate(() =>
-      window.__FLEET_TEST_MAP__?.getViewport(),
-    );
+    const viewport = await page.evaluate(() => window.__FLEET_TEST_MAP__?.getViewport());
     const canvas = page.getByTestId("fleet-map-canvas");
     const box = await canvas.boundingBox();
     if (!viewport || !box) throw new Error("map has no viewport");
@@ -170,9 +164,7 @@ test.describe("geofences", () => {
     await expect(created).toHaveAttribute("aria-current", "true");
     await expect(created).toBeFocused();
     await expect(page.getByTestId("geofences-page")).toContainText("5 geofences");
-    await expect
-      .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.geofenceCount))
-      .toBe(5);
+    await expect.poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.geofenceCount)).toBe(5);
     await expectNoAxeViolations(page);
   });
 
@@ -205,9 +197,7 @@ test.describe("geofences", () => {
     });
     await second.getByRole("button", { name: "Save changes" }).click();
     await expect(second).toHaveCount(0);
-    await expect
-      .poll(() => page.evaluate(() => window.__FLEET_MOCK_WRITES__?.length ?? 0))
-      .toBe(2);
+    await expect.poll(() => page.evaluate(() => window.__FLEET_MOCK_WRITES__?.length ?? 0)).toBe(2);
     write = await lastWrite(page);
     const body = write?.body as { kind?: string; geometry?: { coordinates: number[][][] } };
     expect(body.kind).toBe("customer");
@@ -228,7 +218,8 @@ test.describe("geofences", () => {
     await expect(form).toBeVisible();
 
     await form.getByRole("button", { name: "Cancel" }).click();
-    await page.getByRole("dialog", { name: "Discard changes?" })
+    await page
+      .getByRole("dialog", { name: "Discard changes?" })
       .getByRole("button", { name: "Discard" })
       .click();
     await expect(page.getByRole("list", { name: "Geofences" })).toBeVisible();

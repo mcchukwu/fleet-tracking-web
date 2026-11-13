@@ -45,7 +45,7 @@ export function PlaybackRangeMenu({
           <span className="truncate">{label}</span>
           <ChevronDown
             aria-hidden="true"
-            className="size-4 shrink-0 text-subtle"
+            className="text-subtle size-4 shrink-0"
             strokeWidth={1.5}
           />
         </Button>

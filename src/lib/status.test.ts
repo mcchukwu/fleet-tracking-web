@@ -112,12 +112,6 @@ describe("trip status guards", () => {
   });
 
   it("keeps one option order", () => {
-    expect(tripStatusOptions).toEqual([
-      "planned",
-      "assigned",
-      "active",
-      "completed",
-      "cancelled",
-    ]);
+    expect(tripStatusOptions).toEqual(["planned", "assigned", "active", "completed", "cancelled"]);
   });
 });

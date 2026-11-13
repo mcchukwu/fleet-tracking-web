@@ -82,9 +82,7 @@ async function box(locator: Locator): Promise<Box | null> {
 }
 
 function num(value: number | null | undefined): string {
-  return value === null || value === undefined
-    ? "—"
-    : String(Math.round(value * 100) / 100);
+  return value === null || value === undefined ? "—" : String(Math.round(value * 100) / 100);
 }
 
 function row(name: string, value: Box | null): void {
@@ -119,11 +117,7 @@ function fail(message: string): void {
   console.log(`FAIL ${message}`);
 }
 
-async function gotoPlayback(
-  page: Page,
-  events: number,
-  labels: "normal" | "long",
-): Promise<void> {
+async function gotoPlayback(page: Page, events: number, labels: "normal" | "long"): Promise<void> {
   const labelsParam = labels === "long" ? "&labels=long" : "";
   await page.goto(
     `${BASE_URL}/playback?map=fake&vehicle=${VEHICLE}&events=${events}${labelsParam}`,
@@ -240,8 +234,7 @@ async function measure(page: Page, events: number, labels: "normal" | "long"): P
         fail(`menu width ${num(menuBox.width)} != min(320, ${viewport.width - 24})`);
       }
       if (eventsBox) {
-        const anchored =
-          menuBox.x <= eventsBox.right + 1 && menuBox.right >= eventsBox.x - 1;
+        const anchored = menuBox.x <= eventsBox.right + 1 && menuBox.right >= eventsBox.x - 1;
         if (!anchored) fail("menu is not anchored to its trigger");
       }
     }
@@ -312,7 +305,7 @@ async function measure(page: Page, events: number, labels: "normal" | "long"): P
         const groupX = transportBox.x;
         const groupRight = speedBox.right;
         const centre = (groupX + groupRight) / 2;
-        if (Math.abs(centre - (viewport.width / 2)) > 1) {
+        if (Math.abs(centre - viewport.width / 2) > 1) {
           fail(`row two centre ${num(centre)} != ${num(viewport.width / 2)}`);
         }
         if (Math.abs(speedBox.x - transportBox.right - 16) > 0.5) {
@@ -326,17 +319,18 @@ async function measure(page: Page, events: number, labels: "normal" | "long"): P
         }
       }
     } else {
-      const items = [
-        transportBox,
-        readoutBox,
-        scrubberBox,
-        speedBox,
-      ].filter((value): value is Box => value !== null);
+      const items = [transportBox, readoutBox, scrubberBox, speedBox].filter(
+        (value): value is Box => value !== null,
+      );
       const bottom = items[0]?.bottom ?? 0;
       for (const item of items) {
         if (Math.abs(item.bottom - bottom) > 0.5) fail("single row bottoms differ");
       }
-      if (readoutBox && transportBox && (readoutBox.x < transportBox.right - 0.5 || readoutBox.right > scrubberBox.x + 0.5)) {
+      if (
+        readoutBox &&
+        transportBox &&
+        (readoutBox.x < transportBox.right - 0.5 || readoutBox.right > scrubberBox.x + 0.5)
+      ) {
         fail("readout is not between transport and the scrubber");
       }
     }
@@ -350,7 +344,9 @@ async function measure(page: Page, events: number, labels: "normal" | "long"): P
     const top = optionsBox?.bottom ?? 0;
     const bottom = controlsBox?.y ?? viewport.height;
     const visible = bottom - top;
-    console.log(`map gap ${num(visible)}px (${num((visible / viewport.height) * 100)}% of viewport)`);
+    console.log(
+      `map gap ${num(visible)}px (${num((visible / viewport.height) * 100)}% of viewport)`,
+    );
     if (viewport.width === 360 && viewport.height === 640 && visible < viewport.height * 0.4) {
       fail(`visible map ${num(visible)} < 40% of 640`);
     }
@@ -360,9 +356,7 @@ async function measure(page: Page, events: number, labels: "normal" | "long"): P
 async function main(): Promise<void> {
   const browser = await chromium.launch({
     executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH,
-    args: process.env.PLAYWRIGHT_CHROMIUM_PATH
-      ? ["--no-sandbox", "--disable-dev-shm-usage"]
-      : [],
+    args: process.env.PLAYWRIGHT_CHROMIUM_PATH ? ["--no-sandbox", "--disable-dev-shm-usage"] : [],
   });
   try {
     for (const theme of THEMES) {
@@ -374,7 +368,9 @@ async function main(): Promise<void> {
         const page = await context.newPage();
         for (const labels of LABELS) {
           for (const events of EVENT_COUNTS) {
-            console.log(`\n== ${theme} ${viewport.width}x${viewport.height} events=${events} labels=${labels}`);
+            console.log(
+              `\n== ${theme} ${viewport.width}x${viewport.height} events=${events} labels=${labels}`,
+            );
             await gotoPlayback(page, events, labels);
             await measure(page, events, labels);
           }

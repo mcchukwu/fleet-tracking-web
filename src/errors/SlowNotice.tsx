@@ -24,8 +24,8 @@ export function SlowNotice({ onRetry, onCancel }: SlowNoticeProps) {
   const copy = slowStateCopy(state);
   if (!copy) return null;
   return (
-    <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
-      <output className="text-xs text-muted">{copy}</output>
+    <div className="border-border flex items-center justify-between gap-2 border-b px-3 py-2">
+      <output className="text-muted text-xs">{copy}</output>
       {state === "long" ? (
         <div className="flex items-center gap-1">
           {onCancel ? (

@@ -53,9 +53,7 @@ async function statBoxes(page: Page): Promise<Box[]> {
 }
 
 test.describe("reports layout", () => {
-  test("the seven stats hold one row or a two-column grid", { tag: "@theme" }, async ({
-    page,
-  }) => {
+  test("the seven stats hold one row or a two-column grid", { tag: "@theme" }, async ({ page }) => {
     test.setTimeout(60_000);
     await gotoReports(page);
     await expectNoHorizontalScroll(page);
@@ -75,9 +73,7 @@ test.describe("reports layout", () => {
       expect(new Set(boxes.map((box) => box.y)).size).toBe(1);
     }
 
-    await expectTabularNums(
-      page.getByTestId("reports-stats").locator(".tabular-nums").first(),
-    );
+    await expectTabularNums(page.getByTestId("reports-stats").locator(".tabular-nums").first());
     await expectNoAxeViolations(page);
     await captureForReview(page, "10-reports-default");
 
@@ -91,9 +87,7 @@ test.describe("reports layout", () => {
     await expectNoAxeViolations(page);
   });
 
-  test("the large report keeps every stat on one line and the strip even", async ({
-    page,
-  }) => {
+  test("the large report keeps every stat on one line and the strip even", async ({ page }) => {
     await setScenario(page, "large");
     await gotoReports(page);
 
@@ -135,52 +129,56 @@ test.describe("reports layout", () => {
     await expectNoHorizontalScroll(page);
   });
 
-  test("chart labels truncate instead of pushing the page at 360px", { tag: "@theme" }, async ({
-    page,
-  }) => {
-    test.skip(!isMobile(page), "mobile-only layout");
-    await page.setViewportSize({ width: 360, height: 640 });
-    await setScenario(page, "large");
-    await gotoReports(page);
+  test(
+    "chart labels truncate instead of pushing the page at 360px",
+    { tag: "@theme" },
+    async ({ page }) => {
+      test.skip(!isMobile(page), "mobile-only layout");
+      await page.setViewportSize({ width: 360, height: 640 });
+      await setScenario(page, "large");
+      await gotoReports(page);
 
-    const label = page.getByTestId("chart-label").filter({ hasText: "Unknown type" });
-    await expect(label).toHaveAttribute("title", "Unknown type: solar_flare");
-    const clipped = await label.evaluate((element) => ({
-      scrollWidth: element.scrollWidth,
-      clientWidth: element.clientWidth,
-    }));
-    expect(clipped.scrollWidth).toBeGreaterThan(clipped.clientWidth);
-    await expectNoHorizontalScroll(page);
+      const label = page.getByTestId("chart-label").filter({ hasText: "Unknown type" });
+      await expect(label).toHaveAttribute("title", "Unknown type: solar_flare");
+      const clipped = await label.evaluate((element) => ({
+        scrollWidth: element.scrollWidth,
+        clientWidth: element.clientWidth,
+      }));
+      expect(clipped.scrollWidth).toBeGreaterThan(clipped.clientWidth);
+      await expectNoHorizontalScroll(page);
 
-    const card = await page.getByTestId("alerts-by-type").boundingBox();
-    const value = await page
-      .getByTestId("alerts-by-type")
-      .locator(".tabular-nums")
-      .first()
-      .boundingBox();
-    if (!card || !value) throw new Error("The chart has no box");
-    expect(value.x + value.width).toBeLessThanOrEqual(card.x + card.width);
-    await captureForReview(page, "10-reports-layout-360");
-  });
+      const card = await page.getByTestId("alerts-by-type").boundingBox();
+      const value = await page
+        .getByTestId("alerts-by-type")
+        .locator(".tabular-nums")
+        .first()
+        .boundingBox();
+      if (!card || !value) throw new Error("The chart has no box");
+      expect(value.x + value.width).toBeLessThanOrEqual(card.x + card.width);
+      await captureForReview(page, "10-reports-layout-360");
+    },
+  );
 
-  test("every control keeps a 44px target and the custom dialog fits", { tag: "@theme" }, async ({
-    page,
-  }) => {
-    test.skip(!isMobile(page), "touch targets are a mobile concern");
-    await gotoReports(page);
-    await expectTouchTargets(page, 44);
+  test(
+    "every control keeps a 44px target and the custom dialog fits",
+    { tag: "@theme" },
+    async ({ page }) => {
+      test.skip(!isMobile(page), "touch targets are a mobile concern");
+      await gotoReports(page);
+      await expectTouchTargets(page, 44);
 
-    await page.getByRole("button", { name: /^Range, / }).click();
-    await page.getByRole("menuitem", { name: "Custom range…" }).click();
-    const dialog = page.getByRole("dialog", { name: "Report range" });
-    await expect(dialog).toBeVisible();
-    await expectTouchTargets(page, 44);
-    await expectNoHorizontalScroll(page);
-    await expectNoAxeViolations(page);
+      await page.getByRole("button", { name: /^Range, / }).click();
+      await page.getByRole("menuitem", { name: "Custom range…" }).click();
+      const dialog = page.getByRole("dialog", { name: "Report range" });
+      await expect(dialog).toBeVisible();
+      await expectTouchTargets(page, 44);
+      await expectNoHorizontalScroll(page);
+      await expectNoAxeViolations(page);
 
-    await dialog.getByRole("button", { name: "Cancel" }).click();
-    await expect(page.getByRole("button", { name: /^Range, / })).toBeFocused();
-  });
+      await dialog.getByRole("button", { name: "Cancel" }).click();
+      await expect(page.getByRole("button", { name: /^Range, / })).toBeFocused();
+    },
+  );
 
   test("the zero report reads as a zero, not a failure", { tag: "@theme" }, async ({ page }) => {
     await setScenario(page, "zero");
@@ -191,29 +189,32 @@ test.describe("reports layout", () => {
     await captureForReview(page, "10-reports-zero");
   });
 
-  test("the error state is clear and keeps the range control", { tag: "@theme" }, async ({
-    page,
-  }) => {
-    await page.goto(`${rangeUrl()}&fault=${encodeURIComponent("reports:server")}`);
-    await expect(page.getByText("Something went wrong on our side").first()).toBeVisible({
-      timeout: 15_000,
-    });
-    await expect(page.getByRole("button", { name: /^Range, / })).toBeVisible();
-    await expectNoHorizontalScroll(page);
-    await expectNoAxeViolations(page);
-    await captureForReview(page, "10-reports-error");
-  });
+  test(
+    "the error state is clear and keeps the range control",
+    { tag: "@theme" },
+    async ({ page }) => {
+      await page.goto(`${rangeUrl()}&fault=${encodeURIComponent("reports:server")}`);
+      await expect(page.getByText("Something went wrong on our side").first()).toBeVisible({
+        timeout: 15_000,
+      });
+      await expect(page.getByRole("button", { name: /^Range, / })).toBeVisible();
+      await expectNoHorizontalScroll(page);
+      await expectNoAxeViolations(page);
+      await captureForReview(page, "10-reports-error");
+    },
+  );
 
-  test("the stale report keeps its values and its label", { tag: "@theme" }, async ({
-    page,
-    context,
-  }) => {
-    await gotoReports(page);
-    await context.setOffline(true);
-    await expect(page.getByText(/Stale ·/)).toBeVisible({ timeout: 15_000 });
-    await expectNoHorizontalScroll(page);
-    await expectNoAxeViolations(page);
-    await captureForReview(page, "10-reports-stale");
-    await context.setOffline(false);
-  });
+  test(
+    "the stale report keeps its values and its label",
+    { tag: "@theme" },
+    async ({ page, context }) => {
+      await gotoReports(page);
+      await context.setOffline(true);
+      await expect(page.getByText(/Stale ·/)).toBeVisible({ timeout: 15_000 });
+      await expectNoHorizontalScroll(page);
+      await expectNoAxeViolations(page);
+      await captureForReview(page, "10-reports-stale");
+      await context.setOffline(false);
+    },
+  );
 });

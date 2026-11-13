@@ -19,24 +19,15 @@ describe("SearchField", () => {
     render(<SearchField label="Search vehicles" hideLabel />);
     const label = screen.getByText("Search vehicles");
     expect(label).toHaveClass("sr-only");
-    expect(
-      screen.getByRole("textbox", { name: "Search vehicles" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Search vehicles" })).toBeInTheDocument();
   });
 
   it("renders a trailing slot and clears space for it", () => {
     render(
-      <SearchField
-        label="Vehicle search"
-        trailing={<button type="button">Clear search</button>}
-      />,
+      <SearchField label="Vehicle search" trailing={<button type="button">Clear search</button>} />,
     );
-    expect(
-      screen.getByRole("button", { name: "Clear search" }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("textbox", { name: "Vehicle search" })).toHaveClass(
-      "pr-14",
-    );
+    expect(screen.getByRole("button", { name: "Clear search" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Vehicle search" })).toHaveClass("pr-14");
   });
 
   it("links the hint and the error to the input", async () => {

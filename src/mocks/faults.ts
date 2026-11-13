@@ -66,10 +66,7 @@ export function faultResponse(kind: FaultKind, retryAfterSec = 30): Promise<Resp
       );
     case "forbidden":
       return Promise.resolve(
-        HttpResponse.json(
-          { error: { code: "forbidden", message: "forbidden" } },
-          { status: 403 },
-        ),
+        HttpResponse.json({ error: { code: "forbidden", message: "forbidden" } }, { status: 403 }),
       );
     case "not_found":
       return Promise.resolve(

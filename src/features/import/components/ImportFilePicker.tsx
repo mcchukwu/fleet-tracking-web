@@ -66,22 +66,14 @@ export function ImportFilePicker({
         )}
       >
         <div className="flex items-center gap-2">
-          <FileUp
-            aria-hidden="true"
-            className="text-subtle size-5 shrink-0"
-            strokeWidth={1.5}
-          />
-          <p className="text-text text-sm">
-            Drop a .csv here, or choose a file.
-          </p>
+          <FileUp aria-hidden="true" className="text-subtle size-5 shrink-0" strokeWidth={1.5} />
+          <p className="text-text text-sm">Drop a .csv here, or choose a file.</p>
         </div>
         <Button
           ref={chooseButtonRef}
           variant={file && !emphasized ? "secondary" : "primary"}
           onClick={choose}
-          {...(disabled
-            ? { disabledReason: disabledReason ?? "Uploading." }
-            : {})}
+          {...(disabled ? { disabledReason: disabledReason ?? "Uploading." } : {})}
         >
           {file ? "Choose another file" : "Choose file"}
         </Button>
@@ -109,21 +101,15 @@ export function ImportFilePicker({
             <span className="text-text truncate text-sm" title={file.name}>
               {file.name}
             </span>
-            <span className="text-muted text-xs tabular-nums">
-              {formatBytes(file.size)}
-            </span>
+            <span className="text-muted text-xs tabular-nums">{formatBytes(file.size)}</span>
           </div>
           <Button
             size="sm"
             variant="ghost"
             aria-label="Remove selected file"
-            leadingIcon={
-              <X aria-hidden="true" className="size-3" strokeWidth={1.5} />
-            }
+            leadingIcon={<X aria-hidden="true" className="size-3" strokeWidth={1.5} />}
             onClick={onClear}
-            {...(disabled
-              ? { disabledReason: disabledReason ?? "Uploading." }
-              : {})}
+            {...(disabled ? { disabledReason: disabledReason ?? "Uploading." } : {})}
           >
             Remove
           </Button>

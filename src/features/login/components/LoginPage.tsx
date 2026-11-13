@@ -40,9 +40,7 @@ export function LoginPage() {
           <div className="w-panel max-w-full space-y-4">
             <div className="border-border bg-surface rounded-lg border p-6">
               <h1 className="text-text text-lg font-semibold">Sign in</h1>
-              <p className="text-muted mb-4 text-sm">
-                Use your Fleet Console account.
-              </p>
+              <p className="text-muted mb-4 text-sm">Use your Fleet Console account.</p>
               <LoginForm
                 onSuccess={() => {
                   void completeLogin();

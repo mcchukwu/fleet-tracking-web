@@ -1,27 +1,13 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type CSSProperties,
-  type ReactNode,
-} from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { AuditEntry } from "../../../api/types";
 import type { AppError } from "../../../errors/types";
 import { SlowNotice } from "../../../errors/SlowNotice";
-import {
-  MISSING,
-  formatRelativeTime,
-  formatTimeTooltip,
-} from "../../../lib/format";
+import { MISSING, formatRelativeTime, formatTimeTooltip } from "../../../lib/format";
 import { useNow } from "../../../lib/ticker";
 import { Button } from "../../../ui/Button";
 import { CopyButton } from "../../../ui/CopyButton";
-import {
-  DataTable,
-  DATA_TABLE_ROW_HEIGHT,
-  type DataTableColumn,
-} from "../../../ui/DataTable";
+import { DataTable, DATA_TABLE_ROW_HEIGHT, type DataTableColumn } from "../../../ui/DataTable";
 import { EmptyState, Skeleton } from "../../../ui/StatePanel";
 import { StateBoundary, type StateBoundaryState } from "../../../ui/StateBoundary";
 import { cn } from "../../../ui/cn";
@@ -50,10 +36,7 @@ const COLUMN_ORDER = [
   ["details", "Details"],
 ] as const;
 
-const TABLE_MIN_WIDTH = COLUMN_ORDER.reduce(
-  (total, [id]) => total + COLUMN_WIDTHS[id],
-  0,
-);
+const TABLE_MIN_WIDTH = COLUMN_ORDER.reduce((total, [id]) => total + COLUMN_WIDTHS[id], 0);
 
 function cellWidth(width: number): CSSProperties {
   return { width };
@@ -85,7 +68,7 @@ function AuditTimeCell({ entry, onOpen }: { entry: AuditEntry; onOpen: () => voi
       }, ${relative}, ${tooltip}`}
       title={tooltip}
       onClick={onOpen}
-      className="text-muted hover:text-text focus-visible:outline-focus-ring min-w-touch -my-2 inline-flex h-touch items-center justify-start rounded-sm text-xs tabular-nums focus-visible:outline-2 focus-visible:outline-offset-0 md:my-0 md:h-auto md:min-w-0"
+      className="text-muted hover:text-text focus-visible:outline-focus-ring min-w-touch h-touch -my-2 inline-flex items-center justify-start rounded-sm text-xs tabular-nums focus-visible:outline-2 focus-visible:outline-offset-0 md:my-0 md:h-auto md:min-w-0"
     >
       <time dateTime={entry.created_at}>{relative}</time>
     </button>
@@ -117,10 +100,7 @@ function AuditTableSkeleton() {
           </thead>
           <tbody>
             {Array.from({ length: 6 }).map((_, rowIndex) => (
-              <tr
-                key={rowIndex}
-                className="h-row border-border border-b last:border-0"
-              >
+              <tr key={rowIndex} className="h-row border-border border-b last:border-0">
                 {COLUMN_ORDER.map(([id]) => (
                   <td key={id} className="px-3 py-0" data-column-id={id}>
                     <Skeleton className="h-3 w-full max-w-24" />
@@ -196,18 +176,12 @@ export function AuditTable({
     return entry ? [entry] : [];
   });
   const rowsToRender =
-    scroller && (virtualItems.length > 0 || entries.length === 0)
-      ? virtualRows
-      : entries;
+    scroller && (virtualItems.length > 0 || entries.length === 0) ? virtualRows : entries;
 
   const paddingTop =
-    virtualItems.length > 0
-      ? Math.max(0, virtualItems[0].start - DATA_TABLE_ROW_HEIGHT)
-      : 0;
+    virtualItems.length > 0 ? Math.max(0, virtualItems[0].start - DATA_TABLE_ROW_HEIGHT) : 0;
   const lastItem = virtualItems[virtualItems.length - 1];
-  const paddingBottom = lastItem
-    ? Math.max(0, virtualizer.getTotalSize() - lastItem.end)
-    : 0;
+  const paddingBottom = lastItem ? Math.max(0, virtualizer.getTotalSize() - lastItem.end) : 0;
 
   const columns = useMemo<DataTableColumn<AuditEntry>[]>(
     () => [
@@ -216,9 +190,7 @@ export function AuditTable({
         header: "Time",
         width: COLUMN_WIDTHS.time,
         align: "left",
-        cell: (entry) => (
-          <AuditTimeCell entry={entry} onOpen={() => onOpen(entry.id)} />
-        ),
+        cell: (entry) => <AuditTimeCell entry={entry} onOpen={() => onOpen(entry.id)} />,
       },
       {
         id: "actor",
@@ -226,9 +198,7 @@ export function AuditTable({
         width: COLUMN_WIDTHS.actor,
         align: "left",
         title: (entry) => entry.user_name || MISSING,
-        cell: (entry) => (
-          <span className="text-text text-sm">{entry.user_name || MISSING}</span>
-        ),
+        cell: (entry) => <span className="text-text text-sm">{entry.user_name || MISSING}</span>,
       },
       {
         id: "action",
@@ -259,12 +229,7 @@ export function AuditTable({
         title: (entry) => entry.entity_id || MISSING,
         cell: (entry) =>
           entry.entity_id ? (
-            <CopyButton
-              inline
-              value={entry.entity_id}
-              label="entity id"
-              className="text-xs"
-            />
+            <CopyButton inline value={entry.entity_id} label="entity id" className="text-xs" />
           ) : (
             <span className="text-muted text-sm">{MISSING}</span>
           ),

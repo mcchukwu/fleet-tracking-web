@@ -130,9 +130,7 @@ describe("TripCreateDialog", () => {
     expect(mocks.snapshot.refetch).toHaveBeenCalledTimes(1);
     await user.keyboard("{Escape}");
 
-    await user.click(
-      screen.getByRole("combobox", { name: "Driver (optional)" }),
-    );
+    await user.click(screen.getByRole("combobox", { name: "Driver (optional)" }));
     await user.click(screen.getByRole("button", { name: "Retry" }));
     expect(mocks.drivers.refetch).toHaveBeenCalledTimes(1);
   });

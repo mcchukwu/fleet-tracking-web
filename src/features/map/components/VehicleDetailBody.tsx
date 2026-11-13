@@ -56,8 +56,8 @@ export function VehicleDetailBody({
   if (notFound) {
     return (
       <div className="p-4">
-        <p className="text-base font-medium text-text">Vehicle not found</p>
-        <p className="mt-1 text-sm text-muted">It may have been removed.</p>
+        <p className="text-text text-base font-medium">Vehicle not found</p>
+        <p className="text-muted mt-1 text-sm">It may have been removed.</p>
         <Button className="mt-4" onClick={onClose}>
           Close
         </Button>
@@ -89,9 +89,9 @@ export function VehicleDetailBody({
             <ErrorState error={detailError} onRetry={retryDetail} />
           </div>
         ) : detailError && !vehicle ? (
-          <div className="border-b border-border p-4">
+          <div className="border-border border-b p-4">
             <ErrorState compact error={detailError} onRetry={retryDetail} />
-            <p className="mt-2 text-xs text-muted">
+            <p className="text-muted mt-2 text-xs">
               Live fields stay visible while the full record is unavailable.
             </p>
           </div>
@@ -109,21 +109,21 @@ export function VehicleDetailBody({
       ) : (
         <>
           {detailError && vehicle ? (
-            <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2 text-xs text-muted">
+            <div className="border-border text-muted flex items-center justify-between gap-2 border-b px-4 py-2 text-xs">
               <span>Couldn't refresh vehicle details.</span>
               <button
                 type="button"
                 onClick={retryDetail}
-                className="h-touch rounded-sm px-2 font-medium text-accent-fg hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus-ring md:h-control-sm"
+                className="h-touch text-accent-fg hover:bg-surface-2 focus-visible:outline-focus-ring md:h-control-sm rounded-sm px-2 font-medium focus-visible:outline-2"
               >
                 Retry
               </button>
             </div>
           ) : null}
           {detailError && !vehicle ? (
-            <div className="border-b border-border p-4">
+            <div className="border-border border-b p-4">
               <ErrorState compact error={detailError} onRetry={retryDetail} />
-              <p className="mt-2 text-xs text-muted">
+              <p className="text-muted mt-2 text-xs">
                 Live fields stay visible while the full record is unavailable.
               </p>
             </div>
@@ -142,7 +142,7 @@ export function VehicleDetailBody({
           {vehicle ? (
             <VehicleDetailsSection vehicle={vehicle} />
           ) : view.state === "offline-empty" ? (
-            <p className="border-b border-border px-4 py-2 text-xs text-muted">
+            <p className="border-border text-muted border-b px-4 py-2 text-xs">
               Full vehicle details need a connection.
             </p>
           ) : null}

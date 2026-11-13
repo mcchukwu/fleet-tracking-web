@@ -109,7 +109,10 @@ describe("api client", () => {
     const client = new FleetApiClient(
       "",
       fetcherOf(
-        jsonResponse({ error: { code: "invalid_credentials", message: "invalid email or password" } }, 401),
+        jsonResponse(
+          { error: { code: "invalid_credentials", message: "invalid email or password" } },
+          401,
+        ),
       ),
     );
     client.setSessionHandlers({ onSessionExpired });
@@ -206,7 +209,9 @@ describe("api client", () => {
         csrf: headers.get("X-CSRF-Token"),
       });
       if (attempt === 1) {
-        return Promise.resolve(jsonResponse({ error: { code: "csrf_failed", message: "csrf" } }, 403));
+        return Promise.resolve(
+          jsonResponse({ error: { code: "csrf_failed", message: "csrf" } }, 403),
+        );
       }
       return Promise.resolve(new Response(null, { status: 204 }));
     }) as unknown as typeof fetch;
@@ -234,7 +239,9 @@ describe("api client", () => {
     const fetcher = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
       const headers = new Headers(init?.headers);
       expect(headers.get("Content-Type")).toBeNull();
-      return Promise.resolve(jsonResponse({ job_id: "j", total: 1, imported: 1, failed: 0, errors: [] }));
+      return Promise.resolve(
+        jsonResponse({ job_id: "j", total: 1, imported: 1, failed: 0, errors: [] }),
+      );
     }) as unknown as typeof fetch;
     const client = new FleetApiClient("", fetcher);
     await expect(
@@ -264,10 +271,9 @@ describe("api client", () => {
     ) as unknown as typeof fetch;
     const client = new FleetApiClient("", fetcher);
     const request = caught(
-      client.importVehicles(
-        new File(["imei\n1"], "vehicles.csv", { type: "text/csv" }),
-        { timeoutMs: 50 },
-      ),
+      client.importVehicles(new File(["imei\n1"], "vehicles.csv", { type: "text/csv" }), {
+        timeoutMs: 50,
+      }),
     );
     await vi.advanceTimersByTimeAsync(60);
     const error = await request;
@@ -328,10 +334,7 @@ describe("report summary", () => {
       Promise.resolve(jsonResponse({ ...summary, from: "a", to: "b" })),
     ) as unknown as typeof fetch;
     const client = new FleetApiClient("", fetcher);
-    const result = await client.reportSummary(
-      "2026-11-08T10:00:00Z",
-      "2026-11-08T12:00:00Z",
-    );
+    const result = await client.reportSummary("2026-11-08T10:00:00Z", "2026-11-08T12:00:00Z");
     expect(result.trips).toBe(5);
     expect(fetcher).toHaveBeenCalledWith(
       "/api/v1/reports/summary?from=2026-11-08T10%3A00%3A00Z&to=2026-11-08T12%3A00%3A00Z",
@@ -353,7 +356,10 @@ describe("report summary", () => {
       fetcherOf(
         jsonResponse({
           ...summary,
-          alerts_by_type: [{ key: "speeding", count: 4 }, { key: null, count: "many" }],
+          alerts_by_type: [
+            { key: "speeding", count: 4 },
+            { key: null, count: "many" },
+          ],
         }),
       ),
     );
@@ -372,9 +378,7 @@ describe("report summary", () => {
     ) as unknown as typeof fetch;
     const client = new FleetApiClient("", fetcher);
     const controller = new AbortController();
-    const request = caught(
-      client.reportSummary("a", "b", { signal: controller.signal }),
-    );
+    const request = caught(client.reportSummary("a", "b", { signal: controller.signal }));
     controller.abort();
     expect((await request).kind).toBe("aborted");
   });

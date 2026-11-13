@@ -94,21 +94,23 @@ const row = {
 
 function renderDrawer(overrides: Partial<Parameters<typeof VehicleDrawer>[0]> = {}) {
   return render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
       <TooltipProvider>
         <ToastProvider>
-        <VehicleDrawer
-          vehicleId="vehicle-1"
-          row={row}
-          snapshotVehicle={snapshot}
-          mapReady
-          canMutate
-          offline={false}
-          onClose={vi.fn()}
-          onCentre={vi.fn()}
-          onPlayback={vi.fn()}
-          {...overrides}
-        />
+          <VehicleDrawer
+            vehicleId="vehicle-1"
+            row={row}
+            snapshotVehicle={snapshot}
+            mapReady
+            canMutate
+            offline={false}
+            onClose={vi.fn()}
+            onCentre={vi.fn()}
+            onPlayback={vi.fn()}
+            {...overrides}
+          />
         </ToastProvider>
       </TooltipProvider>
     </QueryClientProvider>,
@@ -217,9 +219,6 @@ describe("VehicleDrawer", () => {
       mutateReason: "You're offline.",
     });
     expect(screen.getAllByText("Stale").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole("button", { name: "Edit" })).toHaveAttribute(
-      "aria-disabled",
-      "true",
-    );
+    expect(screen.getByRole("button", { name: "Edit" })).toHaveAttribute("aria-disabled", "true");
   });
 });

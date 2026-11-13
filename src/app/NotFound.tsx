@@ -13,11 +13,7 @@ export function NotFound() {
         align="center"
         contentClassName="items-center px-4 pt-12 text-center"
       >
-        <FileQuestion
-          aria-hidden="true"
-          className="text-subtle size-6"
-          strokeWidth={1.5}
-        />
+        <FileQuestion aria-hidden="true" className="text-subtle size-6" strokeWidth={1.5} />
         <h1 className="text-base font-medium">Page not found</h1>
         <p className="text-muted max-w-prose text-sm">
           The address may be out of date or the page may have moved.

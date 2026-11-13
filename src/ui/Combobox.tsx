@@ -54,9 +54,7 @@ function normalize(value: string): string {
 function matches(item: ComboboxItem, query: string): boolean {
   const normalized = normalize(query);
   if (!normalized) return true;
-  return normalize(`${item.label} ${item.description ?? ""}`).includes(
-    normalized,
-  );
+  return normalize(`${item.label} ${item.description ?? ""}`).includes(normalized);
 }
 
 const LIST_MAX_HEIGHT = 360;
@@ -105,36 +103,21 @@ function measureListBox(input: HTMLInputElement): ListBoxPosition {
   const bounds = visibleBounds();
   const dialog = input.closest('[role="dialog"]');
   const footerTop =
-    dialog
-      ?.querySelector<HTMLElement>("[data-dialog-footer]")
-      ?.getBoundingClientRect().top ?? null;
+    dialog?.querySelector<HTMLElement>("[data-dialog-footer]")?.getBoundingClientRect().top ?? null;
   const closeBottom =
-    dialog
-      ?.querySelector<HTMLElement>('[aria-label="Close dialog"]')
-      ?.getBoundingClientRect().bottom ?? null;
+    dialog?.querySelector<HTMLElement>('[aria-label="Close dialog"]')?.getBoundingClientRect()
+      .bottom ?? null;
 
   // The list may overlay the dialog's content, never its close or footer
   // controls. Geometry, not z-index, keeps those reachable.
-  const belowLimit = Math.min(
-    bounds.bottom,
-    footerTop ?? Number.POSITIVE_INFINITY,
-  );
-  const aboveLimit = Math.max(
-    bounds.top,
-    closeBottom ?? Number.NEGATIVE_INFINITY,
-  );
+  const belowLimit = Math.min(bounds.bottom, footerTop ?? Number.POSITIVE_INFINITY);
+  const aboveLimit = Math.max(bounds.top, closeBottom ?? Number.NEGATIVE_INFINITY);
   const below = belowLimit - LIST_GAP - rect.bottom;
   const above = rect.top - LIST_GAP - aboveLimit;
   const openAbove = below < LIST_COMFORTABLE && above > below;
-  const maxHeight = Math.max(
-    0,
-    Math.min(LIST_MAX_HEIGHT, openAbove ? above : below),
-  );
+  const maxHeight = Math.max(0, Math.min(LIST_MAX_HEIGHT, openAbove ? above : below));
 
-  const width = Math.min(
-    Math.max(rect.width, LIST_MIN_WIDTH),
-    bounds.right - bounds.left,
-  );
+  const width = Math.min(Math.max(rect.width, LIST_MIN_WIDTH), bounds.right - bounds.left);
   const left = Math.min(
     Math.max(bounds.left, rect.left),
     Math.max(bounds.left, bounds.right - width),
@@ -228,8 +211,7 @@ export function Combobox({
     document.addEventListener("scroll", update, true);
     viewport?.addEventListener("resize", update);
     viewport?.addEventListener("scroll", update);
-    const observer =
-      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
     observer?.observe(input);
     return () => {
       window.removeEventListener("resize", update);
@@ -260,10 +242,7 @@ export function Combobox({
 
   const selected = items.find((item) => item.id === value) ?? null;
   const display = selected?.label ?? selectedLabel ?? "";
-  const filtered = useMemo(
-    () => items.filter((item) => matches(item, query)),
-    [items, query],
-  );
+  const filtered = useMemo(() => items.filter((item) => matches(item, query)), [items, query]);
   const clearOffset = clearable && onClear ? 1 : 0;
   const total = filtered.length + clearOffset;
   const activeIndexClamped = total === 0 ? 0 : Math.min(activeIndex, total - 1);
@@ -358,11 +337,7 @@ export function Combobox({
   }
 
   function onSheetTriggerKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
-    if (
-      event.key === "Enter" ||
-      event.key === " " ||
-      event.key === "ArrowDown"
-    ) {
+    if (event.key === "Enter" || event.key === " " || event.key === "ArrowDown") {
       event.preventDefault();
       openList();
     }
@@ -374,10 +349,7 @@ export function Combobox({
   // open picker, where its Retry lives.
   const showTriggerError = Boolean(error) && !open;
   const describedBy =
-    [
-      disabled && disabledReason ? hintId : null,
-      showTriggerError ? statusId : null,
-    ]
+    [disabled && disabledReason ? hintId : null, showTriggerError ? statusId : null]
       .filter(Boolean)
       .join(" ") || undefined;
 
@@ -387,8 +359,7 @@ export function Combobox({
       className={cn("flex flex-col gap-1", className)}
       onBlur={(event) => {
         if (sheet) return;
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null))
-          closeList();
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) closeList();
       }}
     >
       <SearchField
@@ -459,9 +430,7 @@ export function Combobox({
               {...(error ? { error } : {})}
               {...(emptyMessage ? { emptyMessage } : {})}
               {...(onRetry ? { onRetry } : {})}
-              {...(clearOffset === 1
-                ? { clear: { label: clearLabel, onClear: selectClear } }
-                : {})}
+              {...(clearOffset === 1 ? { clear: { label: clearLabel, onClear: selectClear } } : {})}
               className="max-h-full min-h-0"
             />
           </div>
@@ -494,11 +463,7 @@ export function Combobox({
       />
 
       {showTriggerError ? (
-        <p
-          id={statusId}
-          role="alert"
-          className="text-danger flex items-center gap-1 text-xs"
-        >
+        <p id={statusId} role="alert" className="text-danger flex items-center gap-1 text-xs">
           {error}
         </p>
       ) : null}

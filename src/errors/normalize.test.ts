@@ -55,7 +55,9 @@ describe("normalize", () => {
   });
 
   it("maps a failed lazy chunk to chunk", () => {
-    const error = kindOf(new TypeError("Failed to fetch dynamically imported module: /assets/map.js"));
+    const error = kindOf(
+      new TypeError("Failed to fetch dynamically imported module: /assets/map.js"),
+    );
     expect(error.kind).toBe("chunk");
     expect(error.retryable).toBe(false);
   });

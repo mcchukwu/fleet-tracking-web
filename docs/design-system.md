@@ -20,15 +20,15 @@ Agents: read §0 and §1 always. Read other sections only when building somethin
 
 The user is an operator watching a live system, often for hours, often under pressure when something goes wrong. That single fact produces the whole system:
 
-| Principle | Why | What it forces |
-|---|---|---|
-| **Glanceable** | An operator scans, they do not read. | Status by colour *and* shape *and* label. Big numbers, small chrome. |
-| **Calm** | Constant motion and colour cause fatigue and hide real alerts. | One accent colour, colour reserved for meaning, motion only when information changes. |
-| **Honest** | A stale map that looks live is worse than no map. | Connection and data-age are always visible. Offline data is labelled with its age. |
-| **Dense but legible** | More vehicles in view means fewer clicks. | 4px grid, compact rows, tabular numbers, no decorative padding. |
-| **Keyboard-first** | Dispatchers repeat the same actions hundreds of times. | Every action reachable by keyboard, visible focus, shortcuts for the frequent ones. |
-| **The map owns the page** | The map is the product. | Panels float over it, are opaque, are dismissible, and never shrink the map to a sliver. |
-| **Minimal chrome** | Every persistent control takes map space away from the operator. | Show only what the current task needs; secondary and rare controls live in menus, popovers or sub-menus. Extend an existing menu before adding a new on-screen element. |
+| Principle                 | Why                                                              | What it forces                                                                                                                                                          |
+| ------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Glanceable**            | An operator scans, they do not read.                             | Status by colour _and_ shape _and_ label. Big numbers, small chrome.                                                                                                    |
+| **Calm**                  | Constant motion and colour cause fatigue and hide real alerts.   | One accent colour, colour reserved for meaning, motion only when information changes.                                                                                   |
+| **Honest**                | A stale map that looks live is worse than no map.                | Connection and data-age are always visible. Offline data is labelled with its age.                                                                                      |
+| **Dense but legible**     | More vehicles in view means fewer clicks.                        | 4px grid, compact rows, tabular numbers, no decorative padding.                                                                                                         |
+| **Keyboard-first**        | Dispatchers repeat the same actions hundreds of times.           | Every action reachable by keyboard, visible focus, shortcuts for the frequent ones.                                                                                     |
+| **The map owns the page** | The map is the product.                                          | Panels float over it, are opaque, are dismissible, and never shrink the map to a sliver.                                                                                |
+| **Minimal chrome**        | Every persistent control takes map space away from the operator. | Show only what the current task needs; secondary and rare controls live in menus, popovers or sub-menus. Extend an existing menu before adding a new on-screen element. |
 
 ---
 
@@ -60,133 +60,136 @@ Neutrals are the zinc scale. One accent. Status colours carry meaning and are us
 
 :root {
   /* Surfaces */
-  --bg:            #fafafa;  /* app background behind panels */
-  --surface:       #ffffff;  /* panels, drawers, tables */
-  --surface-2:     #f4f4f5;  /* hover rows, inputs on surface, subtle fills */
-  --surface-3:     #e4e4e7;  /* pressed, selected-neutral */
-  --border:        #e4e4e7;
+  --bg: #fafafa; /* app background behind panels */
+  --surface: #ffffff; /* panels, drawers, tables */
+  --surface-2: #f4f4f5; /* hover rows, inputs on surface, subtle fills */
+  --surface-3: #e4e4e7; /* pressed, selected-neutral */
+  --border: #e4e4e7;
   --border-strong: #d4d4d8;
 
   /* Text */
-  --text:          #18181b;
-  --text-muted:    #52525b;  /* secondary text. 7.7:1 on surface */
-  --text-subtle:   #71717a;  /* captions, placeholders. 4.8:1 on surface. Never smaller than 12px */
-  --text-inverse:  #ffffff;
+  --text: #18181b;
+  --text-muted: #52525b; /* secondary text. 7.7:1 on surface */
+  --text-subtle: #71717a; /* captions, placeholders. 4.8:1 on surface. Never smaller than 12px */
+  --text-inverse: #ffffff;
 
   /* Accent (UI chrome only: primary buttons, focus, selection, links). Never used for map data. */
-  --accent:        #2563eb;
-  --accent-hover:  #1d4ed8;
-  --accent-soft:   #eff6ff;  /* selected row, active nav background */
-  --accent-fg:     #1d4ed8;  /* accent used as text */
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: #eff6ff; /* selected row, active nav background */
+  --accent-fg: #1d4ed8; /* accent used as text */
   --accent-contrast: #ffffff; /* text and glyphs on an accent fill */
-  --focus-ring:    #2563eb;
+  --focus-ring: #2563eb;
 
   /* Status: fill colours (markers, dots, strokes) */
-  --moving:        #16a34a;
-  --idle:          #d97706;
-  --offline:       #71717a;
-  --alert:         #dc2626;
+  --moving: #16a34a;
+  --idle: #d97706;
+  --offline: #71717a;
+  --alert: #dc2626;
 
   /* Status: text colours (AA on surface) */
-  --moving-fg:     #15803d;
-  --idle-fg:       #b45309;
-  --offline-fg:    #52525b;
-  --alert-fg:      #b91c1c;
+  --moving-fg: #15803d;
+  --idle-fg: #b45309;
+  --offline-fg: #52525b;
+  --alert-fg: #b91c1c;
 
   /* Status: tinted backgrounds for badges */
-  --moving-bg:     #f0fdf4;
-  --idle-bg:       #fffbeb;
-  --offline-bg:    #f4f4f5;
-  --alert-bg:      #fef2f2;
+  --moving-bg: #f0fdf4;
+  --idle-bg: #fffbeb;
+  --offline-bg: #f4f4f5;
+  --alert-bg: #fef2f2;
 
   /* Severity (text badges in lists, always with icon + label) */
-  --sev-low:       #52525b;
-  --sev-medium:    #b45309;
-  --sev-high:      #c2410c;
-  --sev-critical:  #b91c1c;
+  --sev-low: #52525b;
+  --sev-medium: #b45309;
+  --sev-high: #c2410c;
+  --sev-critical: #b91c1c;
 
   /* Geofence kinds (map polygons, see §9.3) */
-  --gf-depot:      #4f46e5;
-  --gf-customer:   #0d9488;
+  --gf-depot: #4f46e5;
+  --gf-customer: #0d9488;
   --gf-restricted: #dc2626;
-  --gf-other:      #71717a;
+  --gf-other: #71717a;
 
   /* Offline basemap (self-hosted Protomaps, §9.3) */
   --basemap-background: #f4f4f5;
-  --basemap-earth:      #fafafa;
-  --basemap-water:      #e4e4e7;
-  --basemap-park:       #eef0ec;
-  --basemap-building:   #e4e4e7;
-  --basemap-road:       #ffffff;
+  --basemap-earth: #fafafa;
+  --basemap-water: #e4e4e7;
+  --basemap-park: #eef0ec;
+  --basemap-building: #e4e4e7;
+  --basemap-road: #ffffff;
   --basemap-road-minor: #f4f4f5;
-  --basemap-boundary:   #d4d4d8;
-  --basemap-label:      #52525b;
+  --basemap-boundary: #d4d4d8;
+  --basemap-label: #52525b;
   --basemap-label-halo: #ffffff;
 
   /* Feedback */
-  --success:       #15803d;
-  --warning:       #b45309;
-  --danger:        #b91c1c;
-  --info:          #1d4ed8;
+  --success: #15803d;
+  --warning: #b45309;
+  --danger: #b91c1c;
+  --info: #1d4ed8;
 }
 
 .dark {
-  --bg:            #09090b;
-  --surface:       #18181b;
-  --surface-2:     #27272a;
-  --surface-3:     #3f3f46;
-  --border:        #27272a;
+  --bg: #09090b;
+  --surface: #18181b;
+  --surface-2: #27272a;
+  --surface-3: #3f3f46;
+  --border: #27272a;
   --border-strong: #3f3f46;
 
-  --text:          #fafafa;
-  --text-muted:    #a1a1aa;
-  --text-subtle:   #8b8b94;
-  --text-inverse:  #09090b;
+  --text: #fafafa;
+  --text-muted: #a1a1aa;
+  --text-subtle: #8b8b94;
+  --text-inverse: #09090b;
 
-  --accent:        #2563eb;
-  --accent-hover:  #1d4ed8;
-  --accent-soft:   #172554;
-  --accent-fg:     #93c5fd;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: #172554;
+  --accent-fg: #93c5fd;
   --accent-contrast: #ffffff;
-  --focus-ring:    #60a5fa;
+  --focus-ring: #60a5fa;
 
-  --moving:        #4ade80;
-  --idle:          #fbbf24;
-  --offline:       #a1a1aa;
-  --alert:         #f87171;
+  --moving: #4ade80;
+  --idle: #fbbf24;
+  --offline: #a1a1aa;
+  --alert: #f87171;
 
-  --moving-fg:     #86efac;
-  --idle-fg:       #fcd34d;
-  --offline-fg:    #a1a1aa;
-  --alert-fg:      #fca5a5;
+  --moving-fg: #86efac;
+  --idle-fg: #fcd34d;
+  --offline-fg: #a1a1aa;
+  --alert-fg: #fca5a5;
 
-  --moving-bg:     color-mix(in srgb, #4ade80 14%, var(--surface));
-  --idle-bg:       color-mix(in srgb, #fbbf24 14%, var(--surface));
-  --offline-bg:    color-mix(in srgb, #a1a1aa 14%, var(--surface));
-  --alert-bg:      color-mix(in srgb, #f87171 14%, var(--surface));
+  --moving-bg: color-mix(in srgb, #4ade80 14%, var(--surface));
+  --idle-bg: color-mix(in srgb, #fbbf24 14%, var(--surface));
+  --offline-bg: color-mix(in srgb, #a1a1aa 14%, var(--surface));
+  --alert-bg: color-mix(in srgb, #f87171 14%, var(--surface));
 
-  --sev-low:       #a1a1aa;
-  --sev-medium:    #fcd34d;
-  --sev-high:      #fdba74;
-  --sev-critical:  #fca5a5;
+  --sev-low: #a1a1aa;
+  --sev-medium: #fcd34d;
+  --sev-high: #fdba74;
+  --sev-critical: #fca5a5;
 
-  --gf-depot:      #818cf8;
-  --gf-customer:   #2dd4bf;
+  --gf-depot: #818cf8;
+  --gf-customer: #2dd4bf;
   --gf-restricted: #f87171;
-  --gf-other:      #a1a1aa;
+  --gf-other: #a1a1aa;
 
   --basemap-background: #09090b;
-  --basemap-earth:      #18181b;
-  --basemap-water:      #172033;
-  --basemap-park:       #14201a;
-  --basemap-building:   #27272a;
-  --basemap-road:       #3f3f46;
+  --basemap-earth: #18181b;
+  --basemap-water: #172033;
+  --basemap-park: #14201a;
+  --basemap-building: #27272a;
+  --basemap-road: #3f3f46;
   --basemap-road-minor: #27272a;
-  --basemap-boundary:   #3f3f46;
-  --basemap-label:      #a1a1aa;
+  --basemap-boundary: #3f3f46;
+  --basemap-label: #a1a1aa;
   --basemap-label-halo: #09090b;
 
-  --success: #86efac; --warning: #fcd34d; --danger: #fca5a5; --info: #93c5fd;
+  --success: #86efac;
+  --warning: #fcd34d;
+  --danger: #fca5a5;
+  --info: #93c5fd;
 }
 
 @theme inline {
@@ -203,10 +206,18 @@ Neutrals are the zinc scale. One accent. Status colours carry meaning and are us
   --color-accent-hover: var(--accent-hover);
   --color-accent-soft: var(--accent-soft);
   --color-accent-fg: var(--accent-fg);
-  --color-moving: var(--moving);   --color-moving-fg: var(--moving-fg);   --color-moving-bg: var(--moving-bg);
-  --color-idle: var(--idle);       --color-idle-fg: var(--idle-fg);       --color-idle-bg: var(--idle-bg);
-  --color-offline: var(--offline); --color-offline-fg: var(--offline-fg); --color-offline-bg: var(--offline-bg);
-  --color-alert: var(--alert);     --color-alert-fg: var(--alert-fg);     --color-alert-bg: var(--alert-bg);
+  --color-moving: var(--moving);
+  --color-moving-fg: var(--moving-fg);
+  --color-moving-bg: var(--moving-bg);
+  --color-idle: var(--idle);
+  --color-idle-fg: var(--idle-fg);
+  --color-idle-bg: var(--idle-bg);
+  --color-offline: var(--offline);
+  --color-offline-fg: var(--offline-fg);
+  --color-offline-bg: var(--offline-bg);
+  --color-alert: var(--alert);
+  --color-alert-fg: var(--alert-fg);
+  --color-alert-bg: var(--alert-bg);
   --color-danger: var(--danger);
   --color-success: var(--success);
   --color-warning: var(--warning);
@@ -218,14 +229,15 @@ Neutrals are the zinc scale. One accent. Status colours carry meaning and are us
 
 - **One accent.** It never encodes status. It may tint map data that belongs to the user's task — the selected-vehicle ring and the playback route — but status, severity and geofence hues always win. The user chooses one of four accents in the user menu's Appearance section:
 
-  | Accent | Light `--accent` | Dark `--accent` | Why |
-  |---|---|---|---|
-  | Blue (default) | `#2563eb` | `#2563eb` | The existing default; white text passes on the deep fill. |
-  | Violet | `#7c3aed` | `#7c3aed` | A distinct hue family from status reds and ambers. |
-  | Fuchsia | `#c026d3` | `#c026d3` | Distinct from the indigo and teal geofence hues. |
-  | Graphite | `#475569` | `#64748b` | Desaturated chrome that cannot be mistaken for a status. |
+  | Accent         | Light `--accent` | Dark `--accent` | Why                                                       |
+  | -------------- | ---------------- | --------------- | --------------------------------------------------------- |
+  | Blue (default) | `#2563eb`        | `#2563eb`       | The existing default; white text passes on the deep fill. |
+  | Violet         | `#7c3aed`        | `#7c3aed`       | A distinct hue family from status reds and ambers.        |
+  | Fuchsia        | `#c026d3`        | `#c026d3`       | Distinct from the indigo and teal geofence hues.          |
+  | Graphite       | `#475569`        | `#64748b`       | Desaturated chrome that cannot be mistaken for a status.  |
 
   Each accent defines the full set (`--accent`, `--accent-hover`, `--accent-soft`, `--accent-fg`, `--accent-contrast`, `--focus-ring`) for both themes. Teal was removed because it collided with `--gf-customer`; a stored unknown accent falls back to Blue. `src/theme/accents.test.ts` computes the WCAG ratios from this file for every accent and theme.
+
 - **Fill vs text.** `--moving`, `--idle` fail contrast as text on white. Use `*-fg` for any text or icon on a surface, `*` only for dots, strokes and marker fills.
 - **Never colour alone.** Every status has a colour, a shape or icon, and a text label (§9.1, §10.4).
 - **Dark mode** follows the system setting by default, with a manual segmented control (light, dark, system) in the user menu's Appearance section, persisted locally. Control rooms run at night, so dark mode is a first-class theme and is tested for every screen.
@@ -240,16 +252,16 @@ Neutrals are the zinc scale. One accent. Status colours carry meaning and are us
 - All numbers in tables, KPIs, speeds, distances and timestamps use `tabular-nums`. Apply it globally to `td`, `.stat` and anything numeric.
 - Sentence case everywhere. No ALL CAPS except the 11px `label-caps` style used for table column headers and KPI labels.
 
-| Token | Size / line height | Weight | Use |
-|---|---|---|---|
-| `text-xs` | 12 / 16 | 400 | captions, timestamps, helper text |
-| `text-2xs` | 11 / 16 | 400 | map attribution chip only |
-| `label-caps` | 11 / 16, tracking +0.04em | 600 | column headers, KPI labels |
-| `text-sm` | 13 / 20 | 400 | dense table cells, list rows, secondary UI |
-| `text-base` | 14 / 20 | 400 | default body and form controls |
-| `text-md` | 16 / 24 | 500 | panel titles, drawer titles |
-| `text-lg` | 20 / 28 | 600 | page titles |
-| `stat` | 28 / 32 | 600 | KPI numbers (tabular) |
+| Token        | Size / line height        | Weight | Use                                        |
+| ------------ | ------------------------- | ------ | ------------------------------------------ |
+| `text-xs`    | 12 / 16                   | 400    | captions, timestamps, helper text          |
+| `text-2xs`   | 11 / 16                   | 400    | map attribution chip only                  |
+| `label-caps` | 11 / 16, tracking +0.04em | 600    | column headers, KPI labels                 |
+| `text-sm`    | 13 / 20                   | 400    | dense table cells, list rows, secondary UI |
+| `text-base`  | 14 / 20                   | 400    | default body and form controls             |
+| `text-md`    | 16 / 24                   | 500    | panel titles, drawer titles                |
+| `text-lg`    | 20 / 28                   | 600    | page titles                                |
+| `stat`       | 28 / 32                   | 600    | KPI numbers (tabular)                      |
 
 - Body text is never below 13px; captions never below 12px. The one exception is the map attribution chip, which is 11px licence text.
 - Weights allowed: 400, 500, 600. No 700 or 300.
@@ -264,14 +276,14 @@ Neutrals are the zinc scale. One accent. Status colours carry meaning and are us
 
 4px base grid. Allowed spacing steps: `1 (4)`, `2 (8)`, `3 (12)`, `4 (16)`, `6 (24)`, `8 (32)`, `12 (48)`. Nothing else.
 
-| Element | Value |
-|---|---|
-| Panel padding | 12px (dense), 16px (forms) |
-| Gap between related controls | 8px |
-| Gap between groups | 16px |
-| Table row height | 36px dense (default), 44px comfortable (setting) |
-| Control heights | 28 (sm), 32 (md, default), 36 (lg) |
-| Minimum pointer target | 28px desktop, 44px on touch breakpoints |
+| Element                      | Value                                            |
+| ---------------------------- | ------------------------------------------------ |
+| Panel padding                | 12px (dense), 16px (forms)                       |
+| Gap between related controls | 8px                                              |
+| Gap between groups           | 16px                                             |
+| Table row height             | 36px dense (default), 44px comfortable (setting) |
+| Control heights              | 28 (sm), 32 (md, default), 36 (lg)               |
+| Minimum pointer target       | 28px desktop, 44px on touch breakpoints          |
 
 Nested actions inside a 56px vehicle row keep a 24px visual line but still offer the 44px touch target: the action grows symmetrically and negative vertical margins keep its layout contribution at one text line. The row's 56px selection button remains the primary target.
 
@@ -303,13 +315,13 @@ Shell and dialog sizes are tokens: `--spacing-touch: 44px`, `--spacing-rail-expa
 
 ### 5.3 Breakpoints
 
-| Name | Min width | Behaviour |
-|---|---|---|
-| `sm` | 640 | single column pages |
-| `md` | 768 | icon rail appears |
-| `lg` | 1024 | left panel docks beside the map |
-| `xl` | 1280 | drawer and left panel can be open together |
-| `2xl` | 1536 | comfortable density option |
+| Name  | Min width | Behaviour                                  |
+| ----- | --------- | ------------------------------------------ |
+| `sm`  | 640       | single column pages                        |
+| `md`  | 768       | icon rail appears                          |
+| `lg`  | 1024      | left panel docks beside the map            |
+| `xl`  | 1280      | drawer and left panel can be open together |
+| `2xl` | 1536      | comfortable density option                 |
 
 Below `lg`, the left panel and drawer become a **bottom sheet** with three snap points (peek 113px, half, full). The map remains interactive above it.
 
@@ -319,17 +331,17 @@ At `lg`–`xl` the vehicle drawer hides the left panel without changing the save
 
 ## 6. Shape and elevation
 
-| Token | Value | Use |
-|---|---|---|
-| `--radius-sm` | 4px | badges, checkboxes, table cell chips |
-| `--radius-md` | 6px | buttons, inputs, menus |
-| `--radius-lg` | 10px | floating panels, drawers, dialogs |
-| `--radius-full` | 9999px | status pills, avatars, marker dots |
-| `--overlay` | 40% black light, 60% black dark | dialog and sheet backdrops |
+| Token           | Value                           | Use                                  |
+| --------------- | ------------------------------- | ------------------------------------ |
+| `--radius-sm`   | 4px                             | badges, checkboxes, table cell chips |
+| `--radius-md`   | 6px                             | buttons, inputs, menus               |
+| `--radius-lg`   | 10px                            | floating panels, drawers, dialogs    |
+| `--radius-full` | 9999px                          | status pills, avatars, marker dots   |
+| `--overlay`     | 40% black light, 60% black dark | dialog and sheet backdrops           |
 
 ```css
---shadow-float: 0 1px 2px rgb(0 0 0 / 0.06), 0 8px 24px rgb(0 0 0 / 0.10);
---shadow-menu:  0 1px 2px rgb(0 0 0 / 0.06), 0 4px 12px rgb(0 0 0 / 0.10);
+--shadow-float: 0 1px 2px rgb(0 0 0 / 0.06), 0 8px 24px rgb(0 0 0 / 0.1);
+--shadow-menu: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 12px rgb(0 0 0 / 0.1);
 /* dark: increase alpha to 0.4 / 0.5 and always keep the 1px border */
 ```
 
@@ -340,17 +352,17 @@ At `lg`–`xl` the vehicle drawer hides the left panel without changing the save
 
 z-index only orders elements inside one stacking context. The console therefore has one scale, defined as CSS variables in `src/ui/layers.css` and used only through named utilities; a numeric or arbitrary z-index elsewhere is a guard failure.
 
-| Layer | Utility | Value | Where it applies |
-|---|---|---|---|
-| Map | `z-map` | 0 | the map surface |
-| Map controls | `z-map-controls` | 10 | map controls, attribution, map-level notices |
-| Panel | `z-panel` | 20 | the vehicle panel, KPI strip, bottom sheet, floating page panels |
-| Drawer | `z-drawer` | 30 | the vehicle drawer and the page drawer |
-| Top bar | `z-topbar` | 40 | shell chrome and page sticky headers |
-| Dialog | `z-dialog` | 60 | modal dialogs and their backdrop |
-| Popover | `z-popover` | 70 | menus, selects, comboboxes, the user menu |
-| Toast | `z-toast` | 80 | the toast viewport |
-| Tooltip | `z-tooltip` | 90 | tooltips |
+| Layer        | Utility          | Value | Where it applies                                                 |
+| ------------ | ---------------- | ----- | ---------------------------------------------------------------- |
+| Map          | `z-map`          | 0     | the map surface                                                  |
+| Map controls | `z-map-controls` | 10    | map controls, attribution, map-level notices                     |
+| Panel        | `z-panel`        | 20    | the vehicle panel, KPI strip, bottom sheet, floating page panels |
+| Drawer       | `z-drawer`       | 30    | the vehicle drawer and the page drawer                           |
+| Top bar      | `z-topbar`       | 40    | shell chrome and page sticky headers                             |
+| Dialog       | `z-dialog`       | 60    | modal dialogs and their backdrop                                 |
+| Popover      | `z-popover`      | 70    | menus, selects, comboboxes, the user menu                        |
+| Toast        | `z-toast`        | 80    | the toast viewport                                               |
+| Tooltip      | `z-tooltip`      | 90    | tooltips                                                         |
 
 The content area is `position: relative; isolation: isolate`, so its internal layers (map, controls, panels, drawer) can never paint above the top bar or an overlay, whatever number a component uses. The top bar is in the same shell stacking context but is not positioned against the viewport.
 
@@ -364,11 +376,11 @@ The overlay root is outside the content area, so a modal dialog’s backdrop cov
 
 Motion communicates a change of information, never decoration.
 
-| Token | Duration | Easing | Use |
-|---|---|---|---|
-| `motion-fast` | 100ms | ease-out | hover, press, focus |
-| `motion-base` | 150ms | ease-out | menus, tooltips, tab switch |
-| `motion-slow` | 220ms | cubic-bezier(0.2, 0, 0, 1) | drawer and panel slide, bottom sheet |
+| Token         | Duration | Easing                     | Use                                  |
+| ------------- | -------- | -------------------------- | ------------------------------------ |
+| `motion-fast` | 100ms    | ease-out                   | hover, press, focus                  |
+| `motion-base` | 150ms    | ease-out                   | menus, tooltips, tab switch          |
+| `motion-slow` | 220ms    | cubic-bezier(0.2, 0, 0, 1) | drawer and panel slide, bottom sheet |
 
 - Animate only `opacity` and `transform`. Never animate `width`, `height` or `top` on layout. The drawer inset and control fades use `--motion-slow` (`220ms`) with `--ease-slow` (`cubic-bezier(0.2, 0, 0, 1)`); hover and menus use `--motion-fast` / `--motion-base` with `--ease-out`. While a sheet drag is active, `data-sheet-dragging="true"` suppresses those transitions. The bottom sheet's visible height snaps between snap points instead of transitioning: height is a layout property, and a transform cannot keep the bottom edge pinned while the top moves; the trade-off is recorded in `docs/decisions.md`.
 - Marker movement: interpolate linearly between two position updates over the observed update interval, capped at 2s. No easing, no bounce. If an update is older than 10s, snap instead of gliding.
@@ -394,10 +406,10 @@ Motion communicates a change of information, never decoration.
 
 The brand is **Zoro**. Both marks are single-colour SVGs rendered by `src/ui/BrandLogo.tsx` with `fill="currentColor"`, so the logo follows `--text` and stays legible in light and dark. It never uses the accent, status or severity colours.
 
-| Variant | Art | Where it is used |
-|---|---|---|
-| `lockup` | Symbol + Zoro wordmark | App top bar at `md` and up; the login header strip |
-| `symbol` | Symbol only | App top bar below `md`; favicons, app icons and the maskable icon |
+| Variant  | Art                    | Where it is used                                                  |
+| -------- | ---------------------- | ----------------------------------------------------------------- |
+| `lockup` | Symbol + Zoro wordmark | App top bar at `md` and up; the login header strip                |
+| `symbol` | Symbol only            | App top bar below `md`; favicons, app icons and the maskable icon |
 
 - **Size:** `22px` tall in the shell and login strip. The lockup is never smaller than `20px` tall; below `md` the symbol is used instead of shrinking the wordmark.
 - **Clear space:** at least `8px` on every side, measured from the mark's bounding box. The top bar keeps `16px` from the left edge and a `gap-2` (`8px`) to the next control.
@@ -409,28 +421,28 @@ The brand is **Zoro**. Both marks are single-colour SVGs rendered by `src/ui/Bra
 
 ## 9. Data display rules
 
-| Data | Format |
-|---|---|
-| Timestamp | Relative under 24h (`2m ago`), absolute otherwise (`2 Nov, 14:02`). Tooltip always shows full local time and the UTC value. Use `Intl.DateTimeFormat`. |
-| Speed | integer, `62 km/h` |
-| Distance | one decimal under 100 km, integer above, `12.4 km` |
-| Heading | degrees plus compass, `272° W` |
-| Coordinates | 5 decimals, mono, copyable on click |
-| Plate / IMEI / IDs | mono, never truncated, copy-on-click with toast |
-| Missing value | `—` (em dash), never `null`, `N/A` or blank |
-| Counts | `Intl.NumberFormat`, thousands separators |
-| Currency | none in v0.1 |
+| Data               | Format                                                                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Timestamp          | Relative under 24h (`2m ago`), absolute otherwise (`2 Nov, 14:02`). Tooltip always shows full local time and the UTC value. Use `Intl.DateTimeFormat`. |
+| Speed              | integer, `62 km/h`                                                                                                                                     |
+| Distance           | one decimal under 100 km, integer above, `12.4 km`                                                                                                     |
+| Heading            | degrees plus compass, `272° W`                                                                                                                         |
+| Coordinates        | 5 decimals, mono, copyable on click                                                                                                                    |
+| Plate / IMEI / IDs | mono, never truncated, copy-on-click with toast                                                                                                        |
+| Missing value      | `—` (em dash), never `null`, `N/A` or blank                                                                                                            |
+| Counts             | `Intl.NumberFormat`, thousands separators                                                                                                              |
+| Currency           | none in v0.1                                                                                                                                           |
 
 ### 9.1 Vehicle status
 
 The API gives `online`; the UI derives a display status. The derivation lives in one function, `getVehicleStatus()`, and nowhere else.
 
-| Status | Colour | Marker shape | Label |
-|---|---|---|---|
-| Moving | `--moving` | filled circle with heading chevron | Moving |
-| Idle | `--idle` | filled circle, no chevron, pause glyph in the drawer | Idle |
-| Offline | `--offline` | hollow circle (2px stroke) | Offline |
-| Alert | `--alert` | filled circle with a white `!` and an outer ring | Alert |
+| Status  | Colour      | Marker shape                                         | Label   |
+| ------- | ----------- | ---------------------------------------------------- | ------- |
+| Moving  | `--moving`  | filled circle with heading chevron                   | Moving  |
+| Idle    | `--idle`    | filled circle, no chevron, pause glyph in the drawer | Idle    |
+| Offline | `--offline` | hollow circle (2px stroke)                           | Offline |
+| Alert   | `--alert`   | filled circle with a white `!` and an outer ring     | Alert   |
 
 Alert outranks the other statuses for display. The list shows the status as a pill (§10.4) next to the plate. On the map, alert status comes from open alerts inside a 15-minute window (not from every historical open alert); the KPI and Alerts screen still count every open alert.
 
@@ -438,10 +450,10 @@ Alert outranks the other statuses for display. The list shows the status as a pi
 
 Defaults, tune against real update intervals:
 
-| Age of last update | Treatment |
-|---|---|
-| ≤ 30s | fresh, no indicator |
-| 30s to 5min | `delayed`: timestamp turns `--idle-fg`, clock icon |
+| Age of last update    | Treatment                                                                               |
+| --------------------- | --------------------------------------------------------------------------------------- |
+| ≤ 30s                 | fresh, no indicator                                                                     |
+| 30s to 5min           | `delayed`: timestamp turns `--idle-fg`, clock icon                                      |
 | > 5min or socket down | `stale`: timestamp `--alert-fg`, striped top border on the panel, label `Stale · 14:02` |
 
 The KPI strip always shows `last data age`. The top-bar connection indicator has four states: `Live` (green dot), `Reconnecting…` (amber dot), `Offline` (grey dot, `Showing data from 14:02`) and, until the live socket ships in Slice 2, `Online` (green dot, meaning the browser can reach the server). The label collapses to a dot with the accessible name `Connection: …` below `md`.
@@ -453,16 +465,17 @@ The KPI strip always shows `last data age`. The top-bar connection indicator has
 - **Selected vehicle:** 2px `--accent` outer ring and the marker raised above the others.
 - **Map controls:** app-level, provider-neutral, 36px at `md` and up and 44px on touch. The vertical stack sits bottom-right, uses `--surface`, `--border`, `--shadow-float` and `--radius-md`, and shifts around panels with `--map-inset-right` and `--map-inset-bottom` (transform only). Native adapter controls are hidden. Attribution is a separate static chip that never fades with the controls and is never hidden; it is a licence requirement.
 - **Satellite:** online-only, env-gated, and clearly secondary to the data layers. On imagery every marker gets a 2px halo in `--imagery-halo`, geofence strokes and the playback route get a wider halo, and label halos grow to 2px. Vehicles, geofences and labels must stay legible on both basemaps.
-- **Geofence:** polygon fill at 12% opacity, 2px stroke. Kind is encoded by colour *and* stroke pattern:
+- **Geofence:** polygon fill at 12% opacity, 2px stroke. Kind is encoded by colour _and_ stroke pattern:
 
-  | Kind | Colour | Stroke |
-  |---|---|---|
-  | depot | `--gf-depot` | solid |
-  | customer | `--gf-customer` | dotted |
+  | Kind       | Colour            | Stroke                           |
+  | ---------- | ----------------- | -------------------------------- |
+  | depot      | `--gf-depot`      | solid                            |
+  | customer   | `--gf-customer`   | dotted                           |
   | restricted | `--gf-restricted` | dashed, plus diagonal hatch fill |
-  | other | `--gf-other` | thin solid |
+  | other      | `--gf-other`      | thin solid                       |
 
   Geofence name appears at zoom ≥ 12.
+
 - **Playback route:** 3px line in `--accent`, direction chevrons every 80px, a filled accent start pin, a surface-filled accent-ringed end pin, `Start`/`End` labels from zoom 12, and a 7px accent cursor with a surface ring. Missing-data segments are dashed instead of pretending the straight connector is a route; the cursor stays on the last known point across a gap. The cursor sits above the pins and the pins above the line.
 - The map has an accessible equivalent: the vehicle list. Every marker action is also reachable from the list.
 
@@ -474,12 +487,12 @@ Each component lists its anatomy and its rules. All come from shadcn primitives 
 
 ### 10.1 Button
 
-| Variant | Appearance | Use |
-|---|---|---|
-| `primary` | `--accent` fill, `--text-inverse` text | one per view, the main action |
-| `secondary` | `--surface` fill, 1px `--border-strong` | default actions |
-| `ghost` | transparent, `--surface-2` on hover | toolbars, row actions |
-| `destructive` | `--danger` text on secondary, filled only inside a confirm dialog | delete, cancel trip |
+| Variant       | Appearance                                                        | Use                           |
+| ------------- | ----------------------------------------------------------------- | ----------------------------- |
+| `primary`     | `--accent` fill, `--text-inverse` text                            | one per view, the main action |
+| `secondary`   | `--surface` fill, 1px `--border-strong`                           | default actions               |
+| `ghost`       | transparent, `--surface-2` on hover                               | toolbars, row actions         |
+| `destructive` | `--danger` text on secondary, filled only inside a confirm dialog | delete, cancel trip           |
 
 - Heights 28/32/36, horizontal padding 12px, `--radius-md`, text `text-base` weight 500.
 - Loading: the label stays, a 14px spinner replaces the leading icon, the button is disabled and `aria-busy`.
@@ -600,14 +613,14 @@ Bottom-right, 4s, one line plus an optional action. Success and info auto-dismis
 
 Every list, table, panel and map layer implements all five. Build them with the shared `<StateBoundary>` component so they stay consistent. Pessimistic mutations show a transient pending overlay on the loaded state.
 
-| State | Treatment |
-|---|---|
-| **Loading** | Skeleton of the real layout (same row height and columns). No full-page spinners. Show skeletons after 200ms to avoid flashes. |
-| **Empty** | Icon, one-line reason, one primary action. Distinguish `no data yet` from `no results for this filter`. |
-| **Error** | Message plus `Retry`. Preserve any previously loaded data below it, dimmed. |
-| **Stale** | Data stays visible; the panel shows `Stale · <time>` (§9.2). Mutating actions are disabled with a reason while offline. |
-| **Forbidden** | `You don't have access to this.` plus a link back. Role gating is enforced by the API; the UI never relies on hiding alone. |
-| **Pending** | Keep the previous row visible at reduced opacity and put a spinner in the existing action slot. Do not add text or columns that move the layout. Apply the server result on success; on error, restore the row and announce the error. |
+| State         | Treatment                                                                                                                                                                                                                              |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Loading**   | Skeleton of the real layout (same row height and columns). No full-page spinners. Show skeletons after 200ms to avoid flashes.                                                                                                         |
+| **Empty**     | Icon, one-line reason, one primary action. Distinguish `no data yet` from `no results for this filter`.                                                                                                                                |
+| **Error**     | Message plus `Retry`. Preserve any previously loaded data below it, dimmed.                                                                                                                                                            |
+| **Stale**     | Data stays visible; the panel shows `Stale · <time>` (§9.2). Mutating actions are disabled with a reason while offline.                                                                                                                |
+| **Forbidden** | `You don't have access to this.` plus a link back. Role gating is enforced by the API; the UI never relies on hiding alone.                                                                                                            |
+| **Pending**   | Keep the previous row visible at reduced opacity and put a spinner in the existing action slot. Do not add text or columns that move the layout. Apply the server result on success; on error, restore the row and announce the error. |
 
 Global banners live below the top bar **in normal flow**, in one region that collapses to zero height when no banner is present. Only the highest-priority banner shows at a time, in this order:
 
@@ -627,15 +640,15 @@ The banner region shrinks the content area by exactly the banner’s height, so 
 - Tab order follows visual order. Panels trap focus only when modal (dialogs).
 - Shortcuts (disabled while typing in an input; list shown with `?`):
 
-| Key | Action |
-|---|---|
-| `/` | focus vehicle search |
-| `j` / `k` | next / previous vehicle in list |
-| `Enter` | open selected vehicle drawer |
-| `Esc` | close drawer, clear selection, clear search |
-| `[` | toggle left panel |
-| `g` then `m` / `a` / `t` / `d` / `r` | go to Map / Alerts / Trips / Drivers / Reports |
-| `a` (alert row focused) | acknowledge |
+| Key                                    | Action                                              |
+| -------------------------------------- | --------------------------------------------------- |
+| `/`                                    | focus vehicle search                                |
+| `j` / `k`                              | next / previous vehicle in list                     |
+| `Enter`                                | open selected vehicle drawer                        |
+| `Esc`                                  | close drawer, clear selection, clear search         |
+| `[`                                    | toggle left panel                                   |
+| `g` then `m` / `a` / `t` / `d` / `r`   | go to Map / Alerts / Trips / Drivers / Reports      |
+| `a` (alert row focused)                | acknowledge                                         |
 | `Space`, `←`, `→`, `,`, `.` (playback) | play-pause, step back, step forward, slower, faster |
 
 ---
@@ -669,16 +682,16 @@ The banner region shrinks the content area by exactly the banner’s height, so 
 
 ## 15. Screen composition patterns
 
-| Screen | Pattern |
-|---|---|
-| Map | Full-bleed map, left list panel, KPI strip, right drawer, app-level map controls. Below `lg` the panel becomes a bottom sheet with peek (113px), half and full snap points; the KPI strip becomes the compact 2×2 grid; fit and geofence controls move into the sheet header. The vehicle detail sheet reuses the same 113px header rhythm: 8px drag band, a 44px plate/status/close row, an 8px gap, a 44px icon-action row, 8px bottom padding and a 1px separator. It defaults to half, the body is inert at peek, and at full it ends 80px below the top bar; closing it returns the list sheet at its previous snap. The sheet header is 113px and always visible: an 8px drag band, a 44px title/count/fit/geofences/filters row, and a 60px search row holding a 44px field with 8px above and below. The header is one opaque `surface` region and the single owner of the header separator: a 1px `border` line as its own bottom border, spanning the sheet's full width. The sheet edges are a non-layout ring and the row dividers share the separator's left and right x; a bottom safe-area inset is reserved inside the sheet so the last row clears it. Only the vehicle list scrolls, inside the sheet with contained overscroll; the header never moves and list scrolling never drags the sheet. At full the sheet ends 80px below the top bar, the KPI is hidden, and tapping that map strip returns to half. The controls stack sits bottom-right and shifts with `--map-inset-bottom` / `--map-inset-right`; above 60% sheet height it fades and goes inert. Vehicle rows are 56px, two lines: status pill, mono plate and data age; driver and speed. The plate is a copy button layered above the row's selection button. The map tooltip shows plate, speed and data age, clamped to the map edge. Attribution is a static link rendered by the feature, never injected from a remote style. |
-| Alerts, Trips, Drivers, Audit | Page title, filter row (selects and search, 32px), dense table, detail in a right drawer, never a separate page. Alerts uses the shared `Drawer` page placement: right panel at `md+`, top-quarter sheet below `md`, always leaving the title and tabs visible. The alert detail's static map is the same `FleetMap`, labelled "Alert position", with the shared attribution chip. |
-| Geofences | Split view: list left (360px), map right with draw tools; unsaved polygon shown with dashed `--accent` stroke |
-| Playback | Full-bleed standard map with the route, floating header (back, plate, IMEI, offline badge, change vehicle), and a bottom control bar measuring its own height for camera padding: range and resolution selects, transport, speed, speed/heading readouts, point count, Fit route, Events menu, the scrubber with gap bands and event markers, and gap labels. The attribution chip sits above the bar, never under it. Below `md` the bar stacks and every control keeps a 44px target. |
-| Import | Drop zone with expected headers listed, then a result summary (total, imported, failed) and an error table limited to the first 100 rows |
-| Reports | Range picker (default 7 days), a row of stats, horizontal bar chart for alerts by type |
-| System | Grid of stats grouped by Dependencies, Fleet, Ingest; each stat has a status dot and a label; green means healthy, any non-green is sorted first |
-| Login | Centred 360px form on `--bg`, no illustration, error and rate-limit messages inline |
+| Screen                        | Pattern                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Map                           | Full-bleed map, left list panel, KPI strip, right drawer, app-level map controls. Below `lg` the panel becomes a bottom sheet with peek (113px), half and full snap points; the KPI strip becomes the compact 2×2 grid; fit and geofence controls move into the sheet header. The vehicle detail sheet reuses the same 113px header rhythm: 8px drag band, a 44px plate/status/close row, an 8px gap, a 44px icon-action row, 8px bottom padding and a 1px separator. It defaults to half, the body is inert at peek, and at full it ends 80px below the top bar; closing it returns the list sheet at its previous snap. The sheet header is 113px and always visible: an 8px drag band, a 44px title/count/fit/geofences/filters row, and a 60px search row holding a 44px field with 8px above and below. The header is one opaque `surface` region and the single owner of the header separator: a 1px `border` line as its own bottom border, spanning the sheet's full width. The sheet edges are a non-layout ring and the row dividers share the separator's left and right x; a bottom safe-area inset is reserved inside the sheet so the last row clears it. Only the vehicle list scrolls, inside the sheet with contained overscroll; the header never moves and list scrolling never drags the sheet. At full the sheet ends 80px below the top bar, the KPI is hidden, and tapping that map strip returns to half. The controls stack sits bottom-right and shifts with `--map-inset-bottom` / `--map-inset-right`; above 60% sheet height it fades and goes inert. Vehicle rows are 56px, two lines: status pill, mono plate and data age; driver and speed. The plate is a copy button layered above the row's selection button. The map tooltip shows plate, speed and data age, clamped to the map edge. Attribution is a static link rendered by the feature, never injected from a remote style. |
+| Alerts, Trips, Drivers, Audit | Page title, filter row (selects and search, 32px), dense table, detail in a right drawer, never a separate page. Alerts uses the shared `Drawer` page placement: right panel at `md+`, top-quarter sheet below `md`, always leaving the title and tabs visible. The alert detail's static map is the same `FleetMap`, labelled "Alert position", with the shared attribution chip.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Geofences                     | Split view: list left (360px), map right with draw tools; unsaved polygon shown with dashed `--accent` stroke                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Playback                      | Full-bleed standard map with the route, floating header (back, plate, IMEI, offline badge, change vehicle), and a bottom control bar measuring its own height for camera padding: range and resolution selects, transport, speed, speed/heading readouts, point count, Fit route, Events menu, the scrubber with gap bands and event markers, and gap labels. The attribution chip sits above the bar, never under it. Below `md` the bar stacks and every control keeps a 44px target.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Import                        | Drop zone with expected headers listed, then a result summary (total, imported, failed) and an error table limited to the first 100 rows                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Reports                       | Range picker (default 7 days), a row of stats, horizontal bar chart for alerts by type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| System                        | Grid of stats grouped by Dependencies, Fleet, Ingest; each stat has a status dot and a label; green means healthy, any non-green is sorted first                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Login                         | Centred 360px form on `--bg`, no illustration, error and rate-limit messages inline                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
 Charts: simple horizontal bars drawn with SVG or CSS, one series in `--accent`, direct value labels, no pie or donut charts, no gradients, no animation.
 
@@ -691,10 +704,10 @@ Charts: simple horizontal bars drawn with SVG or CSS, one series in `--accent`, 
 const pill = cva("inline-flex h-5 items-center gap-1 rounded-full px-2 text-xs font-medium", {
   variants: {
     status: {
-      moving:  "bg-moving-bg text-moving-fg",
-      idle:    "bg-idle-bg text-idle-fg",
+      moving: "bg-moving-bg text-moving-fg",
+      idle: "bg-idle-bg text-idle-fg",
       offline: "bg-offline-bg text-offline-fg",
-      alert:   "bg-alert-bg text-alert-fg",
+      alert: "bg-alert-bg text-alert-fg",
     },
   },
 });
@@ -750,6 +763,7 @@ const pill = cva("inline-flex h-5 items-center gap-1 rounded-full px-2 text-xs f
 ## Theme Runtime
 
 `ThemeProvider` persists both preferences through `src/lib/storage.ts`:
+
 - Theme: `fleet.theme` (`light`, `dark`, `system`)
 - Accent: `fleet.accent` (`blue`, `violet`, `fuchsia`, `graphite`)
 
@@ -765,6 +779,7 @@ Accents affect interface chrome only. They never replace semantic status colours
 Add new shared components and their states there.
 
 Review components in:
+
 - Light theme
 - Dark theme
 - Blue accent

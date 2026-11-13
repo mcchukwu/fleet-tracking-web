@@ -10,7 +10,13 @@ const holder = vi.hoisted(() => ({ adapter: null as unknown }));
 
 const adapter = {
   id: "fake",
-  capabilities: { offline: true, drawing: true, clustering: "emulated", comfortableVehicleCount: 1, styles: ["standard"] },
+  capabilities: {
+    offline: true,
+    drawing: true,
+    clustering: "emulated",
+    comfortableVehicleCount: 1,
+    styles: ["standard"],
+  },
   getStyleState: () => ({ style: "standard", status: "ready", attribution: null }),
   getViewport: () => ({
     center: [3.4, 6.5],
@@ -106,13 +112,7 @@ describe("GeofenceMap", () => {
 
   it("mounts the map offline before an adapter exists when a local pack is configured", () => {
     renderMap(
-      <GeofenceMap
-        geofences={[]}
-        adapter={null}
-        offline
-        onAdapter={vi.fn()}
-        onFitAll={vi.fn()}
-      />,
+      <GeofenceMap geofences={[]} adapter={null} offline onAdapter={vi.fn()} onFitAll={vi.fn()} />,
     );
     expect(screen.getByTestId("fleet-map")).toHaveAttribute("data-dimmed", "true");
     expect(screen.queryByText("Map isn't available offline")).toBeNull();

@@ -24,10 +24,7 @@ function storageFailure(): StorageError {
   return new StorageError("The offline profile is unavailable on this device");
 }
 
-export async function saveOfflineProfile(
-  user: User,
-  now: () => number = Date.now,
-): Promise<void> {
+export async function saveOfflineProfile(user: User, now: () => number = Date.now): Promise<void> {
   const profile: OfflineProfile = {
     user: {
       id: user.id,

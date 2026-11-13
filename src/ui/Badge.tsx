@@ -1,12 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import {
-  Check,
-  ChevronRight,
-  Circle,
-  Info,
-  OctagonAlert,
-  TriangleAlert,
-} from "lucide-react";
+import { Check, ChevronRight, Circle, Info, OctagonAlert, TriangleAlert } from "lucide-react";
 import { cn } from "./cn";
 
 const statusPill = cva(
@@ -57,16 +50,9 @@ export function ConnectionIndicator({
         {state === "live" ? (
           <span className="bg-moving absolute inline-flex size-2 animate-ping rounded-full opacity-60 motion-reduce:animate-none" />
         ) : null}
-        <span
-          className={cn(
-            "relative inline-flex size-2 rounded-full",
-            connectionDot[state],
-          )}
-        />
+        <span className={cn("relative inline-flex size-2 rounded-full", connectionDot[state])} />
       </span>
-      <span className={compact ? "hidden md:inline" : undefined}>
-        {connectionLabel[state]}
-      </span>
+      <span className={compact ? "hidden md:inline" : undefined}>{connectionLabel[state]}</span>
     </output>
   );
 }
@@ -81,25 +67,16 @@ const statusLabel: Record<VehicleStatus, string> = {
 function StatusGlyph({ status }: { status: VehicleStatus }) {
   if (status === "moving") {
     return (
-      <span
-        aria-hidden="true"
-        className="relative inline-flex size-3 items-center justify-center"
-      >
+      <span aria-hidden="true" className="relative inline-flex size-3 items-center justify-center">
         <Circle className="absolute size-3 fill-current" strokeWidth={0} />
-        <ChevronRight
-          className="text-text-inverse relative size-2"
-          strokeWidth={3}
-        />
+        <ChevronRight className="text-text-inverse relative size-2" strokeWidth={3} />
       </span>
     );
   }
 
   if (status === "alert") {
     return (
-      <span
-        aria-hidden="true"
-        className="relative inline-flex size-3 items-center justify-center"
-      >
+      <span aria-hidden="true" className="relative inline-flex size-3 items-center justify-center">
         <Circle className="absolute size-3 fill-current" strokeWidth={0} />
         <span className="status-alert-mark text-text-inverse relative">!</span>
         <span className="absolute size-3 rounded-full ring-1 ring-current" />
@@ -116,13 +93,7 @@ function StatusGlyph({ status }: { status: VehicleStatus }) {
   );
 }
 
-export function StatusPill({
-  status,
-  className,
-}: {
-  status: VehicleStatus;
-  className?: string;
-}) {
+export function StatusPill({ status, className }: { status: VehicleStatus; className?: string }) {
   return (
     <span className={cn(statusPill({ status }), className)}>
       <StatusGlyph status={status} />
@@ -154,13 +125,7 @@ const severityIcon: Record<Severity, typeof Info> = {
   critical: OctagonAlert,
 };
 
-export function SeverityBadge({
-  level,
-  className,
-}: {
-  level: Severity;
-  className?: string;
-}) {
+export function SeverityBadge({ level, className }: { level: Severity; className?: string }) {
   const Icon = severityIcon[level];
   return (
     <span className={cn(severityBadge({ level }), className)}>
@@ -189,17 +154,12 @@ export function AlertStatusBadge({ status }: { status: AlertStatus }) {
       {status === "acked" ? (
         <Check aria-hidden="true" className="size-3" strokeWidth={1.5} />
       ) : null}
-      {status === "open"
-        ? "Open"
-        : status === "acked"
-          ? "Acknowledged"
-          : "Closed"}
+      {status === "open" ? "Open" : status === "acked" ? "Acknowledged" : "Closed"}
     </span>
   );
 }
 
-export type TripStatus =
-  "planned" | "assigned" | "active" | "completed" | "cancelled";
+export type TripStatus = "planned" | "assigned" | "active" | "completed" | "cancelled";
 
 const tripStatusClasses: Record<TripStatus, string> = {
   planned: "bg-surface-2 text-muted",

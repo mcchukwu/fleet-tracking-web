@@ -90,51 +90,50 @@ export function GeofenceList({
   }, [resetKey, scroller]);
 
   const query = q.trim();
-  const empty =
-    cancelled ? (
-      <EmptyState
-        title="Loading cancelled"
-        description="The geofence list request was cancelled."
-        action={
-          <Button size="sm" onClick={onRetry}>
-            Retry
+  const empty = cancelled ? (
+    <EmptyState
+      title="Loading cancelled"
+      description="The geofence list request was cancelled."
+      action={
+        <Button size="sm" onClick={onRetry}>
+          Retry
+        </Button>
+      }
+    />
+  ) : offline && total === 0 ? (
+    <EmptyState
+      title="No geofences available offline"
+      description="Reconnect to load the geofence list."
+    />
+  ) : query !== "" ? (
+    <EmptyState
+      title={`No geofences match "${query}".`}
+      description={`Clear the search to see all ${formatCount(total)}.`}
+      action={
+        <Button size="sm" onClick={() => onSearch("")}>
+          Clear search
+        </Button>
+      }
+    />
+  ) : (
+    <EmptyState
+      title={total === 0 ? "No geofences yet" : "No geofences to show"}
+      description={
+        total === 0
+          ? mutate.allowed
+            ? "Draw the first one to start tracking zone events."
+            : "No geofences have been created."
+          : "Clear the search to see them."
+      }
+      action={
+        total === 0 && mutate.allowed ? (
+          <Button size="sm" onClick={onCreate}>
+            Create geofence
           </Button>
-        }
-      />
-    ) : offline && total === 0 ? (
-      <EmptyState
-        title="No geofences available offline"
-        description="Reconnect to load the geofence list."
-      />
-    ) : query !== "" ? (
-      <EmptyState
-        title={`No geofences match "${query}".`}
-        description={`Clear the search to see all ${formatCount(total)}.`}
-        action={
-          <Button size="sm" onClick={() => onSearch("")}>
-            Clear search
-          </Button>
-        }
-      />
-    ) : (
-      <EmptyState
-        title={total === 0 ? "No geofences yet" : "No geofences to show"}
-        description={
-          total === 0
-            ? mutate.allowed
-              ? "Draw the first one to start tracking zone events."
-              : "No geofences have been created."
-            : "Clear the search to see them."
-        }
-        action={
-          total === 0 && mutate.allowed ? (
-            <Button size="sm" onClick={onCreate}>
-              Create geofence
-            </Button>
-          ) : undefined
-        }
-      />
-    );
+        ) : undefined
+      }
+    />
+  );
 
   return (
     <section aria-label="Geofence list" className="flex min-h-0 flex-1 flex-col">
@@ -152,12 +151,7 @@ export function GeofenceList({
         <GeofenceLegend />
       </div>
 
-      <GeofenceToolbar
-        selected={selected}
-        mutate={mutate}
-        onEdit={onEdit}
-        onDelete={onDelete}
-      />
+      <GeofenceToolbar selected={selected} mutate={mutate} onEdit={onEdit} onDelete={onDelete} />
 
       {notFound ? (
         <output className="border-border bg-idle-bg flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2">

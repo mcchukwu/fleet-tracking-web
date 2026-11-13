@@ -66,8 +66,8 @@ Workers Builds installs dependencies from the lockfile before running the build 
 | Variable                | Required | Notes                                                                                                                          |
 | ----------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `VITE_MAPTILER_API_KEY` | No       | Enables Streets and Satellite. Restrict the key by domain in MapTiler. Without it the app uses the OpenFreeMap standard style. |
-| `VITE_APP_VERSION`      | No       | Set from `WORKERS_CI_COMMIT_SHA` in the build command for error reports and the offline cache buster.                           |
-| `VITE_MAP_PMTILES_URL`  | No       | `/map/fleet.pmtiles` enables the offline MapLibre basemap. The pack and glyphs/sprites must exist in `public/map/`.               |
+| `VITE_APP_VERSION`      | No       | Set from `WORKERS_CI_COMMIT_SHA` in the build command for error reports and the offline cache buster.                          |
+| `VITE_MAP_PMTILES_URL`  | No       | `/map/fleet.pmtiles` enables the offline MapLibre basemap. The pack and glyphs/sprites must exist in `public/map/`.            |
 | `VITE_API_BASE`         | No       | Must stay unset. Setting it moves the API to another origin and breaks cookies, CORS and the socket.                           |
 
 `VITE_*` values are compiled into the bundle. Changing one requires a rebuild.

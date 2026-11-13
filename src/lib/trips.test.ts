@@ -41,9 +41,10 @@ describe("trip transitions", () => {
       needsDriver: true,
       label: "Assign driver",
     });
-    expect(
-      nextTripAction(trip({ status: "planned", driver_id: "driver-1" })),
-    ).toMatchObject({ needsDriver: false, label: "Assign" });
+    expect(nextTripAction(trip({ status: "planned", driver_id: "driver-1" }))).toMatchObject({
+      needsDriver: false,
+      label: "Assign",
+    });
   });
 
   it("confirms only completion", () => {
@@ -81,13 +82,7 @@ describe("trip sorting", () => {
       trip({ id: "a3", plate: "M", status: "active", started_at: "2026-11-02T10:00:00Z" }),
     ];
 
-    expect(sortTrips(rows, "status").map((row) => row.id)).toEqual([
-      "a2",
-      "a3",
-      "a1",
-      "p",
-      "c",
-    ]);
+    expect(sortTrips(rows, "status").map((row) => row.id)).toEqual(["a2", "a3", "a1", "p", "c"]);
     expect(tripStatusRank("active")).toBeLessThan(tripStatusRank("planned"));
     expect(tripStatusRank("diverted")).toBeGreaterThan(tripStatusRank("cancelled"));
   });
@@ -106,10 +101,7 @@ describe("trip sorting", () => {
       trip({ id: "none", plate: "A" }),
       trip({ id: "started", plate: "B", started_at: "2026-11-02T10:00:00Z" }),
     ];
-    expect(sortTrips(rows, "started").map((row) => row.id)).toEqual([
-      "started",
-      "none",
-    ]);
+    expect(sortTrips(rows, "started").map((row) => row.id)).toEqual(["started", "none"]);
     expect(rows.map((row) => row.id)).toEqual(["none", "started"]);
   });
 });
@@ -177,10 +169,18 @@ describe("trip reconciliation", () => {
       trip({ id: "trip-2", status: "planned", origin: " Refinery Gate " }),
     ];
     expect(
-      reconcileCreatedTrip(rows, { vehicle_id: "vehicle-1", origin: "Refinery Gate", destination: "Ibadan Customer" }, before),
+      reconcileCreatedTrip(
+        rows,
+        { vehicle_id: "vehicle-1", origin: "Refinery Gate", destination: "Ibadan Customer" },
+        before,
+      ),
     ).toBe("saved");
     expect(
-      reconcileCreatedTrip(rows, { vehicle_id: "vehicle-2", origin: "Refinery Gate", destination: "Ibadan Customer" }, before),
+      reconcileCreatedTrip(
+        rows,
+        { vehicle_id: "vehicle-2", origin: "Refinery Gate", destination: "Ibadan Customer" },
+        before,
+      ),
     ).toBe("not_saved");
   });
 
@@ -189,7 +189,12 @@ describe("trip reconciliation", () => {
     expect(
       reconcileCreatedTrip(
         rows,
-        { vehicle_id: "vehicle-1", origin: "Refinery Gate", destination: "Ibadan Customer", driver_id: "driver-2" },
+        {
+          vehicle_id: "vehicle-1",
+          origin: "Refinery Gate",
+          destination: "Ibadan Customer",
+          driver_id: "driver-2",
+        },
         new Set(),
       ),
     ).toBe("not_saved");
@@ -204,7 +209,9 @@ describe("trip reconciliation", () => {
 
   it("compares the fresh row for transitions", () => {
     expect(reconcileTripTransition(trip({ status: "active" }), { status: "active" })).toBe("saved");
-    expect(reconcileTripTransition(trip({ status: "planned" }), { status: "active" })).toBe("not_saved");
+    expect(reconcileTripTransition(trip({ status: "planned" }), { status: "active" })).toBe(
+      "not_saved",
+    );
     expect(
       reconcileTripTransition(trip({ status: "assigned", driver_id: "driver-1" }), {
         status: "assigned",

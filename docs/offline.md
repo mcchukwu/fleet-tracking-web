@@ -34,10 +34,10 @@ npm run map:pack -- --test  # public/map/test.pmtiles
 
 The committed files were extracted on 2026-11-12 from `https://build.protomaps.com/20261111.pmtiles`:
 
-| File | Bounding box | Max zoom | Size |
-|---|---|---|---|
-| `public/map/fleet.pmtiles` | `2.4,4.2,5.2,8.6` | 12 | 11 MB |
-| `public/map/test.pmtiles` | `2.4,4.2,5.2,8.6` | 6 | 512 KB |
+| File                       | Bounding box      | Max zoom | Size   |
+| -------------------------- | ----------------- | -------- | ------ |
+| `public/map/fleet.pmtiles` | `2.4,4.2,5.2,8.6` | 12       | 11 MB  |
+| `public/map/test.pmtiles`  | `2.4,4.2,5.2,8.6` | 6        | 512 KB |
 
 `scripts/map-assets.sh` downloads the glyph ranges and sprites used by the local style:
 
@@ -79,11 +79,11 @@ npx lighthouse http://127.0.0.1:4174/login --chrome-flags="--headless" --only-ca
 
 Result on 2026-11-12 against the production preview (`lighthouse@12.8.2`, headless Playwright Chromium, mobile emulation):
 
-| Category | Score |
-|---|---|
-| Performance | 80 |
-| Accessibility | 100 |
-| Best practices | 96 |
+| Category       | Score |
+| -------------- | ----- |
+| Performance    | 80    |
+| Accessibility  | 100   |
+| Best practices | 96    |
 
 Lighthouse removed the dedicated PWA category and its installability audits in v12; the JSON has no PWA or manifest audits. Installability is asserted in the PWA suite through Chromium's `Page.getInstallabilityErrors`, which must be empty.
 

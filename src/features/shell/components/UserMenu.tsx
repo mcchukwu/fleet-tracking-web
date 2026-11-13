@@ -73,16 +73,10 @@ export function UserMenu({ onShortcuts }: UserMenuProps) {
 
         <DropdownMenuContent align="end" className="w-72">
           <DropdownMenuLabel>
-            <span
-              className="text-text block truncate text-sm"
-              title={user.name}
-            >
+            <span className="text-text block truncate text-sm" title={user.name}>
               {user.name}
             </span>
-            <span
-              className="text-muted block truncate text-xs"
-              title={user.email}
-            >
+            <span className="text-muted block truncate text-xs" title={user.email}>
               {user.email}
             </span>
             <span className="mt-1 flex flex-wrap items-center gap-1">
@@ -104,11 +98,7 @@ export function UserMenu({ onShortcuts }: UserMenuProps) {
           <DropdownMenuSeparator />
           {onShortcuts ? (
             <DropdownMenuItem onSelect={onShortcuts}>
-              <Keyboard
-                aria-hidden="true"
-                className="size-4"
-                strokeWidth={1.5}
-              />
+              <Keyboard aria-hidden="true" className="size-4" strokeWidth={1.5} />
               Keyboard shortcuts
             </DropdownMenuItem>
           ) : null}

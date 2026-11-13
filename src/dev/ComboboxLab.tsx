@@ -55,8 +55,8 @@ export function ComboboxLab() {
     >
       <h1 className="text-lg font-semibold">Combobox lab</h1>
       <p className="text-muted max-w-prose text-sm">
-        The same picker with 3, 25 and 500 options, standalone and inside a
-        dialog. The measurement script and the layout specs read these.
+        The same picker with 3, 25 and 500 options, standalone and inside a dialog. The measurement
+        script and the layout specs read these.
       </p>
 
       <section
@@ -113,9 +113,7 @@ export function ComboboxLab() {
             label={`Vehicle (${count} options)`}
             items={options(count)}
             value={standalone[count]}
-            onChange={(id) =>
-              setStandalone((current) => ({ ...current, [count]: id }))
-            }
+            onChange={(id) => setStandalone((current) => ({ ...current, [count]: id }))}
             placeholder="Search by plate or IMEI"
           />
           <Button size="sm" onClick={() => setDialog(count)}>

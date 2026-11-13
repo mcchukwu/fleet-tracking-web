@@ -27,11 +27,7 @@ function flattenPages(pages: readonly Trip[][] | undefined): Trip[] {
   return pages ? pages.flat() : [];
 }
 
-export function visibleTrips(
-  trips: readonly Trip[],
-  query: string,
-  sort: TripSort,
-): Trip[] {
+export function visibleTrips(trips: readonly Trip[], query: string, sort: TripSort): Trip[] {
   return sortTrips(filterTrips(trips, query), sort);
 }
 
@@ -41,10 +37,7 @@ export function useTripFeed(filters: TripServerFilters): TripFeedController {
     refetchInterval: online ? REFRESH_MS : false,
   });
   const queryClient = useQueryClient();
-  const incoming = useMemo(
-    () => flattenPages(query.data?.pages),
-    [query.data?.pages],
-  );
+  const incoming = useMemo(() => flattenPages(query.data?.pages), [query.data?.pages]);
 
   const [cancelled, setCancelled] = useState(false);
   const signature = JSON.stringify(filters);

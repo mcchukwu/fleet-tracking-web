@@ -29,11 +29,7 @@ const columns: DataTableColumn<ImportRowError>[] = [
   },
 ];
 
-export function ImportErrorTable({
-  errors,
-  failed,
-  onDownload,
-}: ImportErrorTableProps) {
+export function ImportErrorTable({ errors, failed, onDownload }: ImportErrorTableProps) {
   const capped = failed > errors.length;
   const notice = capped
     ? `Showing the first ${formatCount(errors.length)} of ${formatCount(failed)} row errors.`
@@ -51,9 +47,7 @@ export function ImportErrorTable({
         </p>
         <Button
           size="sm"
-          leadingIcon={
-            <Download aria-hidden="true" className="size-3" strokeWidth={1.5} />
-          }
+          leadingIcon={<Download aria-hidden="true" className="size-3" strokeWidth={1.5} />}
           onClick={onDownload}
         >
           Download errors as CSV

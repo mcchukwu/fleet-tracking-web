@@ -1,13 +1,5 @@
-import type {
-  Alert,
-  AlertServerFilters,
-  AlertSeverity,
-  AlertStatus,
-} from "../../../api/types";
-import {
-  alertTypeLabel,
-  alertTypeOptions as knownAlertTypeOptions,
-} from "../../../lib/status";
+import type { Alert, AlertServerFilters, AlertSeverity, AlertStatus } from "../../../api/types";
+import { alertTypeLabel, alertTypeOptions as knownAlertTypeOptions } from "../../../lib/status";
 
 export interface AlertFilterValues {
   status: AlertStatus | null;

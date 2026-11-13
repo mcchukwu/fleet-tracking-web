@@ -48,11 +48,7 @@ vi.mock("@tanstack/react-query", () => ({
 }));
 
 vi.mock("./PlaybackMap", () => ({
-  PlaybackMap: ({
-    onReady,
-  }: {
-    onReady: (adapter: null) => void;
-  }) => (
+  PlaybackMap: ({ onReady }: { onReady: (adapter: null) => void }) => (
     <section aria-label="Playback map">
       <button type="button" onClick={() => onReady(null)}>
         Map ready

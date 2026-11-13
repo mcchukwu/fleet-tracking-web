@@ -40,16 +40,41 @@ describe("map geofences", () => {
   });
 
   it("rejects a degenerate ring", () => {
-    expect(repairRing([[3.47, 6.43], [3.47, 6.43], [3.47, 6.43]])).toBeNull();
-    expect(repairRing([[3.47, 6.43], [3.49, 6.43]])).toBeNull();
-    expect(repairRing([[3.47, "6.43"], [3.49, 6.43], [3.5, 6.5]])).toBeNull();
+    expect(
+      repairRing([
+        [3.47, 6.43],
+        [3.47, 6.43],
+        [3.47, 6.43],
+      ]),
+    ).toBeNull();
+    expect(
+      repairRing([
+        [3.47, 6.43],
+        [3.49, 6.43],
+      ]),
+    ).toBeNull();
+    expect(
+      repairRing([
+        [3.47, "6.43"],
+        [3.49, 6.43],
+        [3.5, 6.5],
+      ]),
+    ).toBeNull();
   });
 
   it("skips a geofence whose only ring is invalid", () => {
     expect(
       toMapGeofences([
         geofence({
-          geometry: { type: "Polygon", coordinates: [[[1, 2], [3, 4]]] },
+          geometry: {
+            type: "Polygon",
+            coordinates: [
+              [
+                [1, 2],
+                [3, 4],
+              ],
+            ],
+          },
         }),
       ]),
     ).toEqual([]);

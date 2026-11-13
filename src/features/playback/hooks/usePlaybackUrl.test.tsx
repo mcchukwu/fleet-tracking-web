@@ -28,7 +28,11 @@ describe("usePlaybackUrl", () => {
   it("writes the default range and resolution once when the URL has neither", async () => {
     renderHook(() => usePlaybackUrl());
     await waitFor(() => expect(mocks.navigate).toHaveBeenCalledTimes(1));
-    const call = mocks.navigate.mock.calls[0]?.[0] as { search: unknown; replace: boolean; to: string };
+    const call = mocks.navigate.mock.calls[0]?.[0] as {
+      search: unknown;
+      replace: boolean;
+      to: string;
+    };
     expect(call.to).toBe("/playback");
     expect(call.replace).toBe(true);
     const next = runSearch(call);

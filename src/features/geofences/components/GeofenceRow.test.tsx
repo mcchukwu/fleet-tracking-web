@@ -14,9 +14,7 @@ const geofence: Geofence = {
 describe("GeofenceRow", () => {
   it("exposes the name and kind as the accessible name", () => {
     render(<GeofenceRow geofence={geofence} selected={false} onSelect={vi.fn()} />);
-    expect(
-      screen.getByRole("button", { name: /Depot.*Lekki Depot/ }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Depot.*Lekki Depot/ })).toBeInTheDocument();
   });
 
   it("marks the selected row without hiding the name", () => {

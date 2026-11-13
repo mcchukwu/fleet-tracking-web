@@ -24,7 +24,7 @@ export function AppearanceControls() {
       <DropdownMenuLabel className="px-0">Appearance</DropdownMenuLabel>
 
       <div className="mb-2 flex flex-col gap-1">
-        <span className="text-xs text-muted">Theme</span>
+        <span className="text-muted text-xs">Theme</span>
         <DropdownMenuRadioGroup
           value={mode}
           onValueChange={(value) => {
@@ -49,7 +49,7 @@ export function AppearanceControls() {
       </div>
 
       <div className="flex flex-col gap-1">
-        <span className="text-xs text-muted">Accent</span>
+        <span className="text-muted text-xs">Accent</span>
         <DropdownMenuRadioGroup
           value={accent}
           onValueChange={(value) => {
@@ -78,7 +78,11 @@ export function AppearanceControls() {
                   )}
                 >
                   {active ? (
-                    <Check aria-hidden="true" className="size-3 text-accent-contrast" strokeWidth={3} />
+                    <Check
+                      aria-hidden="true"
+                      className="text-accent-contrast size-3"
+                      strokeWidth={3}
+                    />
                   ) : null}
                 </span>
               </DropdownMenuRadioItem>

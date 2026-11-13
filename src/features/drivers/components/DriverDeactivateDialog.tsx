@@ -82,9 +82,7 @@ export function DriverDeactivateDialog({
       {write.pending ? <SlowNotice onCancel={write.cancel} onRetry={write.retry} /> : null}
 
       <div ref={errorRef} tabIndex={-1} className="focus:outline-none">
-        {write.error && copy ? (
-          <InlineError error={write.error} copy={copy} />
-        ) : null}
+        {write.error && copy ? <InlineError error={write.error} copy={copy} /> : null}
       </div>
     </Dialog>
   );

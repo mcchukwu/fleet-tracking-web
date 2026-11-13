@@ -11,8 +11,7 @@ export function useMediaQuery(query: string): boolean {
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
     const list = window.matchMedia(query);
-    const onChange = (event: MediaQueryListEvent) =>
-      setState({ query, matches: event.matches });
+    const onChange = (event: MediaQueryListEvent) => setState({ query, matches: event.matches });
     list.addEventListener("change", onChange);
     return () => list.removeEventListener("change", onChange);
   }, [query]);

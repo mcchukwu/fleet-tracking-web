@@ -79,9 +79,7 @@ describe("useGeofenceWrite", () => {
     mocks.create.mockResolvedValue({ id: "gf-2" });
     const { result } = setup();
 
-    const outcome = await act(() =>
-      result.current.create(input, new Set(["gf-1"])),
-    );
+    const outcome = await act(() => result.current.create(input, new Set(["gf-1"])));
     expect(outcome).toEqual({ status: "created", id: "gf-2" });
     expect(mocks.create).toHaveBeenCalledWith({
       input,
@@ -99,9 +97,7 @@ describe("useGeofenceWrite", () => {
     });
     const { result, invalidate } = setup();
 
-    const outcome = await act(() =>
-      result.current.create(input, new Set(["gf-1"])),
-    );
+    const outcome = await act(() => result.current.create(input, new Set(["gf-1"])));
     expect(outcome).toEqual({ status: "reconciled", id: "gf-2" });
     const keys = invalidate.mock.calls.map(([filters]) => filters?.queryKey);
     expect(keys).toContainEqual(["geofences"]);

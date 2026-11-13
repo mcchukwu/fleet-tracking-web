@@ -38,9 +38,7 @@ export function tripsFeedQueryOptions(filters: TripServerFilters) {
         .then((response) => response.data),
     initialPageParam: 0,
     getNextPageParam: (lastPage, _pages, lastPageParam) =>
-      lastPage.length === TRIPS_PAGE_SIZE
-        ? lastPageParam + TRIPS_PAGE_SIZE
-        : undefined,
+      lastPage.length === TRIPS_PAGE_SIZE ? lastPageParam + TRIPS_PAGE_SIZE : undefined,
     staleTime: 10_000,
     refetchOnWindowFocus: true,
     meta: { scope: "screen", resource: "trips" },
@@ -53,9 +51,7 @@ export function useTripsFeed(
 ) {
   return useInfiniteQuery({
     ...tripsFeedQueryOptions(filters),
-    ...(options.refetchInterval !== undefined
-      ? { refetchInterval: options.refetchInterval }
-      : {}),
+    ...(options.refetchInterval !== undefined ? { refetchInterval: options.refetchInterval } : {}),
   });
 }
 
@@ -77,8 +73,7 @@ export function useCreateTrip() {
 export function useUpdateTrip() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, update }: { id: string; update: TripUpdate }) =>
-      api.updateTrip(id, update),
+    mutationFn: ({ id, update }: { id: string; update: TripUpdate }) => api.updateTrip(id, update),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["trips"] }),

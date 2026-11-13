@@ -12,12 +12,7 @@ export interface GapAnnouncerProps {
  * The label is stable while the cursor stays in the same gap, so the polite
  * live region announces the entry once and stays quiet afterwards.
  */
-export function GapAnnouncer({
-  inGap,
-  playheadMs,
-  gaps,
-  includeDate = false,
-}: GapAnnouncerProps) {
+export function GapAnnouncer({ inGap, playheadMs, gaps, includeDate = false }: GapAnnouncerProps) {
   const gap = inGap
     ? gaps.find((item) => playheadMs > item.startMs && playheadMs < item.endMs)
     : undefined;

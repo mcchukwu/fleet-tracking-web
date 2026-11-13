@@ -84,7 +84,9 @@ describe("SessionExpiryDialog", () => {
     await reauthenticate();
 
     await waitFor(() => {
-      expect(screen.queryByRole("dialog", { name: "Your session expired" })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("dialog", { name: "Your session expired" }),
+      ).not.toBeInTheDocument();
     });
     expect(refetchSpy).toHaveBeenCalledWith({ type: "active" });
     expect(useAuthStore.getState().status).toBe("authenticated");
@@ -128,7 +130,9 @@ describe("SessionExpiryDialog", () => {
     expect(
       screen.getByText("The server didn't end the session, so it may still be active there."),
     ).toBeVisible();
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: "/login", search: { redirect: "/" } }));
+    await waitFor(() =>
+      expect(navigate).toHaveBeenCalledWith({ to: "/login", search: { redirect: "/" } }),
+    );
   });
 
   it("disables sign out while the request is in flight", async () => {

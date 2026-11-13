@@ -31,7 +31,10 @@ describe("MapAttribution", () => {
 
   it("joins credits from more than one style source", () => {
     render(
-      <MapAttribution styleId="streets" attribution={["© MapTiler", "© OpenStreetMap contributors"]} />,
+      <MapAttribution
+        styleId="streets"
+        attribution={["© MapTiler", "© OpenStreetMap contributors"]}
+      />,
     );
     expect(screen.getByTestId("map-attribution")).toHaveTextContent(
       "© MapTiler · © OpenStreetMap contributors",

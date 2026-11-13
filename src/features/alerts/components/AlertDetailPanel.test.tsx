@@ -103,9 +103,7 @@ describe("AlertDetailPanel", () => {
     expect(screen.getByText("Refinery Gate → Ibadan Customer")).toBeVisible();
     expect(screen.getByText("Unknown zone")).toBeVisible();
     expect(screen.getByRole("button", { name: "Raw JSON" })).toBeVisible();
-    expect(
-      screen.getByRole("button", { name: "Acknowledge alert for LSD-101-AA" }),
-    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Acknowledge alert for LSD-101-AA" })).toBeVisible();
   });
 
   it("moves focus to close, closes, and returns focus to the origin", async () => {
@@ -124,9 +122,7 @@ describe("AlertDetailPanel", () => {
   it("acknowledges from the detail action", async () => {
     const onAck = vi.fn();
     renderPanel({ onAck });
-    await userEvent.click(
-      screen.getByRole("button", { name: "Acknowledge alert for LSD-101-AA" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Acknowledge alert for LSD-101-AA" }));
     expect(onAck).toHaveBeenCalledTimes(1);
   });
 
@@ -152,7 +148,16 @@ describe("AlertDetailPanel", () => {
       id: "gf-1",
       name: "Lekki Depot",
       kind: "depot",
-      geometry: { type: "Polygon", coordinates: [[[3.47, 6.43], [3.49, 6.43], [3.47, 6.43]]] },
+      geometry: {
+        type: "Polygon",
+        coordinates: [
+          [
+            [3.47, 6.43],
+            [3.49, 6.43],
+            [3.47, 6.43],
+          ],
+        ],
+      },
     };
     renderPanel({ geofences: [geofence] });
     expect(screen.getByText("Lekki Depot")).toBeVisible();

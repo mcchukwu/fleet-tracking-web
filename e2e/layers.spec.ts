@@ -64,9 +64,7 @@ async function openDrawer(page: Page): Promise<void> {
   }
   // The detail query must settle before the storm banner is raised: a later
   // successful query legitimately clears a storm.
-  await expect(
-    page.getByText("Vehicle details", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText("Vehicle details", { exact: true })).toBeVisible();
 }
 
 async function openUserMenu(page: Page): Promise<void> {
@@ -105,10 +103,7 @@ async function forceBanner(page: Page, kind: BannerKind): Promise<void> {
     },
     { value: kind },
   );
-  await expect(page.getByTestId("banner-region")).toHaveAttribute(
-    "data-banner-kind",
-    kind,
-  );
+  await expect(page.getByTestId("banner-region")).toHaveAttribute("data-banner-kind", kind);
   await page.waitForTimeout(350);
 }
 
@@ -121,10 +116,7 @@ async function clearBanner(page: Page): Promise<void> {
     });
     window.__FLEET_TEST_STORM__?.(false);
   });
-  await expect(page.getByTestId("banner-region")).toHaveAttribute(
-    "data-visible",
-    "false",
-  );
+  await expect(page.getByTestId("banner-region")).toHaveAttribute("data-visible", "false");
   await page.waitForTimeout(350);
 }
 
@@ -145,12 +137,8 @@ async function boxes(page: Page): Promise<{
         bottom: rect.bottom,
       };
     };
-    const banner = document.querySelector<HTMLElement>(
-      '[data-testid="banner-region"] output',
-    );
-    const content = document.querySelector<HTMLElement>(
-      '[data-testid="content-area"]',
-    );
+    const banner = document.querySelector<HTMLElement>('[data-testid="banner-region"] output');
+    const content = document.querySelector<HTMLElement>('[data-testid="content-area"]');
     const contentBox = box(content);
     if (!content || !contentBox) throw new Error("content area missing");
     const selectors: Record<string, Element | null> = {
@@ -192,14 +180,13 @@ test.describe("layers", { tag: "@theme" }, () => {
         expect(banner, `${kind}: banner has a box`).not.toBeNull();
         if (!banner) continue;
 
-        expect(
+        expect(banner.bottom, `${kind}: banner ends at the content top`).toBeLessThanOrEqual(
+          measured.content.y + TOLERANCE,
+        );
+        expect(measured.content.y, `${kind}: content starts at the banner bottom`).toBeCloseTo(
           banner.bottom,
-          `${kind}: banner ends at the content top`,
-        ).toBeLessThanOrEqual(measured.content.y + TOLERANCE);
-        expect(
-          measured.content.y,
-          `${kind}: content starts at the banner bottom`,
-        ).toBeCloseTo(banner.bottom, 0);
+          0,
+        );
         expect(
           measured.content.y + measured.content.height,
           `${kind}: content reaches the viewport bottom`,
@@ -207,10 +194,9 @@ test.describe("layers", { tag: "@theme" }, () => {
 
         for (const [name, element] of Object.entries(measured.elements)) {
           if (!element) continue;
-          expect(
-            element.y,
-            `${kind}: ${name} starts below the banner`,
-          ).toBeGreaterThanOrEqual(banner.bottom - TOLERANCE);
+          expect(element.y, `${kind}: ${name} starts below the banner`).toBeGreaterThanOrEqual(
+            banner.bottom - TOLERANCE,
+          );
         }
         if (kind === "offline" || kind === "session-expired") {
           await captureForReview(page, `layers-banner-${kind}`);
@@ -228,9 +214,8 @@ test.describe("layers", { tag: "@theme" }, () => {
       const before = await page.evaluate(() => ({
         centre: window.__FLEET_TEST_MAP__?.getViewport().center ?? null,
         contentHeight:
-          document
-            .querySelector('[data-testid="content-area"]')
-            ?.getBoundingClientRect().height ?? 0,
+          document.querySelector('[data-testid="content-area"]')?.getBoundingClientRect().height ??
+          0,
       }));
       expect(before.centre).not.toBeNull();
 
@@ -239,9 +224,8 @@ test.describe("layers", { tag: "@theme" }, () => {
       const after = await page.evaluate(() => ({
         centre: window.__FLEET_TEST_MAP__?.getViewport().center ?? null,
         contentHeight:
-          document
-            .querySelector('[data-testid="content-area"]')
-            ?.getBoundingClientRect().height ?? 0,
+          document.querySelector('[data-testid="content-area"]')?.getBoundingClientRect().height ??
+          0,
       }));
 
       expect(shown.banner).not.toBeNull();
@@ -256,9 +240,8 @@ test.describe("layers", { tag: "@theme" }, () => {
       await clearBanner(page);
       const restored = await page.evaluate(() => ({
         contentHeight:
-          document
-            .querySelector('[data-testid="content-area"]')
-            ?.getBoundingClientRect().height ?? 0,
+          document.querySelector('[data-testid="content-area"]')?.getBoundingClientRect().height ??
+          0,
       }));
       expect(restored.contentHeight).toBeCloseTo(before.contentHeight, 0);
       await expectNoHorizontalScroll(page);
@@ -304,23 +287,21 @@ test.describe("layers", { tag: "@theme" }, () => {
 
         expect(result, `${kind}: menu is open`).not.toBeNull();
         expect(result?.inside, `${kind}: menu is fully visible`).toBe(true);
-        expect(
-          result?.corners,
-          `${kind}: every menu corner is the menu`,
-        ).toEqual([true, true, true, true]);
+        expect(result?.corners, `${kind}: every menu corner is the menu`).toEqual([
+          true,
+          true,
+          true,
+          true,
+        ]);
       }
     });
   }
 
-  test("the page drawer starts below a banner on every screen", async ({
-    page,
-  }) => {
+  test("the page drawer starts below a banner on every screen", async ({ page }) => {
     test.setTimeout(120_000);
     for (const viewport of VIEWPORTS) {
       await page.setViewportSize(viewport);
-      await page.goto(
-        "/alerts?map=fake&alert=fbad9142-c164-463d-ae76-3262f2d3b4f9",
-      );
+      await page.goto("/alerts?map=fake&alert=fbad9142-c164-463d-ae76-3262f2d3b4f9");
       const drawer = page.getByRole("complementary", { name: "Alert details" });
       await expect(drawer).toBeVisible();
       await forceBanner(page, "offline");
@@ -329,9 +310,7 @@ test.describe("layers", { tag: "@theme" }, () => {
         const banner = document
           .querySelector('[data-testid="banner-region"] output')
           ?.getBoundingClientRect();
-        const panel = document
-          .querySelector('[data-testid="drawer"]')
-          ?.getBoundingClientRect();
+        const panel = document.querySelector('[data-testid="drawer"]')?.getBoundingClientRect();
         if (!banner || !panel) return null;
         return { bannerBottom: banner.bottom, drawerTop: panel.top };
       });
@@ -358,11 +337,7 @@ test.describe("layers", { tag: "@theme" }, () => {
 
       const top = await page.evaluate(() => {
         const hit = document.elementFromPoint(100, 24);
-        return (
-          hit
-            ?.closest("[data-testid^='layer-swatch-']")
-            ?.getAttribute("data-testid") ?? null
-        );
+        return hit?.closest("[data-testid^='layer-swatch-']")?.getAttribute("data-testid") ?? null;
       });
       expect(top, "the tooltip is the top layer").toBe("layer-swatch-tooltip");
 
@@ -406,19 +381,14 @@ test.describe("layers", { tag: "@theme" }, () => {
     }
   });
 
-  test("a combobox list inside a dialog is above the dialog and its footer", async ({
-    page,
-  }) => {
+  test("a combobox list inside a dialog is above the dialog and its footer", async ({ page }) => {
     await gotoMap(page);
     await openDrawer(page);
     if (!(await isDesktop(page))) {
       await page.keyboard.press("End");
       await page.waitForTimeout(250);
     }
-    await page
-      .getByRole("button", { name: "Edit", exact: true })
-      .first()
-      .click();
+    await page.getByRole("button", { name: "Edit", exact: true }).first().click();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     await page.getByRole("combobox", { name: "Driver" }).click();
@@ -430,27 +400,15 @@ test.describe("layers", { tag: "@theme" }, () => {
       // The sheet presentation is modal: it is portalled above the dialog and
       // covers the dialog's own close by design, offering its own instead.
       const layering = await page.evaluate(() => {
-        const sheetElement = document.querySelector<HTMLElement>(
-          "[data-picker-sheet]",
-        );
-        const dialogs = [
-          ...document.querySelectorAll<HTMLElement>('[role="dialog"]'),
-        ];
-        const parentDialog = dialogs.find(
-          (dialog) => !dialog.contains(sheetElement),
-        );
+        const sheetElement = document.querySelector<HTMLElement>("[data-picker-sheet]");
+        const dialogs = [...document.querySelectorAll<HTMLElement>('[role="dialog"]')];
+        const parentDialog = dialogs.find((dialog) => !dialog.contains(sheetElement));
         if (!sheetElement || !parentDialog) return null;
-        const sheetLayer = sheetElement.closest<HTMLElement>(
-          "[data-layer-portal]",
-        );
-        const dialogLayer = parentDialog.closest<HTMLElement>(
-          "[data-layer-portal]",
-        );
+        const sheetLayer = sheetElement.closest<HTMLElement>("[data-layer-portal]");
+        const dialogLayer = parentDialog.closest<HTMLElement>("[data-layer-portal]");
         return {
           sheetZ: sheetLayer ? Number(getComputedStyle(sheetLayer).zIndex) : 0,
-          dialogZ: dialogLayer
-            ? Number(getComputedStyle(dialogLayer).zIndex)
-            : 0,
+          dialogZ: dialogLayer ? Number(getComputedStyle(dialogLayer).zIndex) : 0,
         };
       });
       expect(layering).not.toBeNull();
@@ -462,9 +420,7 @@ test.describe("layers", { tag: "@theme" }, () => {
       if (closeBox) {
         const hit = await page.evaluate(
           ({ x, y }) =>
-            document
-              .elementFromPoint(x, y)
-              ?.closest('[aria-label="Close picker"]') !== null,
+            document.elementFromPoint(x, y)?.closest('[aria-label="Close picker"]') !== null,
           {
             x: closeBox.x + closeBox.width / 2,
             y: closeBox.y + closeBox.height / 2,
@@ -481,34 +437,22 @@ test.describe("layers", { tag: "@theme" }, () => {
     }
 
     const layering = await page.evaluate(() => {
-      const listElement = document.querySelector<HTMLElement>(
-        "[data-combobox-list]",
-      );
-      const dialogElement =
-        document.querySelector<HTMLElement>('[role="dialog"]');
+      const listElement = document.querySelector<HTMLElement>("[data-combobox-list]");
+      const dialogElement = document.querySelector<HTMLElement>('[role="dialog"]');
       if (!listElement || !dialogElement) return null;
       const listLayer = listElement.closest<HTMLElement>("[data-layer-portal]");
-      const dialogLayer = dialogElement.closest<HTMLElement>(
-        "[data-layer-portal]",
-      );
-      const footer = dialogElement.querySelector<HTMLElement>(
-        ":scope > div:last-child",
-      );
+      const dialogLayer = dialogElement.closest<HTMLElement>("[data-layer-portal]");
+      const footer = dialogElement.querySelector<HTMLElement>(":scope > div:last-child");
       const listRect = listElement.getBoundingClientRect();
       const footerRect = footer?.getBoundingClientRect() ?? null;
-      const overlapTop = footerRect
-        ? Math.max(listRect.top, footerRect.top)
-        : null;
+      const overlapTop = footerRect ? Math.max(listRect.top, footerRect.top) : null;
       const hitAtList = document.elementFromPoint(
         listRect.left + listRect.width / 2,
         listRect.top + Math.min(listRect.height / 2, 24),
       );
       const hitAtFooter =
         footerRect && overlapTop !== null && overlapTop < listRect.bottom
-          ? document.elementFromPoint(
-              listRect.left + listRect.width / 2,
-              overlapTop + 2,
-            )
+          ? document.elementFromPoint(listRect.left + listRect.width / 2, overlapTop + 2)
           : null;
       return {
         listZ: listLayer ? Number(getComputedStyle(listLayer).zIndex) : 0,
@@ -516,36 +460,24 @@ test.describe("layers", { tag: "@theme" }, () => {
         footerZ: footer ? getComputedStyle(footer).zIndex : null,
         portalled: listLayer !== null && dialogLayer !== null,
         hitAtList:
-          hitAtList !== null &&
-          (hitAtList === listElement || listElement.contains(hitAtList)),
+          hitAtList !== null && (hitAtList === listElement || listElement.contains(hitAtList)),
         overlapping: hitAtFooter !== null,
         hitAtFooter:
-          hitAtFooter === null ||
-          hitAtFooter === listElement ||
-          listElement.contains(hitAtFooter),
+          hitAtFooter === null || hitAtFooter === listElement || listElement.contains(hitAtFooter),
       };
     });
 
     expect(layering).not.toBeNull();
-    expect(layering?.portalled, "the list and dialog use layer portals").toBe(
-      true,
-    );
+    expect(layering?.portalled, "the list and dialog use layer portals").toBe(true);
     expect(layering?.listZ).toBeGreaterThan(layering?.dialogZ ?? 0);
-    expect(layering?.footerZ, "the footer has no z-index of its own").toBe(
-      "auto",
-    );
+    expect(layering?.footerZ, "the footer has no z-index of its own").toBe("auto");
     expect(layering?.hitAtList, "the list receives the pointer").toBe(true);
-    expect(
-      layering?.hitAtFooter,
-      "where the list overlaps the footer, the list wins",
-    ).toBe(true);
+    expect(layering?.hitAtFooter, "where the list overlaps the footer, the list wins").toBe(true);
     await captureForReview(page, "layers-dialog-combobox");
     await expectNoHorizontalScroll(page);
   });
 
-  test("the sheet and attribution rules hold with a banner", async ({
-    page,
-  }) => {
+  test("the sheet and attribution rules hold with a banner", async ({ page }) => {
     test.skip(
       (page.viewportSize()?.width ?? 1440) >= 1024,
       "the bottom sheet only exists below lg",
@@ -560,15 +492,9 @@ test.describe("layers", { tag: "@theme" }, () => {
     await page.waitForTimeout(250);
 
     const half = await page.evaluate(() => {
-      const sheet = document.querySelector<HTMLElement>(
-        'section[aria-label="Vehicles"]',
-      );
-      const footer = document.querySelector<HTMLElement>(
-        '[data-testid="map-footer"]',
-      );
-      const attribution = document.querySelector<HTMLElement>(
-        '[data-testid="map-attribution"]',
-      );
+      const sheet = document.querySelector<HTMLElement>('section[aria-label="Vehicles"]');
+      const footer = document.querySelector<HTMLElement>('[data-testid="map-footer"]');
+      const attribution = document.querySelector<HTMLElement>('[data-testid="map-attribution"]');
       if (!sheet || !footer || !attribution) return null;
       const sheetBox = sheet.getBoundingClientRect();
       const footerBox = footer.getBoundingClientRect();
@@ -589,23 +515,14 @@ test.describe("layers", { tag: "@theme" }, () => {
     });
     expect(half).not.toBeNull();
     expect(half?.footerBottom ?? 0).toBeCloseTo((half?.sheetTop ?? 0) - 12, 0);
-    expect(
-      half?.attributionVisible,
-      "attribution is visible above the sheet",
-    ).toBe(true);
+    expect(half?.attributionVisible, "attribution is visible above the sheet").toBe(true);
 
     await page.keyboard.press("End");
     await page.waitForTimeout(250);
     const full = await page.evaluate(() => {
-      const sheet = document.querySelector<HTMLElement>(
-        'section[aria-label="Vehicles"]',
-      );
-      const banner = document.querySelector<HTMLElement>(
-        '[data-testid="banner-region"]',
-      );
-      const attribution = document.querySelector<HTMLElement>(
-        '[data-testid="map-attribution"]',
-      );
+      const sheet = document.querySelector<HTMLElement>('section[aria-label="Vehicles"]');
+      const banner = document.querySelector<HTMLElement>('[data-testid="banner-region"]');
+      const attribution = document.querySelector<HTMLElement>('[data-testid="map-attribution"]');
       if (!sheet || !banner || !attribution) return null;
       const sheetBox = sheet.getBoundingClientRect();
       const bannerBox = banner.getBoundingClientRect();
@@ -613,18 +530,12 @@ test.describe("layers", { tag: "@theme" }, () => {
       return {
         strip: sheetBox.top - bannerBox.bottom,
         attributionVisible:
-          attributionBox.top >= bannerBox.bottom &&
-          attributionBox.bottom <= window.innerHeight,
+          attributionBox.top >= bannerBox.bottom && attributionBox.bottom <= window.innerHeight,
       };
     });
     expect(full).not.toBeNull();
-    expect(full?.strip, "the full snap leaves an 80px map strip").toBeCloseTo(
-      80,
-      0,
-    );
-    expect(full?.attributionVisible, "attribution stays visible at full").toBe(
-      true,
-    );
+    expect(full?.strip, "the full snap leaves an 80px map strip").toBeCloseTo(80, 0);
+    expect(full?.attributionVisible, "attribution stays visible at full").toBe(true);
     await captureForReview(page, "layers-sheet-full-banner");
     await expectNoHorizontalScroll(page);
   });

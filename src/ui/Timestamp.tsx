@@ -17,7 +17,7 @@ export function Timestamp({ iso, now, className }: TimestampProps) {
       <button
         type="button"
         className={cn(
-          "pointer-events-auto -my-3 inline-flex h-touch min-w-touch items-center justify-center rounded-sm tabular-nums focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:my-0 md:h-auto md:min-w-0",
+          "h-touch min-w-touch focus-visible:outline-focus-ring pointer-events-auto -my-3 inline-flex items-center justify-center rounded-sm tabular-nums focus-visible:outline-2 focus-visible:outline-offset-0 md:my-0 md:h-auto md:min-w-0",
           className,
         )}
       >

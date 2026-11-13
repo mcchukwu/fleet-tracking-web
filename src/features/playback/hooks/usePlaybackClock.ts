@@ -37,9 +37,7 @@ export function usePlaybackClock({
   resetKey,
   enabled = true,
 }: PlaybackClockOptions): PlaybackClockController {
-  const [state, dispatch] = useReducer(clockReducer, undefined, () =>
-    createClock(fromMs, toMs),
-  );
+  const [state, dispatch] = useReducer(clockReducer, undefined, () => createClock(fromMs, toMs));
   const pointsRef = useRef(points);
 
   useEffect(() => {

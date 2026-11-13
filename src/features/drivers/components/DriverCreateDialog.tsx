@@ -115,10 +115,7 @@ export function DriverCreateDialog({
           </>
         }
       >
-        <form
-          id="driver-create-form"
-          onSubmit={(event) => void handleSubmit(onSubmit)(event)}
-        >
+        <form id="driver-create-form" onSubmit={(event) => void handleSubmit(onSubmit)(event)}>
           {write.pending ? <SlowNotice onCancel={write.cancel} onRetry={write.retry} /> : null}
 
           <div ref={errorRef} tabIndex={-1} className="focus:outline-none">

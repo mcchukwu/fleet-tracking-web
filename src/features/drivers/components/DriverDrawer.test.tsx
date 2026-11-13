@@ -114,9 +114,7 @@ describe("DriverDrawer", () => {
   it("shows both counts when the snapshot disagrees with the server", () => {
     renderDrawer({ driver: { ...driver, vehicles: 3 } });
     expect(
-      screen.getByText(
-        "The server counts 3; this list shows the current snapshot (2).",
-      ),
+      screen.getByText("The server counts 3; this list shows the current snapshot (2)."),
     ).toBeVisible();
   });
 

@@ -28,17 +28,17 @@ export interface VehicleEventsSectionProps {
 function EventIcon({ event }: { event: VehicleEvent }) {
   if (event.kind === "geofence") {
     if (event.type === "enter") {
-      return <LogIn aria-hidden="true" className="size-4 text-moving-fg" strokeWidth={1.5} />;
+      return <LogIn aria-hidden="true" className="text-moving-fg size-4" strokeWidth={1.5} />;
     }
     if (event.type === "exit") {
-      return <LogOut aria-hidden="true" className="size-4 text-idle-fg" strokeWidth={1.5} />;
+      return <LogOut aria-hidden="true" className="text-idle-fg size-4" strokeWidth={1.5} />;
     }
-    return <MapPin aria-hidden="true" className="size-4 text-muted" strokeWidth={1.5} />;
+    return <MapPin aria-hidden="true" className="text-muted size-4" strokeWidth={1.5} />;
   }
   if (event.kind === "alert") {
-    return <TriangleAlert aria-hidden="true" className="size-4 text-alert-fg" strokeWidth={1.5} />;
+    return <TriangleAlert aria-hidden="true" className="text-alert-fg size-4" strokeWidth={1.5} />;
   }
-  return <HelpCircle aria-hidden="true" className="size-4 text-subtle" strokeWidth={1.5} />;
+  return <HelpCircle aria-hidden="true" className="text-subtle size-4" strokeWidth={1.5} />;
 }
 
 function EventRow({
@@ -56,14 +56,14 @@ function EventRow({
   const evidenceId = `${id}-evidence`;
 
   return (
-    <li className="border-b border-border py-2 last:border-b-0">
+    <li className="border-border border-b py-2 last:border-b-0">
       <div className="flex items-start gap-2">
         <span className="mt-0.5 shrink-0">
           <EventIcon event={event} />
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="min-w-0 text-sm font-medium text-text">{eventLabel(event)}</p>
+            <p className="text-text min-w-0 text-sm font-medium">{eventLabel(event)}</p>
             {event.severity === undefined ? null : isKnownSeverity(event.severity) ? (
               <SeverityBadge level={event.severity} />
             ) : (
@@ -75,23 +75,23 @@ function EventRow({
               <Badge tone="neutral">Unknown status: {event.status}</Badge>
             )}
           </div>
-          {event.name ? <p className="truncate text-xs text-muted">{event.name}</p> : null}
+          {event.name ? <p className="text-muted truncate text-xs">{event.name}</p> : null}
           <div className="mt-0.5 flex items-center gap-2">
-            <Timestamp iso={event.at} className="text-xs text-muted" />
+            <Timestamp iso={event.at} className="text-muted text-xs" />
             {hasEvidence ? (
               <button
                 type="button"
                 aria-expanded={expanded}
                 aria-controls={evidenceId}
                 onClick={onToggle}
-                className="h-touch rounded-sm px-2 text-xs font-medium text-accent-fg hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus-ring md:h-control-sm"
+                className="h-touch text-accent-fg hover:bg-surface-2 focus-visible:outline-focus-ring md:h-control-sm rounded-sm px-2 text-xs font-medium focus-visible:outline-2"
               >
                 {expanded ? "Hide evidence" : "Show evidence"}
               </button>
             ) : null}
           </div>
           {hasEvidence && expanded ? (
-            <div id={evidenceId} className="mt-2 rounded-sm bg-surface-2 p-2">
+            <div id={evidenceId} className="bg-surface-2 mt-2 rounded-sm p-2">
               <EvidenceList evidence={event.evidence ?? {}} />
             </div>
           ) : null}
@@ -129,33 +129,29 @@ export function VehicleEventsSection({ vehicleId, offline = false }: VehicleEven
           </div>
         ) : null
       ) : offline && !query.data ? (
-        <p className="text-sm text-muted">Events need a connection.</p>
+        <p className="text-muted text-sm">Events need a connection.</p>
       ) : query.isError && !query.data ? (
         offline ? (
-          <p className="text-sm text-muted">Events need a connection.</p>
+          <p className="text-muted text-sm">Events need a connection.</p>
         ) : (
-          <ErrorState
-            compact
-            error={normalize(query.error)}
-            onRetry={() => void query.refetch()}
-          />
+          <ErrorState compact error={normalize(query.error)} onRetry={() => void query.refetch()} />
         )
       ) : (
         <>
           {query.isError && query.data && !offline ? (
-            <div className={cn("mb-2 flex items-center justify-between gap-2 text-xs text-muted")}>
+            <div className={cn("text-muted mb-2 flex items-center justify-between gap-2 text-xs")}>
               <span>Couldn't refresh events.</span>
               <button
                 type="button"
                 onClick={() => void query.refetch()}
-                className="h-touch rounded-sm px-2 font-medium text-accent-fg hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus-ring md:h-control-sm"
+                className="h-touch text-accent-fg hover:bg-surface-2 focus-visible:outline-focus-ring md:h-control-sm rounded-sm px-2 font-medium focus-visible:outline-2"
               >
                 Retry
               </button>
             </div>
           ) : null}
           {events.length === 0 ? (
-            <p className="text-sm text-muted">No events in the last 24 hours.</p>
+            <p className="text-muted text-sm">No events in the last 24 hours.</p>
           ) : (
             <ul>
               {events.map((event, index) => {
@@ -172,7 +168,7 @@ export function VehicleEventsSection({ vehicleId, offline = false }: VehicleEven
               })}
             </ul>
           )}
-          {capLabel ? <p className="mt-2 text-xs text-muted">{capLabel}</p> : null}
+          {capLabel ? <p className="text-muted mt-2 text-xs">{capLabel}</p> : null}
         </>
       )}
     </VehicleSection>

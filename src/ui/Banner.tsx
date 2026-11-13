@@ -49,13 +49,7 @@ export function Banner({
         className,
       )}
     >
-      {icon ?? (
-        <Icon
-          aria-hidden="true"
-          className="size-4 shrink-0"
-          strokeWidth={1.5}
-        />
-      )}
+      {icon ?? <Icon aria-hidden="true" className="size-4 shrink-0" strokeWidth={1.5} />}
       <p className="min-w-0 flex-1">{message}</p>
       {action ? (
         <button
@@ -71,9 +65,7 @@ export function Banner({
           label="Dismiss"
           size="sm"
           onClick={onDismiss}
-          icon={
-            <X aria-hidden="true" className="size-icon-sm" strokeWidth={1.5} />
-          }
+          icon={<X aria-hidden="true" className="size-icon-sm" strokeWidth={1.5} />}
         />
       ) : null}
     </output>

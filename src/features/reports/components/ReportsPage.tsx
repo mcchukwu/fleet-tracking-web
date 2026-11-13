@@ -13,10 +13,7 @@ import { Button } from "../../../ui/Button";
 import { DateRangeDialog } from "../../../ui/DateRangeDialog";
 import { PageFrame } from "../../../ui/PageFrame";
 import { EmptyState } from "../../../ui/StatePanel";
-import {
-  StateBoundary,
-  type StateBoundaryState,
-} from "../../../ui/StateBoundary";
+import { StateBoundary, type StateBoundaryState } from "../../../ui/StateBoundary";
 import { AlertsByTypeChart } from "./AlertsByTypeChart";
 import { ReportsRangePicker } from "./ReportsRangePicker";
 import { ReportsSkeleton } from "./ReportsSkeleton";
@@ -79,8 +76,7 @@ function ReportsPageContent() {
   const cached = query.data !== undefined;
   const cancelled = cancelledKey === key;
   const error = !offline && query.error ? normalize(query.error) : null;
-  const pendingFirstLoad =
-    query.isFetching && !cached && !cancelled && hasRange;
+  const pendingFirstLoad = query.isFetching && !cached && !cancelled && hasRange;
 
   const state: StateBoundaryState = !hasRange
     ? "loading"
@@ -157,16 +153,11 @@ function ReportsPageContent() {
 
   return (
     <PageFrame layout="scroll" contentClassName="px-4 pt-6 sm:px-6">
-      <div
-        data-testid="reports-page"
-        className="text-text flex w-full flex-col gap-4"
-      >
+      <div data-testid="reports-page" className="text-text flex w-full flex-col gap-4">
         <header className="flex flex-col gap-1">
           <h1 className="text-text text-lg font-semibold">Reports</h1>
           <p className="text-muted text-sm tabular-nums">
-            {validation.valid
-              ? formatRangeLabel(from, to)
-              : "Fleet activity for a time range."}
+            {validation.valid ? formatRangeLabel(from, to) : "Fleet activity for a time range."}
           </p>
         </header>
 
@@ -179,9 +170,7 @@ function ReportsPageContent() {
           />
         </div>
 
-        {pendingFirstLoad ? (
-          <SlowNotice onCancel={cancel} onRetry={retry} />
-        ) : null}
+        {pendingFirstLoad ? <SlowNotice onCancel={cancel} onRetry={retry} /> : null}
 
         {cancelled && !cached && hasRange ? (
           <div className="border-border bg-surface flex items-center justify-between gap-2 rounded-lg border px-4 py-3">

@@ -1,14 +1,8 @@
 import { Search, CircleAlert } from "lucide-react";
-import {
-  useId,
-  type InputHTMLAttributes,
-  type ReactNode,
-  type Ref,
-} from "react";
+import { useId, type InputHTMLAttributes, type ReactNode, type Ref } from "react";
 import { cn } from "./cn";
 
-export interface SearchFieldProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, "id"> {
+export interface SearchFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "id"> {
   label: string;
   /** The compact map sheet keeps the accessible name but hides the visible label. */
   hideLabel?: boolean;
@@ -40,17 +34,12 @@ export function SearchField({
   const generatedId = useId();
   const id = props.name ? `${props.name}-${generatedId}` : generatedId;
   const describedBy =
-    [hint ? `${id}-hint` : "", error ? `${id}-error` : ""]
-      .filter(Boolean)
-      .join(" ") || undefined;
+    [hint ? `${id}-hint` : "", error ? `${id}-error` : ""].filter(Boolean).join(" ") || undefined;
   const isInvalid = invalid || Boolean(error);
 
   return (
     <div className="flex flex-col gap-1">
-      <label
-        htmlFor={id}
-        className={hideLabel ? "sr-only" : "text-text text-sm font-medium"}
-      >
+      <label htmlFor={id} className={hideLabel ? "sr-only" : "text-text text-sm font-medium"}>
         {label}
       </label>
       <div className="relative">
@@ -76,9 +65,7 @@ export function SearchField({
           {...props}
         />
         {trailing ? (
-          <span className="absolute inset-y-0 right-3 flex items-center">
-            {trailing}
-          </span>
+          <span className="absolute inset-y-0 right-3 flex items-center">{trailing}</span>
         ) : null}
       </div>
       {hint ? (
@@ -87,10 +74,7 @@ export function SearchField({
         </p>
       ) : null}
       {error ? (
-        <p
-          id={`${id}-error`}
-          className="text-danger flex items-center gap-1 text-xs"
-        >
+        <p id={`${id}-error`} className="text-danger flex items-center gap-1 text-xs">
           <CircleAlert aria-hidden="true" className="size-3" strokeWidth={1.5} />
           {error}
         </p>

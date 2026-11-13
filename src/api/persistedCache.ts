@@ -156,9 +156,7 @@ export function startPersistedCache(
   options: PersistedCacheOptions = {},
 ): () => void {
   const debounceMs = options.debounceMs ?? PERSISTED_CACHE_DEBOUNCE_MS;
-  const isEnabled =
-    options.isEnabled ??
-    (() => useAuthStore.getState().status === "authenticated");
+  const isEnabled = options.isEnabled ?? (() => useAuthStore.getState().status === "authenticated");
   let timer: ReturnType<typeof setTimeout> | null = null;
 
   const flush = () => {

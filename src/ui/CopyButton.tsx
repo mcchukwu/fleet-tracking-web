@@ -68,16 +68,16 @@ export function CopyButton({
       title={ariaLabel ?? `Copy ${label.toLowerCase()}`}
       data-copy-status={status}
       className={cn(
-        "inline-flex min-w-touch items-center justify-start text-sm underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:min-w-0",
+        "min-w-touch focus-visible:outline-focus-ring inline-flex items-center justify-start text-sm underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-0 md:min-w-0",
         appearance === "button"
-          ? "border-border-strong bg-surface text-text hover:bg-surface-2 h-touch rounded-md border px-3 font-medium hover:no-underline md:h-control-md"
+          ? "border-border-strong bg-surface text-text hover:bg-surface-2 h-touch md:h-control-md rounded-md border px-3 font-medium hover:no-underline"
           : // The inline variant keeps a 24px visual line inside a 56px row but must
             // still offer a 44px touch target, so it grows symmetrically and the
             // negative margins keep its layout contribution at one text line.
             cn(
               "text-text hover:underline",
-              "font-mono rounded-sm",
-              inline ? "-my-3 h-touch md:my-0 md:h-control-sm" : "h-touch md:h-control-sm",
+              "rounded-sm font-mono",
+              inline ? "h-touch md:h-control-sm -my-3 md:my-0" : "h-touch md:h-control-sm",
             ),
         className,
       )}

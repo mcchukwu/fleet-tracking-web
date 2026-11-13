@@ -9,13 +9,7 @@ export interface CustomRangeDialogProps {
   onClose: () => void;
 }
 
-export function CustomRangeDialog({
-  open,
-  from,
-  to,
-  onApply,
-  onClose,
-}: CustomRangeDialogProps) {
+export function CustomRangeDialog({ open, from, to, onApply, onClose }: CustomRangeDialogProps) {
   return (
     <DateRangeDialog
       open={open}

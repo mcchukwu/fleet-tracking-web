@@ -75,10 +75,7 @@ function validationCopy(error: AppError): GeofenceWriteCopy | null {
 }
 
 /** Copy for a failed create or edit; never raw server text beyond an allowlisted code. */
-export function geofenceWriteCopy(
-  error: AppError,
-  mode: "create" | "update",
-): GeofenceWriteCopy {
+export function geofenceWriteCopy(error: AppError, mode: "create" | "update"): GeofenceWriteCopy {
   const verb = mode === "create" ? "create" : "edit";
   if (error.kind === "validation") {
     const specific = validationCopy(error);

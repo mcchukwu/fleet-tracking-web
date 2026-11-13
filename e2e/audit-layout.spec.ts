@@ -19,9 +19,9 @@ async function setRole(page: Page, role = "admin"): Promise<void> {
 
 async function gotoAudit(page: Page, search = ""): Promise<void> {
   await page.goto(`/audit${search ? `?${search}` : ""}`);
-  await expect(
-    page.getByRole("heading", { name: "Audit", level: 1 }),
-  ).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("heading", { name: "Audit", level: 1 })).toBeVisible({
+    timeout: 15_000,
+  });
 }
 
 async function waitForTable(page: Page): Promise<void> {
@@ -35,12 +35,8 @@ function table(page: Page) {
 }
 
 async function openDetail(page: Page): Promise<void> {
-  await page
-    .getByRole("button", { name: /Open audit entry: Import vehicles/i })
-    .click();
-  await expect(
-    page.getByRole("complementary", { name: "Audit entry details" }),
-  ).toBeVisible();
+  await page.getByRole("button", { name: /Open audit entry: Import vehicles/i }).click();
+  await expect(page.getByRole("complementary", { name: "Audit entry details" })).toBeVisible();
 }
 
 test.describe("audit layout", { tag: "@theme" }, () => {
@@ -56,24 +52,18 @@ test.describe("audit layout", { tag: "@theme" }, () => {
 
     const geometry = await table(page).evaluate((root) => {
       const element = root.querySelector<HTMLTableElement>("table");
-      const scroller = root.querySelector<HTMLElement>(
-        "[data-data-table-scroll]",
-      );
+      const scroller = root.querySelector<HTMLElement>("[data-data-table-scroll]");
       if (!element || !scroller) throw new Error("The audit table did not render");
       return {
         layout: window.getComputedStyle(element).tableLayout,
         minWidth: Number.parseFloat(window.getComputedStyle(element).minWidth),
-        declaredWidths: [
-          ...element.querySelectorAll<HTMLTableColElement>("col"),
-        ].map((col) => Number.parseFloat(col.style.width)),
-        headerAlign: [
-          ...element.querySelectorAll<HTMLTableCellElement>("thead th"),
-        ].map((header) => window.getComputedStyle(header).textAlign),
-        rows: [
-          ...element.querySelectorAll<HTMLTableRowElement>(
-            'tbody tr[data-row="data"]',
-          ),
-        ]
+        declaredWidths: [...element.querySelectorAll<HTMLTableColElement>("col")].map((col) =>
+          Number.parseFloat(col.style.width),
+        ),
+        headerAlign: [...element.querySelectorAll<HTMLTableCellElement>("thead th")].map(
+          (header) => window.getComputedStyle(header).textAlign,
+        ),
+        rows: [...element.querySelectorAll<HTMLTableRowElement>('tbody tr[data-row="data"]')]
           .slice(0, 3)
           .map((row) => Math.round(row.getBoundingClientRect().height)),
         scrollWidth: scroller.scrollWidth,
@@ -104,9 +94,9 @@ test.describe("audit layout", { tag: "@theme" }, () => {
         .evaluate((element) => Math.round(element.getBoundingClientRect().height));
 
     await page.goto("/audit?fault=audit%3Aslow");
-    await expect(
-      page.getByRole("heading", { name: "Audit", level: 1 }),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: "Audit", level: 1 })).toBeVisible({
+      timeout: 15_000,
+    });
     const loading = await headerHeight();
 
     await gotoAudit(page);
@@ -130,9 +120,7 @@ test.describe("audit layout", { tag: "@theme" }, () => {
     }
   });
 
-  test("stacks the filters and scrolls only the table on a narrow page", async ({
-    page,
-  }) => {
+  test("stacks the filters and scrolls only the table on a narrow page", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await gotoAudit(page);
     await waitForTable(page);

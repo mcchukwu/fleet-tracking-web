@@ -9,9 +9,7 @@ import { useAuditFeed } from "./useAuditFeed";
 
 const mocks = vi.hoisted(() => ({
   query: {
-    data: undefined as
-      | { pages: { data: AuditEntry[]; received: number }[] }
-      | undefined,
+    data: undefined as { pages: { data: AuditEntry[]; received: number }[] } | undefined,
     dataUpdatedAt: 0,
     isPending: false,
     isFetching: false,

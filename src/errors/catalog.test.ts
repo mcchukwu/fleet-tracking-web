@@ -64,9 +64,17 @@ describe("error catalog", () => {
     expect(isSafeServerCode("invalid_status")).toBe(true);
     expect(isSafeServerCode("invalid_csv")).toBe(true);
     expect(isSafeServerCode("internal")).toBe(false);
-    const safe = errorCopy(error({ kind: "conflict", code: "in_use", serverMessage: "It has events." }));
+    const safe = errorCopy(
+      error({ kind: "conflict", code: "in_use", serverMessage: "It has events." }),
+    );
     expect(safe.detail).toBe("It has events.");
-    const status = errorCopy(error({ kind: "validation", code: "invalid_status", serverMessage: "status must be active or inactive" }));
+    const status = errorCopy(
+      error({
+        kind: "validation",
+        code: "invalid_status",
+        serverMessage: "status must be active or inactive",
+      }),
+    );
     expect(status.detail).toBe("status must be active or inactive");
     const unsafe = errorCopy(error({ kind: "server", serverMessage: "panic: nil pointer" }));
     expect(unsafe.detail).not.toContain("panic");

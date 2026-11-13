@@ -193,9 +193,7 @@ describe("MobileVehicleSheet", () => {
     const search = screen.getByRole("searchbox", { name: "Search vehicles" });
 
     expect(fireEvent.pointerDown(header, { clientY: 600, pointerId: 1 })).toBe(false);
-    expect(
-      fireEvent.pointerDown(search, { clientY: 600, pointerId: 2, bubbles: true }),
-    ).toBe(true);
+    expect(fireEvent.pointerDown(search, { clientY: 600, pointerId: 2, bubbles: true })).toBe(true);
   });
 
   it("cycles with the keyboard and stops at the ends", async () => {

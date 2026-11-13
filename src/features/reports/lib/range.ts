@@ -32,10 +32,7 @@ export function presetReportsRange(ms: number, now = Date.now()): ReportsRange {
 }
 
 /** Order and format only; the API enforces no maximum range. */
-export function validateReportsRange(
-  from?: string,
-  to?: string,
-): DatetimeRangeValidation {
+export function validateReportsRange(from?: string, to?: string): DatetimeRangeValidation {
   return validateDatetimeRange(from, to);
 }
 
@@ -44,10 +41,7 @@ export function validateReportsRange(
  * passes. A custom range that happens to match a preset duration reads as that
  * preset, which is truthful: the duration is what the label names.
  */
-export function activeReportsPreset(
-  from?: string,
-  to?: string,
-): ReportPresetId | null {
+export function activeReportsPreset(from?: string, to?: string): ReportPresetId | null {
   const validation = validateReportsRange(from, to);
   if (!validation.valid) return null;
   const duration = validation.toMs - validation.fromMs;

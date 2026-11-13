@@ -9,9 +9,7 @@ export function pickerPresentation(matches: boolean): PickerPresentation {
 }
 
 function supportsMatchMedia(): boolean {
-  return (
-    typeof window !== "undefined" && typeof window.matchMedia === "function"
-  );
+  return typeof window !== "undefined" && typeof window.matchMedia === "function";
 }
 
 /**

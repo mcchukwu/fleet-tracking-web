@@ -1,10 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import {
-  OPEN_ALERT_LIMIT,
-  useAlertLookup,
-  useOpenAlerts,
-} from "../../../api/hooks/alerts";
+import { OPEN_ALERT_LIMIT, useAlertLookup, useOpenAlerts } from "../../../api/hooks/alerts";
 import { useGeofences } from "../../../api/hooks/geofences";
 import type { Alert } from "../../../api/types";
 import { useCanMutate } from "../../../auth/useCanMutate";
@@ -67,10 +63,7 @@ function AlertsPageContent() {
   );
 
   const feed = useAlertFeed(filters);
-  const alerts = useMemo(
-    () => filterAlerts(feed.visible, filters),
-    [feed.visible, filters],
-  );
+  const alerts = useMemo(() => filterAlerts(feed.visible, filters), [feed.visible, filters]);
   const types = useMemo(
     () => alertTypeOptions(feed.visible, filters.type),
     [feed.visible, filters.type],
@@ -101,10 +94,7 @@ function AlertsPageContent() {
                 : "not-found";
 
   const geofenceNames = useMemo(
-    () =>
-      new Map(
-        (geofences.data ?? []).map((geofence) => [geofence.id, geofence.name]),
-      ),
+    () => new Map((geofences.data ?? []).map((geofence) => [geofence.id, geofence.name])),
     [geofences.data],
   );
 
@@ -171,9 +161,7 @@ function AlertsPageContent() {
       alert: undefined,
     });
     setTimeout(() => {
-      document
-        .querySelector<HTMLElement>('[role="tab"][data-state="active"]')
-        ?.focus();
+      document.querySelector<HTMLElement>('[role="tab"][data-state="active"]')?.focus();
     }, 0);
   }
 
@@ -188,17 +176,13 @@ function AlertsPageContent() {
   function focusRow(id: string | null): void {
     setTimeout(() => {
       if (id) {
-        const target = document.querySelector<HTMLElement>(
-          `[data-alert-id="${CSS.escape(id)}"]`,
-        );
+        const target = document.querySelector<HTMLElement>(`[data-alert-id="${CSS.escape(id)}"]`);
         if (target) {
           target.focus();
           return;
         }
       }
-      document
-        .querySelector<HTMLElement>('[data-testid="alerts-page"] select')
-        ?.focus();
+      document.querySelector<HTMLElement>('[data-testid="alerts-page"] select')?.focus();
     }, 0);
   }
 
@@ -210,16 +194,11 @@ function AlertsPageContent() {
         next.focus();
         return;
       }
-      document
-        .querySelector<HTMLElement>('[data-testid="alerts-page"] select')
-        ?.focus();
+      document.querySelector<HTMLElement>('[data-testid="alerts-page"] select')?.focus();
     }, 0);
   }
 
-  async function acknowledge(
-    alert: Alert,
-    origin: "row" | "detail",
-  ): Promise<void> {
+  async function acknowledge(alert: Alert, origin: "row" | "detail"): Promise<void> {
     setAckOrigin(origin);
     const index = alerts.findIndex((row) => row.id === alert.id);
     const outcome = await ack.acknowledge(alert);
@@ -270,11 +249,7 @@ function AlertsPageContent() {
           </div>
         </header>
 
-        <Tabs
-          value={tab}
-          onValueChange={changeTab}
-          className="mt-4 flex min-h-0 flex-1 flex-col"
-        >
+        <Tabs value={tab} onValueChange={changeTab} className="mt-4 flex min-h-0 flex-1 flex-col">
           <TabsList aria-label="Alerts sections" className="shrink-0">
             <TabsTrigger value="alerts">Alerts</TabsTrigger>
             <TabsTrigger value="rules">Alert rules</TabsTrigger>

@@ -19,14 +19,10 @@ function variable(source: string, name: string): string {
 
 function luminance(hex: string): number {
   const value = hex.replace("#", "");
-  const channels = [0, 2, 4].map((offset) =>
-    Number.parseInt(value.slice(offset, offset + 2), 16),
-  );
+  const channels = [0, 2, 4].map((offset) => Number.parseInt(value.slice(offset, offset + 2), 16));
   const linear = channels.map((channel) => {
     const normalized = channel / 255;
-    return normalized <= 0.04045
-      ? normalized / 12.92
-      : ((normalized + 0.055) / 1.055) ** 2.4;
+    return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
   });
   return 0.2126 * (linear[0] ?? 0) + 0.7152 * (linear[1] ?? 0) + 0.0722 * (linear[2] ?? 0);
 }
@@ -43,18 +39,26 @@ const lightBase = block(":root");
 const darkBase = block(".dark");
 
 const themes = [
-  { name: "light", base: lightBase, selectors: {
-    blue: ":root",
-    violet: ':root[data-accent="violet"]',
-    fuchsia: ':root[data-accent="fuchsia"]',
-    graphite: ':root[data-accent="graphite"]',
-  } },
-  { name: "dark", base: darkBase, selectors: {
-    blue: ".dark",
-    violet: '.dark[data-accent="violet"]',
-    fuchsia: '.dark[data-accent="fuchsia"]',
-    graphite: '.dark[data-accent="graphite"]',
-  } },
+  {
+    name: "light",
+    base: lightBase,
+    selectors: {
+      blue: ":root",
+      violet: ':root[data-accent="violet"]',
+      fuchsia: ':root[data-accent="fuchsia"]',
+      graphite: ':root[data-accent="graphite"]',
+    },
+  },
+  {
+    name: "dark",
+    base: darkBase,
+    selectors: {
+      blue: ".dark",
+      violet: '.dark[data-accent="violet"]',
+      fuchsia: '.dark[data-accent="fuchsia"]',
+      graphite: '.dark[data-accent="graphite"]',
+    },
+  },
 ] as const;
 
 describe("accent palette", () => {
@@ -94,8 +98,14 @@ describe("accent palette", () => {
       const background = variable(theme.base, "--bg");
       for (const [accent, selector] of Object.entries(theme.selectors)) {
         const ring = variable(block(selector), "--focus-ring");
-        expect(contrast(ring, surface), `${accent} ${theme.name} ring on surface`).toBeGreaterThanOrEqual(3);
-        expect(contrast(ring, background), `${accent} ${theme.name} ring on background`).toBeGreaterThanOrEqual(3);
+        expect(
+          contrast(ring, surface),
+          `${accent} ${theme.name} ring on surface`,
+        ).toBeGreaterThanOrEqual(3);
+        expect(
+          contrast(ring, background),
+          `${accent} ${theme.name} ring on background`,
+        ).toBeGreaterThanOrEqual(3);
       }
     }
   });

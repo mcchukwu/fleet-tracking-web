@@ -18,7 +18,7 @@ export function GeofenceRow({ geofence, selected, onSelect }: GeofenceRowProps) 
         aria-current={selected ? "true" : undefined}
         onClick={onSelect}
         className={cn(
-          "focus-visible:outline-focus-ring flex h-12 w-full items-center gap-2 border-l-2 px-3 text-left transition-colors duration-100 hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-0",
+          "focus-visible:outline-focus-ring hover:bg-surface-2 flex h-12 w-full items-center gap-2 border-l-2 px-3 text-left transition-colors duration-100 focus-visible:outline-2 focus-visible:outline-offset-0",
           selected ? "border-accent bg-accent-soft" : "border-transparent",
         )}
       >

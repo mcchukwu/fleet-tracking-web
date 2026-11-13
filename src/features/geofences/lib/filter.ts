@@ -1,10 +1,7 @@
 import type { Geofence } from "../../../api/types";
 
 /** Client-side name search; the server ignores every query parameter. */
-export function filterGeofences(
-  geofences: readonly Geofence[],
-  query: string,
-): Geofence[] {
+export function filterGeofences(geofences: readonly Geofence[], query: string): Geofence[] {
   const needle = query.trim().toLowerCase();
   if (needle === "") return [...geofences];
   return geofences.filter((geofence) => geofence.name.toLowerCase().includes(needle));

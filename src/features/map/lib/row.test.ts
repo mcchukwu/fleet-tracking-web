@@ -85,22 +85,12 @@ describe("toVehicleRow", () => {
   });
 
   it("marks a vehicle alert for a recently marked live position", () => {
-    const row = toVehicleRow(
-      vehicle,
-      live({ alertMarkedAt: now - 60_000 }),
-      new Set(),
-      now,
-    );
+    const row = toVehicleRow(vehicle, live({ alertMarkedAt: now - 60_000 }), new Set(), now);
     expect(row.status).toBe("alert");
   });
 
   it("ignores an alert mark outside the 15 minute window", () => {
-    const row = toVehicleRow(
-      vehicle,
-      live({ alertMarkedAt: now - 16 * 60_000 }),
-      new Set(),
-      now,
-    );
+    const row = toVehicleRow(vehicle, live({ alertMarkedAt: now - 16 * 60_000 }), new Set(), now);
     expect(row.status).toBe("moving");
   });
 });

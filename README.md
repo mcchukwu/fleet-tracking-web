@@ -41,17 +41,17 @@ The map uses MapLibre with OpenFreeMap's Positron (light) and Dark styles. Overr
 
 ## Scripts
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Start the Vite dev server |
-| `npm run check` | Typecheck, type-aware lint, design guard and unit tests |
-| `npm run guard` | Run only the design guard |
-| `npm run test` | Run Vitest |
-| `npm run e2e` | Run Playwright in desktop and mobile projects, light and dark |
+| Command              | What it does                                                   |
+| -------------------- | -------------------------------------------------------------- |
+| `npm run dev`        | Start the Vite dev server                                      |
+| `npm run check`      | Typecheck, type-aware lint, design guard and unit tests        |
+| `npm run guard`      | Run only the design guard                                      |
+| `npm run test`       | Run Vitest                                                     |
+| `npm run e2e`        | Run Playwright in desktop and mobile projects, light and dark  |
 | `npm run e2e:review` | Run Playwright and write screenshots to `test-results/review/` |
-| `npm run build` | Type-check and build for production |
-| `npm run deploy` | Deploy `dist` to Cloudflare Workers (run the build first) |
-| `npm run preview` | Preview the production build |
+| `npm run build`      | Type-check and build for production                            |
+| `npm run deploy`     | Deploy `dist` to Cloudflare Workers (run the build first)      |
+| `npm run preview`    | Preview the production build                                   |
 
 Install Playwright's browser once after `npm ci`: `npx playwright install --with-deps chromium`. CI needs the same step before `npm run e2e`. If the bundled Chromium is not installed, point it at a system browser instead: `PLAYWRIGHT_CHROMIUM_PATH=/usr/bin/chromium npm run e2e`.
 

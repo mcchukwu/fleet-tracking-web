@@ -56,8 +56,18 @@ describe("map alert window", () => {
   });
 
   it("includes an alert just inside the window and excludes one just outside", () => {
-    const inside = recentAlertKeys([alert({ occurred_at: "2026-11-04T09:45:00Z" })], vehicles, NOW, 15 * 60_000);
-    const outside = recentAlertKeys([alert({ occurred_at: "2026-11-04T09:44:59Z" })], vehicles, NOW, 15 * 60_000);
+    const inside = recentAlertKeys(
+      [alert({ occurred_at: "2026-11-04T09:45:00Z" })],
+      vehicles,
+      NOW,
+      15 * 60_000,
+    );
+    const outside = recentAlertKeys(
+      [alert({ occurred_at: "2026-11-04T09:44:59Z" })],
+      vehicles,
+      NOW,
+      15 * 60_000,
+    );
     expect(inside.size).toBe(1);
     expect(outside.size).toBe(0);
   });

@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type CSSProperties,
-  type ReactNode,
-} from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { Alert } from "../../../api/types";
 import type { AppError } from "../../../errors/types";
@@ -17,25 +11,14 @@ import {
   isAlertStatus,
   severityLabels,
 } from "../../../lib/status";
-import {
-  MISSING,
-  formatRelativeTime,
-  formatTimeTooltip,
-} from "../../../lib/format";
+import { MISSING, formatRelativeTime, formatTimeTooltip } from "../../../lib/format";
 import { useNow } from "../../../lib/ticker";
 import { Badge, AlertStatusBadge, SeverityBadge } from "../../../ui/Badge";
 import { Button } from "../../../ui/Button";
 import { CopyButton } from "../../../ui/CopyButton";
-import {
-  DataTable,
-  DATA_TABLE_ROW_HEIGHT,
-  type DataTableColumn,
-} from "../../../ui/DataTable";
+import { DataTable, DATA_TABLE_ROW_HEIGHT, type DataTableColumn } from "../../../ui/DataTable";
 import { EmptyState, Skeleton } from "../../../ui/StatePanel";
-import {
-  StateBoundary,
-  type StateBoundaryState,
-} from "../../../ui/StateBoundary";
+import { StateBoundary, type StateBoundaryState } from "../../../ui/StateBoundary";
 import { cn } from "../../../ui/cn";
 import type { AckErrorState } from "../hooks/useAlertAck";
 import type { AlertEmptyReason } from "../lib/filter";
@@ -64,10 +47,7 @@ const COLUMN_ORDER = [
   ["actions", ""],
 ] as const;
 
-const TABLE_MIN_WIDTH = COLUMN_ORDER.reduce(
-  (total, [id]) => total + COLUMN_WIDTHS[id],
-  0,
-);
+const TABLE_MIN_WIDTH = COLUMN_ORDER.reduce((total, [id]) => total + COLUMN_WIDTHS[id], 0);
 
 function cellWidth(width: number): CSSProperties {
   return { width };
@@ -102,13 +82,7 @@ interface AlertTimeCellProps {
   disabledReason?: string;
 }
 
-function AlertTimeCell({
-  alert,
-  onOpen,
-  onAck,
-  pending,
-  disabledReason,
-}: AlertTimeCellProps) {
+function AlertTimeCell({ alert, onOpen, onAck, pending, disabledReason }: AlertTimeCellProps) {
   const now = useNow();
   const relativeTime = formatRelativeTime(alert.occurred_at, now);
   const tooltip = formatTimeTooltip(alert.occurred_at);
@@ -206,10 +180,7 @@ function AlertTableSkeleton() {
           </thead>
           <tbody>
             {Array.from({ length: 6 }).map((_, rowIndex) => (
-              <tr
-                key={rowIndex}
-                className="h-row border-border border-b last:border-0"
-              >
+              <tr key={rowIndex} className="h-row border-border border-b last:border-0">
                 {COLUMN_ORDER.map(([id]) => (
                   <td key={id} className="px-3 py-0">
                     <Skeleton className="h-3 w-full max-w-24" />
@@ -319,18 +290,12 @@ export function AlertTable({
     }
   }
   const rowsToRender =
-    scroller && (virtualItems.length > 0 || displayRows.length === 0)
-      ? virtualRows
-      : displayRows;
+    scroller && (virtualItems.length > 0 || displayRows.length === 0) ? virtualRows : displayRows;
 
   const paddingTop =
-    virtualItems.length > 0
-      ? Math.max(0, virtualItems[0].start - DATA_TABLE_ROW_HEIGHT)
-      : 0;
+    virtualItems.length > 0 ? Math.max(0, virtualItems[0].start - DATA_TABLE_ROW_HEIGHT) : 0;
   const lastItem = virtualItems[virtualItems.length - 1];
-  const paddingBottom = lastItem
-    ? Math.max(0, virtualizer.getTotalSize() - lastItem.end)
-    : 0;
+  const paddingBottom = lastItem ? Math.max(0, virtualizer.getTotalSize() - lastItem.end) : 0;
 
   const columns = useMemo<DataTableColumn<DisplayRow>[]>(
     () => [
@@ -357,12 +322,7 @@ export function AlertTable({
         truncate: false,
         title: (row) => row.alert.plate,
         cell: (row) => (
-          <CopyButton
-            inline
-            value={row.alert.plate}
-            label="plate"
-            className="text-xs"
-          />
+          <CopyButton inline value={row.alert.plate} label="plate" className="text-xs" />
         ),
       },
       {
@@ -371,11 +331,7 @@ export function AlertTable({
         width: COLUMN_WIDTHS.type,
         align: "left",
         title: (row) => alertTypeLabel(row.alert.type),
-        cell: (row) => (
-          <span className="text-text text-sm">
-            {alertTypeLabel(row.alert.type)}
-          </span>
-        ),
+        cell: (row) => <span className="text-text text-sm">{alertTypeLabel(row.alert.type)}</span>,
       },
       {
         id: "severity",
@@ -404,11 +360,7 @@ export function AlertTable({
         width: COLUMN_WIDTHS.zone,
         align: "left",
         title: (row) => zoneFor(row.alert) ?? MISSING,
-        cell: (row) => (
-          <span className="text-muted text-xs">
-            {zoneFor(row.alert) ?? MISSING}
-          </span>
-        ),
+        cell: (row) => <span className="text-muted text-xs">{zoneFor(row.alert) ?? MISSING}</span>,
       },
       {
         id: "trip",
@@ -420,12 +372,7 @@ export function AlertTable({
         cell: (row) => {
           const tripLabel = tripFor(row.alert);
           return tripLabel ? (
-            <CopyButton
-              inline
-              value={tripLabel}
-              label="trip id"
-              className="text-xs"
-            />
+            <CopyButton inline value={tripLabel} label="trip id" className="text-xs" />
           ) : (
             <span className="text-muted text-xs">{MISSING}</span>
           );
@@ -476,10 +423,7 @@ export function AlertTable({
       }
     />
   ) : (
-    <EmptyState
-      title="No alerts yet"
-      description="Alerts appear here when a rule fires."
-    />
+    <EmptyState title="No alerts yet" description="Alerts appear here when a rule fires." />
   );
 
   function revealNew(): void {
@@ -511,27 +455,21 @@ export function AlertTable({
               label="Alerts"
               columns={columns}
               rows={rowsToRender}
-              rowKey={(row, index) =>
-                `${row.kind}:${row.alert.id}:${row.virtualIndex ?? index}`
-              }
+              rowKey={(row, index) => `${row.kind}:${row.alert.id}:${row.virtualIndex ?? index}`}
               className="min-h-0 flex-1"
               topSpacer={paddingTop}
               bottomSpacer={paddingBottom}
               onScrollerChange={setScroller}
-              onScroll={(event) =>
-                onScrollTopChange(event.currentTarget.scrollTop <= 8)
-              }
+              onScroll={(event) => onScrollTopChange(event.currentTarget.scrollTop <= 8)}
               rowProps={(row) =>
                 row.kind === "alert"
                   ? {
                       className: cn(
                         "group cursor-pointer",
-                        highlightIds.has(row.alert.id) &&
-                          "value-flash bg-accent-soft",
+                        highlightIds.has(row.alert.id) && "value-flash bg-accent-soft",
                       ),
                       onClick: (event) => {
-                        if ((event.target as HTMLElement).closest("button, a"))
-                          return;
+                        if ((event.target as HTMLElement).closest("button, a")) return;
                         onOpen(row.alert.id);
                       },
                     }
@@ -548,10 +486,7 @@ export function AlertTable({
                       if (element) virtualizer.measureElement(element);
                     }}
                   >
-                    <td
-                      colSpan={columns.length}
-                      className="border-border border-b px-3 py-2"
-                    >
+                    <td colSpan={columns.length} className="border-border border-b px-3 py-2">
                       <InlineError
                         error={row.error.error}
                         copy={{

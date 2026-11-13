@@ -4,9 +4,9 @@ import { captureForReview, expectNoAxeViolations } from "./helpers";
 
 async function gotoFault(page: Page, fault: string): Promise<void> {
   await page.goto(`/system?fault=${encodeURIComponent(fault)}`);
-  await expect(
-    page.getByRole("heading", { name: "System health", level: 1 }),
-  ).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("heading", { name: "System health", level: 1 })).toBeVisible({
+    timeout: 15_000,
+  });
 }
 
 async function clearFault(page: Page): Promise<void> {
@@ -36,9 +36,7 @@ function collectErrors(page: Page): string[] {
 
 function unexpectedConsole(errors: string[]): string[] {
   return errors.filter(
-    (text) =>
-      !text.includes("above error occurred") &&
-      !text.includes("Failed to load resource"),
+    (text) => !text.includes("above error occurred") && !text.includes("Failed to load resource"),
   );
 }
 
@@ -52,9 +50,7 @@ test.describe("system health faults", () => {
     await expect(page.getByText("Can't reach the API")).toBeVisible({
       timeout: 15_000,
     });
-    await expect(
-      page.getByRole("button", { name: "Retry", exact: true }).first(),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Retry", exact: true }).first()).toBeVisible();
     await expect(page.getByText("Something broke.")).toHaveCount(0);
     await expect(page.locator("body")).not.toContainText(/\.tsx:\d+/);
     await captureForReview(page, "11-system-error");
@@ -68,9 +64,7 @@ test.describe("system health faults", () => {
     expect(unexpectedConsole(errors)).toEqual([]);
   });
 
-  test("a cached refresh error keeps the values and labels them stale", async ({
-    page,
-  }) => {
+  test("a cached refresh error keeps the values and labels them stale", async ({ page }) => {
     await page.goto("/system");
     await expect(page.getByText("All systems healthy")).toBeVisible({
       timeout: 15_000,
@@ -84,9 +78,7 @@ test.describe("system health faults", () => {
     });
     await expect(page.getByText(/Stale ·/)).toBeVisible();
     await expect(page.getByText("20 of 25")).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "Retry", exact: true }),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Retry", exact: true })).toBeVisible();
     await captureForReview(page, "11-system-stale-error");
   });
 
@@ -104,9 +96,7 @@ test.describe("system health faults", () => {
     await expect(page.getByText("Still working…")).toHaveCount(0);
     await expect(page.getByText("Taking longer than usual")).toHaveCount(0);
     await expect(page.getByText("Loading cancelled")).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "Retry", exact: true }),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Retry", exact: true })).toBeVisible();
   });
 
   test("a forbidden health call hides the data", async ({ page }) => {
@@ -118,9 +108,7 @@ test.describe("system health faults", () => {
   });
 
   test("a session expiry shows the dialog and keeps the page", async ({ page }) => {
-    await page.goto(
-      `/system?fault=${encodeURIComponent("system-health:unauthenticated")}`,
-    );
+    await page.goto(`/system?fault=${encodeURIComponent("system-health:unauthenticated")}`);
     const dialog = page.getByRole("dialog", { name: "Your session expired" });
     await expect(dialog).toBeVisible({ timeout: 15_000 });
     await expect
@@ -134,12 +122,10 @@ test.describe("system health faults", () => {
 
   test("a malformed body is a contract failure with diagnostics", async ({ page }) => {
     await gotoFault(page, "system-health:malformed");
-    await expect(
-      page.getByText("Unexpected response from the server").first(),
-    ).toBeVisible({ timeout: 15_000 });
-    await expect(
-      page.getByRole("button", { name: "Copy diagnostics" }),
-    ).toBeVisible();
+    await expect(page.getByText("Unexpected response from the server").first()).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByRole("button", { name: "Copy diagnostics" })).toBeVisible();
     await expect(page.getByText(/Unexpected token|JSON/)).toHaveCount(0);
     await expect(page.locator("body")).not.toContainText(/\.tsx:\d+/);
     await expectNoAxeViolations(page);
@@ -147,9 +133,9 @@ test.describe("system health faults", () => {
 
   test("a render crash is contained by the route boundary", async ({ page }) => {
     await page.goto("/system?crash=system");
-    await expect(
-      page.getByText("This part of the page stopped working"),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("This part of the page stopped working")).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.getByRole("banner")).toBeVisible();
   });
 });

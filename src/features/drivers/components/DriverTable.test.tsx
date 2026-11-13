@@ -90,7 +90,12 @@ describe("DriverTable", () => {
   });
 
   it("shows the no-data and no-results empty variants", () => {
-    const { rerender } = renderTable({ drivers: [], hasDrivers: false, state: "empty", emptyReason: "no-data" });
+    const { rerender } = renderTable({
+      drivers: [],
+      hasDrivers: false,
+      state: "empty",
+      emptyReason: "no-data",
+    });
     expect(screen.getByText("No drivers yet")).toBeVisible();
     expect(screen.getByText("Create the first one.")).toBeVisible();
 

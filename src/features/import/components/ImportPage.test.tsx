@@ -55,9 +55,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => mocks.navigate,
-  Link: ({ to, children }: { to: string; children: ReactNode }) => (
-    <a href={to}>{children}</a>
-  ),
+  Link: ({ to, children }: { to: string; children: ReactNode }) => <a href={to}>{children}</a>,
 }));
 vi.mock("../../../auth/useCanMutate", () => ({
   useCanMutate: (_capability: string, roleReason?: string) => {
@@ -162,16 +160,12 @@ describe("ImportPage", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Upload file" }));
 
-    await waitFor(() =>
-      expect(screen.getByTestId("import-result")).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByTestId("import-result")).toBeInTheDocument());
     expect(screen.getByText("2 vehicles imported.")).toBeInTheDocument();
     expect(mocks.recent.add).toHaveBeenCalledWith(
       expect.objectContaining({ jobId: "job-1", fileName: "vehicles.csv" }),
     );
-    await waitFor(() =>
-      expect(screen.getByTestId("import-result-heading")).toHaveFocus(),
-    );
+    await waitFor(() => expect(screen.getByTestId("import-result-heading")).toHaveFocus());
 
     await userEvent.click(screen.getByRole("button", { name: "Search a plate" }));
     expect(mocks.navigate).toHaveBeenCalledWith({ to: "/map" });
@@ -180,9 +174,7 @@ describe("ImportPage", () => {
   it("announces the parse phase and a ready preview", () => {
     mocks.preview = { state: "parsing", preview: null, issue: null };
     const { rerender } = view(<ImportPage />);
-    expect(screen.getByTestId("import-status")).toHaveTextContent(
-      "Reading file…",
-    );
+    expect(screen.getByTestId("import-status")).toHaveTextContent("Reading file…");
 
     mocks.preview = { state: "ready", preview, issue: null };
     rerender(
@@ -192,9 +184,7 @@ describe("ImportPage", () => {
         </ToastProvider>
       </TooltipProvider>,
     );
-    expect(screen.getByTestId("import-status")).toHaveTextContent(
-      "File ready to upload.",
-    );
+    expect(screen.getByTestId("import-status")).toHaveTextContent("File ready to upload.");
   });
 
   it("announces cancellation without showing an error", async () => {
@@ -208,9 +198,7 @@ describe("ImportPage", () => {
     await chooseFile();
     await userEvent.click(screen.getByRole("button", { name: "Upload file" }));
 
-    expect(screen.getByTestId("import-status")).toHaveTextContent(
-      "Upload cancelled",
-    );
+    expect(screen.getByTestId("import-status")).toHaveTextContent("Upload cancelled");
     expect(screen.queryByTestId("import-failure")).not.toBeInTheDocument();
   });
 });

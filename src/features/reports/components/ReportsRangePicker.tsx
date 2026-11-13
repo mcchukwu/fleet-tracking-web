@@ -11,11 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../../../ui/DropdownMenu";
-import {
-  REPORT_PRESETS,
-  reportPresetLabel,
-  type ReportPresetId,
-} from "../lib/range";
+import { REPORT_PRESETS, reportPresetLabel, type ReportPresetId } from "../lib/range";
 
 export interface ReportsRangePickerProps {
   preset: ReportPresetId | null;

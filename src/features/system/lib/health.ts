@@ -71,17 +71,12 @@ export function dependencyLabel(key: string): string {
   if (words.length === 0) return "Dependency";
   return words
     .map((word, index) =>
-      index === 0
-        ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        : word.toLowerCase(),
+      index === 0 ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : word.toLowerCase(),
     )
     .join(" ");
 }
 
-export function counterDelta(
-  current: number,
-  first: number | null | undefined,
-): number | null {
+export function counterDelta(current: number, first: number | null | undefined): number | null {
   if (first === null || first === undefined || !Number.isFinite(first)) {
     return null;
   }
@@ -109,10 +104,7 @@ export function counterRate(
 
 export type CounterTrend = "rising" | "steady" | "falling" | "unknown";
 
-export function counterTrend(
-  current: number,
-  previous: number | null | undefined,
-): CounterTrend {
+export function counterTrend(current: number, previous: number | null | undefined): CounterTrend {
   if (previous === null || previous === undefined) return "unknown";
   if (current > previous) return "rising";
   if (current < previous) return "falling";
@@ -148,10 +140,7 @@ export function counterHint({
   if (reset) return "Reset";
   const delta = counterDelta(current, first);
   const elapsed =
-    previousAt !== null &&
-    previousAt !== undefined &&
-    at !== null &&
-    at !== undefined
+    previousAt !== null && previousAt !== undefined && at !== null && at !== undefined
       ? at - previousAt
       : null;
   const rate = counterRate(current, previous, elapsed);
@@ -176,10 +165,7 @@ function dependencyItems(data: SystemHealth): HealthItem[] {
   }));
 }
 
-function lastReportItem(
-  lastDataAt: number | null,
-  now: number,
-): HealthItem {
+function lastReportItem(lastDataAt: number | null, now: number): HealthItem {
   if (lastDataAt === null) {
     return {
       id: "last-report",
@@ -200,21 +186,14 @@ function lastReportItem(
   };
 }
 
-function fleetItems(
-  data: SystemHealth,
-  lastDataAt: number | null,
-  now: number,
-): HealthItem[] {
-  const ratio =
-    data.vehicles > 0 ? Math.min(1, data.online / data.vehicles) : null;
+function fleetItems(data: SystemHealth, lastDataAt: number | null, now: number): HealthItem[] {
+  const ratio = data.vehicles > 0 ? Math.min(1, data.online / data.vehicles) : null;
   return [
     {
       id: "online",
       label: "Online",
       value: `${formatCount(data.online)} of ${formatCount(data.vehicles)}`,
-      ...(ratio === null
-        ? {}
-        : { hint: `${formatPercent(ratio)} of vehicles` }),
+      ...(ratio === null ? {} : { hint: `${formatPercent(ratio)} of vehicles` }),
       tone: "healthy",
     },
     {
@@ -250,8 +229,7 @@ const failureCounters: CounterSpec[] = [
   {
     id: "coldpath-failures",
     label: "Cold-path failures",
-    read: (data) =>
-      data.ingest.coldpath_failed_alerts + data.ingest.coldpath_failed_positions,
+    read: (data) => data.ingest.coldpath_failed_alerts + data.ingest.coldpath_failed_positions,
   },
   {
     id: "redis-errors",
@@ -319,11 +297,7 @@ function coldpathQueueItem(data: SystemHealth, trend: HealthTrend): HealthItem {
   };
 }
 
-function ingestItems(
-  data: SystemHealth,
-  trend: HealthTrend,
-  at: number,
-): HealthItem[] {
+function ingestItems(data: SystemHealth, trend: HealthTrend, at: number): HealthItem[] {
   const receivedFirst = trend.first?.data.ingest.received ?? null;
   return [
     {

@@ -40,9 +40,7 @@ export function useHealthTrend({
     lastSample.current = sample;
 
     setTrend((state) => {
-      const reset =
-        prior !== null &&
-        sample.data.ingest.received < prior.data.ingest.received;
+      const reset = prior !== null && sample.data.ingest.received < prior.data.ingest.received;
       return {
         first: reset ? sample : (state.first ?? sample),
         current: sample,

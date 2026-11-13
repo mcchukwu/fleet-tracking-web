@@ -87,7 +87,8 @@ test.describe("drivers", () => {
     await drawer.getByRole("button", { name: "Close driver details" }).click();
 
     await openDrawer(page, "Adebayo Okafor", "08031000000 · LIC-01000");
-    await page.getByRole("complementary", { name: "Driver details" })
+    await page
+      .getByRole("complementary", { name: "Driver details" })
       .getByRole("button", { name: "Edit driver" })
       .click();
     const deactivateEdit = page.getByRole("dialog", { name: "Edit driver" });
@@ -114,7 +115,9 @@ test.describe("drivers", () => {
     const inactiveDrawer = page.getByRole("complementary", { name: "Driver details" });
     await expect(inactiveDrawer).toContainText("Inactive");
     await expect(inactiveDrawer.getByRole("link", { name: "LSD-100-AA" })).toBeVisible();
-    await expect(inactiveDrawer).toContainText("Inactive drivers keep their current vehicle assignments.");
+    await expect(inactiveDrawer).toContainText(
+      "Inactive drivers keep their current vehicle assignments.",
+    );
 
     await inactiveDrawer.getByRole("button", { name: "Edit driver" }).click();
     const reactivate = page.getByRole("dialog", { name: "Edit driver" });
@@ -122,7 +125,9 @@ test.describe("drivers", () => {
     await reactivate.getByRole("button", { name: "Save changes" }).click();
     await expect(page.getByText("Driver activated.").first()).toBeVisible();
     expect(await lastWrite(page)).toMatchObject({ method: "PATCH", body: { status: "active" } });
-    await expect(page.getByRole("complementary", { name: "Driver details" })).toContainText("Active");
+    await expect(page.getByRole("complementary", { name: "Driver details" })).toContainText(
+      "Active",
+    );
     await page.getByRole("button", { name: "Close driver details" }).click();
 
     await openDrawer(page, "Test Driver Six", "no contact details");
@@ -313,7 +318,9 @@ test.describe("drivers", () => {
 
     await expect(page.getByText("Couldn't refresh")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/Stale ·/)).toBeVisible();
-    await expect(page.getByRole("button", { name: /Open driver Adebayo Okafor/ }).first()).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Open driver Adebayo Okafor/ }).first(),
+    ).toBeVisible();
     await expectNoAxeViolations(page);
   });
 

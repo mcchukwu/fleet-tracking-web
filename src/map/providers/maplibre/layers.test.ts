@@ -18,10 +18,7 @@ function layerIds(layers: ReturnType<typeof vehicleLayers>): string[] {
   return layers.map((layer) => layer.id);
 }
 
-function paintOf(
-  layers: ReturnType<typeof vehicleLayers>,
-  id: string,
-): Record<string, unknown> {
+function paintOf(layers: ReturnType<typeof vehicleLayers>, id: string): Record<string, unknown> {
   const layer = layers.find((candidate) => candidate.id === id);
   if (!layer) throw new Error(`${id} layer is missing`);
   return layer.paint as Record<string, unknown>;
@@ -54,10 +51,7 @@ describe("imagery halos", () => {
 
   it("widens the label halo to 2px on imagery", () => {
     const standard = paintOf(vehicleLayers(tokens), LAYER_IDS.vehicleLabel);
-    const imagery = paintOf(
-      vehicleLayers(tokens, { imagery: true }),
-      LAYER_IDS.vehicleLabel,
-    );
+    const imagery = paintOf(vehicleLayers(tokens, { imagery: true }), LAYER_IDS.vehicleLabel);
 
     expect(standard["text-halo-width"]).toBe(1.5);
     expect(imagery["text-halo-width"]).toBe(2);
@@ -122,12 +116,26 @@ describe("geofence selection and drawing", () => {
     expect(drawCollection(null)).toEqual({ type: "FeatureCollection", features: [] });
     const collection = drawCollection({
       type: "Polygon",
-      coordinates: [[[3.4, 6.4], [3.5, 6.4], [3.5, 6.5], [3.4, 6.4]]],
+      coordinates: [
+        [
+          [3.4, 6.4],
+          [3.5, 6.4],
+          [3.5, 6.5],
+          [3.4, 6.4],
+        ],
+      ],
     });
     expect(collection.features).toHaveLength(1);
     expect(collection.features[0]?.geometry).toEqual({
       type: "Polygon",
-      coordinates: [[[3.4, 6.4], [3.5, 6.4], [3.5, 6.5], [3.4, 6.4]]],
+      coordinates: [
+        [
+          [3.4, 6.4],
+          [3.5, 6.4],
+          [3.5, 6.5],
+          [3.4, 6.4],
+        ],
+      ],
     });
   });
 });
@@ -161,9 +169,7 @@ describe("route anatomy", () => {
     expect(paintOf(layers, LAYER_IDS.routePinEnd)["circle-stroke-color"]).toBe(
       tokens.colors.accent,
     );
-    expect(paintOf(layers, LAYER_IDS.routeCursor)["circle-radius"]).toBe(
-      tokens.route.cursorRadius,
-    );
+    expect(paintOf(layers, LAYER_IDS.routeCursor)["circle-radius"]).toBe(tokens.route.cursorRadius);
   });
 
   it("keeps the cursor above the pins and the pins above the line", () => {

@@ -52,9 +52,7 @@ export function nearestSnap(visible: number, metrics: SheetMetrics): SheetSnap {
     ["full", metrics.full],
   ];
   return candidates.reduce((closest, current) =>
-    Math.abs(current[1] - visible) < Math.abs(closest[1] - visible)
-      ? current
-      : closest,
+    Math.abs(current[1] - visible) < Math.abs(closest[1] - visible) ? current : closest,
   )[0];
 }
 
@@ -70,9 +68,6 @@ export function nextSheetSnap(snap: SheetSnap, direction: 1 | -1): SheetSnap {
   return SNAPS[next] ?? snap;
 }
 
-export function toggleSheetSnap(
-  snap: SheetSnap,
-  previous: Exclude<SheetSnap, "peek">,
-): SheetSnap {
+export function toggleSheetSnap(snap: SheetSnap, previous: Exclude<SheetSnap, "peek">): SheetSnap {
   return snap === "peek" ? previous : "peek";
 }

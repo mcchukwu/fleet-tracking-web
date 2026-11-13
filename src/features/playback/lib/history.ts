@@ -111,8 +111,7 @@ export function cursorAt(
   const current = points[index] ?? first;
   const next = points[index + 1];
   const currentMs = timeOf(current);
-  const inGap =
-    gapAfterIndex.includes(index) && next !== undefined && timeMs > currentMs;
+  const inGap = gapAfterIndex.includes(index) && next !== undefined && timeMs > currentMs;
 
   if (!next || reducedMotion || inGap || next === current) {
     return {

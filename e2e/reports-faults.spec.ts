@@ -43,8 +43,7 @@ function collectErrors(page: Page): string[] {
 
 function unexpectedConsole(errors: string[]): string[] {
   return errors.filter(
-    (text) =>
-      !text.includes("above error occurred") && !text.includes("Failed to load resource"),
+    (text) => !text.includes("above error occurred") && !text.includes("Failed to load resource"),
   );
 }
 
@@ -78,18 +77,13 @@ test.describe("reports faults", () => {
     if ((page.viewportSize()?.width ?? 1440) < 768) {
       await page.getByRole("button", { name: "Open navigation" }).click();
     }
-    await page
-      .getByRole("navigation", { name: "Main" })
-      .getByRole("link", { name: "Map" })
-      .click();
+    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Map" }).click();
     await expect(page).toHaveURL(/\/map/);
     await page.goBack();
 
     await expect(page.getByText("Couldn't refresh")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByTestId("reports-stats")).toBeVisible();
-    await expect(
-      page.getByTestId("reports-stats").getByText("Vehicles"),
-    ).toBeVisible();
+    await expect(page.getByTestId("reports-stats").getByText("Vehicles")).toBeVisible();
     await expect(page.getByText(/Stale ·/)).toBeVisible();
     await expect(page.getByRole("button", { name: "Retry", exact: true })).toBeVisible();
     await captureForReview(page, "10-reports-stale-error");

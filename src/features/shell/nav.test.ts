@@ -9,7 +9,12 @@ const readOnly = ["/map", "/alerts", "/trips", "/drivers", "/geofences", "/repor
 
 describe("navigation by role", () => {
   it("gives an admin every screen", () => {
-    expect(paths("admin")).toEqual([...readOnly.slice(0, 5), "/import", ...readOnly.slice(5), "/audit"]);
+    expect(paths("admin")).toEqual([
+      ...readOnly.slice(0, 5),
+      "/import",
+      ...readOnly.slice(5),
+      "/audit",
+    ]);
   });
 
   it("hides audit from a dispatcher but keeps import", () => {

@@ -1,11 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import {
-  DATA_TABLE_ROW_HEIGHT,
-  DataTable,
-  type DataTableColumn,
-} from "./DataTable";
+import { DATA_TABLE_ROW_HEIGHT, DataTable, type DataTableColumn } from "./DataTable";
 
 interface Row {
   id: string;
@@ -45,18 +41,9 @@ const columns: DataTableColumn<Row>[] = [
 
 describe("DataTable", () => {
   it("renders the header and cells from one column definition", () => {
-    render(
-      <DataTable
-        label="Vehicles"
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => row.id}
-      />,
-    );
+    render(<DataTable label="Vehicles" columns={columns} rows={rows} rowKey={(row) => row.id} />);
 
-    expect(screen.getByRole("table", { name: "Vehicles" })).toHaveClass(
-      "table-fixed",
-    );
+    expect(screen.getByRole("table", { name: "Vehicles" })).toHaveClass("table-fixed");
     expect(screen.getByRole("columnheader", { name: "Plate" })).toHaveAttribute(
       "data-column-id",
       "plate",
@@ -68,35 +55,17 @@ describe("DataTable", () => {
   });
 
   it("keeps text left and measures right", () => {
-    render(
-      <DataTable
-        label="Vehicles"
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => row.id}
-      />,
-    );
+    render(<DataTable label="Vehicles" columns={columns} rows={rows} rowKey={(row) => row.id} />);
 
-    expect(screen.getByRole("columnheader", { name: "Plate" })).toHaveClass(
-      "text-left",
-    );
-    expect(screen.getByRole("columnheader", { name: "Speed" })).toHaveClass(
-      "text-right",
-    );
+    expect(screen.getByRole("columnheader", { name: "Plate" })).toHaveClass("text-left");
+    expect(screen.getByRole("columnheader", { name: "Speed" })).toHaveClass("text-right");
     const speed = screen.getByRole("cell", { name: "62 km/h" });
     expect(speed).toHaveClass("text-right");
     expect(speed).toHaveClass("tabular-nums");
   });
 
   it("uses a fixed row height and a 12px inset in every cell", () => {
-    render(
-      <DataTable
-        label="Vehicles"
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => row.id}
-      />,
-    );
+    render(<DataTable label="Vehicles" columns={columns} rows={rows} rowKey={(row) => row.id} />);
 
     expect(DATA_TABLE_ROW_HEIGHT).toBe(36);
     for (const cell of screen.getAllByRole("cell")) {
@@ -109,40 +78,20 @@ describe("DataTable", () => {
   });
 
   it("truncates by default and keeps the full value in the title", () => {
-    render(
-      <DataTable
-        label="Vehicles"
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => row.id}
-      />,
-    );
+    render(<DataTable label="Vehicles" columns={columns} rows={rows} rowKey={(row) => row.id} />);
 
     const cell = screen.getByRole("cell", { name: "LSD-101-AA" });
     expect(cell).toHaveAttribute("title", "LSD-101-AA");
-    expect(cell.querySelector("[data-cell-content]")).toHaveClass(
-      "overflow-hidden",
-    );
-    expect(cell.querySelector("[data-cell-content]")).toHaveClass(
-      "text-ellipsis",
-    );
-    expect(cell.querySelector("[data-cell-content]")).toHaveClass(
-      "whitespace-nowrap",
-    );
+    expect(cell.querySelector("[data-cell-content]")).toHaveClass("overflow-hidden");
+    expect(cell.querySelector("[data-cell-content]")).toHaveClass("text-ellipsis");
+    expect(cell.querySelector("[data-cell-content]")).toHaveClass("whitespace-nowrap");
   });
 
   it("does not truncate a column that declares truncate false", () => {
     const fullWidth = columns.map((column) =>
       column.id === "plate" ? { ...column, truncate: false } : column,
     );
-    render(
-      <DataTable
-        label="Vehicles"
-        columns={fullWidth}
-        rows={rows}
-        rowKey={(row) => row.id}
-      />,
-    );
+    render(<DataTable label="Vehicles" columns={fullWidth} rows={rows} rowKey={(row) => row.id} />);
 
     const content = screen
       .getByRole("cell", { name: "LSD-101-AA" })
@@ -182,8 +131,6 @@ describe("DataTable", () => {
       />,
     );
 
-    expect(container.querySelectorAll("tbody tr")).toHaveLength(
-      rows.length + 2,
-    );
+    expect(container.querySelectorAll("tbody tr")).toHaveLength(rows.length + 2);
   });
 });

@@ -7,7 +7,13 @@ const fromMs = Date.parse("2026-11-08T14:00:00Z");
 const toMs = Date.parse("2026-11-08T14:10:00Z");
 const points: Point[] = [
   { t: new Date(fromMs).toISOString(), lat: 6.5, lon: 3.4, speed_kph: 40, heading_deg: 90 },
-  { t: new Date(fromMs + 30_000).toISOString(), lat: 6.6, lon: 3.5, speed_kph: 50, heading_deg: 95 },
+  {
+    t: new Date(fromMs + 30_000).toISOString(),
+    lat: 6.6,
+    lon: 3.5,
+    speed_kph: 50,
+    heading_deg: 95,
+  },
 ];
 
 let now = 0;

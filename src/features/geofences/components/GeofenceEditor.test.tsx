@@ -154,7 +154,9 @@ describe("GeofenceEditor", () => {
     const { write } = renderEditor({ drawing });
     await userEvent.type(screen.getByLabelText("Name"), "Bow tie");
     await userEvent.click(screen.getByRole("button", { name: "Create geofence" }));
-    expect(await screen.findByText("The polygon crosses itself. Adjust the points.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("The polygon crosses itself. Adjust the points."),
+    ).toBeInTheDocument();
     expect(write.create).not.toHaveBeenCalled();
   });
 
@@ -199,7 +201,10 @@ describe("GeofenceEditor", () => {
   it("explains a multi-ring geofence and keeps geometry out of the patch", async () => {
     const twice: Geofence = {
       ...geofence,
-      geometry: { type: "Polygon", coordinates: [...geofence.geometry.coordinates, geofence.geometry.coordinates[0] ?? []] },
+      geometry: {
+        type: "Polygon",
+        coordinates: [...geofence.geometry.coordinates, geofence.geometry.coordinates[0] ?? []],
+      },
     };
     render(
       <GeofenceEditor

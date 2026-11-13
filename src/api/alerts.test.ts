@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  alertMessageSchema,
-  alertRuleSchema,
-  parseAlertRules,
-  parseAlerts,
-} from "./alerts";
+import { alertMessageSchema, alertRuleSchema, parseAlertRules, parseAlerts } from "./alerts";
 import { alertsFixture } from "../mocks/fixtures/alerts";
 import { alertRulesFixture } from "../mocks/fixtures/alertRules";
 import { alertFrame, handoffAlertFrame, openApiAlertFrame } from "../mocks/fixtures/live";
@@ -97,9 +92,7 @@ describe("alert rule contract", () => {
   });
 
   it("defaults a missing config to an empty object", () => {
-    expect(
-      alertRuleSchema.parse({ id: "rule-2", type: "idle", enabled: true }).config,
-    ).toEqual({});
+    expect(alertRuleSchema.parse({ id: "rule-2", type: "idle", enabled: true }).config).toEqual({});
   });
 
   it("drops a rule without a boolean enabled flag", () => {

@@ -18,9 +18,16 @@ async function waitForLive(page: Page): Promise<void> {
 
 async function waitForPosition(page: Page, key: string): Promise<void> {
   await expect
-    .poll(() => page.evaluate((vehicle) => window.__FLEET_DEBUG__?.live.positions[vehicle]?.positionAt ?? 0, key), {
-      timeout: 15_000,
-    })
+    .poll(
+      () =>
+        page.evaluate(
+          (vehicle) => window.__FLEET_DEBUG__?.live.positions[vehicle]?.positionAt ?? 0,
+          key,
+        ),
+      {
+        timeout: 15_000,
+      },
+    )
     .toBeGreaterThan(0);
 }
 
@@ -49,15 +56,21 @@ test.describe("live feed", () => {
 
     await liveSocket.send(position("demo-imei-0019", new Date().toISOString()));
     await expect
-      .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.live.positions["demo-imei-0019"]?.lat))
+      .poll(() =>
+        page.evaluate(() => window.__FLEET_DEBUG__?.live.positions["demo-imei-0019"]?.lat),
+      )
       .toBe(6.6);
 
     await liveSocket.send(position("demo-imei-0019", new Date(Date.now() - 60_000).toISOString()));
     await expect
-      .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.live.positions["demo-imei-0019"]?.lat))
+      .poll(() =>
+        page.evaluate(() => window.__FLEET_DEBUG__?.live.positions["demo-imei-0019"]?.lat),
+      )
       .toBe(6.6);
     await expect
-      .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.live.positions["demo-imei-0019"]?.positionAt))
+      .poll(() =>
+        page.evaluate(() => window.__FLEET_DEBUG__?.live.positions["demo-imei-0019"]?.positionAt),
+      )
       .toBeGreaterThan(before);
   });
 
@@ -122,9 +135,7 @@ test.describe("live feed", () => {
     ).toBeAttached();
 
     expect(titleBefore).not.toContain(`(${openBefore + 1})`);
-    await expect
-      .poll(() => page.title(), { timeout: 15_000 })
-      .toContain(`(${openBefore + 1})`);
+    await expect.poll(() => page.title(), { timeout: 15_000 }).toContain(`(${openBefore + 1})`);
     await captureForReview(page, "02-map-alert-toast");
   });
 
@@ -151,7 +162,9 @@ test.describe("live feed", () => {
     }
 
     await expect(page.getByText("12 new alerts").first()).toBeVisible({ timeout: 10_000 });
-    await expect(page.locator('[data-layer-portal="toast"]').getByText("12 new alerts")).toHaveCount(1);
+    await expect(
+      page.locator('[data-layer-portal="toast"]').getByText("12 new alerts"),
+    ).toHaveCount(1);
     await expect(
       page.locator('[aria-live="polite"]').filter({ hasText: "12 new alerts" }).first(),
     ).toBeAttached();
@@ -215,10 +228,7 @@ test.describe("live feed", () => {
     expect(stats?.frameCount ?? 0).toBeGreaterThan((stats?.batchCount ?? 1) * 5);
 
     const longest = await page.evaluate(() =>
-      Math.max(
-        0,
-        ...((window as Window & { __mapLongTasks?: number[] }).__mapLongTasks ?? []),
-      ),
+      Math.max(0, ...((window as Window & { __mapLongTasks?: number[] }).__mapLongTasks ?? [])),
     );
     expect(longest, `longest main-thread task ${longest}ms`).toBeLessThan(500);
   });

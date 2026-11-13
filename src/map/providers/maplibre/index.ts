@@ -1,12 +1,7 @@
 import { normalize } from "../../../errors/normalize";
 import { MapError } from "../../../errors/types";
 import type { StyleSpecification } from "maplibre-gl";
-import {
-  availableMapStyles,
-  mapConfig,
-  mapTilerConfig,
-  type MapTilerConfig,
-} from "../../config";
+import { availableMapStyles, mapConfig, mapTilerConfig, type MapTilerConfig } from "../../config";
 import type {
   Bounds,
   DrawController,
@@ -40,19 +35,10 @@ import {
   vehicleLayers,
   type VehicleFeatureCache,
 } from "./layers";
-import {
-  createTerraDrawController,
-  type DrawContext,
-  type TerraDrawController,
-} from "./draw";
+import { createTerraDrawController, type DrawContext, type TerraDrawController } from "./draw";
 import { routeLineCollection, routePointCollection } from "../../route";
 import { registerPmtilesProtocol } from "./pmtiles";
-import {
-  createMap,
-  type GeoJSONSource,
-  type MapLibreMap,
-  type MapMouseEvent,
-} from "./sdk";
+import { createMap, type GeoJSONSource, type MapLibreMap, type MapMouseEvent } from "./sdk";
 import {
   fallbackStyle,
   isMapTilerStyleId,
@@ -139,10 +125,7 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
   } | null = null;
   let routeDebug = { lineFeatures: 0, pointFeatures: 0, cursor: false };
   let displayed = new Map<string, LngLat>();
-  let glides = new Map<
-    string,
-    { from: LngLat; to: LngLat; startedAt: number; duration: number }
-  >();
+  let glides = new Map<string, { from: LngLat; to: LngLat; startedAt: number; duration: number }>();
   let lastTargets = new Map<string, { position: LngLat; at: number }>();
   let frame: number | null = null;
   let hoveredKey: string | null = null;
@@ -458,11 +441,7 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
       if (instance !== map) return;
       const status = httpStatusOf(event);
       // The free plan pauses at its quota. One fallback, never a retry loop.
-      if (
-        (status === 403 || status === 429) &&
-        isMapTilerStyleId(baseStyle) &&
-        !fallbackInFlight
-      ) {
+      if ((status === 403 || status === 429) && isMapTilerStyleId(baseStyle) && !fallbackInFlight) {
         void fallBackToStandard(baseStyle, "quota");
         return;
       }
@@ -769,8 +748,7 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
       styleState = {
         style: baseStyle,
         status: "ready",
-        attribution:
-          isMapTilerStyleId(baseStyle) && loaded ? loaded.attribution : null,
+        attribution: isMapTilerStyleId(baseStyle) && loaded ? loaded.attribution : null,
         ...(failedStyle ? { failedStyle, reason: failureReason } : {}),
       };
       styleAbort = null;

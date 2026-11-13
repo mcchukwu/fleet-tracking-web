@@ -55,9 +55,7 @@ export function AuditFilters({
           size="sm"
           variant="ghost"
           disabled={!hasFilters}
-          leadingIcon={
-            <RotateCcw aria-hidden="true" className="size-icon-sm" strokeWidth={1.5} />
-          }
+          leadingIcon={<RotateCcw aria-hidden="true" className="size-icon-sm" strokeWidth={1.5} />}
           onClick={onReset}
         >
           Reset

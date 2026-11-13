@@ -39,9 +39,7 @@ describe("ImportPreview", () => {
     expect(screen.getByRole("columnheader", { name: "imei" })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: "plate" })).toBeInTheDocument();
     expect(screen.getByRole("cell", { name: "LSD-100-AA" })).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /copy imei imei-1/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /copy imei imei-1/i })).toBeInTheDocument();
   });
 
   it("shows a blocking preview error as an alert", () => {
@@ -55,9 +53,7 @@ describe("ImportPreview", () => {
         }}
       />,
     );
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "This file has no imei column.",
-    );
+    expect(screen.getByRole("alert")).toHaveTextContent("This file has no imei column.");
   });
 
   it("shows a skeleton after the 200ms delay while parsing", () => {

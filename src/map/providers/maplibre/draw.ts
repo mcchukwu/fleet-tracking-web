@@ -95,8 +95,10 @@ export function createTerraDrawController(context: DrawContext): TerraDrawContro
     const map = context.getMap();
     if (!map) throw new Error("The map is not ready for drawing");
 
-    const [{ TerraDraw, TerraDrawPolygonMode, TerraDrawSelectMode }, { TerraDrawMapLibreGLAdapter }] =
-      await Promise.all([import("terra-draw"), import("terra-draw-maplibre-gl-adapter")]);
+    const [
+      { TerraDraw, TerraDrawPolygonMode, TerraDrawSelectMode },
+      { TerraDrawMapLibreGLAdapter },
+    ] = await Promise.all([import("terra-draw"), import("terra-draw-maplibre-gl-adapter")]);
 
     const adapter = new TerraDrawMapLibreGLAdapter({ map, coordinatePrecision: 9 });
     const styles = tokens ? polygonStyles(tokens) : undefined;

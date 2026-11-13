@@ -6,11 +6,7 @@ import { api } from "../instance";
 import { queryKeys } from "../keys";
 import { useAckAlert } from "./alerts";
 import { useCreateDriver, useUpdateDriver } from "./drivers";
-import {
-  useCreateGeofence,
-  useDeleteGeofence,
-  useUpdateGeofence,
-} from "./geofences";
+import { useCreateGeofence, useDeleteGeofence, useUpdateGeofence } from "./geofences";
 import { useCreateTrip, useUpdateTrip } from "./trips";
 import { useUpdateVehicle } from "./vehicles";
 
@@ -57,7 +53,8 @@ describe("mutation invalidation", () => {
     expect(keys).toContainEqual(queryKeys.systemHealth);
   });
 
-  it("refreshes health after acknowledging an alert", async () => {    vi.spyOn(api, "ackAlert").mockResolvedValue(undefined);
+  it("refreshes health after acknowledging an alert", async () => {
+    vi.spyOn(api, "ackAlert").mockResolvedValue(undefined);
     const queryClient = new QueryClient();
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");
 
@@ -152,7 +149,14 @@ describe("mutation invalidation", () => {
           name: "Gate",
           geometry: {
             type: "Polygon",
-            coordinates: [[[3.4, 6.4], [3.5, 6.4], [3.5, 6.5], [3.4, 6.4]]],
+            coordinates: [
+              [
+                [3.4, 6.4],
+                [3.5, 6.4],
+                [3.5, 6.5],
+                [3.4, 6.4],
+              ],
+            ],
           },
         },
         signal: controller.signal,

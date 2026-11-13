@@ -58,15 +58,11 @@ test.describe("map controls", () => {
 
     const zoomed = (await debugMap(page))?.viewport?.zoom ?? 0;
     await page.getByRole("button", { name: "Zoom out" }).click();
-    await expect
-      .poll(async () => (await debugMap(page))?.viewport?.zoom ?? 0)
-      .toBeLessThan(zoomed);
+    await expect.poll(async () => (await debugMap(page))?.viewport?.zoom ?? 0).toBeLessThan(zoomed);
 
     const fitCount = (await debugMap(page))?.fitCount ?? 0;
     await page.getByRole("button", { name: "Fit the fleet" }).click();
-    await expect
-      .poll(async () => (await debugMap(page))?.fitCount ?? 0)
-      .toBeGreaterThan(fitCount);
+    await expect.poll(async () => (await debugMap(page))?.fitCount ?? 0).toBeGreaterThan(fitCount);
 
     await page.getByRole("button", { name: "Hide geofences" }).click();
     await expect.poll(async () => (await debugMap(page))?.geofenceCount).toBe(0);
@@ -83,16 +79,20 @@ test.describe("map controls", () => {
     await captureForReview(page, "02b-map-controls-desktop");
   });
 
-  test("desktop controls never overlap the KPI, panel or attribution", { tag: "@theme" }, async ({ page }) => {
-    test.skip(isMobile(page), "desktop-only layout");
-    await gotoMap(page);
+  test(
+    "desktop controls never overlap the KPI, panel or attribution",
+    { tag: "@theme" },
+    async ({ page }) => {
+      test.skip(isMobile(page), "desktop-only layout");
+      await gotoMap(page);
 
-    await expectNoOverlap(controls(page), summary(page));
-    await expectNoOverlap(controls(page), sheet(page));
-    await expectNoOverlap(controls(page), attribution(page));
-    await expectNoHorizontalScroll(page);
-    await expectNoAxeViolations(page);
-  });
+      await expectNoOverlap(controls(page), summary(page));
+      await expectNoOverlap(controls(page), sheet(page));
+      await expectNoOverlap(controls(page), attribution(page));
+      await expectNoHorizontalScroll(page);
+      await expectNoAxeViolations(page);
+    },
+  );
 
   test("the real drawer shifts the controls and keeps every panel clear", async ({ page }) => {
     test.skip(isMobile(page), "desktop-only layout");
@@ -125,15 +125,9 @@ test.describe("map controls", () => {
       const controlBox = await controls(page).boundingBox();
       const attributionBox = await attribution(page).boundingBox();
       if (!controlBox || !attributionBox) throw new Error("missing boxes");
-      expect(attributionBox.y).toBeGreaterThanOrEqual(
-        controlBox.y + controlBox.height - 1,
-      );
+      expect(attributionBox.y).toBeGreaterThanOrEqual(controlBox.y + controlBox.height - 1);
       expect(
-        Math.abs(
-          attributionBox.x +
-            attributionBox.width -
-            (controlBox.x + controlBox.width),
-        ),
+        Math.abs(attributionBox.x + attributionBox.width - (controlBox.x + controlBox.width)),
       ).toBeLessThanOrEqual(1);
 
       await expectNoOverlap(controls(page), drawer);
@@ -272,9 +266,7 @@ test.describe("map controls", () => {
       steps: 4,
     });
     await page.mouse.up();
-    await expect
-      .poll(async () => (await sheet(page).boundingBox())?.y ?? 0)
-      .toBe(peek.y);
+    await expect.poll(async () => (await sheet(page).boundingBox())?.y ?? 0).toBe(peek.y);
 
     const handle = page.getByRole("button", { name: /Showing \d+ of \d+/ });
     await handle.focus();
@@ -290,9 +282,7 @@ test.describe("map controls", () => {
       steps: 4,
     });
     await page.mouse.up();
-    await expect
-      .poll(async () => (await sheet(page).boundingBox())?.y ?? 0)
-      .toBe(full.y);
+    await expect.poll(async () => (await sheet(page).boundingBox())?.y ?? 0).toBe(full.y);
   });
 
   test("the sheet header stays inside 360x640 at every snap", async ({ page }) => {
@@ -331,9 +321,7 @@ test.describe("map controls", () => {
     // targets page content, not transient menus. Everything else is scanned.
     await expectNoAxeViolations(page, ["region"]);
     await page.getByRole("menuitemradio", { name: "Satellite" }).click();
-    await expect
-      .poll(async () => (await debugMap(page))?.styleState)
-      .toBe("ready");
+    await expect.poll(async () => (await debugMap(page))?.styleState).toBe("ready");
     await expect.poll(async () => (await debugMap(page))?.activeStyle).toBe("satellite");
     await expect(logo(page)).toBeVisible();
     await expect(attribution(page)).toHaveText("© MapTiler © OpenStreetMap contributors");
@@ -371,115 +359,121 @@ test.describe("map controls", () => {
     await expect.poll(async () => (await debugMap(page))?.baseStyle).toBe("satellite");
   });
 
-  test("logo, credit, controls and sheet never collide for any style", { tag: "@theme" }, async ({ page }) => {
-    for (const label of ["Map", "Streets", "Satellite"] as const) {
+  test(
+    "logo, credit, controls and sheet never collide for any style",
+    { tag: "@theme" },
+    async ({ page }) => {
+      for (const label of ["Map", "Streets", "Satellite"] as const) {
+        await gotoMap(page);
+        await page.getByRole("button", { name: "Map style" }).click();
+        await page.getByRole("menuitemradio", { name: label }).click();
+        await expect.poll(async () => (await debugMap(page))?.styleState).toBe("ready");
+        await page.keyboard.press("Escape");
+
+        await expectNoOverlap(controls(page), attribution(page));
+        await expectNoOverlap(controls(page), summary(page));
+        await expectNoOverlap(attribution(page), summary(page));
+        if (label === "Map") {
+          await expect(logo(page)).toHaveCount(0);
+        } else {
+          await expect(logo(page)).toBeVisible();
+          await expectNoOverlap(logo(page), controls(page));
+          await expectNoOverlap(logo(page), attribution(page));
+          await expectNoOverlap(logo(page), summary(page));
+          if (isMobile(page)) {
+            await expectNoOverlap(logo(page), sheet(page));
+            const sheetBox = await sheet(page).boundingBox();
+            const logoBox = await logo(page).boundingBox();
+            if (!sheetBox || !logoBox) throw new Error("missing boxes");
+            expect(logoBox.y + logoBox.height).toBeLessThanOrEqual(sheetBox.y + 1);
+          }
+        }
+        if (isMobile(page)) {
+          await expectNoOverlap(attribution(page), sheet(page));
+          await expectNoOverlap(controls(page), sheet(page));
+        }
+        if (isMobile(page) && label !== "Map") {
+          const handle = page.getByRole("button", { name: /Showing \d+ of \d+/ });
+          await handle.focus();
+          await page.keyboard.press("End");
+          await page.waitForTimeout(300);
+          await expect(controls(page)).toHaveCSS("opacity", "0");
+          const full = await sheet(page).boundingBox();
+          const logoBox = await logo(page).boundingBox();
+          const creditBox = await attribution(page).boundingBox();
+          if (!full || !logoBox || !creditBox) throw new Error("missing boxes");
+          expect(logoBox.y + logoBox.height).toBeLessThanOrEqual(full.y + 1);
+          expect(creditBox.y + creditBox.height).toBeLessThanOrEqual(full.y + 1);
+          await expect(logo(page)).toBeVisible();
+          await expectNoOverlap(logo(page), sheet(page));
+        }
+        await expectNoAxeViolations(page);
+        await expectNoHorizontalScroll(page);
+        await captureForReview(page, `maptiler-${label.toLowerCase()}`);
+      }
+    },
+  );
+
+  test(
+    "appearance changes theme and accent without closing the menu",
+    { tag: "@theme" },
+    async ({ page, theme }) => {
       await gotoMap(page);
-      await page.getByRole("button", { name: "Map style" }).click();
-      await page.getByRole("menuitemradio", { name: label }).click();
-      await expect.poll(async () => (await debugMap(page))?.styleState).toBe("ready");
+      const stack = controls(page).locator("div").first();
+      const userMenu = page.getByRole("button", { name: "Account menu for Demo Dispatcher" });
+
+      await userMenu.click();
+      const appearance = page.getByRole("group", { name: "Appearance" });
+      await expect(appearance).toBeVisible();
+      const initialMode = theme === "dark" ? "Dark" : "Light";
+      await expect(
+        appearance
+          .getByRole("menuitemradio", { name: initialMode })
+          .getByTestId("menu-item-indicator"),
+      ).toBeVisible();
+      await appearance.getByRole("menuitemradio", { name: "Light" }).click();
+      await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+      await expect(
+        appearance.getByRole("menuitemradio", { name: "Light" }).getByTestId("menu-item-indicator"),
+      ).toBeVisible();
+      await captureForReview(page, "02b-appearance-menu");
+      const light = await stack.evaluate((element) => getComputedStyle(element).backgroundColor);
+
+      await appearance.getByRole("menuitemradio", { name: "Dark" }).click();
+      await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+      const dark = await stack.evaluate((element) => getComputedStyle(element).backgroundColor);
+      expect(dark).not.toBe(light);
+      await expect(page.getByRole("menu")).toBeVisible();
+
+      for (const accent of ["Violet", "Fuchsia", "Graphite", "Blue"] as const) {
+        await appearance.getByRole("menuitemradio", { name: `${accent} accent` }).click();
+        await expect(page.locator("html")).toHaveAttribute("data-accent", accent.toLowerCase());
+      }
+      await captureForReview(page, "02b-appearance-menu");
       await page.keyboard.press("Escape");
 
-      await expectNoOverlap(controls(page), attribution(page));
-      await expectNoOverlap(controls(page), summary(page));
-      await expectNoOverlap(attribution(page), summary(page));
-      if (label === "Map") {
-        await expect(logo(page)).toHaveCount(0);
-      } else {
-        await expect(logo(page)).toBeVisible();
-        await expectNoOverlap(logo(page), controls(page));
-        await expectNoOverlap(logo(page), attribution(page));
-        await expectNoOverlap(logo(page), summary(page));
-        if (isMobile(page)) {
-          await expectNoOverlap(logo(page), sheet(page));
-          const sheetBox = await sheet(page).boundingBox();
-          const logoBox = await logo(page).boundingBox();
-          if (!sheetBox || !logoBox) throw new Error("missing boxes");
-          expect(logoBox.y + logoBox.height).toBeLessThanOrEqual(sheetBox.y + 1);
-        }
-      }
-      if (isMobile(page)) {
-        await expectNoOverlap(attribution(page), sheet(page));
-        await expectNoOverlap(controls(page), sheet(page));
-      }
-      if (isMobile(page) && label !== "Map") {
-        const handle = page.getByRole("button", { name: /Showing \d+ of \d+/ });
-        await handle.focus();
-        await page.keyboard.press("End");
-        await page.waitForTimeout(300);
-        await expect(controls(page)).toHaveCSS("opacity", "0");
-        const full = await sheet(page).boundingBox();
-        const logoBox = await logo(page).boundingBox();
-        const creditBox = await attribution(page).boundingBox();
-        if (!full || !logoBox || !creditBox) throw new Error("missing boxes");
-        expect(logoBox.y + logoBox.height).toBeLessThanOrEqual(full.y + 1);
-        expect(creditBox.y + creditBox.height).toBeLessThanOrEqual(full.y + 1);
-        await expect(logo(page)).toBeVisible();
-        await expectNoOverlap(logo(page), sheet(page));
-      }
-      await expectNoAxeViolations(page);
-      await expectNoHorizontalScroll(page);
-      await captureForReview(page, `maptiler-${label.toLowerCase()}`);
-    }
-  });
-
-  test("appearance changes theme and accent without closing the menu", { tag: "@theme" }, async ({ page, theme }) => {
-    await gotoMap(page);
-    const stack = controls(page).locator("div").first();
-    const userMenu = page.getByRole("button", { name: "Account menu for Demo Dispatcher" });
-
-    await userMenu.click();
-    const appearance = page.getByRole("group", { name: "Appearance" });
-    await expect(appearance).toBeVisible();
-    const initialMode = theme === "dark" ? "Dark" : "Light";
-    await expect(
-      appearance
-        .getByRole("menuitemradio", { name: initialMode })
-        .getByTestId("menu-item-indicator"),
-    ).toBeVisible();
-    await appearance.getByRole("menuitemradio", { name: "Light" }).click();
-    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-    await expect(
-      appearance
-        .getByRole("menuitemradio", { name: "Light" })
-        .getByTestId("menu-item-indicator"),
-    ).toBeVisible();
-    await captureForReview(page, "02b-appearance-menu");
-    const light = await stack.evaluate((element) => getComputedStyle(element).backgroundColor);
-
-    await appearance.getByRole("menuitemradio", { name: "Dark" }).click();
-    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-    const dark = await stack.evaluate((element) => getComputedStyle(element).backgroundColor);
-    expect(dark).not.toBe(light);
-    await expect(page.getByRole("menu")).toBeVisible();
-
-    for (const accent of ["Violet", "Fuchsia", "Graphite", "Blue"] as const) {
-      await appearance.getByRole("menuitemradio", { name: `${accent} accent` }).click();
-      await expect(page.locator("html")).toHaveAttribute("data-accent", accent.toLowerCase());
-    }
-    await captureForReview(page, "02b-appearance-menu");
-    await page.keyboard.press("Escape");
-
-    await page.reload();
-    await expect(page.locator("html")).toHaveAttribute("data-accent", "blue");
-    const prePaint = await page.evaluate(() => {
-      const scripts = Array.from(document.querySelectorAll("script"));
-      const bootstrap = scripts.find(
-        (script) => !script.src && script.textContent?.includes("fleet.accent"),
-      );
-      const app = scripts.find((script) => script.src.includes("/src/main.tsx"));
-      return {
-        bootstrap: Boolean(bootstrap),
-        app: Boolean(app),
-        before:
-          Boolean(bootstrap && app) &&
-          Boolean(
-            bootstrap?.compareDocumentPosition(app as Node) &&
+      await page.reload();
+      await expect(page.locator("html")).toHaveAttribute("data-accent", "blue");
+      const prePaint = await page.evaluate(() => {
+        const scripts = Array.from(document.querySelectorAll("script"));
+        const bootstrap = scripts.find(
+          (script) => !script.src && script.textContent?.includes("fleet.accent"),
+        );
+        const app = scripts.find((script) => script.src.includes("/src/main.tsx"));
+        return {
+          bootstrap: Boolean(bootstrap),
+          app: Boolean(app),
+          before:
+            Boolean(bootstrap && app) &&
+            Boolean(
+              bootstrap?.compareDocumentPosition(app as Node) &&
               bootstrap.compareDocumentPosition(app as Node) & Node.DOCUMENT_POSITION_FOLLOWING,
-          ),
-      };
-    });
-    expect(prePaint).toEqual({ bootstrap: true, app: true, before: true });
-  });
+            ),
+        };
+      });
+      expect(prePaint).toEqual({ bootstrap: true, app: true, before: true });
+    },
+  );
 
   test("the top bar keeps only the logo, connection and user menu", async ({ page }) => {
     await gotoMap(page);

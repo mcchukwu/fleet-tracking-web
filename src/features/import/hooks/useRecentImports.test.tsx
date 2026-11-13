@@ -53,10 +53,7 @@ describe("useRecentImports", () => {
     });
 
     expect(saved).toBe(true);
-    expect(result.current.entries.map((row) => row.jobId)).toEqual([
-      "job-2",
-      "job-1",
-    ]);
+    expect(result.current.entries.map((row) => row.jobId)).toEqual(["job-2", "job-1"]);
     expect(result.current.error).toBeNull();
   });
 

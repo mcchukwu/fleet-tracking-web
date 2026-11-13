@@ -35,7 +35,7 @@ export function MapAttribution({ styleId, attribution, className }: MapAttributi
       rel="noreferrer"
       className={cn(
         classes,
-        "focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring",
+        "focus-visible:outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-0",
       )}
     >
       {credit.label}

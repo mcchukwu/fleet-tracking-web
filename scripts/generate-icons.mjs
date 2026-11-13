@@ -3,10 +3,34 @@ import { mkdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
 const ICONS = [
-  { file: "public/favicon-32.png", size: 32, background: "transparent", colour: "#000000", markWidth: 0.94 },
-  { file: "public/apple-touch-icon.png", size: 180, background: "#09090b", colour: "#ffffff", markWidth: 0.7 },
-  { file: "public/icons/icon-192.png", size: 192, background: "#09090b", colour: "#ffffff", markWidth: 0.72 },
-  { file: "public/icons/icon-512.png", size: 512, background: "#09090b", colour: "#ffffff", markWidth: 0.72 },
+  {
+    file: "public/favicon-32.png",
+    size: 32,
+    background: "transparent",
+    colour: "#000000",
+    markWidth: 0.94,
+  },
+  {
+    file: "public/apple-touch-icon.png",
+    size: 180,
+    background: "#09090b",
+    colour: "#ffffff",
+    markWidth: 0.7,
+  },
+  {
+    file: "public/icons/icon-192.png",
+    size: 192,
+    background: "#09090b",
+    colour: "#ffffff",
+    markWidth: 0.72,
+  },
+  {
+    file: "public/icons/icon-512.png",
+    size: 512,
+    background: "#09090b",
+    colour: "#ffffff",
+    markWidth: 0.72,
+  },
   {
     file: "public/icons/icon-maskable-512.png",
     size: 512,

@@ -57,9 +57,9 @@ describe("useTripWrite", () => {
     expect(create).toHaveBeenCalledWith(input);
     expect(outcome).toEqual({ status: "created" });
     expect(await screen.findByText("Trip created.")).toBeVisible();
-    expect(
-      invalidate.mock.calls.some(([options]) => options?.queryKey?.[0] === "trips"),
-    ).toBe(true);
+    expect(invalidate.mock.calls.some(([options]) => options?.queryKey?.[0] === "trips")).toBe(
+      true,
+    );
   });
 
   it("ignores a second submit while the first is in flight", async () => {

@@ -67,9 +67,7 @@ export function PlaybackScrubber({
   includeDate = false,
   className,
 }: PlaybackScrubberProps) {
-  const inGap = gaps.some(
-    (gap) => playheadMs > gap.startMs && playheadMs < gap.endMs,
-  );
+  const inGap = gaps.some((gap) => playheadMs > gap.startMs && playheadMs < gap.endMs);
   const currentIso = new Date(playheadMs).toISOString();
   const valueText = `${formatPlaybackTime(currentIso, includeDate)}${inGap ? ", no data" : ""}`;
   const laneRef = useRef<HTMLDivElement | null>(null);
@@ -78,8 +76,7 @@ export function PlaybackScrubber({
   const draggingRef = useRef(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
-  const rovingIndex =
-    events.length > 0 ? Math.min(activeIndex, events.length - 1) : -1;
+  const rovingIndex = events.length > 0 ? Math.min(activeIndex, events.length - 1) : -1;
   const preview = previewIndex === null ? null : (events[previewIndex] ?? null);
 
   const seekAt = (clientX: number) => {
@@ -120,10 +117,7 @@ export function PlaybackScrubber({
     if (!lane) return null;
     const rect = lane.getBoundingClientRect();
     if (rect.width <= 0) return null;
-    const percent = Math.min(
-      100,
-      Math.max(0, ((clientX - rect.left) / rect.width) * 100),
-    );
+    const percent = Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100));
     const index = nearestEventIndex(events, percent);
     return index === -1 ? null : { index, event: events[index] };
   };
@@ -153,10 +147,7 @@ export function PlaybackScrubber({
     markerRefs.current[next]?.focus();
   };
 
-  const handleMarkerKeyDown = (
-    event: ReactKeyboardEvent<HTMLButtonElement>,
-    index: number,
-  ) => {
+  const handleMarkerKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
     if (events.length === 0) return;
     if (event.key === "ArrowRight" || event.key === "ArrowDown") {
       event.preventDefault();
@@ -178,10 +169,7 @@ export function PlaybackScrubber({
   };
 
   return (
-    <div
-      data-testid="playback-scrubber"
-      className={cn("flex min-w-0 items-end gap-2", className)}
-    >
+    <div data-testid="playback-scrubber" className={cn("flex min-w-0 items-end gap-2", className)}>
       <span className="h-touch text-muted md:h-control-md flex min-w-14 shrink-0 items-center text-xs tabular-nums">
         {formatPlaybackTime(new Date(fromMs).toISOString(), includeDate)}
       </span>
@@ -223,9 +211,7 @@ export function PlaybackScrubber({
                 aria-hidden="true"
                 className={cn(
                   "group-focus-visible:ring-focus-ring group-focus-visible:ring-offset-surface block bg-current group-focus-visible:ring-2 group-focus-visible:ring-offset-2",
-                  event.severity
-                    ? severityShape[event.severity]
-                    : "size-2 rounded-full",
+                  event.severity ? severityShape[event.severity] : "size-2 rounded-full",
                 )}
               />
             </button>
@@ -273,7 +259,7 @@ export function PlaybackScrubber({
             onMouseDown={(event) => {
               if (!disabled) event.preventDefault();
             }}
-            className="accent-accent relative z-panel h-full w-full cursor-pointer touch-none appearance-none bg-transparent disabled:cursor-not-allowed disabled:opacity-60"
+            className="accent-accent z-panel relative h-full w-full cursor-pointer touch-none appearance-none bg-transparent disabled:cursor-not-allowed disabled:opacity-60"
           />
         </div>
       </div>

@@ -97,7 +97,9 @@ describe("GeofenceList", () => {
     const onSearch = vi.fn();
     renderList({ geofences: [], q: "lekki", state: "empty", onSearch });
     expect(screen.getByText('No geofences match "lekki".')).toBeInTheDocument();
-    await userEvent.click(screen.getAllByRole("button", { name: "Clear search" })[1] as HTMLElement);
+    await userEvent.click(
+      screen.getAllByRole("button", { name: "Clear search" })[1] as HTMLElement,
+    );
     expect(onSearch).toHaveBeenCalledWith("");
   });
 

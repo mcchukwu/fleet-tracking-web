@@ -91,9 +91,9 @@ async function useAdmin(page: Page): Promise<void> {
 
 async function gotoRoute(page: Page, route: RouteCase): Promise<void> {
   await page.goto(route.path);
-  await expect(
-    page.getByRole("heading", { name: route.heading, level: 1 }),
-  ).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("heading", { name: route.heading, level: 1 })).toBeVisible({
+    timeout: 30_000,
+  });
   if (route.map) {
     await expect
       .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.mapLoaded), {
@@ -117,23 +117,18 @@ interface FrameMeasurement {
 async function measureFrame(page: Page): Promise<FrameMeasurement> {
   return page.evaluate(() => {
     const frame = document.querySelector<HTMLElement>("[data-page-frame]");
-    const content = frame?.querySelector<HTMLElement>(
-      "[data-page-frame-content]",
-    );
+    const content = frame?.querySelector<HTMLElement>("[data-page-frame-content]");
     if (!frame || !content) throw new Error("The page frame is missing");
     const contentBox = content.getBoundingClientRect();
     const frameBox = frame.getBoundingClientRect();
     // The last in-flow block defines where the content ends; descendants of a
     // closed <details> still report boxes but are not part of the page.
     const last = content.lastElementChild;
-    const lowestContentBottom = last
-      ? last.getBoundingClientRect().bottom
-      : contentBox.bottom;
+    const lowestContentBottom = last ? last.getBoundingClientRect().bottom : contentBox.bottom;
     return {
       frameHeight: frameBox.height,
       frameBottom: frameBox.bottom,
-      contentPaddingBottom:
-        Number.parseFloat(window.getComputedStyle(content).paddingBottom) || 0,
+      contentPaddingBottom: Number.parseFloat(window.getComputedStyle(content).paddingBottom) || 0,
       contentHeight: contentBox.height,
       overflow: frame.scrollHeight - frame.clientHeight,
       scrollHeight: frame.scrollHeight,
@@ -147,10 +142,7 @@ async function scrollEverything(page: Page): Promise<void> {
   await page.evaluate(() => {
     const frame = document.querySelector<HTMLElement>("[data-page-frame]");
     if (!frame) return;
-    for (const element of [
-      frame,
-      ...frame.querySelectorAll<HTMLElement>("*"),
-    ]) {
+    for (const element of [frame, ...frame.querySelectorAll<HTMLElement>("*")]) {
       if (element.scrollHeight > element.clientHeight + 1) {
         element.scrollTop = element.scrollHeight;
       }
@@ -247,19 +239,16 @@ test.describe("page frames", { tag: "@theme" }, () => {
       await useAdmin(page);
       await page.setViewportSize(viewport);
       await page.goto("/alerts?map=fake&q=zzzz");
-      await expect(
-        page.getByRole("heading", { name: "Alerts", level: 1 }),
-      ).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByRole("heading", { name: "Alerts", level: 1 })).toBeVisible({
+        timeout: 30_000,
+      });
       const frame = await expectPageFrame(page, "fill");
       await expect(page.getByText("No alerts match")).toBeVisible();
 
       const overflow = await frame.evaluate(
         (element) => element.scrollHeight - element.clientHeight,
       );
-      expect(
-        overflow,
-        "the alerts frame clips its empty state",
-      ).toBeLessThanOrEqual(1);
+      expect(overflow, "the alerts frame clips its empty state").toBeLessThanOrEqual(1);
 
       const body = page.getByTestId("alerts-table-body");
       const metrics = await body.evaluate((element) => ({
@@ -281,9 +270,7 @@ test.describe("page frames", { tag: "@theme" }, () => {
     });
   }
 
-  test("the alerts loading skeleton scrolls inside the fill frame at 320x568", async ({
-    page,
-  }) => {
+  test("the alerts loading skeleton scrolls inside the fill frame at 320x568", async ({ page }) => {
     await useAdmin(page);
     await page.setViewportSize({ width: 320, height: 568 });
     await page.goto("/alerts?map=fake&fault=alerts%3Aslow");
@@ -291,13 +278,8 @@ test.describe("page frames", { tag: "@theme" }, () => {
       timeout: 30_000,
     });
     const frame = await expectPageFrame(page, "fill");
-    const overflow = await frame.evaluate(
-      (element) => element.scrollHeight - element.clientHeight,
-    );
-    expect(
-      overflow,
-      "the alerts frame clips its loading skeleton",
-    ).toBeLessThanOrEqual(1);
+    const overflow = await frame.evaluate((element) => element.scrollHeight - element.clientHeight);
+    expect(overflow, "the alerts frame clips its loading skeleton").toBeLessThanOrEqual(1);
     const body = page.getByTestId("alerts-table-body");
     const metrics = await body.evaluate((element) => ({
       clientHeight: element.clientHeight,
@@ -328,25 +310,15 @@ test.describe("page frames", { tag: "@theme" }, () => {
 
   test("the viewport meta opts into the safe area", async ({ page }) => {
     await page.goto("/styleguide");
-    const content = await page
-      .locator('meta[name="viewport"]')
-      .getAttribute("content");
+    const content = await page.locator('meta[name="viewport"]').getAttribute("content");
     expect(content).toContain("viewport-fit=cover");
     await expectPageFrame(page, "scroll");
     await expectLockedDocument(page);
   });
 
-  test("representative routes are axe clean inside their frames", async ({
-    page,
-  }) => {
+  test("representative routes are axe clean inside their frames", async ({ page }) => {
     await useAdmin(page);
-    for (const path of [
-      "/map?map=fake",
-      "/alerts",
-      "/reports",
-      "/styleguide",
-      "/no-such-route",
-    ]) {
+    for (const path of ["/map?map=fake", "/alerts", "/reports", "/styleguide", "/no-such-route"]) {
       await page.goto(path);
       await expect(page.locator("[data-page-frame]")).toBeVisible({
         timeout: 30_000,
@@ -359,13 +331,9 @@ test.describe("page frames", { tag: "@theme" }, () => {
 
   test("sign in is a centred scroll frame", async ({ page }) => {
     await page.goto("/styleguide");
-    await page.evaluate(() =>
-      localStorage.setItem("fleet.mockAuth", "anonymous"),
-    );
+    await page.evaluate(() => localStorage.setItem("fleet.mockAuth", "anonymous"));
     await page.goto("/login");
-    await expect(
-      page.getByRole("heading", { name: "Sign in", level: 1 }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Sign in", level: 1 })).toBeVisible();
     const frame = await expectPageFrame(page, "scroll");
     await expectLockedDocument(page);
     const centred = await page.evaluate(() => {
@@ -375,8 +343,7 @@ test.describe("page frames", { tag: "@theme" }, () => {
       const mainBox = main.getBoundingClientRect();
       const contentBox = content.getBoundingClientRect();
       return Math.abs(
-        (mainBox.top + mainBox.bottom) / 2 -
-          (contentBox.top + contentBox.bottom) / 2,
+        (mainBox.top + mainBox.bottom) / 2 - (contentBox.top + contentBox.bottom) / 2,
       );
     });
     expect(centred).toBeLessThanOrEqual(1);

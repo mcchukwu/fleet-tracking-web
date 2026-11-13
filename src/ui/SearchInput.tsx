@@ -58,13 +58,7 @@ export function SearchInput({
               <IconButton
                 label="Clear search"
                 size="sm"
-                icon={
-                  <X
-                    aria-hidden="true"
-                    className="size-icon-sm"
-                    strokeWidth={1.5}
-                  />
-                }
+                icon={<X aria-hidden="true" className="size-icon-sm" strokeWidth={1.5} />}
                 onClick={() => update("")}
               />
             ) : shortcutHint ? (

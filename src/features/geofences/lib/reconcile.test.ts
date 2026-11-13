@@ -132,18 +132,15 @@ describe("reconcileCreatedGeofence", () => {
 describe("reconcileGeofenceUpdate", () => {
   it("compares every intended field", () => {
     expect(
-      reconcileGeofenceUpdate(
-        [{ ...existing, name: "Lekki Gate", kind: "customer" }],
-        "gf-1",
-        { name: "Lekki Gate", kind: "customer" },
-      ),
+      reconcileGeofenceUpdate([{ ...existing, name: "Lekki Gate", kind: "customer" }], "gf-1", {
+        name: "Lekki Gate",
+        kind: "customer",
+      }),
     ).toBe("saved");
   });
 
   it("reports not saved when a field differs", () => {
-    expect(reconcileGeofenceUpdate([existing], "gf-1", { name: "Lekki Gate" })).toBe(
-      "not_saved",
-    );
+    expect(reconcileGeofenceUpdate([existing], "gf-1", { name: "Lekki Gate" })).toBe("not_saved");
   });
 
   it("reports unknown when the id is absent", () => {
@@ -176,7 +173,11 @@ describe("geofenceWriteCopy", () => {
   it("names the polygon for each validation code", () => {
     expect(
       geofenceWriteCopy(
-        error({ kind: "validation", code: "invalid_geometry", serverMessage: "geometry must be a valid polygon" }),
+        error({
+          kind: "validation",
+          code: "invalid_geometry",
+          serverMessage: "geometry must be a valid polygon",
+        }),
         "create",
       ),
     ).toEqual({
@@ -185,7 +186,11 @@ describe("geofenceWriteCopy", () => {
     });
     expect(
       geofenceWriteCopy(
-        error({ kind: "validation", code: "invalid_kind", serverMessage: "kind must be depot, customer, restricted or other" }),
+        error({
+          kind: "validation",
+          code: "invalid_kind",
+          serverMessage: "kind must be depot, customer, restricted or other",
+        }),
         "update",
       ),
     ).toEqual({
@@ -196,7 +201,14 @@ describe("geofenceWriteCopy", () => {
 
   it("falls back to the catalog for other validation and request errors", () => {
     expect(
-      geofenceWriteCopy(error({ kind: "validation", code: "invalid_request", serverMessage: "name and geometry are required" }), "create").detail,
+      geofenceWriteCopy(
+        error({
+          kind: "validation",
+          code: "invalid_request",
+          serverMessage: "name and geometry are required",
+        }),
+        "create",
+      ).detail,
     ).toBe("name and geometry are required");
   });
 
@@ -217,14 +229,9 @@ describe("geofenceWriteCopy", () => {
   });
 
   it("distinguishes unknown, failed and saved writes", () => {
-    expect(geofenceWriteCopy(error({ kind: "timeout" }), "create").title).toBe(
-      "It wasn't saved.",
-    );
+    expect(geofenceWriteCopy(error({ kind: "timeout" }), "create").title).toBe("It wasn't saved.");
     expect(geofenceWriteCopy(error({ kind: "network" }), "create").detail).toBe("Try again.");
-    const unknown = geofenceWriteCopy(
-      error({ kind: "timeout", outcome: "unknown" }),
-      "update",
-    );
+    const unknown = geofenceWriteCopy(error({ kind: "timeout", outcome: "unknown" }), "update");
     expect(unknown.title).toContain("couldn't confirm");
     expect(unknown.detail).toContain("Check the geofences list");
   });
@@ -261,9 +268,7 @@ describe("geofenceDeleteCopy", () => {
   });
 
   it("distinguishes unknown, failed and conflict outcomes", () => {
-    expect(geofenceDeleteCopy(error({ kind: "network" })).title).toBe(
-      "It wasn't deleted.",
-    );
+    expect(geofenceDeleteCopy(error({ kind: "network" })).title).toBe("It wasn't deleted.");
     const unknown = geofenceDeleteCopy(error({ kind: "timeout", outcome: "unknown" }));
     expect(unknown.title).toContain("couldn't confirm");
     expect(unknown.detail).toContain("Check the geofences list");

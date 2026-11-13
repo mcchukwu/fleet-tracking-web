@@ -55,12 +55,7 @@ async function installStyleMock(page: Page, options: StyleOptions = {}): Promise
 
     const original = window.fetch.bind(window);
     window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url =
-        typeof input === "string"
-          ? input
-          : input instanceof URL
-            ? input.href
-            : input.url;
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
       if (!next.realStyles && url.startsWith("https://styles.test/")) {
         return new Response(JSON.stringify(standard(url.includes("dark"))), {
           status: 200,
@@ -74,7 +69,9 @@ async function installStyleMock(page: Page, options: StyleOptions = {}): Promise
           await new Promise((resolve) => setTimeout(resolve, 900));
         }
         return new Response(
-          JSON.stringify(hosted(url.includes("streets-v4-dark") ? "streets-dark" : "streets-light")),
+          JSON.stringify(
+            hosted(url.includes("streets-v4-dark") ? "streets-dark" : "streets-light"),
+          ),
           { status: 200, headers: { "content-type": "application/json" } },
         );
       }
@@ -243,9 +240,7 @@ test.describe("MapTiler review screenshots", { tag: "@theme" }, () => {
         zoom,
       );
       await page.waitForTimeout(250);
-      await expect
-        .poll(async () => (await debugMap(page))?.viewport?.zoom)
-        .toBeCloseTo(zoom, 3);
+      await expect.poll(async () => (await debugMap(page))?.viewport?.zoom).toBeCloseTo(zoom, 3);
       await captureForReview(page, `maptiler-satellite-z${zoom}`);
     }
 

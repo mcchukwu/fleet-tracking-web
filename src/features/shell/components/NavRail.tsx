@@ -16,7 +16,7 @@ export function NavRail() {
     <nav
       aria-label="Main"
       className={cn(
-        "hidden shrink-0 flex-col border-r border-border bg-surface md:flex",
+        "border-border bg-surface hidden shrink-0 flex-col border-r md:flex",
         expanded ? "w-rail-expanded" : "w-rail",
       )}
     >
@@ -28,7 +28,7 @@ export function NavRail() {
               to={item.to}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex h-control-lg items-center gap-2 rounded-md text-sm transition-colors duration-100 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring",
+                "h-control-lg focus-visible:outline-focus-ring flex items-center gap-2 rounded-md text-sm transition-colors duration-100 focus-visible:outline-2 focus-visible:outline-offset-0",
                 expanded ? "px-2" : "justify-center",
                 active
                   ? "bg-accent-soft text-accent-fg"
@@ -42,13 +42,19 @@ export function NavRail() {
 
           return (
             <li key={item.to}>
-              {expanded ? link : <Tooltip label={item.label} side="right">{link}</Tooltip>}
+              {expanded ? (
+                link
+              ) : (
+                <Tooltip label={item.label} side="right">
+                  {link}
+                </Tooltip>
+              )}
             </li>
           );
         })}
       </ul>
 
-      <div className="border-t border-border p-2">
+      <div className="border-border border-t p-2">
         <Tooltip label={expanded ? "Collapse navigation" : "Expand navigation"} side="right">
           <button
             type="button"
@@ -56,7 +62,7 @@ export function NavRail() {
             aria-expanded={expanded}
             onClick={() => setExpanded((open) => !open)}
             className={cn(
-              "flex h-control-lg items-center gap-2 rounded-md text-muted hover:bg-surface-2 hover:text-text focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring",
+              "h-control-lg text-muted hover:bg-surface-2 hover:text-text focus-visible:outline-focus-ring flex items-center gap-2 rounded-md focus-visible:outline-2 focus-visible:outline-offset-0",
               expanded ? "w-full px-2" : "w-full justify-center",
             )}
           >

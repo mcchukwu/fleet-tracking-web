@@ -190,13 +190,7 @@ describe("Combobox popover", () => {
     const user = userEvent.setup();
     const onRetry = vi.fn();
     const { rerender } = render(
-      <Combobox
-        label="Driver"
-        items={[]}
-        value={null}
-        onChange={() => undefined}
-        loading
-      />,
+      <Combobox label="Driver" items={[]} value={null} onChange={() => undefined} loading />,
     );
     await user.click(screen.getByRole("combobox", { name: "Driver" }));
     expect(screen.getByText("Loading options…")).toBeVisible();
@@ -211,9 +205,7 @@ describe("Combobox popover", () => {
         onRetry={onRetry}
       />,
     );
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Couldn't load drivers.",
-    );
+    expect(screen.getByRole("alert")).toHaveTextContent("Couldn't load drivers.");
     await user.click(screen.getByRole("button", { name: "Retry" }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
@@ -234,9 +226,7 @@ describe("Combobox popover", () => {
     );
     await user.click(screen.getByRole("combobox", { name: "Driver" }));
     expect(screen.getAllByRole("option")).toHaveLength(3);
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Couldn't refresh drivers.",
-    );
+    expect(screen.getByRole("alert")).toHaveTextContent("Couldn't refresh drivers.");
     await user.click(screen.getByRole("button", { name: "Retry" }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
@@ -287,9 +277,7 @@ describe("Combobox sheet", () => {
 
     await user.click(screen.getByRole("option", { name: /Chinedu Musa/ }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: "Driver" })).toHaveValue(
-      "Chinedu Musa",
-    );
+    expect(screen.getByRole("combobox", { name: "Driver" })).toHaveValue("Chinedu Musa");
   });
 
   it("closes on the close button and on Escape", async () => {
@@ -315,9 +303,7 @@ describe("Combobox sheet", () => {
     await user.click(screen.getByRole("combobox", { name: "Driver" }));
 
     const dialog = screen.getByRole("dialog", { name: "Driver" });
-    await user.click(
-      within(dialog).getByRole("option", { name: "Clear selection" }),
-    );
+    await user.click(within(dialog).getByRole("option", { name: "Clear selection" }));
     expect(onClear).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
@@ -338,9 +324,7 @@ describe("Combobox sheet", () => {
     );
     await user.click(screen.getByRole("combobox", { name: "Driver" }));
     const dialog = screen.getByRole("dialog", { name: "Driver" });
-    expect(within(dialog).getByRole("alert")).toHaveTextContent(
-      "Couldn't load drivers.",
-    );
+    expect(within(dialog).getByRole("alert")).toHaveTextContent("Couldn't load drivers.");
     await user.click(within(dialog).getByRole("button", { name: "Retry" }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });

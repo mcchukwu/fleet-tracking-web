@@ -17,16 +17,10 @@ function isMobile(page: Page): boolean {
 
 async function startAnonymous(page: Page): Promise<void> {
   await page.goto("/styleguide");
-  await page.evaluate(() =>
-    localStorage.setItem("fleet.mockAuth", "anonymous"),
-  );
+  await page.evaluate(() => localStorage.setItem("fleet.mockAuth", "anonymous"));
 }
 
-async function signIn(
-  page: Page,
-  email = "dispatcher@demo.ftb",
-  password = PASSWORD,
-) {
+async function signIn(page: Page, email = "dispatcher@demo.ftb", password = PASSWORD) {
   await page.getByLabel("Email", { exact: true }).fill(email);
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
@@ -38,16 +32,12 @@ test.describe("login", () => {
     { tag: "@theme" },
     async ({ page, theme }) => {
       await startAnonymous(page);
-      await page.goto(
-        "/map?v=4324a768-9b14-4223-a299-eb8da4d8d309&status=moving",
-      );
+      await page.goto("/map?v=4324a768-9b14-4223-a299-eb8da4d8d309&status=moving");
 
       await expect(page).toHaveURL(
         /\/login\?redirect=%2Fmap%3Fv%3D4324a768-9b14-4223-a299-eb8da4d8d309%26status%3Dmoving$/,
       );
-      await expect(
-        page.getByRole("heading", { name: "Sign in" }),
-      ).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
       await expect(page).toHaveTitle("Sign in · Fleet Console");
       await expectTheme(page, theme);
       await expectNoHorizontalScroll(page);
@@ -67,16 +57,12 @@ test.describe("login", () => {
     const alert = page.getByRole("alert");
     await expect(alert).toContainText("Email or password is incorrect.");
     await expect(alert).not.toContainText("session expired");
-    await expect(page.getByLabel("Email", { exact: true })).toHaveValue(
-      "dispatcher@demo.ftb",
-    );
+    await expect(page.getByLabel("Email", { exact: true })).toHaveValue("dispatcher@demo.ftb");
     await expect(page.getByLabel("Password", { exact: true })).toHaveValue("");
 
     const errorFocused = await page.evaluate(() => {
       const alertElement = document.querySelector('[role="alert"]');
-      return alertElement
-        ? (document.activeElement?.contains(alertElement) ?? false)
-        : false;
+      return alertElement ? (document.activeElement?.contains(alertElement) ?? false) : false;
     });
     expect(errorFocused).toBe(true);
     await expectFocusVisible(page.getByRole("alert").locator(".."));
@@ -84,36 +70,24 @@ test.describe("login", () => {
     await captureForReview(page, "01-login-invalid");
   });
 
-  test("a malformed or repeated redirect still opens the form", async ({
-    page,
-  }) => {
+  test("a malformed or repeated redirect still opens the form", async ({ page }) => {
     await startAnonymous(page);
     await page.goto("/login?redirect=/map&redirect=/alerts");
 
     await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
-    await expect(
-      page.getByText("This part of the page stopped working"),
-    ).toHaveCount(0);
+    await expect(page.getByText("This part of the page stopped working")).toHaveCount(0);
   });
 
-  test("a correct password returns to the requested route", async ({
-    page,
-  }) => {
+  test("a correct password returns to the requested route", async ({ page }) => {
     await startAnonymous(page);
-    await page.goto(
-      "/map?v=4324a768-9b14-4223-a299-eb8da4d8d309&status=moving",
-    );
+    await page.goto("/map?v=4324a768-9b14-4223-a299-eb8da4d8d309&status=moving");
     await signIn(page);
 
-    await expect(page).toHaveURL(
-      /\/map\?v=4324a768-9b14-4223-a299-eb8da4d8d309&status=moving$/,
-    );
+    await expect(page).toHaveURL(/\/map\?v=4324a768-9b14-4223-a299-eb8da4d8d309&status=moving$/);
     await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
   });
 
-  test("a reload restores the session instead of flashing the login screen", async ({
-    page,
-  }) => {
+  test("a reload restores the session instead of flashing the login screen", async ({ page }) => {
     await startAnonymous(page);
     await page.goto("/map");
     await signIn(page);
@@ -140,21 +114,15 @@ test.describe("login", () => {
     await captureForReview(page, "01-login-rate-limited");
   });
 
-  test("a network failure can be retried after the connection returns", async ({
-    page,
-  }) => {
+  test("a network failure can be retried after the connection returns", async ({ page }) => {
     await startAnonymous(page);
     await page.goto("/login?fault=login:network");
     await signIn(page);
 
     // A failed fetch marks the connection offline (Slice 13), so the form is
     // gated with the honest offline copy rather than a request error.
-    await expect(
-      page.getByText("You're offline. Reconnect to sign in.").first(),
-    ).toBeVisible();
-    await expect(page.getByLabel("Password", { exact: true })).toHaveValue(
-      PASSWORD,
-    );
+    await expect(page.getByText("You're offline. Reconnect to sign in.").first()).toBeVisible();
+    await expect(page.getByLabel("Password", { exact: true })).toHaveValue(PASSWORD);
 
     await page.evaluate(() => history.replaceState({}, "", "/login"));
     await page.evaluate(() => window.dispatchEvent(new Event("online")));
@@ -188,9 +156,7 @@ test.describe("login", () => {
     });
     await page.goto("/login");
 
-    await expect(
-      page.getByText("You're offline. Reconnect to sign in."),
-    ).toBeVisible();
+    await expect(page.getByText("You're offline. Reconnect to sign in.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Sign in" })).toBeDisabled();
     await expectNoAxeViolations(page);
     await captureForReview(page, "01-login-offline");

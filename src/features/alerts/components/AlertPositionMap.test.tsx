@@ -34,7 +34,10 @@ const geofence: Geofence = {
   },
 };
 
-function renderMap(state: Parameters<typeof AlertPositionMap>[0]["state"], adapter = new FakeAdapter()) {
+function renderMap(
+  state: Parameters<typeof AlertPositionMap>[0]["state"],
+  adapter = new FakeAdapter(),
+) {
   render(
     <ThemeProvider>
       <AlertPositionMap

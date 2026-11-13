@@ -61,8 +61,20 @@ describe("map filters", () => {
   it("combines query, status and depot filters", () => {
     const rows = [
       row(),
-      row({ id: "uuid-2", key: "demo-imei-0002", plate: "LSD-101-AA", status: "idle", depot: "Apapa Depot" }),
-      row({ id: "uuid-3", key: "demo-imei-0003", plate: "TEST-101-AA", status: "offline", depot: "Lekki Depot" }),
+      row({
+        id: "uuid-2",
+        key: "demo-imei-0002",
+        plate: "LSD-101-AA",
+        status: "idle",
+        depot: "Apapa Depot",
+      }),
+      row({
+        id: "uuid-3",
+        key: "demo-imei-0003",
+        plate: "TEST-101-AA",
+        status: "offline",
+        depot: "Lekki Depot",
+      }),
     ];
 
     expect(filterRows(rows, { ...baseFilters, statuses: ["moving"] })).toHaveLength(1);
@@ -75,7 +87,13 @@ describe("map filters", () => {
       row({ lat: null, lon: null }),
       row({ id: "uuid-2", key: "demo-imei-0002", lat: 6.5, lon: 3.4 }),
     ];
-    expect(filterRows(rows, { ...baseFilters, onlyInView: true }, { south: 6, west: 3, north: 7, east: 4 })).toHaveLength(1);
+    expect(
+      filterRows(
+        rows,
+        { ...baseFilters, onlyInView: true },
+        { south: 6, west: 3, north: 7, east: 4 },
+      ),
+    ).toHaveLength(1);
   });
 
   it("sorts by plate, last seen and status with missing values last", () => {

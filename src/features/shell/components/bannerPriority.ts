@@ -1,10 +1,5 @@
 export type BannerKind =
-  | "session-expired"
-  | "offline"
-  | "unavailable"
-  | "storm"
-  | "reconnecting"
-  | "update";
+  "session-expired" | "offline" | "unavailable" | "storm" | "reconnecting" | "update";
 
 /**
  * One banner slot, highest first. Session expiry is blocking, so its banner is
@@ -19,9 +14,7 @@ export const BANNER_PRIORITY: readonly BannerKind[] = [
   "update",
 ];
 
-export function highestPriorityBanner(
-  present: Iterable<BannerKind>,
-): BannerKind | null {
+export function highestPriorityBanner(present: Iterable<BannerKind>): BannerKind | null {
   const candidates = new Set(present);
   return BANNER_PRIORITY.find((kind) => candidates.has(kind)) ?? null;
 }

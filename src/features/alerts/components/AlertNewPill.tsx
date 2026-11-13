@@ -7,7 +7,7 @@ export interface AlertNewPillProps {
 export function AlertNewPill({ count, onReveal }: AlertNewPillProps) {
   if (count <= 0) return null;
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-3 z-map-controls flex justify-center">
+    <div className="z-map-controls pointer-events-none absolute inset-x-0 bottom-3 flex justify-center">
       <button
         type="button"
         onClick={onReveal}

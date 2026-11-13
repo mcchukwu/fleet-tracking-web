@@ -84,9 +84,9 @@ describe("driver form", () => {
 
   it("changes status only when it differs", () => {
     expect(diffDriver(driver, editValues({ status: "inactive" }))).toEqual({ status: "inactive" });
-    expect(diffDriver({ ...driver, status: "suspended" }, editValues({ status: "suspended" }))).toEqual(
-      {},
-    );
+    expect(
+      diffDriver({ ...driver, status: "suspended" }, editValues({ status: "suspended" })),
+    ).toEqual({});
   });
 
   it("knows when the diff is empty", () => {
@@ -102,10 +102,7 @@ describe("driver form", () => {
     expect(requiresDeactivationConfirmation(driver, { phone: "" })).toBe(false);
     expect(requiresDeactivationConfirmation(driver, { status: "active" })).toBe(false);
     expect(
-      requiresDeactivationConfirmation(
-        { ...driver, status: "inactive" },
-        { status: "inactive" },
-      ),
+      requiresDeactivationConfirmation({ ...driver, status: "inactive" }, { status: "inactive" }),
     ).toBe(false);
   });
 });

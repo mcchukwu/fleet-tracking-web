@@ -9,12 +9,7 @@ export interface ChangeVehicleDialogProps {
   onClose: () => void;
 }
 
-export function ChangeVehicleDialog({
-  open,
-  value,
-  onChange,
-  onClose,
-}: ChangeVehicleDialogProps) {
+export function ChangeVehicleDialog({ open, value, onChange, onClose }: ChangeVehicleDialogProps) {
   return (
     <Dialog
       open={open}

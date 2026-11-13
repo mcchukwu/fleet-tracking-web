@@ -114,7 +114,9 @@ function applyNetwork(next: NetworkState): void {
   setReportedOnline(after === "online");
   if (after === before) return;
   if (typeof window !== "undefined") {
-    window.dispatchEvent(new CustomEvent("fleet:connectivity", { detail: { online: after === "online" } }));
+    window.dispatchEvent(
+      new CustomEvent("fleet:connectivity", { detail: { online: after === "online" } }),
+    );
   }
 }
 
@@ -195,7 +197,10 @@ export function createConnectivity(options: ConnectivityOptions = {}): Connectiv
   };
 
   const handleVisibility = () => {
-    if (document.visibilityState === "visible" && useConnectionStore.getState().network === "offline") {
+    if (
+      document.visibilityState === "visible" &&
+      useConnectionStore.getState().network === "offline"
+    ) {
       void probeNow();
     }
   };

@@ -90,9 +90,7 @@ describe("useAlertPosition", () => {
   });
 
   it("does not pretend to know an invalid alert time", () => {
-    const { result } = renderHook(() =>
-      useAlertPosition(alert({ occurred_at: "not-a-date" }), []),
-    );
+    const { result } = renderHook(() => useAlertPosition(alert({ occurred_at: "not-a-date" }), []));
     expect(result.current.state).toEqual({ status: "unavailable" });
   });
 });

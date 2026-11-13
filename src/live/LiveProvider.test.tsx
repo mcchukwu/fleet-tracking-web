@@ -191,7 +191,9 @@ describe("LiveProvider", () => {
       if (index === 5) await new Promise((resolve) => setTimeout(resolve, 30));
     }
 
-    expect(await screen.findByText("12 new alerts", undefined, { timeout: 3_000 })).toBeInTheDocument();
+    expect(
+      await screen.findByText("12 new alerts", undefined, { timeout: 3_000 }),
+    ).toBeInTheDocument();
     expect(screen.getAllByText("12 new alerts")).toHaveLength(1);
   });
 
@@ -200,29 +202,25 @@ describe("LiveProvider", () => {
     socket.send(alert("demo-imei-0001", 0, "critical"));
 
     await waitFor(() => {
-      expect(document.querySelector('[aria-live="assertive"]')?.textContent).toContain(
-        "Speeding",
-      );
-      expect(screen.getByText("Speeding").closest("li")?.querySelector(".text-danger")).not.toBeNull();
+      expect(document.querySelector('[aria-live="assertive"]')?.textContent).toContain("Speeding");
+      expect(
+        screen.getByText("Speeding").closest("li")?.querySelector(".text-danger"),
+      ).not.toBeNull();
     });
   });
 
-  it(
-    "throttles alert announcements to one per five seconds",
-    async () => {
-      const socket = await start();
+  it("throttles alert announcements to one per five seconds", async () => {
+    const socket = await start();
 
-      socket.send(alert("demo-imei-0001", 0, "high", "speeding"));
-      expect(await screen.findByText("Speeding")).toBeInTheDocument();
+    socket.send(alert("demo-imei-0001", 0, "high", "speeding"));
+    expect(await screen.findByText("Speeding")).toBeInTheDocument();
 
-      socket.send(alert("demo-imei-0002", 1, "high", "idle"));
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      expect(screen.queryByText("Idle")).not.toBeInTheDocument();
+    socket.send(alert("demo-imei-0002", 1, "high", "idle"));
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    expect(screen.queryByText("Idle")).not.toBeInTheDocument();
 
-      expect(await screen.findByText("Idle", undefined, { timeout: 6_000 })).toBeInTheDocument();
-    },
-    12_000,
-  );
+    expect(await screen.findByText("Idle", undefined, { timeout: 6_000 })).toBeInTheDocument();
+  }, 12_000);
 
   it("stops the socket when the session expires", async () => {
     const socket = await start();

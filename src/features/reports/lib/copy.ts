@@ -1,6 +1,5 @@
 export const reportsCopy = {
-  rangeNote:
-    "Trip and alert numbers cover the selected range; the links open the full lists.",
+  rangeNote: "Trip and alert numbers cover the selected range; the links open the full lists.",
   loadingCancelled: "Loading cancelled",
   invalidRange: {
     title: "That range isn't valid",
@@ -19,6 +18,5 @@ export const reportsCopy = {
     title: "No alerts in this range",
     description: "Nothing was raised during this period.",
   },
-  breakdownUnavailable:
-    "The alert breakdown isn't available for this range.",
+  breakdownUnavailable: "The alert breakdown isn't available for this range.",
 } as const;

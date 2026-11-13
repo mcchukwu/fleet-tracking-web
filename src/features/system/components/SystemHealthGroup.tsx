@@ -1,8 +1,5 @@
 import { cn } from "../../../ui/cn";
-import {
-  HEALTH_GROUP_COLUMNS,
-  type HealthGroupId,
-} from "../lib/constants";
+import { HEALTH_GROUP_COLUMNS, type HealthGroupId } from "../lib/constants";
 import type { HealthItem } from "../lib/health";
 import { SystemHealthItem } from "./SystemHealthItem";
 
@@ -23,11 +20,7 @@ export function SystemHealthGroup({
 }: SystemHealthGroupProps) {
   const headingId = `health-${id}`;
   return (
-    <section
-      aria-labelledby={headingId}
-      data-health-group={id}
-      className="flex flex-col gap-2"
-    >
+    <section aria-labelledby={headingId} data-health-group={id} className="flex flex-col gap-2">
       <div className="flex flex-col gap-0.5">
         <h2 id={headingId} className="text-text text-sm font-semibold">
           {title}
@@ -48,11 +41,7 @@ export function SystemHealthGroup({
           )}
         >
           {items.map((item) => (
-            <SystemHealthItem
-              key={item.id}
-              item={item}
-              size={id === "ingest" ? "sm" : "md"}
-            />
+            <SystemHealthItem key={item.id} item={item} size={id === "ingest" ? "sm" : "md"} />
           ))}
         </ul>
       )}

@@ -21,11 +21,7 @@ function activatesNatively(target: EventTarget | null): boolean {
   return target.closest('button, a, [role="button"], [role="link"]') !== null;
 }
 
-export function usePlaybackShortcuts({
-  onToggle,
-  onStep,
-  onSpeed,
-}: PlaybackShortcutActions): void {
+export function usePlaybackShortcuts({ onToggle, onStep, onSpeed }: PlaybackShortcutActions): void {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;

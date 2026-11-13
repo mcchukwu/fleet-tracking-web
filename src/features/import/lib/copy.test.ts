@@ -18,9 +18,7 @@ describe("import copy", () => {
     expect(previewIssueCopy("wrong-type").title).toBe("Choose a .csv file.");
     expect(previewIssueCopy("empty-file").title).toBe("This file is empty.");
     expect(previewIssueCopy("no-data-rows").title).toBe("This file has no data rows.");
-    expect(previewIssueCopy("missing-imei").title).toBe(
-      "This file has no imei column.",
-    );
+    expect(previewIssueCopy("missing-imei").title).toBe("This file has no imei column.");
     expect(previewIssueCopy("unreadable").title).toBe("Couldn't read this file.");
     for (const issue of [
       "wrong-type",
@@ -34,21 +32,15 @@ describe("import copy", () => {
   });
 
   it("summarises clean, partial and zero imports", () => {
-    expect(resultSentence({ total: 2, imported: 2, failed: 0 })).toBe(
-      "2 vehicles imported.",
-    );
-    expect(resultSentence({ total: 1, imported: 1, failed: 0 })).toBe(
-      "1 vehicle imported.",
-    );
+    expect(resultSentence({ total: 2, imported: 2, failed: 0 })).toBe("2 vehicles imported.");
+    expect(resultSentence({ total: 1, imported: 1, failed: 0 })).toBe("1 vehicle imported.");
     expect(resultSentence({ total: 12, imported: 10, failed: 2 })).toBe(
       "10 vehicles imported, 2 rows failed.",
     );
     expect(resultSentence({ total: 3, imported: 0, failed: 3 })).toBe(
       "No vehicles imported. 3 rows failed.",
     );
-    expect(resultSentence({ total: 0, imported: 0, failed: 0 })).toBe(
-      "No rows to import.",
-    );
+    expect(resultSentence({ total: 0, imported: 0, failed: 0 })).toBe("No rows to import.");
   });
 
   it("uses the allowlisted invalid_csv server message", () => {
@@ -80,9 +72,7 @@ describe("import copy", () => {
 
   it("treats an uncertain outcome as safe to upload again", () => {
     for (const kind of ["network", "timeout"] as const) {
-      const copy = importFailureCopy(
-        error({ kind, outcome: "unknown", retryable: true }),
-      );
+      const copy = importFailureCopy(error({ kind, outcome: "unknown", retryable: true }));
       expect(copy.title).toBe("We couldn't confirm the import");
       expect(copy.detail).toBe("It's safe to upload again.");
     }
@@ -92,9 +82,9 @@ describe("import copy", () => {
     expect(importFailureCopy(error({ kind: "forbidden", status: 403 })).title).toBe(
       "Your role can't import vehicles.",
     );
-    expect(
-      importFailureCopy(error({ kind: "unauthenticated", status: 401 })).title,
-    ).toBe("Your session expired.");
+    expect(importFailureCopy(error({ kind: "unauthenticated", status: 401 })).title).toBe(
+      "Your session expired.",
+    );
   });
 
   it("falls back to catalog copy without raw server text", () => {
@@ -108,15 +98,11 @@ describe("import copy", () => {
     expect(server.title).toBe("Something went wrong on our side");
     expect(server.detail).not.toContain("panic");
 
-    const contract = importFailureCopy(
-      error({ kind: "contract", retryable: true }),
-    );
+    const contract = importFailureCopy(error({ kind: "contract", retryable: true }));
     expect(contract.title).toBe("Unexpected response from the server");
   });
 
   it("never treats a cancelled upload as an error", () => {
-    expect(importFailureCopy(error({ kind: "aborted" })).title).toBe(
-      "Upload cancelled",
-    );
+    expect(importFailureCopy(error({ kind: "aborted" })).title).toBe("Upload cancelled");
   });
 });

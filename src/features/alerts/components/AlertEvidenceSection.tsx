@@ -12,7 +12,7 @@ export function AlertEvidenceSection({ evidence }: AlertEvidenceSectionProps) {
   return (
     <section aria-labelledby="alert-evidence-heading" className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
-        <h3 id="alert-evidence-heading" className="text-sm font-medium text-text">
+        <h3 id="alert-evidence-heading" className="text-text text-sm font-medium">
           Evidence
         </h3>
         {hasEvidence ? (
@@ -20,7 +20,7 @@ export function AlertEvidenceSection({ evidence }: AlertEvidenceSectionProps) {
             type="button"
             aria-pressed={raw}
             onClick={() => setRaw((value) => !value)}
-            className="h-touch rounded-sm px-2 text-xs font-medium text-accent-fg hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:h-control-sm"
+            className="h-touch text-accent-fg hover:bg-surface-2 focus-visible:outline-focus-ring md:h-control-sm rounded-sm px-2 text-xs font-medium focus-visible:outline-2 focus-visible:outline-offset-0"
           >
             {raw ? "Readable view" : "Raw JSON"}
           </button>
@@ -28,7 +28,7 @@ export function AlertEvidenceSection({ evidence }: AlertEvidenceSectionProps) {
       </div>
 
       {raw ? (
-        <pre className="max-h-64 overflow-auto rounded-md border border-border bg-surface-2 p-3 font-mono text-xs text-text">
+        <pre className="border-border bg-surface-2 text-text max-h-64 overflow-auto rounded-md border p-3 font-mono text-xs">
           {JSON.stringify(evidence, null, 2)}
         </pre>
       ) : (

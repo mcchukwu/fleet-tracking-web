@@ -62,10 +62,7 @@ describe("VehicleActions", () => {
 
   it("marks edits and assignments offline", () => {
     renderActions({ canMutate: false, mutateReason: "You're offline." });
-    expect(screen.getByRole("button", { name: "Edit" })).toHaveAttribute(
-      "aria-disabled",
-      "true",
-    );
+    expect(screen.getByRole("button", { name: "Edit" })).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByRole("button", { name: "Assign driver" })).toHaveAttribute(
       "aria-disabled",
       "true",

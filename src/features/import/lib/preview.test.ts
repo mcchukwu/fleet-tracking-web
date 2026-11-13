@@ -1,13 +1,7 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildImportPreview,
-  parseImportCsvText,
-  parseImportText,
-  stripBom,
-} from "./preview";
+import { buildImportPreview, parseImportCsvText, parseImportText, stripBom } from "./preview";
 
-const HEADER =
-  "imei,plate,vehicle_type,make,model,year,colour,depot,driver_name,driver_phone";
+const HEADER = "imei,plate,vehicle_type,make,model,year,colour,depot,driver_name,driver_phone";
 
 function dataRows(count: number): string[][] {
   return Array.from({ length: count }, (_, index) => [

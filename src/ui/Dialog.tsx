@@ -86,13 +86,7 @@ export function Dialog({
               <DialogPrimitive.Close asChild>
                 <IconButton
                   label="Close dialog"
-                  icon={
-                    <X
-                      aria-hidden="true"
-                      className="size-4"
-                      strokeWidth={1.5}
-                    />
-                  }
+                  icon={<X aria-hidden="true" className="size-4" strokeWidth={1.5} />}
                 />
               </DialogPrimitive.Close>
             )}

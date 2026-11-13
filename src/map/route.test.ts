@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  routeBounds,
-  routeLineCollection,
-  routePointCollection,
-  routeRuns,
-} from "./route";
+import { routeBounds, routeLineCollection, routePointCollection, routeRuns } from "./route";
 import type { LngLat } from "./types";
 
 const points: LngLat[] = [

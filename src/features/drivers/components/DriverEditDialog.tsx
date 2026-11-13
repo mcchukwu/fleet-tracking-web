@@ -126,10 +126,7 @@ export function DriverEditDialog({
           </>
         }
       >
-        <form
-          id="driver-edit-form"
-          onSubmit={(event) => void handleSubmit(onSubmit)(event)}
-        >
+        <form id="driver-edit-form" onSubmit={(event) => void handleSubmit(onSubmit)(event)}>
           {write.pending ? <SlowNotice onCancel={write.cancel} onRetry={write.retry} /> : null}
 
           <div ref={errorRef} tabIndex={-1} className="focus:outline-none">
@@ -148,7 +145,12 @@ export function DriverEditDialog({
           </div>
 
           <div className="grid gap-3">
-            <Input label="Name" autoComplete="name" error={errors.name?.message} {...register("name")} />
+            <Input
+              label="Name"
+              autoComplete="name"
+              error={errors.name?.message}
+              {...register("name")}
+            />
             <Input
               label="Phone"
               type="tel"

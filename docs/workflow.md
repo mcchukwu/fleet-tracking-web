@@ -68,16 +68,16 @@ Each slice ends with a working screen, its states, and a Playwright check.
 
 ## Commands
 
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Development |
-| `npm run check` | Typecheck, oxlint, guard and unit tests |
-| `npm run guard` | Architectural guards |
-| `npm run test` | Unit tests |
-| `npm run e2e` | Playwright |
-| `npm run e2e:review` | Generate visual review screenshots |
-| `npm run build` | Production build |
-| `npm run deploy` | Deploy `dist` to Cloudflare Workers (run `npm run build` first) |
+| Command              | Purpose                                                         |
+| -------------------- | --------------------------------------------------------------- |
+| `npm run dev`        | Development                                                     |
+| `npm run check`      | Typecheck, oxlint, guard and unit tests                         |
+| `npm run guard`      | Architectural guards                                            |
+| `npm run test`       | Unit tests                                                      |
+| `npm run e2e`        | Playwright                                                      |
+| `npm run e2e:review` | Generate visual review screenshots                              |
+| `npm run build`      | Production build                                                |
+| `npm run deploy`     | Deploy `dist` to Cloudflare Workers (run `npm run build` first) |
 
 Use npm and `package-lock.json`.
 
@@ -95,6 +95,7 @@ Use npm and `package-lock.json`.
 ## Completion
 
 A slice is agent-complete when:
+
 - `npm run check` passes.
 - Its Playwright tests pass.
 - No TODOs remain.

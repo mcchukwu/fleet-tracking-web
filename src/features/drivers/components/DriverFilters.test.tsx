@@ -8,11 +8,7 @@ describe("DriverFilters", () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
     render(
-      <DriverFilters
-        values={{ status: null, q: "" }}
-        onChange={onChange}
-        onReset={vi.fn()}
-      />,
+      <DriverFilters values={{ status: null, q: "" }} onChange={onChange} onReset={vi.fn()} />,
     );
 
     await user.selectOptions(screen.getByLabelText("Status"), "inactive");

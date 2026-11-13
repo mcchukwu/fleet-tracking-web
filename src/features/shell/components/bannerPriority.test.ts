@@ -14,15 +14,9 @@ describe("banner priority", () => {
   });
 
   it("returns the highest present kind regardless of insertion order", () => {
-    expect(
-      highestPriorityBanner(["update", "reconnecting", "offline", "storm"]),
-    ).toBe("offline");
-    expect(highestPriorityBanner(["update", "storm", "reconnecting"])).toBe(
-      "storm",
-    );
-    expect(highestPriorityBanner(["update", "reconnecting"])).toBe(
-      "reconnecting",
-    );
+    expect(highestPriorityBanner(["update", "reconnecting", "offline", "storm"])).toBe("offline");
+    expect(highestPriorityBanner(["update", "storm", "reconnecting"])).toBe("storm");
+    expect(highestPriorityBanner(["update", "reconnecting"])).toBe("reconnecting");
     expect(highestPriorityBanner(["update"])).toBe("update");
   });
 

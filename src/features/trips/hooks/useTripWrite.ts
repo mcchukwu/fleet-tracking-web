@@ -32,7 +32,11 @@ export type TripTransitionOutcome =
 
 export interface TripWriteController {
   create: (input: TripInput, beforeSubmitIds: ReadonlySet<string>) => Promise<TripCreateOutcome>;
-  transition: (trip: Trip, update: TripUpdate, action: TripAction) => Promise<TripTransitionOutcome>;
+  transition: (
+    trip: Trip,
+    update: TripUpdate,
+    action: TripAction,
+  ) => Promise<TripTransitionOutcome>;
   pending: boolean;
   error: AppError | null;
   reset: () => void;
@@ -44,10 +48,7 @@ export interface TripWriteCopy {
 }
 
 /** Copy for a failed create or transition; never raw server text. */
-export function tripWriteCopy(
-  error: AppError,
-  mode: "create" | "change",
-): TripWriteCopy {
+export function tripWriteCopy(error: AppError, mode: "create" | "change"): TripWriteCopy {
   if (error.kind === "not_found") {
     return {
       title: "This trip no longer exists.",
@@ -114,10 +115,7 @@ export function useTripWrite(): TripWriteController {
   }, [queryClient]);
 
   const create = useCallback(
-    async (
-      input: TripInput,
-      beforeSubmitIds: ReadonlySet<string>,
-    ): Promise<TripCreateOutcome> => {
+    async (input: TripInput, beforeSubmitIds: ReadonlySet<string>): Promise<TripCreateOutcome> => {
       if (inFlight.current) return { status: "ignored" };
       inFlight.current = true;
       try {
@@ -153,11 +151,7 @@ export function useTripWrite(): TripWriteController {
   );
 
   const transition = useCallback(
-    async (
-      trip: Trip,
-      update: TripUpdate,
-      action: TripAction,
-    ): Promise<TripTransitionOutcome> => {
+    async (trip: Trip, update: TripUpdate, action: TripAction): Promise<TripTransitionOutcome> => {
       if (inFlight.current) return { status: "ignored" };
       inFlight.current = true;
       try {
@@ -178,12 +172,20 @@ export function useTripWrite(): TripWriteController {
         );
 
         if (result.status === "success") {
-          toast({ title: transitionToast(action), tone: "success", key: `trip-${action}:${trip.id}` });
+          toast({
+            title: transitionToast(action),
+            tone: "success",
+            key: `trip-${action}:${trip.id}`,
+          });
           return { status: "done", reconciled: false };
         }
         if (result.status === "reconciled") {
           await invalidate();
-          toast({ title: transitionToast(action), tone: "success", key: `trip-${action}:${trip.id}` });
+          toast({
+            title: transitionToast(action),
+            tone: "success",
+            key: `trip-${action}:${trip.id}`,
+          });
           return { status: "done", reconciled: true };
         }
 

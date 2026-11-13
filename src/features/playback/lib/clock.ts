@@ -34,8 +34,9 @@ function clamp(value: number, min: number, max: number): number {
 export function nextSpeed(speed: number, direction: -1 | 1): number {
   const index = PLAYBACK_SPEEDS.findIndex((option) => option >= speed);
   const current = index === -1 ? PLAYBACK_SPEEDS.length - 1 : index;
-  return PLAYBACK_SPEEDS[clamp(current + direction, 0, PLAYBACK_SPEEDS.length - 1)] ??
-    PLAYBACK_SPEEDS[0];
+  return (
+    PLAYBACK_SPEEDS[clamp(current + direction, 0, PLAYBACK_SPEEDS.length - 1)] ?? PLAYBACK_SPEEDS[0]
+  );
 }
 
 export function stepTime(
@@ -96,9 +97,7 @@ export function clockReducer(state: ClockState, action: ClockAction): ClockState
     case "speed":
       return { ...state, speed: nextSpeed(state.speed, action.direction) };
     case "set-speed": {
-      const allowed = PLAYBACK_SPEEDS.includes(
-        action.speed as (typeof PLAYBACK_SPEEDS)[number],
-      );
+      const allowed = PLAYBACK_SPEEDS.includes(action.speed as (typeof PLAYBACK_SPEEDS)[number]);
       return allowed ? { ...state, speed: action.speed } : state;
     }
     case "reset":

@@ -24,7 +24,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user, csrfToken, status: "authenticated", sessionVerified: true }),
   setOfflineProfile: (user) =>
     set({ user, csrfToken: null, status: "authenticated", sessionVerified: false }),
-  clear: () =>
-    set({ user: null, csrfToken: null, status: "anonymous", sessionVerified: false }),
+  clear: () => set({ user: null, csrfToken: null, status: "anonymous", sessionVerified: false }),
   expire: () => set({ status: "expired", csrfToken: null, sessionVerified: false }),
 }));

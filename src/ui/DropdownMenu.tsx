@@ -50,12 +50,7 @@ export function DropdownMenuItem({
   className,
   ...props
 }: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item>) {
-  return (
-    <DropdownMenuPrimitive.Item
-      className={cn(itemStyles, className)}
-      {...props}
-    />
-  );
+  return <DropdownMenuPrimitive.Item className={cn(itemStyles, className)} {...props} />;
 }
 
 export function DropdownMenuRadioItem({
@@ -67,10 +62,7 @@ export function DropdownMenuRadioItem({
   showIndicator?: boolean;
 }) {
   return (
-    <DropdownMenuPrimitive.RadioItem
-      className={cn(itemStyles, className)}
-      {...props}
-    >
+    <DropdownMenuPrimitive.RadioItem className={cn(itemStyles, className)} {...props}>
       {children}
       {showIndicator ? <ItemIndicator /> : null}
     </DropdownMenuPrimitive.RadioItem>
@@ -86,10 +78,7 @@ export function DropdownMenuCheckboxItem({
   showIndicator?: boolean;
 }) {
   return (
-    <DropdownMenuPrimitive.CheckboxItem
-      className={cn(itemStyles, className)}
-      {...props}
-    >
+    <DropdownMenuPrimitive.CheckboxItem className={cn(itemStyles, className)} {...props}>
       {children}
       {showIndicator ? <ItemIndicator /> : null}
     </DropdownMenuPrimitive.CheckboxItem>
@@ -149,9 +138,5 @@ export function DropdownMenuSubContent({
 export function DropdownMenuSeparator({
   className,
 }: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Separator>) {
-  return (
-    <DropdownMenuPrimitive.Separator
-      className={cn("bg-border my-1 h-px", className)}
-    />
-  );
+  return <DropdownMenuPrimitive.Separator className={cn("bg-border my-1 h-px", className)} />;
 }

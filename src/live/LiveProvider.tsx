@@ -127,10 +127,7 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
 
       lastAlertFlushAt = Date.now();
       const summary = alertBatchSummary(alerts);
-      const key =
-        summary.count > 1
-          ? `alert-batch:${alertWindowSequence.current++}`
-          : summary.key;
+      const key = summary.count > 1 ? `alert-batch:${alertWindowSequence.current++}` : summary.key;
       toastRef.current({
         title: summary.title,
         description: summary.description,

@@ -29,10 +29,7 @@ export function Select({
   const inline = labelPlacement === "inline";
   return (
     <div className={inline ? "flex" : "flex flex-col gap-1"}>
-      <label
-        htmlFor={id}
-        className={inline ? "sr-only" : "text-sm font-medium text-text"}
-      >
+      <label htmlFor={id} className={inline ? "sr-only" : "text-text text-sm font-medium"}>
         {label}
       </label>
       <div className="relative">
@@ -41,8 +38,8 @@ export function Select({
           aria-describedby={describedBy}
           aria-invalid={error ? true : undefined}
           className={cn(
-            "h-touch w-full appearance-none rounded-md border bg-surface text-base text-text transition-colors duration-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus-ring/30 md:h-control-md",
-            compact ? "pl-2 pr-4 md:px-4 md:pr-10" : "px-4 pr-10",
+            "h-touch bg-surface text-text focus-visible:ring-focus-ring/30 md:h-control-md w-full appearance-none rounded-md border text-base transition-colors duration-100 focus-visible:ring-1 focus-visible:outline-none focus-visible:ring-inset",
+            compact ? "pr-4 pl-2 md:px-4 md:pr-10" : "px-4 pr-10",
             error
               ? "border-danger focus-visible:border-danger"
               : "border-border-strong focus-visible:border-accent",
@@ -55,15 +52,19 @@ export function Select({
         <ChevronDown
           aria-hidden="true"
           className={cn(
-            "pointer-events-none absolute top-1/2 -translate-y-1/2 text-subtle",
+            "text-subtle pointer-events-none absolute top-1/2 -translate-y-1/2",
             compact ? "right-1 size-3 md:right-3 md:size-4" : "right-3 size-4",
           )}
           strokeWidth={1.5}
         />
       </div>
-      {hint ? <p id={hintId} className="text-xs text-muted">{hint}</p> : null}
+      {hint ? (
+        <p id={hintId} className="text-muted text-xs">
+          {hint}
+        </p>
+      ) : null}
       {error ? (
-        <p id={errorId} role="alert" className="flex items-center gap-1 text-xs text-danger">
+        <p id={errorId} role="alert" className="text-danger flex items-center gap-1 text-xs">
           <CircleAlert aria-hidden="true" className="size-3" strokeWidth={1.5} />
           {error}
         </p>

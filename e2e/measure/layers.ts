@@ -56,10 +56,7 @@ const SELECTORS: Array<[string, string]> = [
   ["kpi", '[data-testid="map-root"] .map-kpi'],
   ["panel", '[data-testid="map-root"] aside'],
   ["drawer", '[data-testid="drawer"]'],
-  [
-    "sheet",
-    'section[aria-label="Vehicles"], [data-testid="vehicle-detail-sheet"]',
-  ],
+  ["sheet", 'section[aria-label="Vehicles"], [data-testid="vehicle-detail-sheet"]'],
   ["footer", '[data-testid="map-footer"]'],
   ["controls", 'fieldset[aria-label="Map controls"]'],
   ["attribution", '[data-testid="map-attribution"]'],
@@ -89,19 +86,14 @@ async function snapshot(page: Page, keys?: readonly string[]): Promise<Row[]> {
         if (style.transform !== "none") reasons.push("transform");
         if (style.filter !== "none") reasons.push("filter");
         if (style.isolation === "isolate") reasons.push("isolation");
-        if (style.willChange !== "auto")
-          reasons.push(`will-change=${style.willChange}`);
+        if (style.willChange !== "auto") reasons.push(`will-change=${style.willChange}`);
         if (style.backdropFilter !== "none") reasons.push("backdrop-filter");
         if (style.contain !== "none") reasons.push(`contain=${style.contain}`);
-        if (style.mixBlendMode !== "normal")
-          reasons.push(`blend=${style.mixBlendMode}`);
-        const parentStyle = window.getComputedStyle(
-          parent.parentElement ?? parent,
-        );
+        if (style.mixBlendMode !== "normal") reasons.push(`blend=${style.mixBlendMode}`);
+        const parentStyle = window.getComputedStyle(parent.parentElement ?? parent);
         if (
           z !== "auto" &&
-          (parentStyle.display.includes("flex") ||
-            parentStyle.display.includes("grid"))
+          (parentStyle.display.includes("flex") || parentStyle.display.includes("grid"))
         ) {
           reasons.push(`flex-item+z=${z}`);
         }
@@ -110,9 +102,7 @@ async function snapshot(page: Page, keys?: readonly string[]): Promise<Row[]> {
         const cls = parent.className
           ? `.${String(parent.className).trim().split(/\s+/).join(".")}`
           : "";
-        return [
-          `${parent.tagName.toLowerCase()}${id}${cls}[${reasons.join(",")}]`,
-        ];
+        return [`${parent.tagName.toLowerCase()}${id}${cls}[${reasons.join(",")}]`];
       };
 
       const rows: Array<{
@@ -181,9 +171,7 @@ function logState(
   theme: Theme,
   rows: Row[],
 ): void {
-  console.log(
-    `\nstate=${label} viewport=${viewport.width}x${viewport.height} theme=${theme}`,
-  );
+  console.log(`\nstate=${label} viewport=${viewport.width}x${viewport.height} theme=${theme}`);
   for (const row of rows) {
     const { key, box } = row;
     console.log(
@@ -217,8 +205,7 @@ async function openPanel(page: Page, width: number): Promise<void> {
     return;
   }
   const handle = page.getByRole("button", { name: /Showing \d+ of \d+/ });
-  if ((await handle.getAttribute("aria-expanded")) === "false")
-    await handle.click();
+  if ((await handle.getAttribute("aria-expanded")) === "false") await handle.click();
   await page.waitForTimeout(150);
 }
 
@@ -288,12 +275,7 @@ async function main(): Promise<void> {
   try {
     const output = execFileSync(
       "rg",
-      [
-        "-n",
-        "--no-heading",
-        String.raw`\bz-(\[[^]]*\]|[0-9]+)\b|z-index\s*:`,
-        "src",
-      ],
+      ["-n", "--no-heading", String.raw`\bz-(\[[^]]*\]|[0-9]+)\b|z-index\s*:`, "src"],
       { encoding: "utf8" },
     );
     console.log(output.trim() || "  (none)");
@@ -342,8 +324,7 @@ async function main(): Promise<void> {
         await openEditDialog(page, viewport.width);
         await measureState(page, "dialog", viewport, theme);
         await openCombobox(page);
-        const sheetOpen =
-          (await page.locator("[data-picker-sheet]").count()) > 0;
+        const sheetOpen = (await page.locator("[data-picker-sheet]").count()) > 0;
         await measureState(
           page,
           sheetOpen ? "dialog-picker-sheet" : "dialog-combobox",

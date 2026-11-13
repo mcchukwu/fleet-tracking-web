@@ -104,26 +104,20 @@ describe("playback formatting", () => {
   });
 
   it("formats a same-day range once and a cross-day range with both dates", () => {
-    expect(
-      formatPlaybackRange(iso(2026, 11, 8, 14, 0), iso(2026, 11, 8, 16, 0)),
-    ).toBe("14:00 – 16:00");
-    expect(
-      formatPlaybackRange(iso(2026, 11, 8, 22, 0), iso(2026, 11, 9, 2, 0)),
-    ).toBe("8 Nov 22:00 – 9 Nov 02:00");
+    expect(formatPlaybackRange(iso(2026, 11, 8, 14, 0), iso(2026, 11, 8, 16, 0))).toBe(
+      "14:00 – 16:00",
+    );
+    expect(formatPlaybackRange(iso(2026, 11, 8, 22, 0), iso(2026, 11, 9, 2, 0))).toBe(
+      "8 Nov 22:00 – 9 Nov 02:00",
+    );
   });
 
   it("detects a range that crosses local midnight", () => {
     expect(
-      spansLocalDays(
-        Date.parse(iso(2026, 11, 8, 14, 0)),
-        Date.parse(iso(2026, 11, 8, 16, 0)),
-      ),
+      spansLocalDays(Date.parse(iso(2026, 11, 8, 14, 0)), Date.parse(iso(2026, 11, 8, 16, 0))),
     ).toBe(false);
     expect(
-      spansLocalDays(
-        Date.parse(iso(2026, 11, 8, 22, 0)),
-        Date.parse(iso(2026, 11, 9, 2, 0)),
-      ),
+      spansLocalDays(Date.parse(iso(2026, 11, 8, 22, 0)), Date.parse(iso(2026, 11, 9, 2, 0))),
     ).toBe(true);
   });
 
@@ -186,9 +180,9 @@ describe("report formatting", () => {
   });
 
   it("adds the year only when the endpoints differ by year", () => {
-    expect(
-      formatRangeLabel(iso(2026, 12, 31, 22, 0), iso(2027, 1, 1, 2, 0)),
-    ).toBe("31 Dec 2026, 22:00 – 1 Jan 2027, 02:00");
+    expect(formatRangeLabel(iso(2026, 12, 31, 22, 0), iso(2027, 1, 1, 2, 0))).toBe(
+      "31 Dec 2026, 22:00 – 1 Jan 2027, 02:00",
+    );
   });
 
   it("returns the missing value for an invalid endpoint", () => {

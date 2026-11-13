@@ -14,12 +14,24 @@ export function MapTilerLogo({ className }: MapTilerLogoProps) {
       rel="noreferrer"
       aria-label="MapTiler"
       className={cn(
-        "pointer-events-auto inline-flex min-h-touch items-center rounded-md border border-border bg-surface px-2 shadow-menu focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:min-h-control-sm",
+        "min-h-touch border-border bg-surface shadow-menu focus-visible:outline-focus-ring md:min-h-control-sm pointer-events-auto inline-flex items-center rounded-md border px-2 focus-visible:outline-2 focus-visible:outline-offset-0",
         className,
       )}
     >
-      <img src="/maptiler-logo-light.svg" alt="" width={67} height={20} className="h-4 w-auto dark:hidden" />
-      <img src="/maptiler-logo-dark.svg" alt="" width={67} height={20} className="hidden h-4 w-auto dark:block" />
+      <img
+        src="/maptiler-logo-light.svg"
+        alt=""
+        width={67}
+        height={20}
+        className="h-4 w-auto dark:hidden"
+      />
+      <img
+        src="/maptiler-logo-dark.svg"
+        alt=""
+        width={67}
+        height={20}
+        className="hidden h-4 w-auto dark:block"
+      />
     </a>
   );
 }

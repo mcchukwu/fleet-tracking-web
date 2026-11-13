@@ -30,9 +30,7 @@ describe("Banner", () => {
   it("can be dismissed without removing the message from the live region", async () => {
     const user = userEvent.setup();
     const onDismiss = vi.fn();
-    render(
-      <Banner tone="neutral" message="You're offline." dismissible onDismiss={onDismiss} />,
-    );
+    render(<Banner tone="neutral" message="You're offline." dismissible onDismiss={onDismiss} />);
 
     await user.click(screen.getByRole("button", { name: "Dismiss" }));
     expect(onDismiss).toHaveBeenCalledOnce();

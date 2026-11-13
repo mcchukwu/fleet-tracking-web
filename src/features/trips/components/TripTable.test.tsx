@@ -59,7 +59,10 @@ describe("TripTable", () => {
 
   it("shows a completed distance and an unknown status fallback", () => {
     renderTable({
-      trips: [trip({ status: "completed", distance_km: 2.04 }), trip({ id: "trip-2", status: "diverted" })],
+      trips: [
+        trip({ status: "completed", distance_km: 2.04 }),
+        trip({ id: "trip-2", status: "diverted" }),
+      ],
     });
 
     expect(screen.getByText("2.0 km")).toBeVisible();

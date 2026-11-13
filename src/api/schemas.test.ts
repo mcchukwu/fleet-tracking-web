@@ -61,9 +61,9 @@ describe("contract schemas", () => {
   });
 
   it("accepts an alert with an unknown severity instead of dropping the frame", () => {
-    expect(
-      liveMessageSchema.safeParse({ ...openApiAlertFrame, severity: "extreme" }).success,
-    ).toBe(true);
+    expect(liveMessageSchema.safeParse({ ...openApiAlertFrame, severity: "extreme" }).success).toBe(
+      true,
+    );
   });
 
   it.each(malformedLiveFrames)("rejects a malformed live frame", (frame) => {
@@ -141,10 +141,7 @@ describe("contract schemas", () => {
     });
 
     expect(result.rejected).toBe(0);
-    expect(result.entries.map((entry) => entry.id)).toEqual([
-      207,
-      "audit-string-id",
-    ]);
+    expect(result.entries.map((entry) => entry.id)).toEqual([207, "audit-string-id"]);
     expect(result.entries[0]).toMatchObject({
       action: "user.role_change",
       entity: "maintenance_job",
@@ -240,9 +237,9 @@ describe("contract schemas", () => {
 
   it("accepts both null and an array for import errors", () => {
     expect(importResultSchema.safeParse(importResultFixture).success).toBe(true);
-    expect(
-      importResultSchema.safeParse({ ...importResultFixture, errors: null }).success,
-    ).toBe(true);
+    expect(importResultSchema.safeParse({ ...importResultFixture, errors: null }).success).toBe(
+      true,
+    );
   });
 
   it("accepts the captured clean and capped import responses", () => {
@@ -270,17 +267,13 @@ describe("contract schemas", () => {
 
   it("keeps driver_id and driver_name so the drawer can join assignments", () => {
     const result = parseSnapshot({ data: [vehiclesFixture[0]] });
-    expect(result.vehicles[0]?.driver_id).toBe(
-      "5b77edaf-c0c6-4ba4-b0c7-d2b6422c598d",
-    );
+    expect(result.vehicles[0]?.driver_id).toBe("5b77edaf-c0c6-4ba4-b0c7-d2b6422c598d");
     expect(result.vehicles[0]?.driver_name).toBe("Adebayo Okafor");
   });
 
   it("accepts a snapshot row without driver_id", () => {
     const { driver_id: _driverId, ...withoutDriver } = vehiclesFixture[0] ?? {};
-    expect(vehiclesFixture[0]?.driver_id).toBe(
-      "5b77edaf-c0c6-4ba4-b0c7-d2b6422c598d",
-    );
+    expect(vehiclesFixture[0]?.driver_id).toBe("5b77edaf-c0c6-4ba4-b0c7-d2b6422c598d");
     const result = parseSnapshot({ data: [withoutDriver] });
     expect(result.vehicles).toHaveLength(1);
     expect(result.vehicles[0]?.driver_id).toBeUndefined();
@@ -428,11 +421,7 @@ describe("vehicle events parser", () => {
 
   it("keeps both event shapes and sorts newest first", () => {
     const result = parseVehicleEventsResponse({ data: events });
-    expect(result.events.map((event) => event.type)).toEqual([
-      "exit",
-      "route_deviation",
-      "enter",
-    ]);
+    expect(result.events.map((event) => event.type)).toEqual(["exit", "route_deviation", "enter"]);
     expect(result.rejected).toBe(0);
   });
 
@@ -538,7 +527,14 @@ describe("trip parser", () => {
   it("drops only structurally invalid rows", () => {
     const result = parseTrips({
       data: [
-        { id: "trip-1", vehicle_id: "v", plate: "P", origin: "A", destination: "B", status: "planned" },
+        {
+          id: "trip-1",
+          vehicle_id: "v",
+          plate: "P",
+          origin: "A",
+          destination: "B",
+          status: "planned",
+        },
         { id: "", vehicle_id: "v", plate: "P", origin: "A", destination: "B", status: "planned" },
       ],
     });

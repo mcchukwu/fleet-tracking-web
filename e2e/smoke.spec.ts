@@ -15,9 +15,7 @@ test.describe("foundation smoke", () => {
     });
 
     await page.goto("/styleguide");
-    await expect(
-      page.getByRole("heading", { name: "Fleet Console foundations" }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Fleet Console foundations" })).toBeVisible();
     await expect(page).toHaveTitle("Styleguide · Fleet Console");
     await expectTheme(page, theme);
     await expectNoHorizontalScroll(page);
@@ -27,28 +25,32 @@ test.describe("foundation smoke", () => {
     expect(errors).toEqual([]);
   });
 
-  test("the styleguide captures the shell primitives and every accent", { tag: "@theme" }, async ({ page }) => {
-    await page.goto("/styleguide");
+  test(
+    "the styleguide captures the shell primitives and every accent",
+    { tag: "@theme" },
+    async ({ page }) => {
+      await page.goto("/styleguide");
 
-    for (const [id, name] of [
-      ["overlays", "01-styleguide-overlays"],
-      ["menus", "01-styleguide-menus"],
-      ["toasts", "01-styleguide-toasts"],
-      ["banners", "01-styleguide-banners"],
-      ["shell", "01-styleguide-shell-login"],
-      ["data-display", "02-styleguide-data-display"],
-    ] as const) {
-      await page.locator(`#${id}`).scrollIntoViewIfNeeded();
-      await captureForReview(page, name);
-    }
+      for (const [id, name] of [
+        ["overlays", "01-styleguide-overlays"],
+        ["menus", "01-styleguide-menus"],
+        ["toasts", "01-styleguide-toasts"],
+        ["banners", "01-styleguide-banners"],
+        ["shell", "01-styleguide-shell-login"],
+        ["data-display", "02-styleguide-data-display"],
+      ] as const) {
+        await page.locator(`#${id}`).scrollIntoViewIfNeeded();
+        await captureForReview(page, name);
+      }
 
-    for (const accent of ["Blue", "Violet", "Fuchsia", "Graphite"] as const) {
-      await page.getByRole("button", { name: `${accent} accent` }).click();
-      await expect(page.locator("html")).toHaveAttribute("data-accent", accent.toLowerCase());
-      await page.locator("#shell").scrollIntoViewIfNeeded();
-      await captureForReview(page, `02b-styleguide-accent-${accent.toLowerCase()}`);
-    }
-  });
+      for (const accent of ["Blue", "Violet", "Fuchsia", "Graphite"] as const) {
+        await page.getByRole("button", { name: `${accent} accent` }).click();
+        await expect(page.locator("html")).toHaveAttribute("data-accent", accent.toLowerCase());
+        await page.locator("#shell").scrollIntoViewIfNeeded();
+        await captureForReview(page, `02b-styleguide-accent-${accent.toLowerCase()}`);
+      }
+    },
+  );
 
   test("the index route opens the map inside the shell", async ({ page }) => {
     await page.goto("/");
@@ -132,9 +134,7 @@ test.describe("foundation smoke", () => {
     await expect(page).toHaveURL(/\/forbidden$/);
 
     await page.goto("/import");
-    await expect(
-      page.getByRole("heading", { name: "Import", level: 1 }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Import", level: 1 })).toBeVisible();
   });
 
   test("an admin can open the audit log", async ({ page }) => {

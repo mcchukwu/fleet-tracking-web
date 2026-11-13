@@ -63,11 +63,11 @@ export function GeofenceMap({
       {!offlinePanel ? (
         <>
           {hint ? (
-            <output className="border-border bg-surface text-text shadow-float pointer-events-none absolute top-3 left-1/2 z-map-controls block max-w-panel -translate-x-1/2 rounded-md border px-3 py-2 text-center text-xs">
+            <output className="border-border bg-surface text-text shadow-float z-map-controls max-w-panel pointer-events-none absolute top-3 left-1/2 block -translate-x-1/2 rounded-md border px-3 py-2 text-center text-xs">
               {hint}
             </output>
           ) : null}
-          <div className="absolute right-3 bottom-3 z-map-controls flex flex-col items-end gap-2">
+          <div className="z-map-controls absolute right-3 bottom-3 flex flex-col items-end gap-2">
             <GeofenceMapControls
               adapter={adapter}
               fitDisabled={fitDisabled || adapter === null}

@@ -46,9 +46,9 @@ describe("useAlertRulesWrite", () => {
     expect(update).toHaveBeenCalledWith("rule-1", { enabled: false });
 
     await act(async () => {
-      expect(
-        await result.current.saveConfig(rule, { speed_kph: 81, duration_s: 120 }),
-      ).toBe("saved");
+      expect(await result.current.saveConfig(rule, { speed_kph: 81, duration_s: 120 })).toBe(
+        "saved",
+      );
     });
     expect(update).toHaveBeenLastCalledWith("rule-1", {
       config: { speed_kph: 81, duration_s: 120 },
@@ -111,9 +111,7 @@ describe("useAlertRulesWrite", () => {
   });
 
   it("keeps the server state and reports a server failure", async () => {
-    vi.spyOn(api, "updateAlertRule").mockRejectedValue(
-      new ApiError(500, "internal", "boom"),
-    );
+    vi.spyOn(api, "updateAlertRule").mockRejectedValue(new ApiError(500, "internal", "boom"));
     const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
     const { result } = renderHook(() => useAlertRulesWrite({ canMutate: true }), {
       wrapper: wrapperFor(queryClient),
@@ -123,7 +121,9 @@ describe("useAlertRulesWrite", () => {
       expect(await result.current.toggle(rule, false)).toBe("failed");
     });
     expect(result.current.error?.ruleId).toBe("rule-1");
-    expect(result.current.error?.detail).toBe("Try again in a moment. If it keeps happening, check System.");
+    expect(result.current.error?.detail).toBe(
+      "Try again in a moment. If it keeps happening, check System.",
+    );
   });
 
   it("reconciles a lost rule write as saved and invalidates the rules", async () => {

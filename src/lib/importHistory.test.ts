@@ -70,13 +70,7 @@ describe("import history", () => {
 
     const next = await addImportHistory(entry("job-6"));
 
-    expect(next.map((row) => row.jobId)).toEqual([
-      "job-6",
-      "job-5",
-      "job-4",
-      "job-3",
-      "job-2",
-    ]);
+    expect(next.map((row) => row.jobId)).toEqual(["job-6", "job-5", "job-4", "job-3", "job-2"]);
     expect(mocks.set).toHaveBeenCalledWith("fleet.import-history", next);
   });
 
@@ -103,10 +97,7 @@ describe("import history", () => {
     await expect(claimImportHistory("user-2")).resolves.toBe("user-1");
     expect(mocks.clear).not.toHaveBeenCalled();
     expect(mocks.del).toHaveBeenCalledWith("fleet.import-history");
-    expect(mocks.set).toHaveBeenCalledWith(
-      "fleet.import-history-owner",
-      "user-2",
-    );
+    expect(mocks.set).toHaveBeenCalledWith("fleet.import-history-owner", "user-2");
   });
 
   it("clears unattributed history from devices without an owner", async () => {
@@ -115,10 +106,7 @@ describe("import history", () => {
     await expect(claimImportHistory("user-1")).resolves.toBeNull();
     expect(mocks.clear).not.toHaveBeenCalled();
     expect(mocks.del).toHaveBeenCalledWith("fleet.import-history");
-    expect(mocks.set).toHaveBeenCalledWith(
-      "fleet.import-history-owner",
-      "user-1",
-    );
+    expect(mocks.set).toHaveBeenCalledWith("fleet.import-history-owner", "user-1");
   });
 
   it("surfaces a storage failure on read, write and clear", async () => {
@@ -127,17 +115,13 @@ describe("import history", () => {
 
     mocks.get.mockResolvedValue([]);
     mocks.set.mockRejectedValue(new Error("quota"));
-    await expect(addImportHistory(entry("job-1"))).rejects.toBeInstanceOf(
-      StorageError,
-    );
+    await expect(addImportHistory(entry("job-1"))).rejects.toBeInstanceOf(StorageError);
 
     mocks.del.mockRejectedValue(new Error("blocked"));
     await expect(clearImportHistory()).rejects.toBeInstanceOf(StorageError);
 
     mocks.get.mockRejectedValue(new Error("idb unavailable"));
-    await expect(claimImportHistory("user-1")).rejects.toBeInstanceOf(
-      StorageError,
-    );
+    await expect(claimImportHistory("user-1")).rejects.toBeInstanceOf(StorageError);
   });
 
   it("clears only its own keys", async () => {

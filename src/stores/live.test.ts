@@ -48,27 +48,19 @@ describe("live store", () => {
   it("applies a newer frame and ignores an older or equal one", () => {
     useLiveStore.getState().applySnapshot([snapshotVehicle()], NOW);
 
-    useLiveStore
-      .getState()
-      .applyFrames([frame("2026-11-04T09:59:40Z", 6.6, 3.5)], NOW);
+    useLiveStore.getState().applyFrames([frame("2026-11-04T09:59:40Z", 6.6, 3.5)], NOW);
     expect(useLiveStore.getState().positions["demo-imei-0001"]?.lat).toBe(6.6);
 
-    useLiveStore
-      .getState()
-      .applyFrames([frame("2026-11-04T09:59:35Z", 6.1, 3.1)], NOW);
+    useLiveStore.getState().applyFrames([frame("2026-11-04T09:59:35Z", 6.1, 3.1)], NOW);
     expect(useLiveStore.getState().positions["demo-imei-0001"]?.lat).toBe(6.6);
 
-    useLiveStore
-      .getState()
-      .applyFrames([frame("2026-11-04T09:59:40Z", 6.2, 3.2)], NOW);
+    useLiveStore.getState().applyFrames([frame("2026-11-04T09:59:40Z", 6.2, 3.2)], NOW);
     expect(useLiveStore.getState().positions["demo-imei-0001"]?.lat).toBe(6.6);
   });
 
   it("keeps the last snapshot speed and heading after a frame without them", () => {
     useLiveStore.getState().applySnapshot([snapshotVehicle()], NOW);
-    useLiveStore
-      .getState()
-      .applyFrames([frame("2026-11-04T09:59:40Z")], NOW);
+    useLiveStore.getState().applyFrames([frame("2026-11-04T09:59:40Z")], NOW);
 
     const position = useLiveStore.getState().positions["demo-imei-0001"];
     expect(position?.speedKph).toBe(48);
@@ -78,9 +70,7 @@ describe("live store", () => {
 
   it("does not overwrite a newer live position with an older snapshot", () => {
     useLiveStore.getState().applySnapshot([snapshotVehicle()], NOW);
-    useLiveStore
-      .getState()
-      .applyFrames([frame("2026-11-04T09:59:50Z", 6.9, 3.9)], NOW);
+    useLiveStore.getState().applyFrames([frame("2026-11-04T09:59:50Z", 6.9, 3.9)], NOW);
     useLiveStore.getState().applySnapshot([snapshotVehicle()], NOW);
 
     expect(useLiveStore.getState().positions["demo-imei-0001"]?.lat).toBe(6.9);
@@ -90,10 +80,7 @@ describe("live store", () => {
     useLiveStore.getState().applySnapshot([snapshotVehicle()], NOW);
     useLiveStore
       .getState()
-      .applyFrames(
-        [{ ...frame("2026-11-04T09:59:40Z"), vehicle_id: "not-in-snapshot" }],
-        NOW,
-      );
+      .applyFrames([{ ...frame("2026-11-04T09:59:40Z"), vehicle_id: "not-in-snapshot" }], NOW);
 
     expect(useLiveStore.getState().positions["not-in-snapshot"]).toBeUndefined();
     expect(useLiveStore.getState().unknownKeys).toBe(1);
@@ -107,10 +94,7 @@ describe("live store", () => {
     useLiveStore
       .getState()
       .applyFrames(
-        [
-          frame("2026-11-04T09:59:40Z"),
-          { ...frame("2026-11-04T09:59:41Z"), vehicle_id: "other" },
-        ],
+        [frame("2026-11-04T09:59:40Z"), { ...frame("2026-11-04T09:59:41Z"), vehicle_id: "other" }],
         NOW,
       );
 
@@ -121,13 +105,15 @@ describe("live store", () => {
   });
 
   it("drops positions for keys removed from the snapshot", () => {
-    useLiveStore.getState().applySnapshot(
-      [
-        snapshotVehicle(),
-        snapshotVehicle({ id: "uuid-2", external_id: "demo-imei-0002", plate: "LSD-101-AA" }),
-      ],
-      NOW,
-    );
+    useLiveStore
+      .getState()
+      .applySnapshot(
+        [
+          snapshotVehicle(),
+          snapshotVehicle({ id: "uuid-2", external_id: "demo-imei-0002", plate: "LSD-101-AA" }),
+        ],
+        NOW,
+      );
     useLiveStore.getState().applySnapshot([snapshotVehicle()], NOW);
 
     expect(useLiveStore.getState().positions["demo-imei-0001"]).toBeDefined();

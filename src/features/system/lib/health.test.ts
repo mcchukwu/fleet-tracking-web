@@ -21,9 +21,7 @@ function data(overrides: Partial<SystemHealth> = {}): SystemHealth {
   return { ...systemHealthFixture, ...overrides };
 }
 
-function withIngest(
-  overrides: Partial<SystemHealth["ingest"]>,
-): SystemHealth {
+function withIngest(overrides: Partial<SystemHealth["ingest"]>): SystemHealth {
   return data({ ingest: { ...systemHealthFixture.ingest, ...overrides } });
 }
 
@@ -109,18 +107,11 @@ describe("health groups", () => {
       emptyTrend(),
       now,
     );
-    expect(item(groups, "dependency-postgres_replica").label).toBe(
-      "Postgres replica",
-    );
+    expect(item(groups, "dependency-postgres_replica").label).toBe("Postgres replica");
   });
 
   it("shows online as a count of the fleet with a percentage hint", () => {
-    const groups = buildHealthGroups(
-      data({ online: 20, vehicles: 25 }),
-      now,
-      emptyTrend(),
-      now,
-    );
+    const groups = buildHealthGroups(data({ online: 20, vehicles: 25 }), now, emptyTrend(), now);
     expect(item(groups, "online")).toMatchObject({
       value: "20 of 25",
       hint: "80% of vehicles",
@@ -131,32 +122,17 @@ describe("health groups", () => {
   });
 
   it("bands the last vehicle report with the shared freshness thresholds", () => {
-    const fresh = buildHealthGroups(
-      data(),
-      now - 10_000,
-      emptyTrend(),
-      now,
-    );
+    const fresh = buildHealthGroups(data(), now - 10_000, emptyTrend(), now);
     expect(item(fresh, "last-report")).toMatchObject({
       value: "10s",
       tone: "healthy",
     });
     expect(item(fresh, "last-report").tooltip).toMatch(/ · .* UTC$/);
 
-    const delayed = buildHealthGroups(
-      data(),
-      now - 60_000,
-      emptyTrend(),
-      now,
-    );
+    const delayed = buildHealthGroups(data(), now - 60_000, emptyTrend(), now);
     expect(item(delayed, "last-report").tone).toBe("warning");
 
-    const stale = buildHealthGroups(
-      data(),
-      now - 10 * 60_000,
-      emptyTrend(),
-      now,
-    );
+    const stale = buildHealthGroups(data(), now - 10 * 60_000, emptyTrend(), now);
     expect(item(stale, "last-report").tone).toBe("critical");
 
     const unknown = buildHealthGroups(data(), null, emptyTrend(), now);
@@ -171,12 +147,7 @@ describe("health groups", () => {
     const first = withIngest({ dropped: 10 });
     const previous = withIngest({ dropped: 10 });
     const current = withIngest({ dropped: 30 });
-    const groups = buildHealthGroups(
-      current,
-      now,
-      trend(first, previous),
-      now,
-    );
+    const groups = buildHealthGroups(current, now, trend(first, previous), now);
     expect(item(groups, "dropped")).toMatchObject({
       value: "30",
       hint: "+20 · 2/s",
@@ -230,12 +201,17 @@ describe("health groups", () => {
 
   it("says measuring on the first sample even though it is the baseline", () => {
     const sample = withIngest({ dropped: 4 });
-    const groups = buildHealthGroups(sample, now, {
-      first: { data: sample, at: now },
-      current: { data: sample, at: now },
-      previous: null,
-      reset: false,
-    }, now);
+    const groups = buildHealthGroups(
+      sample,
+      now,
+      {
+        first: { data: sample, at: now },
+        current: { data: sample, at: now },
+        previous: null,
+        reset: false,
+      },
+      now,
+    );
     expect(item(groups, "dropped").hint).toBe("Measuring…");
   });
 
@@ -294,12 +270,7 @@ describe("health groups", () => {
 
     const coldPrevious = withIngest({ coldpath_queue_alerts: 1 });
     const coldCurrent = withIngest({ coldpath_queue_alerts: 3 });
-    const coldGroups = buildHealthGroups(
-      coldCurrent,
-      now,
-      trend(coldPrevious, coldPrevious),
-      now,
-    );
+    const coldGroups = buildHealthGroups(coldCurrent, now, trend(coldPrevious, coldPrevious), now);
     expect(item(coldGroups, "coldpath-queue")).toMatchObject({
       value: "3",
       hint: "Rising",
@@ -322,11 +293,7 @@ describe("health groups", () => {
 
   it("keeps every item in the declared groups", () => {
     const groups = buildHealthGroups(data(), now, emptyTrend(), now);
-    expect(groups.map((group) => group.id)).toEqual([
-      "dependencies",
-      "fleet",
-      "ingest",
-    ]);
+    expect(groups.map((group) => group.id)).toEqual(["dependencies", "fleet", "ingest"]);
     expect(groups[0]?.items).toHaveLength(2);
     expect(groups[1]?.items).toHaveLength(4);
     expect(groups[2]?.items).toHaveLength(8);
@@ -372,12 +339,7 @@ describe("health summary", () => {
       { id: "c", label: "C", value: "3", tone: "critical" },
       { id: "d", label: "D", value: "4", tone: "warning" },
     ];
-    expect(sortHealthItems(items).map((entry) => entry.id)).toEqual([
-      "c",
-      "b",
-      "d",
-      "a",
-    ]);
+    expect(sortHealthItems(items).map((entry) => entry.id)).toEqual(["c", "b", "d", "a"]);
   });
 });
 

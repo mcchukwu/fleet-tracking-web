@@ -44,9 +44,7 @@ describe("useImportVehicles", () => {
       file: new File(["imei\n1"], "vehicles.csv"),
     });
 
-    const roots = invalidate.mock.calls.map((call) =>
-      JSON.stringify(call[0]?.queryKey),
-    );
+    const roots = invalidate.mock.calls.map((call) => JSON.stringify(call[0]?.queryKey));
     expect(roots).toEqual(
       expect.arrayContaining([
         JSON.stringify(["vehicles"]),
@@ -63,9 +61,7 @@ describe("useImportVehicles", () => {
   it("resolves the upload before background invalidations settle", async () => {
     mocks.importVehicles.mockResolvedValue(result);
     const queryClient = new QueryClient();
-    vi.spyOn(queryClient, "invalidateQueries").mockReturnValue(
-      new Promise<void>(() => undefined),
-    );
+    vi.spyOn(queryClient, "invalidateQueries").mockReturnValue(new Promise<void>(() => undefined));
     const { result: hook } = renderHook(() => useImportVehicles(), {
       wrapper: wrapper(queryClient),
     });

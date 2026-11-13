@@ -142,11 +142,13 @@ describe("loadBaseStyle", () => {
 
   it("refuses a hosted style without a credit", async () => {
     const url = "https://api.maptiler.com/maps/hybrid-v4/style.json?key=no-credit";
-    mockFetch({ [url]: style({ satellite: { type: "raster", tiles: ["https://t.example/{z}/{x}/{y}.png"] } }) });
+    mockFetch({
+      [url]: style({ satellite: { type: "raster", tiles: ["https://t.example/{z}/{x}/{y}.png"] } }),
+    });
 
-    await expect(loadBaseStyle("satellite", "light", { apiKey: "no-credit" })).rejects.toBeInstanceOf(
-      StyleLoadError,
-    );
+    await expect(
+      loadBaseStyle("satellite", "light", { apiKey: "no-credit" }),
+    ).rejects.toBeInstanceOf(StyleLoadError);
   });
 
   it("reports the HTTP status so the caller can spot a quota pause", async () => {

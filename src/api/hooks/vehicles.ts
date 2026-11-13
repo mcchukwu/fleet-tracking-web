@@ -1,12 +1,13 @@
-import { keepPreviousData, queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { api } from "../instance";
 import { queryKeys } from "../keys";
-import type {
-  HistoryRange,
-  VehicleEventRange,
-  VehicleFilters,
-  VehicleUpdate,
-} from "../types";
+import type { HistoryRange, VehicleEventRange, VehicleFilters, VehicleUpdate } from "../types";
 
 const SNAPSHOT_REFRESH_MS = 60_000;
 
@@ -63,9 +64,7 @@ export function vehicleEventsQueryOptions(
     },
     enabled: Boolean(id) && (options.enabled ?? true),
     meta: { scope: "panel", resource: "vehicle-events" },
-    ...(options.refetchInterval !== undefined
-      ? { refetchInterval: options.refetchInterval }
-      : {}),
+    ...(options.refetchInterval !== undefined ? { refetchInterval: options.refetchInterval } : {}),
   });
 }
 

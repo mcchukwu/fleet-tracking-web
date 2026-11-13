@@ -15,13 +15,7 @@ function input(): HTMLInputElement {
 describe("ImportFilePicker", () => {
   it("passes a chosen file to the caller", async () => {
     const onSelect = vi.fn();
-    view(
-      <ImportFilePicker
-        file={null}
-        onSelect={onSelect}
-        onClear={vi.fn()}
-      />,
-    );
+    view(<ImportFilePicker file={null} onSelect={onSelect} onClear={vi.fn()} />);
 
     const file = new File(["imei\n1"], "vehicles.csv", { type: "text/csv" });
     await userEvent.upload(input(), file);
@@ -32,13 +26,7 @@ describe("ImportFilePicker", () => {
 
   it("accepts a dropped file and offers a keyboard alternative", () => {
     const onSelect = vi.fn();
-    view(
-      <ImportFilePicker
-        file={null}
-        onSelect={onSelect}
-        onClear={vi.fn()}
-      />,
-    );
+    view(<ImportFilePicker file={null} onSelect={onSelect} onClear={vi.fn()} />);
 
     const file = new File(["imei\n1"], "vehicles.csv", { type: "text/csv" });
     fireEvent.drop(screen.getByTestId("import-drop-zone"), {
@@ -52,36 +40,23 @@ describe("ImportFilePicker", () => {
   it("summarises the selected file and clears it", async () => {
     const onClear = vi.fn();
     const file = new File(["x".repeat(2048)], "fleet.csv", { type: "text/csv" });
-    view(
-      <ImportFilePicker file={file} onSelect={vi.fn()} onClear={onClear} />,
-    );
+    view(<ImportFilePicker file={file} onSelect={vi.fn()} onClear={onClear} />);
 
     expect(screen.getByText("fleet.csv")).toBeInTheDocument();
     expect(screen.getByText("2 KB")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Choose another file" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Choose another file" })).toBeInTheDocument();
 
-    await userEvent.click(
-      screen.getByRole("button", { name: "Remove selected file" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Remove selected file" }));
     expect(onClear).toHaveBeenCalledTimes(1);
   });
 
   it("emphasizes the file action when the preview is invalid", () => {
     const file = new File(["x"], "fleet.csv", { type: "text/csv" });
-    view(
-      <ImportFilePicker
-        file={file}
-        emphasized
-        onSelect={vi.fn()}
-        onClear={vi.fn()}
-      />,
-    );
+    view(<ImportFilePicker file={file} emphasized onSelect={vi.fn()} onClear={vi.fn()} />);
 
-    expect(
-      screen.getByRole("button", { name: "Choose another file" }).className,
-    ).toContain("bg-accent");
+    expect(screen.getByRole("button", { name: "Choose another file" }).className).toContain(
+      "bg-accent",
+    );
   });
 
   it("keeps the control visible but inert while disabled", async () => {
@@ -104,14 +79,7 @@ describe("ImportFilePicker", () => {
 
   it("ignores a drop while disabled", () => {
     const onSelect = vi.fn();
-    view(
-      <ImportFilePicker
-        file={null}
-        disabled
-        onSelect={onSelect}
-        onClear={vi.fn()}
-      />,
-    );
+    view(<ImportFilePicker file={null} disabled onSelect={onSelect} onClear={vi.fn()} />);
 
     fireEvent.drop(screen.getByTestId("import-drop-zone"), {
       dataTransfer: {
@@ -122,9 +90,7 @@ describe("ImportFilePicker", () => {
   });
 
   it("does not put the hidden file input in the tab order", () => {
-    view(
-      <ImportFilePicker file={null} onSelect={vi.fn()} onClear={vi.fn()} />,
-    );
+    view(<ImportFilePicker file={null} onSelect={vi.fn()} onClear={vi.fn()} />);
     expect(input().tabIndex).toBe(-1);
   });
 });

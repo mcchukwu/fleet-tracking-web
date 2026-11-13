@@ -34,12 +34,7 @@ export interface MobileFilterMenuProps {
   onReset: () => void;
 }
 
-export function MobileFilterMenu({
-  filters,
-  depots,
-  onChange,
-  onReset,
-}: MobileFilterMenuProps) {
+export function MobileFilterMenu({ filters, depots, onChange, onReset }: MobileFilterMenuProps) {
   const activeCount =
     filters.statuses.length +
     (filters.depot ? 1 : 0) +

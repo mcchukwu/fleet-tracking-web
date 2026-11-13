@@ -67,8 +67,7 @@ export function ImportRecentList({
       {writeFailed ? (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-danger text-sm">
-            This import worked, but this device couldn't save it to Recent
-            imports.
+            This import worked, but this device couldn't save it to Recent imports.
           </p>
           <Button size="sm" variant="ghost" onClick={onRetry}>
             Retry
@@ -82,9 +81,7 @@ export function ImportRecentList({
         ) : null
       ) : state === "error" ? (
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-muted text-sm">
-            Recent imports aren't available on this device.
-          </p>
+          <p className="text-muted text-sm">Recent imports aren't available on this device.</p>
           <Button size="sm" variant="ghost" onClick={onRetry}>
             Retry
           </Button>
@@ -100,10 +97,7 @@ export function ImportRecentList({
               className="border-border flex h-14 items-center justify-between gap-2 border-b last:border-b-0"
             >
               <div className="flex min-w-0 flex-col gap-0.5">
-                <span
-                  className="text-text truncate font-mono text-xs"
-                  title={entry.fileName}
-                >
+                <span className="text-text truncate font-mono text-xs" title={entry.fileName}>
                   {entry.fileName}
                 </span>
                 <span className="text-muted flex items-center gap-1 overflow-hidden text-xs whitespace-nowrap tabular-nums">

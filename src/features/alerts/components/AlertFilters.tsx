@@ -47,9 +47,7 @@ export function AlertFilters({
           label="Status"
           value={values.status ?? ""}
           disabled={disabled}
-          onChange={(event) =>
-            onChange({ status: (event.target.value as AlertStatus) || null })
-          }
+          onChange={(event) => onChange({ status: (event.target.value as AlertStatus) || null })}
         >
           <option value="">All statuses</option>
           {alertStatusOptions.map((status) => (

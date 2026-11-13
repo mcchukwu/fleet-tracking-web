@@ -69,9 +69,7 @@ describe("DriverDeactivateDialog", () => {
     const onCancel = vi.fn();
     renderDialog({ onCancel });
 
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Keep active" })).toHaveFocus(),
-    );
+    await waitFor(() => expect(screen.getByRole("button", { name: "Keep active" })).toHaveFocus());
     await user.click(screen.getByRole("button", { name: "Keep active" }));
     expect(onCancel).toHaveBeenCalled();
     expect(mocks.write.update).not.toHaveBeenCalled();

@@ -1,7 +1,8 @@
 import type { Trip, TripInput, TripStatus, TripUpdate } from "../api/types";
 import { isTripStatus } from "./status";
 
-export type TripSort = "status" | "started" | "plate";export type TripAction = "assign" | "start" | "complete" | "cancel";
+export type TripSort = "status" | "started" | "plate";
+export type TripAction = "assign" | "start" | "complete" | "cancel";
 export type TripReconcileOutcome = "saved" | "not_saved" | "unknown";
 export type TripEmptyReason = "no-data" | "no-results" | "no-loaded-matches";
 
@@ -39,9 +40,7 @@ export function tripStatusRank(status: string): number {
 }
 
 /** Invalid transitions are never offered; unknown statuses offer nothing. */
-export function nextTripAction(
-  trip: Pick<Trip, "status" | "driver_id">,
-): TripNextAction | null {
+export function nextTripAction(trip: Pick<Trip, "status" | "driver_id">): TripNextAction | null {
   if (trip.status === "planned") {
     const needsDriver = !trip.driver_id;
     return {
@@ -65,10 +64,7 @@ export function canCancelTrip(trip: Pick<Trip, "status">): boolean {
 }
 
 /** Never sends distance or timestamps: the backend owns both. */
-export function transitionPayload(
-  action: TripAction,
-  driverId?: string,
-): TripUpdate {
+export function transitionPayload(action: TripAction, driverId?: string): TripUpdate {
   if (action === "assign") {
     return driverId ? { status: "assigned", driver_id: driverId } : { status: "assigned" };
   }
@@ -130,9 +126,7 @@ export function sortTrips(trips: readonly Trip[], sort: TripSort): Trip[] {
 }
 
 /** `distance_km` is 0 before completion, so it is unknown until the trip is completed. */
-export function tripDistanceKm(
-  trip: Pick<Trip, "status" | "distance_km">,
-): number | null {
+export function tripDistanceKm(trip: Pick<Trip, "status" | "distance_km">): number | null {
   return trip.status === "completed" ? trip.distance_km : null;
 }
 

@@ -38,11 +38,7 @@ export function MapStyleMenu({
   const loading = loadingStyle !== null;
 
   return (
-    <DropdownMenu
-      open={isOpen}
-      modal={false}
-      onOpenChange={onOpenChange ?? setUncontrolledOpen}
-    >
+    <DropdownMenu open={isOpen} modal={false} onOpenChange={onOpenChange ?? setUncontrolledOpen}>
       <DropdownMenuTrigger asChild>
         <IconButton
           size="lg"
@@ -79,7 +75,7 @@ export function MapStyleMenu({
               <DropdownMenuRadioItem key={id} value={id} disabled={disabled}>
                 <span className="flex-1">{MAP_STYLE_LABELS[id]}</span>
                 {disabled ? (
-                  <span className="text-xs text-muted">{MAP_STYLE_OFFLINE_REASON}</span>
+                  <span className="text-muted text-xs">{MAP_STYLE_OFFLINE_REASON}</span>
                 ) : null}
               </DropdownMenuRadioItem>
             );

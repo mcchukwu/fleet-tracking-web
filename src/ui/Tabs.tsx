@@ -11,7 +11,7 @@ export function TabsList({
   return (
     <TabsPrimitive.List
       className={cn(
-        "inline-flex h-touch items-center gap-1 border-b border-border md:h-control-lg",
+        "h-touch border-border md:h-control-lg inline-flex items-center gap-1 border-b",
         className,
       )}
       {...props}
@@ -26,7 +26,7 @@ export function TabsTrigger({
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        "relative inline-flex h-touch items-center px-3 text-sm text-muted md:h-control-lg transition-colors duration-100 after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-transparent after:content-[''] hover:text-text focus-visible:outline-2 focus-visible:outline-focus-ring data-[state=active]:text-text data-[state=active]:after:bg-accent",
+        "h-touch text-muted md:h-control-lg hover:text-text focus-visible:outline-focus-ring data-[state=active]:text-text data-[state=active]:after:bg-accent relative inline-flex items-center px-3 text-sm transition-colors duration-100 after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-transparent after:content-[''] focus-visible:outline-2",
         className,
       )}
       {...props}
@@ -40,7 +40,7 @@ export function TabsContent({
 }: ComponentPropsWithoutRef<typeof TabsPrimitive.Content>) {
   return (
     <TabsPrimitive.Content
-      className={cn("pt-3 focus-visible:outline-2 focus-visible:outline-focus-ring", className)}
+      className={cn("focus-visible:outline-focus-ring pt-3 focus-visible:outline-2", className)}
       {...props}
     />
   );

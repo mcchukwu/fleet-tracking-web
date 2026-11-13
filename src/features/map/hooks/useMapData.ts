@@ -69,12 +69,7 @@ export interface MapData {
   now: number;
 }
 
-export function useMapData({
-  snapshot,
-  alerts,
-  selectedId,
-  hoveredKey,
-}: UseMapDataInput): MapData {
+export function useMapData({ snapshot, alerts, selectedId, hoveredKey }: UseMapDataInput): MapData {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -87,7 +82,9 @@ export function useMapData({
   const rows = useMemo(() => {
     const vehicles = snapshot ?? [];
     const positions = useLiveStore.getState().positions;
-    const alertKeys = alerts ? recentAlertKeys(alerts, vehicles, now, ALERT_MARK_WINDOW_MS) : new Set<string>();
+    const alertKeys = alerts
+      ? recentAlertKeys(alerts, vehicles, now, ALERT_MARK_WINDOW_MS)
+      : new Set<string>();
 
     const nextRows: VehicleRow[] = vehicles.map((vehicle) =>
       toVehicleRow(vehicle, positions[vehicle.external_id], alertKeys, now),

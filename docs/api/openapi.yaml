@@ -25,36 +25,36 @@ paths:
                 email: { type: string, format: email }
                 password: { type: string }
       responses:
-        '200':
+        "200":
           description: Session cookie and CSRF token.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  user: { $ref: '#/components/schemas/User' }
+                  user: { $ref: "#/components/schemas/User" }
                   csrf_token: { type: string }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '429': { $ref: '#/components/responses/RateLimited' }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429": { $ref: "#/components/responses/RateLimited" }
   /auth/logout:
     post:
       summary: Sign out
       parameters:
-        - $ref: '#/components/parameters/CSRF'
+        - $ref: "#/components/parameters/CSRF"
       responses:
-        '204': { description: Session revoked }
+        "204": { description: Session revoked }
   /me:
     get:
       summary: Current user and CSRF token
       responses:
-        '200':
+        "200":
           description: Current user
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  user: { $ref: '#/components/schemas/User' }
+                  user: { $ref: "#/components/schemas/User" }
                   csrf_token: { type: string }
   /vehicles:
     get:
@@ -67,10 +67,10 @@ paths:
           in: query
           description: Plate or IMEI fragment
           schema: { type: string }
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
-        '200':
+        "200":
           description: Vehicles
           content:
             application/json:
@@ -79,39 +79,39 @@ paths:
                 properties:
                   data:
                     type: array
-                    items: { $ref: '#/components/schemas/Vehicle' }
+                    items: { $ref: "#/components/schemas/Vehicle" }
   /vehicles/{id}:
     get:
       summary: One vehicle
       parameters:
-        - $ref: '#/components/parameters/ID'
+        - $ref: "#/components/parameters/ID"
       responses:
-        '200':
+        "200":
           description: Vehicle
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  data: { $ref: '#/components/schemas/Vehicle' }
-        '404': { $ref: '#/components/responses/NotFound' }
+                  data: { $ref: "#/components/schemas/Vehicle" }
+        "404": { $ref: "#/components/responses/NotFound" }
     patch:
       summary: Update vehicle fields
       parameters:
-        - $ref: '#/components/parameters/ID'
-        - $ref: '#/components/parameters/CSRF'
+        - $ref: "#/components/parameters/ID"
+        - $ref: "#/components/parameters/CSRF"
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/VehicleUpdate' }
+            schema: { $ref: "#/components/schemas/VehicleUpdate" }
       responses:
-        '204': { description: Updated }
+        "204": { description: Updated }
   /vehicles/{id}/events:
     get:
       summary: Geofence events and alerts for one vehicle
       parameters:
-        - $ref: '#/components/parameters/ID'
+        - $ref: "#/components/parameters/ID"
         - name: from
           in: query
           schema: { type: string, format: date-time }
@@ -119,7 +119,7 @@ paths:
           in: query
           schema: { type: string, format: date-time }
       responses:
-        '200':
+        "200":
           description: Events, newest first
           content:
             application/json:
@@ -128,12 +128,12 @@ paths:
                 properties:
                   data:
                     type: array
-                    items: { $ref: '#/components/schemas/VehicleEvent' }
+                    items: { $ref: "#/components/schemas/VehicleEvent" }
   /vehicles/{id}/history:
     get:
       summary: Position history
       parameters:
-        - $ref: '#/components/parameters/ID'
+        - $ref: "#/components/parameters/ID"
         - name: from
           in: query
           schema: { type: string, format: date-time }
@@ -144,7 +144,7 @@ paths:
           in: query
           schema: { type: string, enum: [raw, 30s, 5m] }
       responses:
-        '200':
+        "200":
           description: Points
           content:
             application/json:
@@ -153,13 +153,13 @@ paths:
                 properties:
                   data:
                     type: array
-                    items: { $ref: '#/components/schemas/Point' }
+                    items: { $ref: "#/components/schemas/Point" }
                   resolution: { type: string }
   /live/snapshot:
     get:
       summary: Current state for every vehicle in the tenant
       responses:
-        '200':
+        "200":
           description: Vehicles
           content:
             application/json:
@@ -168,18 +168,18 @@ paths:
                 properties:
                   data:
                     type: array
-                    items: { $ref: '#/components/schemas/Vehicle' }
+                    items: { $ref: "#/components/schemas/Vehicle" }
   /live/ws:
     get:
       summary: Live WebSocket feed
       description: Session cookie required. Messages are position or alert updates for the user's tenant.
       responses:
-        '101': { description: Switching protocols }
+        "101": { description: Switching protocols }
   /geofences:
     get:
       summary: List geofences
       responses:
-        '200':
+        "200":
           description: Geofences
           content:
             application/json:
@@ -188,18 +188,18 @@ paths:
                 properties:
                   data:
                     type: array
-                    items: { $ref: '#/components/schemas/Geofence' }
+                    items: { $ref: "#/components/schemas/Geofence" }
     post:
       summary: Create a geofence
       parameters:
-        - $ref: '#/components/parameters/CSRF'
+        - $ref: "#/components/parameters/CSRF"
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/GeofenceInput' }
+            schema: { $ref: "#/components/schemas/GeofenceInput" }
       responses:
-        '201':
+        "201":
           description: Created
           content:
             application/json:
@@ -207,27 +207,27 @@ paths:
                 type: object
                 properties:
                   id: { type: string, format: uuid }
-        '400': { $ref: '#/components/responses/BadRequest' }
+        "400": { $ref: "#/components/responses/BadRequest" }
   /geofences/{id}:
     patch:
       summary: Update a geofence
       parameters:
-        - $ref: '#/components/parameters/ID'
-        - $ref: '#/components/parameters/CSRF'
+        - $ref: "#/components/parameters/ID"
+        - $ref: "#/components/parameters/CSRF"
       requestBody:
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/GeofenceInput' }
+            schema: { $ref: "#/components/schemas/GeofenceInput" }
       responses:
-        '204': { description: Updated }
+        "204": { description: Updated }
     delete:
       summary: Delete a geofence
       parameters:
-        - $ref: '#/components/parameters/ID'
-        - $ref: '#/components/parameters/CSRF'
+        - $ref: "#/components/parameters/ID"
+        - $ref: "#/components/parameters/CSRF"
       responses:
-        '204': { description: Deleted }
-        '409': { description: Geofence has events }
+        "204": { description: Deleted }
+        "409": { description: Geofence has events }
   /trips:
     get:
       summary: List trips
@@ -235,10 +235,10 @@ paths:
         - name: status
           in: query
           schema: { type: string }
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
-        '200':
+        "200":
           description: Trips
           content:
             application/json:
@@ -247,18 +247,18 @@ paths:
                 properties:
                   data:
                     type: array
-                    items: { $ref: '#/components/schemas/Trip' }
+                    items: { $ref: "#/components/schemas/Trip" }
     post:
       summary: Create a trip
       parameters:
-        - $ref: '#/components/parameters/CSRF'
+        - $ref: "#/components/parameters/CSRF"
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/TripInput' }
+            schema: { $ref: "#/components/schemas/TripInput" }
       responses:
-        '201':
+        "201":
           description: Created
           content:
             application/json:
@@ -270,14 +270,14 @@ paths:
     patch:
       summary: Update trip status or driver
       parameters:
-        - $ref: '#/components/parameters/ID'
-        - $ref: '#/components/parameters/CSRF'
+        - $ref: "#/components/parameters/ID"
+        - $ref: "#/components/parameters/CSRF"
       requestBody:
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/TripUpdate' }
+            schema: { $ref: "#/components/schemas/TripUpdate" }
       responses:
-        '204': { description: Updated }
+        "204": { description: Updated }
   /alerts:
     get:
       summary: List alerts
@@ -288,10 +288,10 @@ paths:
         - name: type
           in: query
           schema: { type: string }
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
-        '200':
+        "200":
           description: Alerts
           content:
             application/json:
@@ -300,21 +300,21 @@ paths:
                 properties:
                   data:
                     type: array
-                    items: { $ref: '#/components/schemas/Alert' }
+                    items: { $ref: "#/components/schemas/Alert" }
   /alerts/{id}/ack:
     post:
       summary: Acknowledge an alert
       parameters:
-        - $ref: '#/components/parameters/ID'
-        - $ref: '#/components/parameters/CSRF'
+        - $ref: "#/components/parameters/ID"
+        - $ref: "#/components/parameters/CSRF"
       responses:
-        '204': { description: Acknowledged }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "204": { description: Acknowledged }
+        "404": { $ref: "#/components/responses/NotFound" }
   /alert-rules:
     get:
       summary: List alert rules
       responses:
-        '200':
+        "200":
           description: Rules
           content:
             application/json:
@@ -323,13 +323,13 @@ paths:
                 properties:
                   data:
                     type: array
-                    items: { $ref: '#/components/schemas/AlertRule' }
+                    items: { $ref: "#/components/schemas/AlertRule" }
   /alert-rules/{id}:
     patch:
       summary: Enable or configure a rule
       parameters:
-        - $ref: '#/components/parameters/ID'
-        - $ref: '#/components/parameters/CSRF'
+        - $ref: "#/components/parameters/ID"
+        - $ref: "#/components/parameters/CSRF"
       requestBody:
         content:
           application/json:
@@ -339,7 +339,7 @@ paths:
                 enabled: { type: boolean }
                 config: { type: object }
       responses:
-        '204': { description: Updated }
+        "204": { description: Updated }
   /reports/summary:
     get:
       summary: Fleet summary
@@ -351,7 +351,7 @@ paths:
           in: query
           schema: { type: string, format: date-time }
       responses:
-        '200':
+        "200":
           description: Counts
           content:
             application/json:
@@ -376,7 +376,7 @@ paths:
     get:
       summary: List drivers
       responses:
-        '200':
+        "200":
           description: Drivers
           content:
             application/json:
@@ -385,18 +385,18 @@ paths:
                 properties:
                   data:
                     type: array
-                    items: { $ref: '#/components/schemas/Driver' }
+                    items: { $ref: "#/components/schemas/Driver" }
     post:
       summary: Create a driver
       parameters:
-        - $ref: '#/components/parameters/CSRF'
+        - $ref: "#/components/parameters/CSRF"
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/DriverInput' }
+            schema: { $ref: "#/components/schemas/DriverInput" }
       responses:
-        '201':
+        "201":
           description: Created
           content:
             application/json:
@@ -408,22 +408,22 @@ paths:
     patch:
       summary: Update a driver
       parameters:
-        - $ref: '#/components/parameters/ID'
-        - $ref: '#/components/parameters/CSRF'
+        - $ref: "#/components/parameters/ID"
+        - $ref: "#/components/parameters/CSRF"
       requestBody:
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/DriverUpdate' }
+            schema: { $ref: "#/components/schemas/DriverUpdate" }
       responses:
-        '204': { description: Updated }
+        "204": { description: Updated }
   /audit:
     get:
       summary: Recent user actions
       parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
-        '200':
+        "200":
           description: Audit entries
           content:
             application/json:
@@ -432,7 +432,7 @@ paths:
     get:
       summary: Dependencies and ingest counters
       responses:
-        '200':
+        "200":
           description: Health
           content:
             application/json:
@@ -441,7 +441,7 @@ paths:
     post:
       summary: Import vehicles from CSV
       parameters:
-        - $ref: '#/components/parameters/CSRF'
+        - $ref: "#/components/parameters/CSRF"
       requestBody:
         required: true
         content:
@@ -452,7 +452,7 @@ paths:
               properties:
                 file: { type: string, format: binary }
       responses:
-        '200':
+        "200":
           description: Import summary
           content:
             application/json:
@@ -500,22 +500,22 @@ components:
       description: Not signed in
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
     NotFound:
       description: Not found
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
     BadRequest:
       description: Invalid request
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
     RateLimited:
       description: Too many attempts
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
   schemas:
     Error:
       type: object
@@ -670,14 +670,14 @@ components:
         id: { type: string, format: uuid }
         name: { type: string }
         kind: { type: string, enum: [depot, customer, restricted, other] }
-        geometry: { $ref: '#/components/schemas/Polygon' }
+        geometry: { $ref: "#/components/schemas/Polygon" }
     GeofenceInput:
       type: object
       required: [name, geometry]
       properties:
         name: { type: string }
         kind: { type: string, enum: [depot, customer, restricted, other] }
-        geometry: { $ref: '#/components/schemas/Polygon' }
+        geometry: { $ref: "#/components/schemas/Polygon" }
     Polygon:
       type: object
       properties:

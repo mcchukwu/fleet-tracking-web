@@ -24,8 +24,7 @@ const rfc3339 =
 export function isRfc3339(value: string): boolean {
   const match = rfc3339.exec(value);
   if (!match) return false;
-  const [, year, month, day, hour, minute, second, , offsetHour, offsetMinute] =
-    match;
+  const [, year, month, day, hour, minute, second, , offsetHour, offsetMinute] = match;
   const monthNumber = Number(month);
   const dayNumber = Number(day);
   const daysInMonth = new Date(Date.UTC(Number(year), monthNumber, 0)).getUTCDate();

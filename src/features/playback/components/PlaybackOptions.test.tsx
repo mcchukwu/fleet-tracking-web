@@ -70,15 +70,11 @@ describe("PlaybackOptions", () => {
   it("shows the vehicle and range triggers, the tools and the info line", () => {
     renderOptions();
     expect(screen.getByRole("heading", { name: "Playback" })).toHaveClass("sr-only");
-    expect(screen.getByRole("button", { name: /^Change vehicle/ })).toHaveTextContent(
-      "LSD-100-AA",
-    );
+    expect(screen.getByRole("button", { name: /^Change vehicle/ })).toHaveTextContent("LSD-100-AA");
     expect(screen.getByRole("button", { name: /^Range/ })).toHaveTextContent("2 h");
     expect(screen.getByRole("button", { name: "Events (0)" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Fit route" })).toBeVisible();
-    expect(screen.getByTestId("playback-options-info")).toHaveTextContent(
-      "Resolution: 30s",
-    );
+    expect(screen.getByTestId("playback-options-info")).toHaveTextContent("Resolution: 30s");
     expect(screen.getByTestId("playback-options-info")).toHaveTextContent("240 points");
     expect(screen.getByTestId("playback-options-info")).toHaveTextContent("52 km/h");
     expect(screen.getByLabelText("Resolution")).toHaveDisplayValue("30s");

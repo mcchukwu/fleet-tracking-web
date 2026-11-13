@@ -41,9 +41,7 @@ export function AlertAckButton({
       className={cn(
         "h-touch focus-visible:outline-focus-ring md:h-control-sm -my-2 inline-flex items-center justify-center gap-1 rounded-md px-2 text-sm font-medium transition-colors duration-100 focus-visible:outline-2 focus-visible:outline-offset-0 md:my-0",
         iconOnly ? "w-touch md:w-control-sm px-0" : undefined,
-        disabled
-          ? "text-subtle cursor-not-allowed opacity-60"
-          : "text-text hover:bg-surface-2",
+        disabled ? "text-subtle cursor-not-allowed opacity-60" : "text-text hover:bg-surface-2",
         className,
       )}
     >

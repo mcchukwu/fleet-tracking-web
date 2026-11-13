@@ -38,16 +38,12 @@ describe("ImportResultPanel", () => {
     expect(screen.getByText("12")).toBeInTheDocument();
     expect(screen.getByText("10")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
-    expect(
-      screen.getByText("10 vehicles imported, 2 rows failed."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("10 vehicles imported, 2 rows failed.")).toBeInTheDocument();
     expect(screen.getByText("vehicles.csv")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Search a plate" }));
     expect(onSearchPlate).toHaveBeenCalledTimes(1);
-    await userEvent.click(
-      screen.getByRole("button", { name: "Import another file" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Import another file" }));
     expect(onImportAnother).toHaveBeenCalledTimes(1);
   });
 
@@ -72,9 +68,7 @@ describe("ImportResultPanel", () => {
       />,
     );
 
-    expect(
-      screen.getByText("Showing the first 100 of 105 row errors."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Showing the first 100 of 105 row errors.")).toBeInTheDocument();
     expect(screen.getAllByRole("row")).toHaveLength(101);
   });
 

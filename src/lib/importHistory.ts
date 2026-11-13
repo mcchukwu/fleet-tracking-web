@@ -46,10 +46,10 @@ export async function readImportHistory(): Promise<RecentImport[]> {
 
 export async function addImportHistory(entry: RecentImport): Promise<RecentImport[]> {
   const current = await readImportHistory();
-  const next = [
-    entry,
-    ...current.filter((item) => item.jobId !== entry.jobId),
-  ].slice(0, RECENT_IMPORT_LIMIT);
+  const next = [entry, ...current.filter((item) => item.jobId !== entry.jobId)].slice(
+    0,
+    RECENT_IMPORT_LIMIT,
+  );
 
   try {
     await set(IMPORT_HISTORY_KEY, next);

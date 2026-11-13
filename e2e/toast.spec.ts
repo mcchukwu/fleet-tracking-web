@@ -1,9 +1,7 @@
 import { expect, test } from "./fixtures";
 
 test.describe("toasts", () => {
-  test("a manual close does not make later non-error toasts persistent", async ({
-    page,
-  }) => {
+  test("a manual close does not make later non-error toasts persistent", async ({ page }) => {
     await page.goto("/styleguide");
     await page.locator("#toasts").scrollIntoViewIfNeeded();
 

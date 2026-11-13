@@ -1,12 +1,6 @@
 import Papa from "papaparse";
 import { describe, expect, it } from "vitest";
-import {
-  errorsCsv,
-  errorsCsvFileName,
-  importHeaderRow,
-  sampleCsv,
-  sampleCsvFileName,
-} from "./csv";
+import { errorsCsv, errorsCsvFileName, importHeaderRow, sampleCsv, sampleCsvFileName } from "./csv";
 import { IMPORT_HEADERS } from "./constants";
 
 describe("import CSV helpers", () => {
@@ -61,9 +55,7 @@ describe("import CSV helpers", () => {
   });
 
   it("produces predictable filenames", () => {
-    expect(errorsCsvFileName("Fleet Import 09.CSV")).toBe(
-      "import-errors-fleet-import-09.csv",
-    );
+    expect(errorsCsvFileName("Fleet Import 09.CSV")).toBe("import-errors-fleet-import-09.csv");
     expect(errorsCsvFileName("")).toBe("import-errors-vehicles.csv");
     expect(sampleCsvFileName()).toBe("fleet-import-sample.csv");
   });

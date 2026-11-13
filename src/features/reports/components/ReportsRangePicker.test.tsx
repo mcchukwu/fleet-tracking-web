@@ -21,9 +21,7 @@ describe("ReportsRangePicker", () => {
   it("reports the chosen preset", async () => {
     const user = userEvent.setup();
     const onPreset = vi.fn();
-    render(
-      <ReportsRangePicker preset="7d" onPreset={onPreset} onCustom={() => undefined} />,
-    );
+    render(<ReportsRangePicker preset="7d" onPreset={onPreset} onCustom={() => undefined} />);
     await user.click(screen.getByRole("button", { name: "Range, 7 days" }));
     await user.click(screen.getByRole("menuitemradio", { name: "24 hours" }));
     expect(onPreset).toHaveBeenCalledWith("24h");
@@ -32,9 +30,7 @@ describe("ReportsRangePicker", () => {
   it("opens the custom range from the menu", async () => {
     const user = userEvent.setup();
     const onCustom = vi.fn();
-    render(
-      <ReportsRangePicker preset="7d" onPreset={() => undefined} onCustom={onCustom} />,
-    );
+    render(<ReportsRangePicker preset="7d" onPreset={() => undefined} onCustom={onCustom} />);
     await user.click(screen.getByRole("button", { name: "Range, 7 days" }));
     await user.click(screen.getByRole("menuitem", { name: "Custom range…" }));
     expect(onCustom).toHaveBeenCalledTimes(1);

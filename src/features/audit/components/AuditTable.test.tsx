@@ -78,14 +78,10 @@ describe("AuditTable", () => {
   it("renders the same columns and six rows while loading", async () => {
     renderTable({ state: "loading" });
 
-    await waitFor(() =>
-      expect(screen.getByLabelText("Loading audit log")).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByLabelText("Loading audit log")).toBeInTheDocument());
     const skeleton = screen.getByLabelText("Loading audit log");
     expect(within(skeleton).getAllByRole("columnheader")).toHaveLength(6);
-    expect(
-      within(skeleton).getAllByRole("row", { hidden: true }).length,
-    ).toBeGreaterThanOrEqual(7);
+    expect(within(skeleton).getAllByRole("row", { hidden: true }).length).toBeGreaterThanOrEqual(7);
   });
 
   it("names each empty reason with its recovery", async () => {
@@ -284,9 +280,7 @@ describe("AuditTable", () => {
     await userEvent.click(screen.getByText("Demo Dispatcher"));
     expect(onOpen).toHaveBeenCalledTimes(2);
 
-    await userEvent.click(
-      screen.getByRole("button", { name: /Copy entity id/i }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: /Copy entity id/i }));
     expect(onOpen).toHaveBeenCalledTimes(2);
   });
 });

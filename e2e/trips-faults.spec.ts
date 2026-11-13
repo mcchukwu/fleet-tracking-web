@@ -34,15 +34,17 @@ function collectErrors(page: Page): string[] {
 
 function unexpectedConsole(errors: string[]): string[] {
   return errors.filter(
-    (text) =>
-      !text.includes("above error occurred") && !text.includes("Failed to load resource"),
+    (text) => !text.includes("above error occurred") && !text.includes("Failed to load resource"),
   );
 }
 
 async function fillCreate(page: Page): Promise<void> {
   const create = page.getByRole("dialog").filter({ hasText: "Create trip" });
   await create.getByLabel("Vehicle").click();
-  await page.getByRole("option", { name: /LSD-100-AA/ }).first().click();
+  await page
+    .getByRole("option", { name: /LSD-100-AA/ })
+    .first()
+    .click();
   await create.getByLabel("Origin").fill("Refinery Gate");
   await create.getByLabel("Destination").fill("Ibadan Customer");
   await create.getByRole("button", { name: "Create trip" }).click();
@@ -183,9 +185,7 @@ test.describe("trips faults", () => {
     await expectNoAxeViolations(page);
   });
 
-  test("a lost create reports that it was not saved and creates no duplicate", async ({
-    page,
-  }) => {
+  test("a lost create reports that it was not saved and creates no duplicate", async ({ page }) => {
     test.setTimeout(60_000);
     const errors = collectErrors(page);
     await page.goto("/trips");
@@ -203,9 +203,7 @@ test.describe("trips faults", () => {
       timeout: 45_000,
     });
     await expect
-      .poll(() =>
-        page.evaluate(() => Boolean(document.activeElement?.closest('[role="dialog"]'))),
-      )
+      .poll(() => page.evaluate(() => Boolean(document.activeElement?.closest('[role="dialog"]'))))
       .toBe(true);
     await expect(page.locator("body")).not.toContainText(/\.tsx:\d+/);
     expect(await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? [])).toHaveLength(0);

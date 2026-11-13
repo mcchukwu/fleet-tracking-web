@@ -1,12 +1,6 @@
 /* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- the scrollable table region must be keyboard reachable */
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
-import type {
-  CSSProperties,
-  HTMLAttributes,
-  ReactNode,
-  Ref,
-  UIEvent,
-} from "react";
+import type { CSSProperties, HTMLAttributes, ReactNode, Ref, UIEvent } from "react";
 import { cn } from "./cn";
 
 export const DATA_TABLE_ROW_HEIGHT = 36;
@@ -45,11 +39,7 @@ export interface DataTableProps<Row> {
     row: Row,
     index: number,
   ) => HTMLAttributes<HTMLTableRowElement> & { ref?: Ref<HTMLTableRowElement> };
-  renderRow?: (
-    row: Row,
-    index: number,
-    cells: readonly ReactNode[],
-  ) => ReactNode | undefined;
+  renderRow?: (row: Row, index: number, cells: readonly ReactNode[]) => ReactNode | undefined;
   onScroll?: (event: UIEvent<HTMLElement>) => void;
   onScrollerChange?: (element: HTMLElement | null) => void;
 }
@@ -83,24 +73,15 @@ function SortGlyph({ direction }: { direction: "asc" | "desc" | null }) {
     return <ArrowUp aria-hidden="true" className="size-3" strokeWidth={1.5} />;
   }
   if (direction === "desc") {
-    return (
-      <ArrowDown aria-hidden="true" className="size-3" strokeWidth={1.5} />
-    );
+    return <ArrowDown aria-hidden="true" className="size-3" strokeWidth={1.5} />;
   }
-  return (
-    <ArrowUpDown aria-hidden="true" className="size-3" strokeWidth={1.5} />
-  );
+  return <ArrowUpDown aria-hidden="true" className="size-3" strokeWidth={1.5} />;
 }
 
 function SpacerRow({ height, columns }: { height: number; columns: number }) {
   return (
     <tr aria-hidden="true">
-      <td
-        aria-hidden="true"
-        colSpan={columns}
-        className="p-0"
-        style={spacerStyle(height)}
-      />
+      <td aria-hidden="true" colSpan={columns} className="p-0" style={spacerStyle(height)} />
     </tr>
   );
 }
@@ -123,8 +104,7 @@ export function DataTable<Row>({
   onScrollerChange,
 }: DataTableProps<Row>) {
   const totalWidth = columns.reduce((total, column) => total + column.width, 0);
-  const rowStyle =
-    rowHeight === DATA_TABLE_ROW_HEIGHT ? undefined : { height: rowHeight };
+  const rowStyle = rowHeight === DATA_TABLE_ROW_HEIGHT ? undefined : { height: rowHeight };
   const stickyFirst = columns.length > 0;
 
   function scrollerRef(element: HTMLElement | null): void {
@@ -151,11 +131,10 @@ export function DataTable<Row>({
               <col key={column.id} style={colStyle(column.width)} />
             ))}
           </colgroup>
-          <thead className="bg-surface-2 sticky top-0 z-panel">
+          <thead className="bg-surface-2 z-panel sticky top-0">
             <tr className="h-row border-border border-b" style={rowStyle}>
               {columns.map((column, index) => {
-                const direction =
-                  sort?.columnId === column.id ? sort.direction : null;
+                const direction = sort?.columnId === column.id ? sort.direction : null;
                 const sortable = Boolean(column.sortable && onSort);
                 return (
                   <th
@@ -174,9 +153,7 @@ export function DataTable<Row>({
                     className={cn(
                       "label-caps h-row border-border text-muted border-b px-3 py-0 align-middle whitespace-nowrap",
                       alignClass(column.align),
-                      stickyFirst &&
-                        index === 0 &&
-                        "bg-surface-2 sticky left-0 z-drawer",
+                      stickyFirst && index === 0 && "bg-surface-2 z-drawer sticky left-0",
                     )}
                     style={rowStyle}
                   >
@@ -198,9 +175,7 @@ export function DataTable<Row>({
             </tr>
           </thead>
           <tbody>
-            {topSpacer > 0 ? (
-              <SpacerRow height={topSpacer} columns={columns.length} />
-            ) : null}
+            {topSpacer > 0 ? <SpacerRow height={topSpacer} columns={columns.length} /> : null}
             {rows.map((row, index) => {
               const isSelected = selected?.(row, index) ?? false;
               const cells = columns.map((column, cellIndex) => (
@@ -212,12 +187,8 @@ export function DataTable<Row>({
                     "h-row text-text px-3 py-0 align-middle text-sm whitespace-nowrap",
                     alignClass(column.align),
                     column.align === "right" && "tabular-nums",
-                    stickyFirst &&
-                      cellIndex === 0 &&
-                      "sticky left-0 z-map-controls bg-inherit",
-                    isSelected &&
-                      cellIndex === 0 &&
-                      "ring-accent ring-2 ring-inset",
+                    stickyFirst && cellIndex === 0 && "z-map-controls sticky left-0 bg-inherit",
+                    isSelected && cellIndex === 0 && "ring-accent ring-2 ring-inset",
                   )}
                   style={rowStyle}
                 >
@@ -226,9 +197,7 @@ export function DataTable<Row>({
                     data-truncate={column.truncate === false ? "false" : "true"}
                     className={cn(
                       "whitespace-nowrap",
-                      column.truncate === false
-                        ? undefined
-                        : "overflow-hidden text-ellipsis",
+                      column.truncate === false ? undefined : "overflow-hidden text-ellipsis",
                     )}
                   >
                     {column.cell(row, index)}
@@ -256,9 +225,7 @@ export function DataTable<Row>({
                 </tr>
               );
             })}
-            {bottomSpacer > 0 ? (
-              <SpacerRow height={bottomSpacer} columns={columns.length} />
-            ) : null}
+            {bottomSpacer > 0 ? <SpacerRow height={bottomSpacer} columns={columns.length} /> : null}
           </tbody>
         </table>
       </section>

@@ -55,7 +55,12 @@ export function normalizeAlertFrame(message: AlertMessage): NormalizedAlertFrame
   const occurredAt =
     inner?.occurred_at ?? message.occurred_at ?? inner?.event_time ?? message.event_time ?? null;
   const severity = toSeverity(inner?.severity ?? message.severity ?? null);
-  const geofence = inner?.geofence_id ?? message.geofence_id ?? inner?.geofence_name ?? message.geofence_name ?? "";
+  const geofence =
+    inner?.geofence_id ??
+    message.geofence_id ??
+    inner?.geofence_name ??
+    message.geofence_name ??
+    "";
 
   return {
     key: alertId

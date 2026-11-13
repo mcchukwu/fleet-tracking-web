@@ -41,21 +41,12 @@ export function AppShell() {
   return (
     <LiveProvider>
       <div className="bg-bg text-text flex h-dvh flex-col overflow-hidden">
-        <TopBar
-          onOpenMenu={() => setMenuOpen(true)}
-          onOpenShortcuts={openShortcuts}
-        />
+        <TopBar onOpenMenu={() => setMenuOpen(true)} onOpenShortcuts={openShortcuts} />
         <GlobalBanners />
 
-        <div
-          data-testid="content-area"
-          className="relative isolate flex min-h-0 flex-1"
-        >
+        <div data-testid="content-area" className="relative isolate flex min-h-0 flex-1">
           <NavRail />
-          <main
-            tabIndex={-1}
-            className="min-h-0 min-w-0 flex-1 overflow-hidden focus:outline-none"
-          >
+          <main tabIndex={-1} className="min-h-0 min-w-0 flex-1 overflow-hidden focus:outline-none">
             <ErrorBoundary level="route" resetKeys={[pathname]}>
               <Outlet />
             </ErrorBoundary>
@@ -67,10 +58,7 @@ export function AppShell() {
         </div>
 
         <MobileNav open={menuOpen} onClose={() => setMenuOpen(false)} />
-        <ShortcutsDialog
-          open={shortcutsOpen}
-          onClose={() => setShortcutsOpen(false)}
-        />
+        <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       </div>
     </LiveProvider>
   );

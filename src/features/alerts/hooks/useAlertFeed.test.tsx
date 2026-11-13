@@ -43,7 +43,9 @@ describe("useAlertFeed", () => {
       wrapper: wrapperFor(queryClient),
     });
 
-    await waitFor(() => expect(result.current.visible.map((alert) => alert.id)).toEqual(["a", "b"]));
+    await waitFor(() =>
+      expect(result.current.visible.map((alert) => alert.id)).toEqual(["a", "b"]),
+    );
 
     act(() => result.current.setAtTop(false));
     hydrate(queryClient, [row("c", "2026-11-02T13:00:00Z"), ...first]);
@@ -52,7 +54,9 @@ describe("useAlertFeed", () => {
     expect(result.current.visible.map((alert) => alert.id)).toEqual(["a", "b"]);
 
     act(() => result.current.revealNew());
-    await waitFor(() => expect(result.current.visible.map((alert) => alert.id)).toEqual(["c", "a", "b"]));
+    await waitFor(() =>
+      expect(result.current.visible.map((alert) => alert.id)).toEqual(["c", "a", "b"]),
+    );
     expect(result.current.newCount).toBe(0);
     expect([...result.current.highlightIds]).toEqual(["c"]);
   });
@@ -83,7 +87,9 @@ describe("useAlertFeed", () => {
     act(() => result.current.setAtTop(false));
 
     rerender({ filters: { ...emptyAlertFilters, severity: "low" } });
-    await waitFor(() => expect(result.current.visible.map((alert) => alert.id)).toEqual(["a", "b"]));
+    await waitFor(() =>
+      expect(result.current.visible.map((alert) => alert.id)).toEqual(["a", "b"]),
+    );
     expect(result.current.newCount).toBe(0);
   });
 });

@@ -39,9 +39,9 @@ interface Box {
 
 async function openLab(page: Page): Promise<void> {
   await page.goto("/dev/combobox");
-  await expect(page.getByRole("heading", { name: "Combobox lab" })).toBeVisible(
-    { timeout: 30_000 },
-  );
+  await expect(page.getByRole("heading", { name: "Combobox lab" })).toBeVisible({
+    timeout: 30_000,
+  });
 }
 
 async function box(locator: Locator): Promise<Box> {
@@ -54,9 +54,7 @@ async function box(locator: Locator): Promise<Box> {
 async function rowHeights(scope: Locator): Promise<number[]> {
   return scope
     .getByRole("option")
-    .evaluateAll((options) =>
-      options.map((option) => option.getBoundingClientRect().height),
-    );
+    .evaluateAll((options) => options.map((option) => option.getBoundingClientRect().height));
 }
 
 async function visibleRowCount(scope: Locator): Promise<number> {
@@ -121,15 +119,12 @@ test.describe(
   { tag: "@theme" },
   () => {
     for (const viewport of VIEWPORTS) {
-      test(`the picker is correct at ${viewport.width}x${viewport.height}`, async ({
-        page,
-      }) => {
+      test(`the picker is correct at ${viewport.width}x${viewport.height}`, async ({ page }) => {
         await page.setViewportSize(viewport);
         await openLab(page);
         // The coarse-pointer projects keep the sheet even at a wide viewport.
         const sheetExpected = !(await page.evaluate(
-          () =>
-            window.matchMedia("(min-width: 768px) and (pointer: fine)").matches,
+          () => window.matchMedia("(min-width: 768px) and (pointer: fine)").matches,
         ));
 
         for (const count of COUNTS) {
@@ -147,9 +142,7 @@ test.describe(
 
           if (count === 500) {
             expect(
-              await picker.scope
-                .locator("[data-picker-list]")
-                .getAttribute("data-virtualized"),
+              await picker.scope.locator("[data-picker-list]").getAttribute("data-virtualized"),
             ).toBe("true");
             expect(heights.length).toBeLessThan(500);
           } else {
@@ -163,9 +156,7 @@ test.describe(
               (element) => Number.parseFloat(element.style.maxHeight) || 0,
             );
             expect(sheetBox.y).toBeGreaterThanOrEqual(0);
-            expect(sheetBox.bottom).toBeLessThanOrEqual(
-              viewport.height + TOLERANCE,
-            );
+            expect(sheetBox.bottom).toBeLessThanOrEqual(viewport.height + TOLERANCE);
             expect(maxHeight).toBeLessThanOrEqual(viewport.height * 0.85 + 1);
             await expect(picker.search).toBeFocused();
             if (count >= 4) {
@@ -184,9 +175,7 @@ test.describe(
             );
             expect(maxHeight).toBeLessThanOrEqual(360 + TOLERANCE);
             expect(shellBox.y).toBeGreaterThanOrEqual(0);
-            expect(shellBox.bottom).toBeLessThanOrEqual(
-              viewport.height + TOLERANCE,
-            );
+            expect(shellBox.bottom).toBeLessThanOrEqual(viewport.height + TOLERANCE);
             await expect(picker.trigger).toBeFocused();
           }
 
@@ -194,10 +183,7 @@ test.describe(
           await page.keyboard.press("Escape");
           await expect(page.locator("[data-picker-sheet]")).toHaveCount(0);
           await expect(page.locator("[data-combobox-shell]")).toHaveCount(0);
-          await expect(picker.trigger).toHaveAttribute(
-            "aria-expanded",
-            "false",
-          );
+          await expect(picker.trigger).toHaveAttribute("aria-expanded", "false");
           await expect(picker.trigger).toBeFocused();
         }
 
@@ -218,13 +204,9 @@ test.describe(
       });
     }
 
-    test("a coarse pointer at 1024 keeps the 44px sheet controls", async ({
-      browser,
-    }) => {
+    test("a coarse pointer at 1024 keeps the 44px sheet controls", async ({ browser }) => {
       const baseURL = test.info().project.use.baseURL;
-      const theme = test.info().project.name.includes("dark")
-        ? "dark"
-        : "light";
+      const theme = test.info().project.name.includes("dark") ? "dark" : "light";
       const context = await browser.newContext({
         viewport: { width: 1024, height: 768 },
         hasTouch: true,
@@ -283,9 +265,7 @@ test.describe("picker interaction", { tag: "@theme" }, () => {
     await page.keyboard.press("Escape");
   });
 
-  test("selection works by keyboard, mouse and touch and returns focus", async ({
-    page,
-  }) => {
+  test("selection works by keyboard, mouse and touch and returns focus", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openLab(page);
 
@@ -302,16 +282,12 @@ test.describe("picker interaction", { tag: "@theme" }, () => {
     await expect(picker.trigger).toBeFocused();
 
     picker = await openPicker(page, "Vehicle (25 options)");
-    const option = picker.scope
-      .getByRole("option", { name: /LSD-007-AA/ })
-      .first();
+    const option = picker.scope.getByRole("option", { name: /LSD-007-AA/ }).first();
     await touchTap(page, option);
     await expect(picker.trigger).toHaveValue("LSD-007-AA");
   });
 
-  test("the sheet follows the software keyboard and keeps four rows", async ({
-    page,
-  }) => {
+  test("the sheet follows the software keyboard and keeps four rows", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openLab(page);
     const picker = await openPicker(page, "Vehicle (25 options)");
@@ -324,9 +300,7 @@ test.describe("picker interaction", { tag: "@theme" }, () => {
     }));
     const sheetBox = await box(picker.scope);
     expect(sheetBox.y).toBeGreaterThanOrEqual(0);
-    expect(sheetBox.bottom).toBeLessThanOrEqual(
-      visual.offsetTop + visual.height + TOLERANCE,
-    );
+    expect(sheetBox.bottom).toBeLessThanOrEqual(visual.offsetTop + visual.height + TOLERANCE);
     await expect(picker.search).toBeFocused();
     expect(await visibleRowCount(picker.scope)).toBeGreaterThanOrEqual(4);
     const clear = picker.scope.getByRole("button", { name: "Close picker" });

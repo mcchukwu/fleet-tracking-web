@@ -52,9 +52,7 @@ describe("MapStyleMenu", () => {
       expect(item).toHaveAttribute("data-disabled");
       expect(within(item).getByText("Needs a connection")).toBeVisible();
     }
-    expect(screen.getByRole("menuitemradio", { name: "Map" })).not.toHaveAttribute(
-      "data-disabled",
-    );
+    expect(screen.getByRole("menuitemradio", { name: "Map" })).not.toHaveAttribute("data-disabled");
   });
 
   it("shows only Map when the build has no MapTiler key", async () => {
@@ -69,9 +67,6 @@ describe("MapStyleMenu", () => {
 
   it("marks the picker busy while a style loads", () => {
     menu({ loadingStyle: "satellite" });
-    expect(screen.getByRole("button", { name: "Map style" })).toHaveAttribute(
-      "aria-busy",
-      "true",
-    );
+    expect(screen.getByRole("button", { name: "Map style" })).toHaveAttribute("aria-busy", "true");
   });
 });

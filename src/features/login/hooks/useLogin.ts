@@ -30,8 +30,7 @@ export function useLogin(): UseLoginResult {
   const task = useRef<Promise<LoginOutcome> | null>(null);
   const pending = startedAt !== null;
   const now = useClock(startedAt !== null);
-  const slow: SlowState | null =
-    startedAt === null ? null : getSlowState(startedAt, now);
+  const slow: SlowState | null = startedAt === null ? null : getSlowState(startedAt, now);
 
   const submit = useCallback(
     async (email: string, password: string): Promise<LoginOutcome> => {

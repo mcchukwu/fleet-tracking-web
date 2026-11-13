@@ -151,9 +151,13 @@ describe("useLogin", () => {
     await act(async () => {
       pending = result.current.submit(user.email, "secret");
     });
-    await act(async () => { vi.advanceTimersByTime(3_000); });
+    await act(async () => {
+      vi.advanceTimersByTime(3_000);
+    });
     expect(result.current.slow).toBe("working");
-    await act(async () => { vi.advanceTimersByTime(7_000); });
+    await act(async () => {
+      vi.advanceTimersByTime(7_000);
+    });
     expect(result.current.slow).toBe("long");
 
     await act(async () => {

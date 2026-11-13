@@ -13,7 +13,7 @@ export function VehicleListSkeleton({ rows = 6, rowHeight }: VehicleListSkeleton
         <div
           key={index}
           style={rowBoxStyle(rowHeight)}
-          className="flex flex-col justify-center gap-2 border-b border-border px-3"
+          className="border-border flex flex-col justify-center gap-2 border-b px-3"
         >
           <div className="flex items-center gap-2">
             <Skeleton className="w-14" />

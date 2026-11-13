@@ -27,17 +27,16 @@ export function routeBounds(points: readonly LngLat[]): Bounds | null {
 }
 
 function validGapIndexes(gapAfterIndex: readonly number[], length: number): Set<number> {
-  return new Set(gapAfterIndex.filter((index) => Number.isInteger(index) && index >= 0 && index < length - 1));
+  return new Set(
+    gapAfterIndex.filter((index) => Number.isInteger(index) && index >= 0 && index < length - 1),
+  );
 }
 
 /**
  * Split the route into contiguous solid runs. A gap always breaks the run: the
  * connector itself is drawn separately and dashed, never as a line run.
  */
-export function routeRuns(
-  points: readonly LngLat[],
-  gapAfterIndex: readonly number[],
-): LngLat[][] {
+export function routeRuns(points: readonly LngLat[], gapAfterIndex: readonly number[]): LngLat[][] {
   if (points.length < 2) return [];
   const gaps = validGapIndexes(gapAfterIndex, points.length);
   const runs: LngLat[][] = [];

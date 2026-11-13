@@ -79,7 +79,9 @@ function renderPanel(overrides: Partial<VehiclePanelProps>) {
 describe("VehiclePanel", () => {
   it("shows a delayed skeleton while loading", async () => {
     renderPanel({ loading: true, total: 0 });
-    expect(await screen.findByLabelText("Loading vehicles", {}, { timeout: 1_500 })).toBeInTheDocument();
+    expect(
+      await screen.findByLabelText("Loading vehicles", {}, { timeout: 1_500 }),
+    ).toBeInTheDocument();
   });
 
   it("distinguishes no data, no positions and no results", () => {
@@ -95,7 +97,14 @@ describe("VehiclePanel", () => {
               positioned: 0,
               rows: [
                 { ...row, lat: null, lon: null, ageSeconds: null, status: "offline" },
-                { ...row, id: "uuid-2", key: "demo-imei-0002", plate: "TEST-101-AA", lat: null, lon: null },
+                {
+                  ...row,
+                  id: "uuid-2",
+                  key: "demo-imei-0002",
+                  plate: "TEST-101-AA",
+                  lat: null,
+                  lon: null,
+                },
               ],
             })}
           />

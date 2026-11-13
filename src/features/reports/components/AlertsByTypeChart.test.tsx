@@ -45,9 +45,10 @@ describe("AlertsByTypeChart", () => {
     await user.click(screen.getByText("View data table"));
     const table = screen.getByRole("table", { name: /Alerts by type/ });
     const rows = within(table).getAllByRole("row").slice(1);
-    expect(
-      rows.map((row) => within(row).getAllByRole("cell")[0]?.textContent),
-    ).toEqual(["Geofence exit", "Speeding"]);
+    expect(rows.map((row) => within(row).getAllByRole("cell")[0]?.textContent)).toEqual([
+      "Geofence exit",
+      "Speeding",
+    ]);
   });
 
   it("shows the zero state when the range has no alerts", () => {
@@ -58,21 +59,12 @@ describe("AlertsByTypeChart", () => {
 
   it("explains a missing breakdown without claiming there were no alerts", () => {
     render(<AlertsByTypeChart alertCount={66} items={[]} />);
-    expect(
-      screen.getByText("The alert breakdown isn't available for this range."),
-    ).toBeVisible();
+    expect(screen.getByText("The alert breakdown isn't available for this range.")).toBeVisible();
     expect(screen.queryByText("No alerts in this range")).toBeNull();
   });
 
   it("renders an unknown type with the neutral fallback", () => {
-    render(
-      <AlertsByTypeChart
-        alertCount={2}
-        items={[{ key: "solar_flare", count: 2 }]}
-      />,
-    );
-    expect(
-      within(screen.getByRole("img")).getByText("Unknown type: solar_flare"),
-    ).toBeVisible();
+    render(<AlertsByTypeChart alertCount={2} items={[{ key: "solar_flare", count: 2 }]} />);
+    expect(within(screen.getByRole("img")).getByText("Unknown type: solar_flare")).toBeVisible();
   });
 });

@@ -29,9 +29,7 @@ describe("useImportPreview", () => {
   });
 
   it("rejects a file that is not .csv before reading it", async () => {
-    const { result } = renderHook(() =>
-      useImportPreview(csvFile("vehicles.txt")),
-    );
+    const { result } = renderHook(() => useImportPreview(csvFile("vehicles.txt")));
     await waitFor(() => expect(result.current.state).toBe("error"));
     expect(result.current.issue).toBe("wrong-type");
     expect(mocks.readImportFile).not.toHaveBeenCalled();
@@ -114,10 +112,9 @@ describe("useImportPreview", () => {
 
     const first = csvFile("first.csv");
     const second = csvFile("second.csv");
-    const { result, rerender } = renderHook(
-      ({ file }) => useImportPreview(file),
-      { initialProps: { file: first } },
-    );
+    const { result, rerender } = renderHook(({ file }) => useImportPreview(file), {
+      initialProps: { file: first },
+    });
 
     rerender({ file: second });
     resolveSecond?.({
@@ -138,8 +135,6 @@ describe("useImportPreview", () => {
       bom: false,
       errorCount: 0,
     });
-    await waitFor(() =>
-      expect(result.current.preview?.rows[0]?.[0]).toBe("imei-2"),
-    );
+    await waitFor(() => expect(result.current.preview?.rows[0]?.[0]).toBe("imei-2"));
   });
 });

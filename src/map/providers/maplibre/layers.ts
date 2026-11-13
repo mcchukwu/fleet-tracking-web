@@ -292,7 +292,10 @@ const geofenceLine = (
   },
 });
 
-export function geofenceLayers(tokens: MapTokens, options: LayerOptions = {}): LayerSpecification[] {
+export function geofenceLayers(
+  tokens: MapTokens,
+  options: LayerOptions = {},
+): LayerSpecification[] {
   const imagery = options.imagery === true;
   return [
     {
@@ -371,13 +374,7 @@ export function geofenceLayers(tokens: MapTokens, options: LayerOptions = {}): L
       [4, 3],
       tokens.geofence.strokeWidth,
     ),
-    geofenceLine(
-      LAYER_IDS.geofenceLineOther,
-      "other",
-      tokens.colors.geofenceOther,
-      null,
-      1,
-    ),
+    geofenceLine(LAYER_IDS.geofenceLineOther, "other", tokens.colors.geofenceOther, null, 1),
     {
       id: LAYER_IDS.geofenceLabel,
       type: "symbol",
@@ -484,11 +481,7 @@ export function routeLayers(tokens: MapTokens, options: LayerOptions = {}): Laye
       type: "symbol",
       source: SOURCE_IDS.routePoints,
       minzoom: tokens.route.labelZoom,
-      filter: [
-        "any",
-        ["==", ["get", "role"], "start"],
-        ["==", ["get", "role"], "end"],
-      ],
+      filter: ["any", ["==", ["get", "role"], "start"], ["==", ["get", "role"], "end"]],
       layout: {
         "text-field": ["match", ["get", "role"], "start", "Start", "end", "End", ""],
         "text-font": ["Noto Sans Regular"],
@@ -522,11 +515,7 @@ export interface VehicleFeatureCache {
   features: Map<string, Feature<Point>>;
 }
 
-function sameVehicle(
-  feature: Feature<Point>,
-  vehicle: MapVehicle,
-  position: LngLat,
-): boolean {
+function sameVehicle(feature: Feature<Point>, vehicle: MapVehicle, position: LngLat): boolean {
   const properties = feature.properties;
   return (
     feature.geometry.coordinates[0] === position[0] &&

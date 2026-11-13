@@ -96,7 +96,10 @@ export function GeofenceDeleteDialog({
     >
       <div className="flex flex-col gap-2">
         {blocked ? (
-          <div role="alert" className="border-border bg-alert-bg flex flex-col gap-1 rounded-md border p-3">
+          <div
+            role="alert"
+            className="border-border bg-alert-bg flex flex-col gap-1 rounded-md border p-3"
+          >
             <p className="text-alert-fg text-sm font-medium">{blocked.title}</p>
             <p className="text-alert-fg text-sm">{blocked.detail}</p>
           </div>

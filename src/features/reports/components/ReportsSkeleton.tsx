@@ -2,11 +2,7 @@ import { Skeleton } from "../../../ui/StatePanel";
 
 export function ReportsSkeleton() {
   return (
-    <output
-      aria-busy="true"
-      aria-label="Loading report"
-      className="flex flex-col gap-6"
-    >
+    <output aria-busy="true" aria-label="Loading report" className="flex flex-col gap-6">
       <div className="border-border bg-border grid grid-cols-2 gap-px overflow-hidden rounded-lg border sm:grid-cols-3 lg:grid-cols-7">
         {Array.from({ length: 7 }).map((_, index) => (
           <div
@@ -33,7 +29,7 @@ export function ReportsSkeleton() {
           ))}
         </div>
         <div className="border-border border-t pt-2">
-          <div className="flex min-h-touch items-center md:min-h-control-sm">
+          <div className="min-h-touch md:min-h-control-sm flex items-center">
             <Skeleton className="w-32" />
           </div>
         </div>

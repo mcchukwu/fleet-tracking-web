@@ -65,11 +65,7 @@ describe("useTripFeed", () => {
       wrapper: wrapper(new QueryClient()),
     });
 
-    expect(result.current.trips.map((row) => row.id)).toEqual([
-      "trip-1",
-      "trip-2",
-      "trip-3",
-    ]);
+    expect(result.current.trips.map((row) => row.id)).toEqual(["trip-1", "trip-2", "trip-3"]);
     expect(result.current.loadedCount).toBe(3);
     expect(result.current.hasMore).toBe(true);
 

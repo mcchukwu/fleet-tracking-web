@@ -1,10 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import {
-  captureForReview,
-  expectNoAxeViolations,
-  expectNoHorizontalScroll,
-} from "./helpers";
+import { captureForReview, expectNoAxeViolations, expectNoHorizontalScroll } from "./helpers";
 
 async function goOffline(page: Page): Promise<void> {
   await page.getByTestId("banner-region").waitFor({ state: "attached" });
@@ -35,29 +31,31 @@ test.describe("offline presentation", () => {
     await captureForReview(page, "13-offline-map-stale");
   });
 
-  test("map becomes a full-width list when the provider cannot work offline", { tag: "@theme" }, async ({
-    page,
-  }) => {
-    await page.goto("/map?map=fake&offline=0");
-    await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
-    await goOffline(page);
+  test(
+    "map becomes a full-width list when the provider cannot work offline",
+    { tag: "@theme" },
+    async ({ page }) => {
+      await page.goto("/map?map=fake&offline=0");
+      await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
+      await goOffline(page);
 
-    await expect(page.getByTestId("map-list-only")).toBeVisible();
-    await expect(page.getByRole("region", { name: "Live map" })).toHaveCount(0);
-    await expect(page.getByText("Map isn't available offline")).toBeVisible();
-    await expect(page.getByTestId("map-attribution")).toHaveCount(0);
-    await expectNoHorizontalScroll(page);
-    await expectNoAxeViolations(page);
-    await expect(page.getByTestId("map-list-only").getByTestId("map-kpi")).toBeVisible();
+      await expect(page.getByTestId("map-list-only")).toBeVisible();
+      await expect(page.getByRole("region", { name: "Live map" })).toHaveCount(0);
+      await expect(page.getByText("Map isn't available offline")).toBeVisible();
+      await expect(page.getByTestId("map-attribution")).toHaveCount(0);
+      await expectNoHorizontalScroll(page);
+      await expectNoAxeViolations(page);
+      await expect(page.getByTestId("map-list-only").getByTestId("map-kpi")).toBeVisible();
 
-    const root = await page.getByTestId("map-root").boundingBox();
-    const box = await page.getByTestId("map-list-only").boundingBox();
-    if (root && box) {
-      expect(box.width).toBeGreaterThanOrEqual(root.width - 32);
-    }
+      const root = await page.getByTestId("map-root").boundingBox();
+      const box = await page.getByTestId("map-list-only").boundingBox();
+      if (root && box) {
+        expect(box.width).toBeGreaterThanOrEqual(root.width - 32);
+      }
 
-    await captureForReview(page, "13-offline-map-list-only");
-  });
+      await captureForReview(page, "13-offline-map-list-only");
+    },
+  );
 
   for (const path of ["/alerts", "/trips", "/drivers", "/geofences", "/reports", "/system"]) {
     test(`${path} shows the banner without a region error`, async ({ page }) => {
@@ -69,23 +67,29 @@ test.describe("offline presentation", () => {
     });
   }
 
-  test("audit explains that the security log is not cached", { tag: "@theme" }, async ({ page }) => {
-    await page.goto("/audit");
-    await goOffline(page);
-    await expect(page.getByTestId("banner-region")).toContainText("You're offline");
-    await captureForReview(page, "13-offline-audit");
-  });
+  test(
+    "audit explains that the security log is not cached",
+    { tag: "@theme" },
+    async ({ page }) => {
+      await page.goto("/audit");
+      await goOffline(page);
+      await expect(page.getByTestId("banner-region")).toContainText("You're offline");
+      await captureForReview(page, "13-offline-audit");
+    },
+  );
 
-  test("the update banner is a prompt and has an explicit action", { tag: "@theme" }, async ({ page }) => {
-    await page.goto("/map?map=fake");
-    await expect(page.getByTestId("map-root")).toBeVisible();
-    await expect(page.getByLabel("Connection: Live")).toBeVisible();
-    await page.evaluate(() =>
-      window.dispatchEvent(new CustomEvent("fleet:update-available")),
-    );
+  test(
+    "the update banner is a prompt and has an explicit action",
+    { tag: "@theme" },
+    async ({ page }) => {
+      await page.goto("/map?map=fake");
+      await expect(page.getByTestId("map-root")).toBeVisible();
+      await expect(page.getByLabel("Connection: Live")).toBeVisible();
+      await page.evaluate(() => window.dispatchEvent(new CustomEvent("fleet:update-available")));
 
-    await expect(page.getByTestId("banner-region")).toContainText("A new version is available");
-    await expect(page.getByRole("button", { name: "Reload" })).toBeVisible();
-    await captureForReview(page, "13-offline-update-banner");
-  });
+      await expect(page.getByTestId("banner-region")).toContainText("A new version is available");
+      await expect(page.getByRole("button", { name: "Reload" })).toBeVisible();
+      await captureForReview(page, "13-offline-update-banner");
+    },
+  );
 });

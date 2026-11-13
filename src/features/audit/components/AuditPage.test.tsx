@@ -24,9 +24,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@tanstack/react-router", () => ({
   useSearch: () => mocks.search,
   useNavigate: () => mocks.navigate,
-  Link: ({ to, children }: { to: string; children: ReactNode }) => (
-    <a href={to}>{children}</a>
-  ),
+  Link: ({ to, children }: { to: string; children: ReactNode }) => <a href={to}>{children}</a>,
 }));
 
 vi.mock("../hooks/useAuditFeed", () => ({
@@ -267,9 +265,7 @@ describe("AuditPage", () => {
   it("opens an entry from the table by writing it to the URL", async () => {
     renderPage();
 
-    await userEvent.click(
-      screen.getByRole("button", { name: /Open audit entry/i }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: /Open audit entry/i }));
     const lastCall = mocks.navigate.mock.lastCall?.[0] as {
       to: string;
       search: (previous: Record<string, unknown>) => Record<string, unknown>;
@@ -284,9 +280,7 @@ describe("AuditPage", () => {
     mocks.search = { entry: "207" };
     renderPage();
 
-    expect(
-      screen.getByRole("complementary", { name: "Audit entry details" }),
-    ).toBeVisible();
+    expect(screen.getByRole("complementary", { name: "Audit entry details" })).toBeVisible();
     expect(screen.getAllByText("Demo Admin").length).toBeGreaterThanOrEqual(1);
   });
 
@@ -313,9 +307,7 @@ describe("AuditPage", () => {
     mocks.search = { entry: "207" };
     renderPage();
 
-    await userEvent.click(
-      screen.getByRole("button", { name: "Close audit entry" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Close audit entry" }));
     expect(mocks.navigate).toHaveBeenLastCalledWith({
       to: "/audit",
       search: { entry: undefined },

@@ -39,11 +39,7 @@ export function useErrorStorm(): boolean {
   return useSyncExternalStore(subscribeErrorStorm, getErrorStorm, () => false);
 }
 
-export function recordRequestFailure(
-  resource: string,
-  kind: AppErrorKind,
-  at = Date.now(),
-): void {
+export function recordRequestFailure(resource: string, kind: AppErrorKind, at = Date.now()): void {
   if (!stormKinds.has(kind)) return;
   failures = failures.filter((failure) => at - failure.at <= STORM_WINDOW_MS);
   if (!failures.some((failure) => failure.resource === resource)) {
@@ -83,10 +79,12 @@ export function retryDelay(
 }
 
 export function handleGlobalError(cause: unknown, meta?: FleetMeta): AppError {
-  const error = isAppError(cause) ? cause : normalize(cause, {
-    resource: meta?.resource,
-    route: typeof window === "undefined" ? "/" : window.location.pathname,
-  });
+  const error = isAppError(cause)
+    ? cause
+    : normalize(cause, {
+        resource: meta?.resource,
+        route: typeof window === "undefined" ? "/" : window.location.pathname,
+      });
   if (error.kind === "aborted") return error;
 
   recordError(error);

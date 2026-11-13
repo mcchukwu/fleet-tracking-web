@@ -119,7 +119,13 @@ export function sortRows(rows: readonly VehicleRow[], sort: MapSort): VehicleRow
 }
 
 export function filterSignature(filters: MapFilterValues): string {
-  return [filters.q, filters.statuses.join(","), filters.depot ?? "", filters.sort, filters.onlyInView ? "1" : "0"].join("|");
+  return [
+    filters.q,
+    filters.statuses.join(","),
+    filters.depot ?? "",
+    filters.sort,
+    filters.onlyInView ? "1" : "0",
+  ].join("|");
 }
 
 export function nextSelectionKey(

@@ -37,9 +37,7 @@ describe("chartItems", () => {
   });
 
   it("uses human labels for known types", () => {
-    expect(chartItems([{ key: "geofence_enter", count: 2 }])[0]?.label).toBe(
-      "Geofence entry",
-    );
+    expect(chartItems([{ key: "geofence_enter", count: 2 }])[0]?.label).toBe("Geofence entry");
   });
 });
 
@@ -49,9 +47,7 @@ describe("chartDescription", () => {
       { key: "geofence_exit", count: 31 },
       { key: "speeding", count: 4 },
     ]);
-    expect(chartDescription(items)).toBe(
-      "Alerts by type: Geofence exit 31, Speeding 4.",
-    );
+    expect(chartDescription(items)).toBe("Alerts by type: Geofence exit 31, Speeding 4.");
   });
 
   it("describes an empty breakdown", () => {

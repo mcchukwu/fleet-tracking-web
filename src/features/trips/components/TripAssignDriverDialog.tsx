@@ -57,11 +57,7 @@ export function TripAssignDriverDialog({
 
   async function submit(): Promise<void> {
     if (!trip || !driverId || write.pending || disabledReason) return;
-    const outcome = await write.transition(
-      trip,
-      transitionPayload("assign", driverId),
-      "assign",
-    );
+    const outcome = await write.transition(trip, transitionPayload("assign", driverId), "assign");
     if (outcome.status === "done" || outcome.status === "gone" || outcome.status === "conflict") {
       onFinished?.();
       close();
@@ -106,7 +102,7 @@ export function TripAssignDriverDialog({
       </div>
 
       {!driversQuery.isLoading && !driversQuery.error && drivers.length === 0 ? (
-        <p className="mb-3 text-sm text-muted">
+        <p className="text-muted mb-3 text-sm">
           No active drivers are available. Add one before assigning this trip.
         </p>
       ) : null}

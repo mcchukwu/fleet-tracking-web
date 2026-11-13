@@ -1,10 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import {
-  captureForReview,
-  expectNoAxeViolations,
-  expectNoHorizontalScroll,
-} from "./helpers";
+import { captureForReview, expectNoAxeViolations, expectNoHorizontalScroll } from "./helpers";
 
 const VEHICLE_2 = "6c69032e-b802-447e-8f7a-ad8c0ddc2359";
 const PLATE_2 = "LSD-101-AA";
@@ -14,9 +10,7 @@ function isMobile(page: Page): boolean {
 }
 
 function drawer(page: Page) {
-  return isMobile(page)
-    ? page.getByTestId("vehicle-detail-sheet")
-    : page.getByTestId("drawer");
+  return isMobile(page) ? page.getByTestId("vehicle-detail-sheet") : page.getByTestId("drawer");
 }
 
 async function gotoFault(page: Page, fault: string): Promise<void> {
@@ -57,9 +51,7 @@ test.describe("vehicle drawer faults", () => {
   test("a forbidden detail shows the forbidden state", async ({ page }) => {
     await gotoFault(page, "vehicle:forbidden");
     await expect(page.getByText("You don't have access to this.")).toBeVisible();
-    await expect(
-      drawer(page).getByRole("button", { name: "Close", exact: true }),
-    ).toBeVisible();
+    await expect(drawer(page).getByRole("button", { name: "Close", exact: true })).toBeVisible();
     await captureForReview(page, "03-drawer-forbidden");
   });
 
@@ -185,9 +177,13 @@ test.describe("vehicle drawer faults", () => {
     await expect(page.getByText("Still working…")).toBeVisible({ timeout: 6_000 });
   });
 
-  test("the drawer is axe clean in its empty and stale states", { tag: "@theme" }, async ({ page }) => {
-    await page.goto(`/map?map=fake&v=${VEHICLE_2}`);
-    await expect(drawer(page)).toBeVisible();
-    await expectNoAxeViolations(page);
-  });
+  test(
+    "the drawer is axe clean in its empty and stale states",
+    { tag: "@theme" },
+    async ({ page }) => {
+      await page.goto(`/map?map=fake&v=${VEHICLE_2}`);
+      await expect(drawer(page)).toBeVisible();
+      await expectNoAxeViolations(page);
+    },
+  );
 });

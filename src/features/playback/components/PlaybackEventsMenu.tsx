@@ -57,12 +57,7 @@ export function PlaybackEventsMenu({
     <DropdownMenu>
       <Tooltip label={label}>
         <DropdownMenuTrigger asChild>
-          <Button
-            size="md"
-            variant="ghost"
-            aria-label={label}
-            className={triggerClassName}
-          >
+          <Button size="md" variant="ghost" aria-label={label} className={triggerClassName}>
             {trigger}
           </Button>
         </DropdownMenuTrigger>
@@ -70,7 +65,7 @@ export function PlaybackEventsMenu({
       <DropdownMenuContent
         align="end"
         collisionPadding={12}
-        className="w-events-menu flex max-h-menu flex-col gap-0.5 overflow-y-auto"
+        className="w-events-menu max-h-menu flex flex-col gap-0.5 overflow-y-auto"
       >
         {events.map((event) => (
           <DropdownMenuItem
@@ -82,7 +77,7 @@ export function PlaybackEventsMenu({
               <span className="flex-1">{event.label}</span>
               {event.severity ? <SeverityBadge level={event.severity} /> : null}
             </span>
-            <span className="text-xs tabular-nums text-muted">
+            <span className="text-muted text-xs tabular-nums">
               {formatPlaybackTime(event.at, includeDate)}
             </span>
           </DropdownMenuItem>

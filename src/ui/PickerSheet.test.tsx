@@ -70,9 +70,7 @@ describe("PickerSheet", () => {
     await user.click(screen.getByRole("button", { name: "Open picker" }));
 
     await user.click(screen.getByRole("option", { name: /Chinedu Musa/ }));
-    expect(onSelect).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "d2" }),
-    );
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: "d2" }));
   });
 
   it("closes from the close button", async () => {
@@ -125,8 +123,6 @@ describe("PickerSheet", () => {
     await user.click(screen.getByRole("button", { name: "Open picker" }));
 
     const dialog = screen.getByRole("dialog");
-    expect(dialog.style.maxHeight).toBe(
-      `${Math.round(window.innerHeight * 0.85)}px`,
-    );
+    expect(dialog.style.maxHeight).toBe(`${Math.round(window.innerHeight * 0.85)}px`);
   });
 });

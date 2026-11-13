@@ -24,12 +24,15 @@ export interface VehicleFiltersProps {
   className?: string;
 }
 
-export function VehicleFilters({ values, depots, onChange, onReset, className }: VehicleFiltersProps) {
+export function VehicleFilters({
+  values,
+  depots,
+  onChange,
+  onReset,
+  className,
+}: VehicleFiltersProps) {
   const hasFilters =
-    values.q !== "" ||
-    values.statuses.length > 0 ||
-    values.depot !== null ||
-    values.onlyInView;
+    values.q !== "" || values.statuses.length > 0 || values.depot !== null || values.onlyInView;
 
   function toggleStatus(status: VehicleDisplayStatus): void {
     onChange({
@@ -40,7 +43,7 @@ export function VehicleFilters({ values, depots, onChange, onReset, className }:
   }
 
   return (
-    <div className={cn("flex flex-col gap-3 border-b border-border p-3", className)}>
+    <div className={cn("border-border flex flex-col gap-3 border-b p-3", className)}>
       <SearchInput value={values.q} onChange={(q) => onChange({ q })} />
 
       <fieldset className="flex flex-wrap gap-1">
@@ -54,8 +57,8 @@ export function VehicleFilters({ values, depots, onChange, onReset, className }:
               aria-pressed={active}
               onClick={() => toggleStatus(status)}
               className={cn(
-                "h-touch rounded-full border px-1.5 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:h-control-sm",
-                active ? "border-accent bg-accent-soft" : "border-transparent hover:bg-surface-2",
+                "h-touch focus-visible:outline-focus-ring md:h-control-sm rounded-full border px-1.5 focus-visible:outline-2 focus-visible:outline-offset-0",
+                active ? "border-accent bg-accent-soft" : "hover:bg-surface-2 border-transparent",
               )}
             >
               <StatusPill status={status} />
@@ -100,7 +103,14 @@ export function VehicleFilters({ values, depots, onChange, onReset, className }:
           onChange={(event) => onChange({ onlyInView: event.target.checked })}
         />
         {hasFilters ? (
-          <Button size="sm" variant="ghost" leadingIcon={<RotateCcw aria-hidden="true" className="size-icon-sm" strokeWidth={1.5} />} onClick={onReset}>
+          <Button
+            size="sm"
+            variant="ghost"
+            leadingIcon={
+              <RotateCcw aria-hidden="true" className="size-icon-sm" strokeWidth={1.5} />
+            }
+            onClick={onReset}
+          >
             Reset
           </Button>
         ) : null}

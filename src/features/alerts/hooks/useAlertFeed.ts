@@ -29,10 +29,7 @@ export function useAlertFeed(filters: AlertFilterValues): AlertFeedController {
   const signature = filterSignature(filters);
   const query = useAlertFeedQuery(serverFilters(filters));
   const queryClient = useQueryClient();
-  const incoming = useMemo(
-    () => flattenPages(query.data?.pages ?? []),
-    [query.data?.pages],
-  );
+  const incoming = useMemo(() => flattenPages(query.data?.pages ?? []), [query.data?.pages]);
 
   const [visible, setVisible] = useState<Alert[]>([]);
   const [newCount, setNewCount] = useState(0);

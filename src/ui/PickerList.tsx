@@ -73,9 +73,7 @@ function StatusRow({
         error ? "text-danger" : "text-muted",
       )}
     >
-      {error ? (
-        <CircleAlert aria-hidden="true" className="size-3" strokeWidth={1.5} />
-      ) : null}
+      {error ? <CircleAlert aria-hidden="true" className="size-3" strokeWidth={1.5} /> : null}
       {children}
     </div>
   );
@@ -135,10 +133,7 @@ export function PickerList({
 
   const optionId = (id: string) => `${listboxId}-${id}`;
 
-  function renderRow(
-    index: number,
-    rowCss: RowStyle | VirtualRowStyle,
-  ): ReactNode {
+  function renderRow(index: number, rowCss: RowStyle | VirtualRowStyle): ReactNode {
     if (clear && index === 0) {
       const isActive = activeIndex === 0;
       const isSelected = selectedId === null;
@@ -192,26 +187,18 @@ export function PickerList({
           isSelected ? "text-accent-fg" : "text-text",
         )}
       >
-        <span
-          className={cn("truncate text-sm font-medium", item.labelClassName)}
-        >
+        <span className={cn("truncate text-sm font-medium", item.labelClassName)}>
           {item.label}
         </span>
         {item.description ? (
-          <span className="text-muted truncate text-xs">
-            {item.description}
-          </span>
+          <span className="text-muted truncate text-xs">{item.description}</span>
         ) : null}
       </div>
     );
   }
 
   const status =
-    loading && total === 0
-      ? "loading"
-      : items.length === 0 && !clear
-        ? "empty"
-        : "ready";
+    loading && total === 0 ? "loading" : items.length === 0 && !clear ? "empty" : "ready";
 
   if (status === "loading") {
     return (
@@ -221,10 +208,7 @@ export function PickerList({
         aria-label={label}
         aria-busy="true"
         data-combobox-list
-        className={cn(
-          "border-border bg-surface overflow-y-auto overscroll-contain",
-          className,
-        )}
+        className={cn("border-border bg-surface overflow-y-auto overscroll-contain", className)}
         style={style}
       >
         <StatusRow>Loading options…</StatusRow>
@@ -263,17 +247,10 @@ export function PickerList({
                 >
                   {virtualizer
                     .getVirtualItems()
-                    .map((row) =>
-                      renderRow(
-                        row.index,
-                        virtualRowStyle(rowHeight, row.start),
-                      ),
-                    )}
+                    .map((row) => renderRow(row.index, virtualRowStyle(rowHeight, row.start)))}
                 </div>,
               ]
-            : Array.from({ length: total }, (_, index) =>
-                renderRow(index, rowStyle(rowHeight)),
-              )
+            : Array.from({ length: total }, (_, index) => renderRow(index, rowStyle(rowHeight)))
           : null}
 
         {status === "ready" && items.length === 0 && clear ? (

@@ -31,39 +31,22 @@ function row(page: Page, plate: string, type?: string) {
 }
 
 test.describe("alerts", () => {
-  test("loads the list with counts, title, tabs and unknown fallbacks", async ({
-    page,
-  }) => {
+  test("loads the list with counts, title, tabs and unknown fallbacks", async ({ page }) => {
     await gotoAlerts(page);
 
-    await expect(page.getByRole("tab", { name: "Alerts" })).toHaveAttribute(
-      "data-state",
-      "active",
-    );
-    await expect(
-      page.getByRole("columnheader", { name: "Plate" }),
-    ).toBeVisible();
+    await expect(page.getByRole("tab", { name: "Alerts" })).toHaveAttribute("data-state", "active");
+    await expect(page.getByRole("columnheader", { name: "Plate" })).toBeVisible();
     await expect(page.getByTestId("alerts-page")).toContainText("7 open");
     await expect(page.getByTestId("alerts-page")).toContainText("10 loaded");
     await expect.poll(() => page.title()).toBe("(7) Alerts · Fleet Console");
 
     await expect(page.getByRole("cell", { name: "Speeding" })).toBeVisible();
-    await expect(
-      page.getByRole("cell", { name: "Route deviation" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("cell", { name: "Unknown type: solar_flare" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("cell", { name: /Unknown severity: extreme/ }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("cell", { name: "Unknown status: pending" }),
-    ).toBeVisible();
+    await expect(page.getByRole("cell", { name: "Route deviation" })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "Unknown type: solar_flare" })).toBeVisible();
+    await expect(page.getByRole("cell", { name: /Unknown severity: extreme/ })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "Unknown status: pending" })).toBeVisible();
     if (!isMobile(page)) {
-      await expect(
-        page.getByRole("cell", { name: "Ibadan Customer" }),
-      ).toBeVisible();
+      await expect(page.getByRole("cell", { name: "Ibadan Customer" })).toBeVisible();
     }
 
     await captureForReview(page, "04-alerts-list");
@@ -71,9 +54,7 @@ test.describe("alerts", () => {
     await expectNoAxeViolations(page);
   });
 
-  test("combines server and client filters and restores them from the URL", async ({
-    page,
-  }) => {
+  test("combines server and client filters and restores them from the URL", async ({ page }) => {
     await gotoAlerts(page);
 
     await page.getByLabel("Status").selectOption("acked");
@@ -85,9 +66,7 @@ test.describe("alerts", () => {
     await page.getByLabel("Severity").selectOption("critical");
     await expect(page).toHaveURL(/severity=critical/);
     await expect(row(page, "LSD-102-AA", "Speeding")).toBeVisible();
-    await expect(page.getByRole("cell", { name: "Geofence exit" })).toHaveCount(
-      0,
-    );
+    await expect(page.getByRole("cell", { name: "Geofence exit" })).toHaveCount(0);
 
     await page.getByLabel("Severity").selectOption("");
     await page.getByLabel("Search plate").fill("lsd101aa");
@@ -110,25 +89,18 @@ test.describe("alerts", () => {
     await expect(page).not.toHaveURL(/status=|type=|severity=|q=/);
   });
 
-  test("shows the no-results empty state and clears the filters", async ({
-    page,
-  }) => {
+  test("shows the no-results empty state and clears the filters", async ({ page }) => {
     await gotoAlerts(page);
     await page.getByLabel("Search plate").fill("NO-SUCH-PLATE");
     await expect(page.getByText("No alerts match")).toBeVisible();
-    await expect(
-      page.getByText("Try a different search or clear the filters."),
-    ).toBeVisible();
+    await expect(page.getByText("Try a different search or clear the filters.")).toBeVisible();
     await captureForReview(page, "04-alerts-empty");
     await expectNoAxeViolations(page);
     await page.getByRole("button", { name: "Clear filters" }).click();
     await expect(page.getByTestId("alerts-page")).toContainText("10 loaded");
   });
 
-  test("loads more when the first 500-row page is full", async ({
-    page,
-    liveSocket,
-  }) => {
+  test("loads more when the first 500-row page is full", async ({ page, liveSocket }) => {
     await gotoAlerts(page);
     await page.evaluate(async () => {
       await fetch("/api/v1/__mock/alerts/bulk", {
@@ -155,10 +127,7 @@ test.describe("alerts", () => {
     await expect(page.getByTestId("alerts-page")).toContainText("510 loaded");
   });
 
-  test("a live alert waits in a pill while the list is scrolled", async ({
-    page,
-    liveSocket,
-  }) => {
+  test("a live alert waits in a pill while the list is scrolled", async ({ page, liveSocket }) => {
     await gotoAlerts(page);
     await liveSocket.wait();
     await page.evaluate(async () => {
@@ -175,9 +144,7 @@ test.describe("alerts", () => {
     await scroller.evaluate((element) => {
       element.scrollTop = element.scrollHeight;
     });
-    await expect
-      .poll(() => scroller.evaluate((element) => element.scrollTop))
-      .toBeGreaterThan(0);
+    await expect.poll(() => scroller.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
 
     await page.evaluate(async () => {
       await fetch("/api/v1/__mock/alerts", {
@@ -200,27 +167,19 @@ test.describe("alerts", () => {
 
     await pill.click();
     await expect(page.getByTestId("alerts-page")).toContainText("56 loaded");
-    await expect
-      .poll(() => scroller.evaluate((element) => element.scrollTop))
-      .toBe(0);
+    await expect.poll(() => scroller.evaluate((element) => element.scrollTop)).toBe(0);
   });
 
-  test("opens the detail with position, zone, evidence and focus return", async ({
-    page,
-  }) => {
+  test("opens the detail with position, zone, evidence and focus return", async ({ page }) => {
     await gotoAlerts(page, `alert=${GEOFENCE_EXIT}`);
     const drawer = page.getByRole("complementary", { name: "Alert details" });
     await expect(drawer).toBeVisible();
-    await expect(
-      drawer.getByRole("heading", { name: "Geofence exit" }),
-    ).toBeVisible();
+    await expect(drawer.getByRole("heading", { name: "Geofence exit" })).toBeVisible();
     await expect(drawer.getByText("Ibadan Customer")).toBeVisible();
     await expect(drawer.getByText(/Nearest position at/)).toBeVisible();
     await expect(drawer.getByText("No trip linked.")).toBeVisible();
     await expect(drawer.getByText("Geofence id")).toBeVisible();
-    await expect(
-      drawer.getByRole("region", { name: "Alert position" }),
-    ).toBeVisible();
+    await expect(drawer.getByRole("region", { name: "Alert position" })).toBeVisible();
 
     await drawer.getByRole("button", { name: "Raw JSON" }).click();
     await expect(drawer.getByText(/"geofence_id"/)).toBeVisible();
@@ -237,43 +196,30 @@ test.describe("alerts", () => {
   test("replay carries the alert range and the vehicle", async ({ page }) => {
     await gotoAlerts(page, `alert=${ROUTE_DEVIATION}`);
     const drawer = page.getByRole("complementary", { name: "Alert details" });
-    await expect(
-      drawer.getByText("Refinery Gate → Ibadan Customer"),
-    ).toBeVisible();
+    await expect(drawer.getByText("Refinery Gate → Ibadan Customer")).toBeVisible();
 
-    await drawer
-      .getByRole("button", { name: "Replay last 30 minutes" })
-      .click();
+    await drawer.getByRole("button", { name: "Replay last 30 minutes" }).click();
     await expect(page).toHaveURL(/\/playback\?/);
-    await expect(page).toHaveURL(
-      /vehicle=6c69032e-b802-447e-8f7a-ad8c0ddc2359/,
-    );
+    await expect(page).toHaveURL(/vehicle=6c69032e-b802-447e-8f7a-ad8c0ddc2359/);
     await expect(page).toHaveURL(/from=2026-11-02T19%3A37%3A39.179Z/);
     await expect(page).toHaveURL(/to=2026-11-02T20%3A09%3A39.179Z/);
     await expect(page.getByRole("heading", { name: "Playback" })).toBeVisible();
     await expect(page.getByRole("region", { name: "Playback controls" })).toBeVisible();
     await expect
-      .poll(
-        () => page.evaluate(() => window.__FLEET_DEBUG__?.playback?.pointCount ?? 0),
-        { timeout: 15_000 },
-      )
+      .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.playback?.pointCount ?? 0), {
+        timeout: 15_000,
+      })
       .toBeGreaterThan(0);
   });
 
-  test("acknowledges from a row and removes it from the open filter", async ({
-    page,
-  }) => {
+  test("acknowledges from a row and removes it from the open filter", async ({ page }) => {
     await gotoAlerts(page, "status=open");
     const target = row(page, "LSD-102-AA", "Geofence exit");
-    await target
-      .getByRole("button", { name: /Acknowledge alert for LSD-102-AA/ })
-      .click();
+    await target.getByRole("button", { name: /Acknowledge alert for LSD-102-AA/ }).click();
 
     await expect(page.getByText("Acknowledged.").first()).toBeVisible();
     await expect(target).toHaveCount(0);
-    const writes = await page.evaluate(
-      () => window.__FLEET_MOCK_WRITES__ ?? [],
-    );
+    const writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
     expect(writes.at(-1)).toMatchObject({
       method: "POST",
       url: `/api/v1/alerts/${GEOFENCE_EXIT}/ack`,
@@ -293,9 +239,7 @@ test.describe("alerts", () => {
     });
     await expect(ack).toHaveAttribute("aria-disabled", "true");
     await ack.click({ force: true });
-    const writes = await page.evaluate(
-      () => window.__FLEET_MOCK_WRITES__ ?? [],
-    );
+    const writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
     expect(writes).toHaveLength(0);
   });
 
@@ -308,9 +252,7 @@ test.describe("alerts", () => {
     await expect(page.getByText("Acknowledged.").first()).toBeVisible();
   });
 
-  test("acknowledging an alert already acked elsewhere explains it", async ({
-    page,
-  }) => {
+  test("acknowledging an alert already acked elsewhere explains it", async ({ page }) => {
     await gotoAlerts(page);
     await page.evaluate(async (id) => {
       await fetch(`/api/v1/alerts/${id}/ack`, { method: "POST" });
@@ -326,32 +268,25 @@ test.describe("alerts", () => {
     });
   });
 
-  test("rules list, toggle, config save and invalid input", async ({
-    page,
-  }) => {
+  test("rules list, toggle, config save and invalid input", async ({ page }) => {
     await gotoAlerts(page, "tab=rules");
-    await expect(
-      page.getByRole("tab", { name: "Alert rules" }),
-    ).toHaveAttribute("data-state", "active");
+    await expect(page.getByRole("tab", { name: "Alert rules" })).toHaveAttribute(
+      "data-state",
+      "active",
+    );
     const speeding = page.getByRole("listitem").filter({ hasText: "Speeding" });
     await expect(speeding).toBeVisible();
     await expect(page.getByText("Unknown type: solar_flare")).toBeVisible();
-    await expect(
-      page.getByText("This rule type has no settings editor."),
-    ).toBeVisible();
+    await expect(page.getByText("This rule type has no settings editor.")).toBeVisible();
     await captureForReview(page, "04-alerts-rules");
     await expectNoAxeViolations(page);
 
-    await speeding
-      .getByRole("checkbox", { name: "Enabled Speeding rule" })
-      .click();
+    await speeding.getByRole("checkbox", { name: "Enabled Speeding rule" }).click();
     await expect(page.getByText("Alert rule updated.").first()).toBeVisible();
     let writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
     expect(writes.at(-1)?.body).toEqual({ enabled: false });
 
-    await speeding
-      .getByRole("button", { name: "Edit settings for Speeding" })
-      .click();
+    await speeding.getByRole("button", { name: "Edit settings for Speeding" }).click();
     await speeding.getByLabel("Speed kph").fill("81");
     await speeding.getByRole("button", { name: "Save settings" }).click();
     await expect(page.getByText("Alert rule updated.").first()).toBeVisible();
@@ -363,9 +298,7 @@ test.describe("alerts", () => {
 
     await speeding.getByLabel("Speed kph").fill("-1");
     await speeding.getByRole("button", { name: "Save settings" }).click();
-    await expect(
-      speeding.getByText("Enter a number of 0 or more."),
-    ).toBeVisible();
+    await expect(speeding.getByText("Enter a number of 0 or more.")).toBeVisible();
     const count = writes.length;
     writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
     expect(writes).toHaveLength(count);
@@ -374,9 +307,7 @@ test.describe("alerts", () => {
   test("viewers cannot change rules", async ({ page }) => {
     await setRole(page, "viewer");
     await gotoAlerts(page, "tab=rules");
-    await expect(
-      page.getByText("Your role can't change alert rules.").first(),
-    ).toBeVisible();
+    await expect(page.getByText("Your role can't change alert rules.").first()).toBeVisible();
     const enabled = page
       .getByRole("listitem")
       .filter({ hasText: "Speeding" })
@@ -384,37 +315,41 @@ test.describe("alerts", () => {
     await expect(enabled).toBeDisabled();
   });
 
-  test("the detail panel starts below the top bar on desktop", { tag: "@theme" }, async ({
-    page,
-  }) => {
-    test.skip(isMobile(page), "desktop-only layout");
-    await gotoAlerts(page, `alert=${GEOFENCE_EXIT}`);
-    const drawer = page.getByRole("complementary", { name: "Alert details" });
-    await expect(drawer).toBeVisible();
-    const box = await drawer.boundingBox();
-    if (!box) throw new Error("missing drawer box");
-    expect(box.y).toBeGreaterThanOrEqual(59);
-    expect(box.y).toBeLessThanOrEqual(61);
-  });
+  test(
+    "the detail panel starts below the top bar on desktop",
+    { tag: "@theme" },
+    async ({ page }) => {
+      test.skip(isMobile(page), "desktop-only layout");
+      await gotoAlerts(page, `alert=${GEOFENCE_EXIT}`);
+      const drawer = page.getByRole("complementary", { name: "Alert details" });
+      await expect(drawer).toBeVisible();
+      const box = await drawer.boundingBox();
+      if (!box) throw new Error("missing drawer box");
+      expect(box.y).toBeGreaterThanOrEqual(59);
+      expect(box.y).toBeLessThanOrEqual(61);
+    },
+  );
 
-  test("the detail is a top-quarter sheet on mobile and leaves the title visible", { tag: "@theme" }, async ({
-    page,
-  }) => {
-    test.skip(!isMobile(page), "mobile-only layout");
-    await gotoAlerts(page, `alert=${GEOFENCE_EXIT}`);
-    const drawer = page.getByRole("complementary", { name: "Alert details" });
-    await expect(drawer).toBeVisible();
+  test(
+    "the detail is a top-quarter sheet on mobile and leaves the title visible",
+    { tag: "@theme" },
+    async ({ page }) => {
+      test.skip(!isMobile(page), "mobile-only layout");
+      await gotoAlerts(page, `alert=${GEOFENCE_EXIT}`);
+      const drawer = page.getByRole("complementary", { name: "Alert details" });
+      await expect(drawer).toBeVisible();
 
-    const box = await drawer.boundingBox();
-    const tabs = await page.getByRole("tablist").boundingBox();
-    if (!box || !tabs) throw new Error("missing layout boxes");
-    expect(box.y).toBeGreaterThanOrEqual(844 * 0.24);
-    expect(box.y).toBeGreaterThan(tabs.y + tabs.height);
-    await expect(page.getByRole("heading", { name: "Alerts" })).toBeVisible();
+      const box = await drawer.boundingBox();
+      const tabs = await page.getByRole("tablist").boundingBox();
+      if (!box || !tabs) throw new Error("missing layout boxes");
+      expect(box.y).toBeGreaterThanOrEqual(844 * 0.24);
+      expect(box.y).toBeGreaterThan(tabs.y + tabs.height);
+      await expect(page.getByRole("heading", { name: "Alerts" })).toBeVisible();
 
-    await expectNoHorizontalScroll(page);
-    await expectTouchTargets(page, 44);
-    await expectNoAxeViolations(page);
-    await captureForReview(page, "04-alerts-detail-mobile");
-  });
+      await expectNoHorizontalScroll(page);
+      await expectTouchTargets(page, 44);
+      await expectNoAxeViolations(page);
+      await captureForReview(page, "04-alerts-detail-mobile");
+    },
+  );
 });

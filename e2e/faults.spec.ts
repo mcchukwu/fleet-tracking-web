@@ -61,9 +61,7 @@ test.describe("fault scenarios", () => {
 
     await expect(page.getByText("You don't have access to this")).toBeVisible();
     await page.getByRole("button", { name: "Go back" }).click();
-    await expect(
-      page.getByRole("heading", { name: "Fleet Console foundations" }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Fleet Console foundations" })).toBeVisible();
   });
 
   test("an offline session restore renders the offline state", async ({ page }) => {
@@ -106,9 +104,7 @@ test.describe("fault scenarios", () => {
     await page.goto("/dev/faults");
     await expect(page.locator('section[aria-labelledby="fault-alerts"] li').first()).toBeVisible();
 
-    await page.evaluate(() =>
-      history.replaceState({}, "", "/dev/faults?fault=alerts:server"),
-    );
+    await page.evaluate(() => history.replaceState({}, "", "/dev/faults?fault=alerts:server"));
     await page.getByRole("button", { name: "Refetch alerts" }).click();
 
     await expect(page.getByText("Couldn't refresh")).toBeVisible({ timeout: 15_000 });
@@ -139,9 +135,7 @@ test.describe("fault scenarios", () => {
     expect(unexpectedConsole(errors)).toEqual([]);
   });
 
-  test("an injected render crash is contained by the panel boundary", async ({
-    page,
-  }) => {
+  test("an injected render crash is contained by the panel boundary", async ({ page }) => {
     const errors = collectErrors(page);
     await page.goto("/dev/faults");
     await page.getByRole("button", { name: "Crash this panel" }).click();
@@ -154,8 +148,7 @@ test.describe("fault scenarios", () => {
 
     expect(
       errors.filter(
-        (text) =>
-          !text.includes("above error occurred") && !text.includes("Injected panel crash"),
+        (text) => !text.includes("above error occurred") && !text.includes("Injected panel crash"),
       ),
     ).toEqual([]);
   });

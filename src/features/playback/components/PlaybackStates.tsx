@@ -3,12 +3,7 @@ import { EmptyState, ForbiddenState } from "../../../ui/StatePanel";
 import { cn } from "../../../ui/cn";
 
 export type PlaybackStateVariant =
-  | "validation"
-  | "empty"
-  | "offline-uncached"
-  | "cancelled"
-  | "not-found"
-  | "forbidden";
+  "validation" | "empty" | "offline-uncached" | "cancelled" | "not-found" | "forbidden";
 
 export interface PlaybackStatesProps {
   variant: PlaybackStateVariant;
@@ -40,7 +35,7 @@ export function PlaybackStates({
 
   if (variant === "forbidden") {
     return (
-      <div className={cn("rounded-lg border border-border bg-surface", className)}>
+      <div className={cn("border-border bg-surface rounded-lg border", className)}>
         <ForbiddenState action={back} />
       </div>
     );
@@ -48,9 +43,9 @@ export function PlaybackStates({
 
   if (variant === "validation") {
     return (
-      <div className={cn("rounded-lg border border-border bg-surface p-4", className)}>
-        <p className="text-base font-medium text-text">Choose a valid range</p>
-        <p className="mt-1 text-sm text-muted">{message ?? "Choose a start and end time."}</p>
+      <div className={cn("border-border bg-surface rounded-lg border p-4", className)}>
+        <p className="text-text text-base font-medium">Choose a valid range</p>
+        <p className="text-muted mt-1 text-sm">{message ?? "Choose a start and end time."}</p>
         <div className="mt-3">{reset}</div>
       </div>
     );
@@ -58,7 +53,7 @@ export function PlaybackStates({
 
   if (variant === "empty") {
     return (
-      <div className={cn("rounded-lg border border-border bg-surface", className)}>
+      <div className={cn("border-border bg-surface rounded-lg border", className)}>
         <EmptyState
           title="No positions in this range"
           description="Try a wider range or choose another vehicle."
@@ -70,7 +65,7 @@ export function PlaybackStates({
 
   if (variant === "offline-uncached") {
     return (
-      <div className={cn("rounded-lg border border-border bg-surface", className)}>
+      <div className={cn("border-border bg-surface rounded-lg border", className)}>
         <EmptyState
           title="Not available offline"
           description="Reconnect to load this range. Ranges you've already viewed stay available."
@@ -82,7 +77,7 @@ export function PlaybackStates({
 
   if (variant === "not-found") {
     return (
-      <div className={cn("rounded-lg border border-border bg-surface", className)}>
+      <div className={cn("border-border bg-surface rounded-lg border", className)}>
         <EmptyState
           title="Vehicle not found"
           description="It may have been removed."
@@ -93,7 +88,7 @@ export function PlaybackStates({
   }
 
   return (
-    <div className={cn("rounded-lg border border-border bg-surface", className)}>
+    <div className={cn("border-border bg-surface rounded-lg border", className)}>
       <EmptyState
         title="Playback cancelled"
         description="Nothing was changed."

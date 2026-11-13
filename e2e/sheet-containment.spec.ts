@@ -33,18 +33,13 @@ async function setSnap(page: Page, snap: Snap): Promise<void> {
     await page.keyboard.press("ArrowUp");
   }
   if (snap === "full") await page.keyboard.press("End");
-  await expect(handle).toHaveAttribute(
-    "aria-expanded",
-    snap === "peek" ? "false" : "true",
-  );
+  await expect(handle).toHaveAttribute("aria-expanded", snap === "peek" ? "false" : "true");
   await page.waitForTimeout(400);
 }
 
 async function scrollListToEnd(page: Page): Promise<void> {
   await page.evaluate(() => {
-    const scroller = document.querySelector(
-      'ul[aria-label="Vehicles"]',
-    )?.parentElement;
+    const scroller = document.querySelector('ul[aria-label="Vehicles"]')?.parentElement;
     if (scroller) scroller.scrollTop = scroller.scrollHeight;
   });
   await page.waitForTimeout(200);
@@ -52,16 +47,12 @@ async function scrollListToEnd(page: Page): Promise<void> {
 
 async function readGeometry(page: Page) {
   return page.evaluate(() => {
-    const sheet = document.querySelector<HTMLElement>(
-      'section[aria-label="Vehicles"]',
-    );
+    const sheet = document.querySelector<HTMLElement>('section[aria-label="Vehicles"]');
     const main = document.querySelector<HTMLElement>("main");
     const scroller = document.querySelector<HTMLElement>(
       'ul[aria-label="Vehicles"]',
     )?.parentElement;
-    const rows = [
-      ...document.querySelectorAll<HTMLElement>("[data-vehicle-key]"),
-    ];
+    const rows = [...document.querySelectorAll<HTMLElement>("[data-vehicle-key]")];
     if (!sheet || !main || !scroller) {
       throw new Error("The sheet or the map page did not render");
     }
@@ -105,24 +96,22 @@ test.describe("mobile sheet containment", { tag: "@theme" }, () => {
         await setSnap(page, snap);
         const geometry = await readGeometry(page);
 
-        expect(
-          geometry.sheetBottom,
-          `${snap}: sheet bottom`,
-        ).toBeLessThanOrEqual(geometry.viewportHeight + TOLERANCE);
-        expect(
-          geometry.sheetBottom,
-          `${snap}: sheet reaches the bottom`,
-        ).toBeCloseTo(geometry.viewportHeight, 0);
+        expect(geometry.sheetBottom, `${snap}: sheet bottom`).toBeLessThanOrEqual(
+          geometry.viewportHeight + TOLERANCE,
+        );
+        expect(geometry.sheetBottom, `${snap}: sheet reaches the bottom`).toBeCloseTo(
+          geometry.viewportHeight,
+          0,
+        );
         expect(
           geometry.sheetTop,
           `${snap}: sheet top stays inside the viewport`,
         ).toBeGreaterThanOrEqual(-TOLERANCE);
 
         // The map page is one fixed screen: the drawer must not add page scroll.
-        expect(
-          geometry.mainScrollHeight,
-          `${snap}: map page scroll height`,
-        ).toBeLessThanOrEqual(geometry.mainClientHeight + TOLERANCE);
+        expect(geometry.mainScrollHeight, `${snap}: map page scroll height`).toBeLessThanOrEqual(
+          geometry.mainClientHeight + TOLERANCE,
+        );
         expect(
           geometry.documentScrollHeight,
           `${snap}: document scroll height`,
@@ -140,17 +129,14 @@ test.describe("mobile sheet containment", { tag: "@theme" }, () => {
         expect(
           geometry.scrollerHeight,
           `${snap}: list height equals the visible sheet body`,
-        ).toBeCloseTo(
-          geometry.sheetHeight - (geometry.scrollerTop - geometry.sheetTop),
-          0,
-        );
+        ).toBeCloseTo(geometry.sheetHeight - (geometry.scrollerTop - geometry.sheetTop), 0);
 
         await scrollListToEnd(page);
         const scrolled = await readGeometry(page);
-        expect(
-          scrolled.listScrollTop,
-          `${snap}: list can scroll to its end`,
-        ).toBeCloseTo(scrolled.listMaxScrollTop, 0);
+        expect(scrolled.listScrollTop, `${snap}: list can scroll to its end`).toBeCloseTo(
+          scrolled.listMaxScrollTop,
+          0,
+        );
         expect(scrolled.lastRowTop, `${snap}: last row top`).not.toBeNull();
         expect(
           scrolled.lastRowBottom ?? Number.POSITIVE_INFINITY,
@@ -164,9 +150,7 @@ test.describe("mobile sheet containment", { tag: "@theme" }, () => {
     });
   }
 
-  test("dragging the header resizes the drawer without scrolling the page", async ({
-    page,
-  }) => {
+  test("dragging the header resizes the drawer without scrolling the page", async ({ page }) => {
     test.skip(
       (page.viewportSize()?.width ?? 1440) >= 1024,
       "the bottom sheet only exists below lg",
@@ -196,10 +180,9 @@ test.describe("mobile sheet containment", { tag: "@theme" }, () => {
       "the header tracks the pointer",
     ).toBeLessThanOrEqual(3);
     expect(during.mainScrollTop, "the page scrolls during the drag").toBe(0);
-    expect(
-      during.mainScrollHeight,
-      "the page grows during the drag",
-    ).toBeLessThanOrEqual(during.mainClientHeight + TOLERANCE);
+    expect(during.mainScrollHeight, "the page grows during the drag").toBeLessThanOrEqual(
+      during.mainClientHeight + TOLERANCE,
+    );
 
     await page.mouse.up();
     await page.waitForTimeout(300);
@@ -208,9 +191,8 @@ test.describe("mobile sheet containment", { tag: "@theme" }, () => {
       after.viewportHeight,
       0,
     );
-    expect(
-      after.mainScrollHeight,
-      "the page grows after the drag",
-    ).toBeLessThanOrEqual(after.mainClientHeight + TOLERANCE);
+    expect(after.mainScrollHeight, "the page grows after the drag").toBeLessThanOrEqual(
+      after.mainClientHeight + TOLERANCE,
+    );
   });
 });

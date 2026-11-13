@@ -19,9 +19,7 @@ function entry(overrides: Partial<AuditEntry> = {}): AuditEntry {
   };
 }
 
-function renderPanel(
-  props: Partial<Parameters<typeof AuditDetailPanel>[0]> = {},
-) {
+function renderPanel(props: Partial<Parameters<typeof AuditDetailPanel>[0]> = {}) {
   return render(
     <TooltipProvider>
       <ToastProvider>
@@ -41,18 +39,14 @@ describe("AuditDetailPanel", () => {
   it("shows the actor, raw action, entity, identifiers and metadata as text", () => {
     renderPanel();
 
-    expect(
-      screen.getByRole("complementary", { name: "Audit entry details" }),
-    ).toBeVisible();
+    expect(screen.getByRole("complementary", { name: "Audit entry details" })).toBeVisible();
     expect(screen.getByText("Import vehicles")).toBeVisible();
     expect(screen.getByText("Demo Dispatcher")).toBeVisible();
     expect(screen.getByText("import.vehicles")).toBeVisible();
     expect(screen.getAllByText("Import job").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Entry ID")).toBeVisible();
     expect(screen.getByText("Entity ID")).toBeVisible();
-    expect(
-      screen.getByRole("button", { name: /Copy entry id 207/i }),
-    ).toBeVisible();
+    expect(screen.getByRole("button", { name: /Copy entry id 207/i })).toBeVisible();
     expect(
       screen.getByRole("button", {
         name: /Copy entity id 00000000-0000-0000-0000-000000000401/i,
@@ -75,17 +69,13 @@ describe("AuditDetailPanel", () => {
       entry: entry({ entity_id: "", user_name: "" }),
     });
     expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(2);
-    expect(
-      screen.queryByRole("button", { name: /Copy entity id/i }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Copy entity id/i })).not.toBeInTheDocument();
   });
 
   it("shows the not-found, offline and error states", async () => {
     const { rerender } = renderPanel({ entry: null, lookup: "not-found" });
     expect(screen.getByText("Audit entry not found")).toBeVisible();
-    expect(
-      screen.getByText("It may be older than the 500 most recent entries."),
-    ).toBeVisible();
+    expect(screen.getByText("It may be older than the 500 most recent entries.")).toBeVisible();
 
     rerender(
       <TooltipProvider>

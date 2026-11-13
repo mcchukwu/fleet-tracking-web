@@ -9,11 +9,7 @@ import {
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import {
-  useLiveSnapshot,
-  useVehicleEvents,
-  useVehicleHistory,
-} from "../../../api/hooks/vehicles";
+import { useLiveSnapshot, useVehicleEvents, useVehicleHistory } from "../../../api/hooks/vehicles";
 import { queryKeys } from "../../../api/keys";
 import { ErrorBoundary } from "../../../errors/ErrorBoundary";
 import { ErrorState } from "../../../errors/ErrorState";
@@ -34,11 +30,7 @@ import { usePlaybackUrl } from "../hooks/usePlaybackUrl";
 import { findGaps, normalisePoints } from "../lib/history";
 import { timelineEvents } from "../lib/events";
 import { presetRange, resolutionParam } from "../lib/range";
-import {
-  DEFAULT_RANGE_MS,
-  RANGE_PRESETS,
-  type RangePresetId,
-} from "../lib/constants";
+import { DEFAULT_RANGE_MS, RANGE_PRESETS, type RangePresetId } from "../lib/constants";
 import { ChangeVehicleDialog } from "./ChangeVehicleDialog";
 import { CustomRangeDialog } from "./CustomRangeDialog";
 import { GapAnnouncer } from "./GapAnnouncer";
@@ -64,10 +56,7 @@ function CrashProbe(): null {
   return null;
 }
 
-function useElementHeight(
-  ref: RefObject<HTMLElement | null>,
-  fallback: number,
-): number {
+function useElementHeight(ref: RefObject<HTMLElement | null>, fallback: number): number {
   const [height, setHeight] = useState(fallback);
   useEffect(() => {
     const element = ref.current;
@@ -113,8 +102,7 @@ export function PlaybackPage() {
 
   const offline = network === "offline";
   const defaulting = !from || !to;
-  const requestEnabled =
-    Boolean(vehicleId) && range.valid && !defaulting && !offline;
+  const requestEnabled = Boolean(vehicleId) && range.valid && !defaulting && !offline;
 
   const history = useVehicleHistory(
     vehicleId ?? undefined,
@@ -131,10 +119,7 @@ export function PlaybackPage() {
 
   const rows = snapshot.data ?? [];
   const vehicle = rows.find((row) => row.id === vehicleId) ?? null;
-  const points = useMemo(
-    () => normalisePoints(history.data?.data ?? []),
-    [history.data],
-  );
+  const points = useMemo(() => normalisePoints(history.data?.data ?? []), [history.data]);
   const routePoints = useMemo<LngLat[]>(
     () => points.map((point) => [point.lon, point.lat]),
     [points],
@@ -167,8 +152,7 @@ export function PlaybackPage() {
   });
 
   const timeline = useMemo(
-    () =>
-      range.valid ? timelineEvents(eventsQuery.data ?? [], fromMs, toMs) : [],
+    () => (range.valid ? timelineEvents(eventsQuery.data ?? [], fromMs, toMs) : []),
     [eventsQuery.data, fromMs, range.valid, toMs],
   );
 
@@ -251,13 +235,9 @@ export function PlaybackPage() {
 
   const cached = points.length > 0;
   const historyError =
-    !offline && history.isError
-      ? normalize(history.error, { resource: "history" })
-      : null;
+    !offline && history.isError ? normalize(history.error, { resource: "history" }) : null;
   const eventsError =
-    !offline && eventsQuery.isError
-      ? normalize(eventsQuery.error, { resource: "events" })
-      : null;
+    !offline && eventsQuery.isError ? normalize(eventsQuery.error, { resource: "events" }) : null;
 
   const cancel = useCallback(() => {
     setCancelled(true);
@@ -321,8 +301,7 @@ export function PlaybackPage() {
     });
   }, [vehicleId, points.length]);
 
-  const headerVehicle =
-    vehicle ?? (vehicleId ? { id: vehicleId, plate: "—" } : null);
+  const headerVehicle = vehicle ?? (vehicleId ? { id: vehicleId, plate: "—" } : null);
 
   let overlay: ReactNode = null;
   if (vehicleId && !defaulting) {
@@ -336,11 +315,7 @@ export function PlaybackPage() {
       );
     } else if (cancelled && !cached) {
       overlay = (
-        <PlaybackStates
-          variant="cancelled"
-          onRetry={retryHistory}
-          onResetRange={useDefaultRange}
-        />
+        <PlaybackStates variant="cancelled" onRetry={retryHistory} onResetRange={useDefaultRange} />
       );
     } else if (offline && !cached) {
       overlay = <PlaybackStates variant="offline-uncached" />;
@@ -349,16 +324,12 @@ export function PlaybackPage() {
         historyError.kind === "forbidden" ? (
           <PlaybackStates
             variant="forbidden"
-            onBack={() =>
-              void navigate({ to: "/map", search: { v: vehicleId } })
-            }
+            onBack={() => void navigate({ to: "/map", search: { v: vehicleId } })}
           />
         ) : historyError.kind === "not_found" ? (
           <PlaybackStates
             variant="not-found"
-            onBack={() =>
-              void navigate({ to: "/map", search: { v: vehicleId } })
-            }
+            onBack={() => void navigate({ to: "/map", search: { v: vehicleId } })}
           />
         ) : historyError.code === "invalid_range" ? (
           <PlaybackStates
@@ -367,25 +338,16 @@ export function PlaybackPage() {
             onResetRange={useDefaultRange}
           />
         ) : (
-          <ErrorState
-            error={historyError}
-            onRetry={retryHistory}
-            compact={storm}
-          />
+          <ErrorState error={historyError} onRetry={retryHistory} compact={storm} />
         );
     } else if (!cached && !history.isLoading) {
-      overlay = (
-        <PlaybackStates variant="empty" onResetRange={useDefaultRange} />
-      );
+      overlay = <PlaybackStates variant="empty" onResetRange={useDefaultRange} />;
     }
   }
 
   return (
     <PageFrame layout="fill" width="full">
-      <div
-        data-testid="playback-page"
-        className="bg-surface-2 relative h-full min-h-0"
-      >
+      <div data-testid="playback-page" className="bg-surface-2 relative h-full min-h-0">
         <ErrorBoundary level="panel">
           <CrashProbe />
           <PlaybackMap
@@ -404,10 +366,7 @@ export function PlaybackPage() {
           />
 
           {headerVehicle ? (
-            <div
-              ref={headerRef}
-              className="z-panel pointer-events-none absolute inset-x-3 top-3"
-            >
+            <div ref={headerRef} className="z-panel pointer-events-none absolute inset-x-3 top-3">
               <PlaybackOptions
                 vehicle={headerVehicle}
                 offline={offline}
@@ -442,18 +401,10 @@ export function PlaybackPage() {
           {!vehicleId ? (
             <div className="z-map-controls absolute inset-0 flex items-start justify-center overflow-y-auto p-4 pt-16">
               <div className="border-border bg-surface shadow-float w-full max-w-sm rounded-lg border p-4">
-                <h2 className="text-md text-text font-medium">
-                  Choose a vehicle
-                </h2>
-                <p className="text-muted mt-1 text-sm">
-                  Search by plate or IMEI.
-                </p>
+                <h2 className="text-md text-text font-medium">Choose a vehicle</h2>
+                <p className="text-muted mt-1 text-sm">Search by plate or IMEI.</p>
                 <div className="mt-3">
-                  <VehiclePicker
-                    value={null}
-                    initialFocus
-                    onChange={(id) => setVehicle(id)}
-                  />
+                  <VehiclePicker value={null} initialFocus onChange={(id) => setVehicle(id)} />
                 </div>
               </div>
             </div>
@@ -523,7 +474,5 @@ export function PlaybackPage() {
 }
 
 function presetMs(id: RangePresetId): number {
-  return (
-    RANGE_PRESETS.find((preset) => preset.id === id)?.ms ?? DEFAULT_RANGE_MS
-  );
+  return RANGE_PRESETS.find((preset) => preset.id === id)?.ms ?? DEFAULT_RANGE_MS;
 }

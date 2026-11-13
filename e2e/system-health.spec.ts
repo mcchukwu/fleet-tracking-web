@@ -16,9 +16,9 @@ async function setRole(page: Page, role: string): Promise<void> {
 
 async function gotoSystem(page: Page, search = "/system"): Promise<void> {
   await page.goto(search);
-  await expect(
-    page.getByRole("heading", { name: "System health", level: 1 }),
-  ).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("heading", { name: "System health", level: 1 })).toBeVisible({
+    timeout: 15_000,
+  });
 }
 
 function isHealthRequest(url: string): boolean {
@@ -36,17 +36,13 @@ async function setVisibility(page: Page, value: "visible" | "hidden"): Promise<v
 }
 
 test.describe("system health", () => {
-  test("shows the all-green fixture with every group and the document title", async ({
-    page,
-  }) => {
+  test("shows the all-green fixture with every group and the document title", async ({ page }) => {
     await gotoSystem(page);
 
     await expect(page.getByText("All systems healthy")).toBeVisible({
       timeout: 15_000,
     });
-    await expect(
-      page.locator('[data-health-group="fleet"]').getByText("20 of 25"),
-    ).toBeVisible();
+    await expect(page.locator('[data-health-group="fleet"]').getByText("20 of 25")).toBeVisible();
     await expect(
       page.locator('[data-health-group="fleet"]').getByText("80% of vehicles"),
     ).toBeVisible();
@@ -74,18 +70,14 @@ test.describe("system health", () => {
     await expectNoHorizontalScroll(page);
   });
 
-  test("a down dependency is critical, sorts first and counts as an issue", async ({
-    page,
-  }) => {
+  test("a down dependency is critical, sorts first and counts as an issue", async ({ page }) => {
     await setScenario(page, "dependency-down");
     await gotoSystem(page);
 
     await expect(page.getByText("1 issue needs attention")).toBeVisible({
       timeout: 15_000,
     });
-    const rows = page.locator(
-      '[data-health-group="dependencies"] [data-health-item]',
-    );
+    const rows = page.locator('[data-health-group="dependencies"] [data-health-item]');
     await expect(rows).toHaveCount(2);
     await expect(rows.nth(0)).toHaveAttribute("data-health-id", "dependency-redis");
     await expect(rows.nth(0)).toHaveAttribute("data-health-tone", "critical");
@@ -112,9 +104,7 @@ test.describe("system health", () => {
       "data-health-tone",
       "healthy",
     );
-    const ingest = page.locator(
-      '[data-health-group="ingest"] [data-health-item]',
-    );
+    const ingest = page.locator('[data-health-group="ingest"] [data-health-item]');
     await expect(ingest.nth(0)).toHaveAttribute("data-health-id", "dropped");
     await expect(page.getByText(/issues? need attention/)).toBeVisible();
   });
@@ -157,10 +147,7 @@ test.describe("system health", () => {
     await expect.poll(() => requests).toBe(afterLoad + 2);
   });
 
-  test("offline keeps cached values with a stale label and no error", async ({
-    page,
-    context,
-  }) => {
+  test("offline keeps cached values with a stale label and no error", async ({ page, context }) => {
     await gotoSystem(page);
     await expect(page.getByText("All systems healthy")).toBeVisible({
       timeout: 15_000,
@@ -188,9 +175,9 @@ test.describe("system health", () => {
     await primeOfflineSession(page);
     await gotoSystem(page);
 
-    await expect(
-      page.getByText("System health isn't available offline"),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("System health isn't available offline")).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.getByRole("button", { name: "Retry" })).toHaveCount(0);
     await expect(page.getByText("All systems healthy")).toHaveCount(0);
   });
@@ -202,9 +189,7 @@ test.describe("system health", () => {
       timeout: 15_000,
     });
     await expect(page.getByText("Received")).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "Refresh" }),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Refresh" })).toBeVisible();
   });
 
   test("a failed first load recovers with Retry", async ({ page }) => {

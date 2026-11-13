@@ -22,7 +22,7 @@ export function SystemHealthItem({ item, size = "md" }: SystemHealthItemProps) {
         hintTooltip={item.tooltip}
         size={size}
         leading={<HealthDot tone={item.tone} label={item.label} />}
-        className={size === "md" ? "border-0 min-h-24" : "border-0 min-h-20"}
+        className={size === "md" ? "min-h-24 border-0" : "min-h-20 border-0"}
       />
     </li>
   );

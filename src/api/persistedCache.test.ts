@@ -86,10 +86,7 @@ describe("saving the query cache", () => {
     expect(key).toBe(PERSISTED_CACHE_KEY);
     expect(value).toMatchObject({ buster: "test:1", savedAt: 5_000 });
     const entries = (value as { entries: { queryKey: unknown[] }[] }).entries;
-    expect(entries.map((entry) => entry.queryKey[0])).toEqual([
-      "live-snapshot",
-      "alerts",
-    ]);
+    expect(entries.map((entry) => entry.queryKey[0])).toEqual(["live-snapshot", "alerts"]);
   });
 
   it("skips queries without data", async () => {
@@ -123,10 +120,15 @@ describe("saving the query cache", () => {
 describe("restoring the query cache", () => {
   it("restores data with its original update time", async () => {
     const at = 10_000;
-    mocks.get.mockResolvedValue(payload([{ queryKey: ["alerts", "feed", {}], data: [{ id: "a1" }], updatedAt: at }]));
+    mocks.get.mockResolvedValue(
+      payload([{ queryKey: ["alerts", "feed", {}], data: [{ id: "a1" }], updatedAt: at }]),
+    );
 
     const client = new QueryClient();
-    const restored = await restorePersistedCache(client, { now: () => at + HOUR, buster: () => "test:1" });
+    const restored = await restorePersistedCache(client, {
+      now: () => at + HOUR,
+      buster: () => "test:1",
+    });
 
     expect(restored).toBe(1);
     expect(client.getQueryData(["alerts", "feed", {}])).toEqual([{ id: "a1" }]);
@@ -135,17 +137,23 @@ describe("restoring the query cache", () => {
   });
 
   it("discards a payload written by another build", async () => {
-    mocks.get.mockResolvedValue(payload([{ queryKey: ["drivers"], data: [], updatedAt: 1 }], { buster: "old:1" }));
+    mocks.get.mockResolvedValue(
+      payload([{ queryKey: ["drivers"], data: [], updatedAt: 1 }], { buster: "old:1" }),
+    );
 
     const client = new QueryClient();
-    await expect(restorePersistedCache(client, { now: () => 2, buster: () => "test:1" })).resolves.toBe(0);
+    await expect(
+      restorePersistedCache(client, { now: () => 2, buster: () => "test:1" }),
+    ).resolves.toBe(0);
 
     expect(client.getQueryData(["drivers"])).toBeUndefined();
     expect(mocks.del).toHaveBeenCalledWith(PERSISTED_CACHE_KEY);
   });
 
   it("discards a payload older than a day", async () => {
-    mocks.get.mockResolvedValue(payload([{ queryKey: ["drivers"], data: [], updatedAt: 1 }], { savedAt: 1 }));
+    mocks.get.mockResolvedValue(
+      payload([{ queryKey: ["drivers"], data: [], updatedAt: 1 }], { savedAt: 1 }),
+    );
 
     const client = new QueryClient();
     const restored = await restorePersistedCache(client, {
@@ -162,15 +170,19 @@ describe("restoring the query cache", () => {
     mocks.get.mockResolvedValue({ buster: "test:1", savedAt: 1, entries: "nope" });
 
     const client = new QueryClient();
-    await expect(restorePersistedCache(client, { now: () => 2, buster: () => "test:1" })).resolves.toBe(0);
+    await expect(
+      restorePersistedCache(client, { now: () => 2, buster: () => "test:1" }),
+    ).resolves.toBe(0);
     expect(mocks.del).toHaveBeenCalledWith(PERSISTED_CACHE_KEY);
   });
 
   it("ignores entries outside the allowlist without deleting the payload", async () => {
-    mocks.get.mockResolvedValue(payload([
-      { queryKey: ["audit", "feed"], data: [{ id: "1" }], updatedAt: 1 },
-      { queryKey: ["drivers"], data: [], updatedAt: 1 },
-    ]));
+    mocks.get.mockResolvedValue(
+      payload([
+        { queryKey: ["audit", "feed"], data: [{ id: "1" }], updatedAt: 1 },
+        { queryKey: ["drivers"], data: [], updatedAt: 1 },
+      ]),
+    );
 
     const client = new QueryClient();
     const restored = await restorePersistedCache(client, { now: () => 2, buster: () => "test:1" });
@@ -183,7 +195,9 @@ describe("restoring the query cache", () => {
   it("treats a missing payload as an empty cache", async () => {
     mocks.get.mockResolvedValue(undefined);
     const client = new QueryClient();
-    await expect(restorePersistedCache(client, { now: () => 2, buster: () => "test:1" })).resolves.toBe(0);
+    await expect(
+      restorePersistedCache(client, { now: () => 2, buster: () => "test:1" }),
+    ).resolves.toBe(0);
     expect(mocks.del).not.toHaveBeenCalled();
   });
 });

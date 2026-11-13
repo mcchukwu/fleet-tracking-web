@@ -28,7 +28,9 @@ export interface LiveState {
   reset: () => void;
 }
 
-function positionOf(vehicle: SnapshotVehicle): Omit<LivePosition, "speedKph" | "headingDeg" | "speedAt" | "alertMarkedAt"> | null {
+function positionOf(
+  vehicle: SnapshotVehicle,
+): Omit<LivePosition, "speedKph" | "headingDeg" | "speedAt" | "alertMarkedAt"> | null {
   if (
     typeof vehicle.lat !== "number" ||
     typeof vehicle.lon !== "number" ||
@@ -69,7 +71,8 @@ export const useLiveStore = create<LiveState>((set, get) => ({
       if (!seeded) continue;
 
       const existing = positions[seeded.key];
-      const hasSpeed = typeof vehicle.speed_kph === "number" || typeof vehicle.heading_deg === "number";
+      const hasSpeed =
+        typeof vehicle.speed_kph === "number" || typeof vehicle.heading_deg === "number";
 
       if (!existing) {
         positions[seeded.key] = {
@@ -83,7 +86,8 @@ export const useLiveStore = create<LiveState>((set, get) => ({
       }
 
       const positionIsNewer = seeded.positionAt > existing.positionAt;
-      const speedIsNewer = hasSpeed && (existing.speedAt === null || seeded.positionAt >= existing.speedAt);
+      const speedIsNewer =
+        hasSpeed && (existing.speedAt === null || seeded.positionAt >= existing.speedAt);
 
       positions[seeded.key] = {
         ...existing,

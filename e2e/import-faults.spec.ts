@@ -1,10 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import {
-  captureForReview,
-  expectNoAxeViolations,
-  expectNoHorizontalScroll,
-} from "./helpers";
+import { captureForReview, expectNoAxeViolations, expectNoHorizontalScroll } from "./helpers";
 
 test.describe.configure({ timeout: 60_000 });
 
@@ -46,9 +42,7 @@ function collectErrors(page: Page): string[] {
 
 function unexpectedConsole(errors: string[]): string[] {
   return errors.filter(
-    (text) =>
-      !text.includes("above error occurred") &&
-      !text.includes("Failed to load resource"),
+    (text) => !text.includes("above error occurred") && !text.includes("Failed to load resource"),
   );
 }
 
@@ -72,10 +66,9 @@ test.describe("import faults", () => {
 
     await clearFault(page);
     await notice.getByRole("button", { name: "Retry" }).click();
-    await expect(page.getByTestId("import-result-sentence")).toHaveText(
-      "1 vehicle imported.",
-      { timeout: 15_000 },
-    );
+    await expect(page.getByTestId("import-result-sentence")).toHaveText("1 vehicle imported.", {
+      timeout: 15_000,
+    });
     expect(unexpectedConsole(errors)).toEqual([]);
   });
 
@@ -109,10 +102,9 @@ test.describe("import faults", () => {
 
     await clearFault(page);
     await notice.getByRole("button", { name: "Upload again" }).click();
-    await expect(page.getByTestId("import-result-sentence")).toHaveText(
-      "1 vehicle imported.",
-      { timeout: 15_000 },
-    );
+    await expect(page.getByTestId("import-result-sentence")).toHaveText("1 vehicle imported.", {
+      timeout: 15_000,
+    });
   });
 
   test("a forbidden upload offers a way back", async ({ page }) => {
@@ -129,9 +121,7 @@ test.describe("import faults", () => {
     await expect(page).toHaveURL(/\/map/);
   });
 
-  test("a session expiry shows the blocking dialog and keeps the file", async ({
-    page,
-  }) => {
+  test("a session expiry shows the blocking dialog and keeps the file", async ({ page }) => {
     const errors = collectErrors(page);
     await gotoFault(page, "import:unauthenticated");
     await chooseFile(page);
@@ -139,22 +129,16 @@ test.describe("import faults", () => {
 
     const dialog = page.getByRole("dialog", { name: "Your session expired" });
     await expect(dialog).toBeVisible();
-    await expect(page.getByTestId("import-failure")).toContainText(
-      "Your session expired.",
-    );
+    await expect(page.getByTestId("import-failure")).toContainText("Your session expired.");
     await expect
-      .poll(() =>
-        dialog.evaluate((element) => element.contains(document.activeElement)),
-      )
+      .poll(() => dialog.evaluate((element) => element.contains(document.activeElement)))
       .toBe(true);
     await expect(page.getByTestId("import-selected-file")).toBeVisible();
     await expectNoAxeViolations(page);
     expect(unexpectedConsole(errors)).toEqual([]);
   });
 
-  test("a malformed response is a contract failure with diagnostics", async ({
-    page,
-  }) => {
+  test("a malformed response is a contract failure with diagnostics", async ({ page }) => {
     const errors = collectErrors(page);
     await gotoFault(page, "import:malformed");
     await chooseFile(page);
@@ -179,19 +163,17 @@ test.describe("import faults", () => {
 
     const chooser = page.waitForEvent("filechooser");
     await notice.getByRole("button", { name: "Choose another file" }).click();
-    await (await chooser).setFiles({
+    await (
+      await chooser
+    ).setFiles({
       name: "replacement.csv",
       mimeType: "text/csv",
       buffer: Buffer.from(csv),
     });
-    await expect(page.getByTestId("import-selected-file")).toContainText(
-      "replacement.csv",
-    );
+    await expect(page.getByTestId("import-selected-file")).toContainText("replacement.csv");
   });
 
-  test("a slow upload shows the 3s and 10s states and Cancel aborts it", async ({
-    page,
-  }) => {
+  test("a slow upload shows the 3s and 10s states and Cancel aborts it", async ({ page }) => {
     test.setTimeout(50_000);
     await gotoFault(page, "import:slow");
     await chooseFile(page);
@@ -222,10 +204,9 @@ test.describe("import faults", () => {
     await clearFault(page);
     await page.getByRole("button", { name: "Retry" }).click();
 
-    await expect(page.getByTestId("import-result-sentence")).toHaveText(
-      "1 vehicle imported.",
-      { timeout: 15_000 },
-    );
+    await expect(page.getByTestId("import-result-sentence")).toHaveText("1 vehicle imported.", {
+      timeout: 15_000,
+    });
     await expect(page.getByTestId("import-result-heading")).toBeFocused();
     await expect(page.locator("[data-recent-import]")).toHaveCount(1);
     await expect(page.getByTestId("import-failure")).toHaveCount(0);

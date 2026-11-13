@@ -56,7 +56,8 @@ function routeChevronImage(tokens: MapTokens): ImageData {
   return drawing.getImageData(0, 0, SIZE, SIZE);
 }
 
-function hatchImage(tokens: MapTokens): ImageData {  const drawing = context();
+function hatchImage(tokens: MapTokens): ImageData {
+  const drawing = context();
   drawing.strokeStyle = tokens.colors.geofenceRestricted;
   drawing.lineWidth = 4;
   for (let offset = -SIZE; offset < SIZE * 2; offset += 16) {

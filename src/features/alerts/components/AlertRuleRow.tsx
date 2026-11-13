@@ -49,7 +49,7 @@ export function AlertRuleRow({
   }
 
   return (
-    <li className="flex flex-col gap-2 border-b border-border py-3 last:border-0">
+    <li className="border-border flex flex-col gap-2 border-b py-3 last:border-0">
       <div className="flex flex-wrap items-center gap-2">
         {withReason(
           <Checkbox
@@ -65,7 +65,7 @@ export function AlertRuleRow({
             className={roleDisabled ? "cursor-not-allowed" : undefined}
           />,
         )}
-        <p className="min-w-0 flex-1 text-sm font-medium text-text">{typeLabel}</p>
+        <p className="text-text min-w-0 flex-1 text-sm font-medium">{typeLabel}</p>
         {withReason(
           editable && hasConfig ? (
             <Button
@@ -89,15 +89,13 @@ export function AlertRuleRow({
 
       {!editable ? (
         <div className="flex flex-col gap-1">
-          <p className="text-xs text-muted">This rule type has no settings editor.</p>
+          <p className="text-muted text-xs">This rule type has no settings editor.</p>
           {hasConfig ? (
             <dl className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-x-3 gap-y-1 text-xs">
               {Object.entries(rule.config).map(([key, value]) => (
                 <div key={key} className="contents">
                   <dt className="text-muted">{humanizeEvidenceKey(key)}</dt>
-                  <dd className="font-mono text-text">
-                    {formatEvidenceValue(key, value)}
-                  </dd>
+                  <dd className="text-text font-mono">{formatEvidenceValue(key, value)}</dd>
                 </div>
               ))}
             </dl>

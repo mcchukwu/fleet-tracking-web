@@ -47,7 +47,8 @@ const INJECT_CRASH =
   typeof window !== "undefined" &&
   new URLSearchParams(window.location.search).get("crash") === "map";
 
-export function MapView({  vehicles,
+export function MapView({
+  vehicles,
   geofences,
   selectedKey,
   hoveredKey,
@@ -161,7 +162,7 @@ export function MapView({  vehicles,
       />
 
       {loading && !hasData ? (
-        <div className="absolute inset-x-0 top-0 z-map-controls">
+        <div className="z-map-controls absolute inset-x-0 top-0">
           <LoadingBar label="Loading vehicles" />
         </div>
       ) : null}
@@ -169,7 +170,7 @@ export function MapView({  vehicles,
       {error && !hasData && showErrorOverlay ? (
         <div
           data-testid="map-error-overlay"
-          className="absolute inset-0 z-map-controls flex items-center justify-center bg-surface/90 p-4"
+          className="z-map-controls bg-surface/90 absolute inset-0 flex items-center justify-center p-4"
         >
           <ErrorState error={error} onRetry={onRetry} />
         </div>

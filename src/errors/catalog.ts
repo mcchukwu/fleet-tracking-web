@@ -1,13 +1,7 @@
 import type { AppError, AppErrorKind } from "./types";
 
 export type ErrorAction =
-  | "retry"
-  | "refresh"
-  | "sign_in"
-  | "go_back"
-  | "reload"
-  | "dismiss"
-  | "none";
+  "retry" | "refresh" | "sign_in" | "go_back" | "reload" | "dismiss" | "none";
 
 export interface ErrorCopy {
   title: string;
@@ -203,8 +197,7 @@ export function errorCopy(error: AppError, hints: CopyHints = {}): ErrorCopy {
       return {
         ...copy,
         title: "Couldn't read this file",
-        detail:
-          safeMessage(error) ?? "Check the CSV header row and try again.",
+        detail: safeMessage(error) ?? "Check the CSV header row and try again.",
         action: "none",
       };
     }

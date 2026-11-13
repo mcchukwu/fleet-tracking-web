@@ -35,14 +35,14 @@ export function ShortcutsDialog({ open, onClose }: ShortcutsDialogProps) {
               <dl className="mt-2 flex flex-col gap-1">
                 {items.map((shortcut) => (
                   <div key={shortcut.id} className="flex items-center justify-between gap-4 py-1">
-                    <dt className={shortcut.active ? "text-sm text-text" : "text-sm text-muted"}>
+                    <dt className={shortcut.active ? "text-text text-sm" : "text-muted text-sm"}>
                       {shortcut.label}
                     </dt>
                     <dd className="flex shrink-0 items-center gap-1">
                       {shortcut.keys.map((key, index) => (
                         <span key={`${shortcut.id}-${key}`} className="flex items-center gap-1">
-                          {index > 0 ? <span className="text-xs text-subtle">then</span> : null}
-                          <kbd className="rounded-sm border border-border bg-surface-2 px-2 py-1 font-mono text-xs text-text">
+                          {index > 0 ? <span className="text-subtle text-xs">then</span> : null}
+                          <kbd className="border-border bg-surface-2 text-text rounded-sm border px-2 py-1 font-mono text-xs">
                             {key}
                           </kbd>
                         </span>

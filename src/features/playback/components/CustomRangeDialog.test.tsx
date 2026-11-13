@@ -41,9 +41,7 @@ describe("CustomRangeDialog", () => {
     );
     fireEvent.change(screen.getByLabelText("End"), { target: { value: "2026-11-08T11:00" } });
     await userEvent.click(screen.getByRole("button", { name: "Apply" }));
-    expect(
-      screen.getAllByText("The end time must be after the start time.")[0],
-    ).toBeVisible();
+    expect(screen.getAllByText("The end time must be after the start time.")[0]).toBeVisible();
     const start = screen.getByLabelText("Start");
     const end = screen.getByLabelText("End");
     expect(start).toHaveAttribute("aria-invalid", "true");

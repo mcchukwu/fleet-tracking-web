@@ -5,9 +5,7 @@ import { captureForReview, expectNoAxeViolations, expectNoHorizontalScroll } fro
 const ROUTE_DEVIATION = "ac1a223c-f9b0-46f3-9ead-13a10bfd6389";
 
 async function gotoFault(page: Page, fault: string, extra = ""): Promise<void> {
-  await page.goto(
-    `/alerts?map=fake&fault=${encodeURIComponent(fault)}${extra ? `&${extra}` : ""}`,
-  );
+  await page.goto(`/alerts?map=fake&fault=${encodeURIComponent(fault)}${extra ? `&${extra}` : ""}`);
   await expect(page.getByRole("heading", { name: "Alerts" })).toBeVisible();
 }
 
@@ -27,9 +25,7 @@ test.describe("alerts faults", () => {
     await expect(page.getByText("Something went wrong on our side").first()).toBeVisible({
       timeout: 15_000,
     });
-    await expect(
-      page.getByRole("button", { name: "Retry", exact: true }).first(),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Retry", exact: true }).first()).toBeVisible();
     await expect(page.getByText("Something broke.")).toHaveCount(0);
     await captureForReview(page, "04-alerts-error");
     await expectNoAxeViolations(page);
@@ -41,10 +37,7 @@ test.describe("alerts faults", () => {
     });
   });
 
-  test("a refresh error keeps the cached rows and labels them", async ({
-    page,
-    liveSocket,
-  }) => {
+  test("a refresh error keeps the cached rows and labels them", async ({ page, liveSocket }) => {
     await page.goto("/alerts?map=fake");
     await expect(page.getByLabel("Copy plate LSD-102-AA").first()).toBeVisible();
     await liveSocket.wait();
@@ -118,9 +111,7 @@ test.describe("alerts faults", () => {
     await expect(page.getByRole("columnheader", { name: "Plate" })).toBeVisible();
   });
 
-  test("an unknown alert deep link shows the not-found state with a way back", async ({
-    page,
-  }) => {
+  test("an unknown alert deep link shows the not-found state with a way back", async ({ page }) => {
     await page.goto("/alerts?map=fake&alert=does-not-exist");
     await expect(page.getByText("Alert not found")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole("button", { name: "Back to alerts" })).toBeVisible();
@@ -195,9 +186,7 @@ test.describe("alerts faults", () => {
     await expect(drawer.getByText("Something went wrong on our side")).toBeVisible({
       timeout: 15_000,
     });
-    await expect(
-      drawer.getByRole("button", { name: "Retry", exact: true }),
-    ).toBeVisible();
+    await expect(drawer.getByRole("button", { name: "Retry", exact: true })).toBeVisible();
     await expectNoAxeViolations(page);
   });
 
@@ -220,9 +209,9 @@ test.describe("alerts faults", () => {
     const drawer = page.getByRole("complementary", { name: "Alert details" });
     await expect(drawer).toBeVisible();
     await expect(drawer.getByRole("heading", { name: "Route deviation" })).toBeVisible();
-    await expect(
-      drawer.getByText("Something went wrong on our side").first(),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(drawer.getByText("Something went wrong on our side").first()).toBeVisible({
+      timeout: 15_000,
+    });
     await captureForReview(page, "04-alerts-trip-error");
     await expectNoAxeViolations(page);
   });

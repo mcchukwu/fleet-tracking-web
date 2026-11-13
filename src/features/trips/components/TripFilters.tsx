@@ -1,10 +1,6 @@
 import { RotateCcw } from "lucide-react";
 import type { TripStatus } from "../../../api/types";
-import {
-  isTripStatus,
-  tripStatusLabels,
-  tripStatusOptions,
-} from "../../../lib/status";
+import { isTripStatus, tripStatusLabels, tripStatusOptions } from "../../../lib/status";
 import { isTripSort, tripSortOptions, type TripSort } from "../../../lib/trips";
 import { Button } from "../../../ui/Button";
 import { SearchInput } from "../../../ui/SearchInput";

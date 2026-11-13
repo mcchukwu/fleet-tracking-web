@@ -40,11 +40,11 @@ export function TopBar({ onOpenMenu, onOpenShortcuts }: TopBarProps) {
           : "online";
 
   return (
-    <header className="z-topbar shrink-0 border-b border-border bg-surface">
+    <header className="z-topbar border-border bg-surface shrink-0 border-b">
       <BrandBar className="gap-2">
         <Link
           to="/map"
-          className="flex h-touch min-w-touch shrink-0 items-center rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+          className="h-touch min-w-touch focus-visible:outline-focus-ring flex shrink-0 items-center rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           <span className="hidden md:inline-flex">
             <BrandLogo variant="lockup" />
@@ -62,7 +62,7 @@ export function TopBar({ onOpenMenu, onOpenShortcuts }: TopBarProps) {
         />
 
         <div className="hidden min-w-0 flex-1 justify-center px-2 md:flex">
-          <div className="w-full max-w-panel">
+          <div className="max-w-panel w-full">
             <GlobalSearch />
           </div>
         </div>
@@ -87,7 +87,7 @@ export function TopBar({ onOpenMenu, onOpenShortcuts }: TopBarProps) {
       </BrandBar>
 
       {searchOpen ? (
-        <div className="flex items-center gap-2 border-t border-border px-4 py-2 md:hidden">
+        <div className="border-border flex items-center gap-2 border-t px-4 py-2 md:hidden">
           <GlobalSearch
             inputId="vehicle-search-mobile"
             focusOnMount

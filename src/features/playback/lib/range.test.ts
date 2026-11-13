@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  activePreset,
-  defaultRange,
-  presetRange,
-  resolutionParam,
-  validateRange,
-} from "./range";
+import { activePreset, defaultRange, presetRange, resolutionParam, validateRange } from "./range";
 import { RANGE_PRESETS } from "./constants";
 
 const now = Date.parse("2026-11-08T12:00:00Z");

@@ -66,9 +66,9 @@ export function MapTooltip({ row, point, now: fixedNow }: MapTooltipProps) {
       ref={ref}
       role="tooltip"
       style={tooltipStyle(point, metrics.container, metrics.tooltip)}
-      className="pointer-events-none absolute z-tooltip max-w-panel rounded-md border border-border bg-surface px-2 py-1 text-xs shadow-menu"
+      className="z-tooltip max-w-panel border-border bg-surface shadow-menu pointer-events-none absolute rounded-md border px-2 py-1 text-xs"
     >
-      <p className="font-mono font-medium text-text">{row.plate}</p>
+      <p className="text-text font-mono font-medium">{row.plate}</p>
       <p
         className="text-muted"
         title={
@@ -79,7 +79,10 @@ export function MapTooltip({ row, point, now: fixedNow }: MapTooltipProps) {
       >
         {speedText(row, speedAge)}
       </p>
-      <p className="text-muted" title={row.recordedAt ? formatTimeTooltip(row.recordedAt) : undefined}>
+      <p
+        className="text-muted"
+        title={row.recordedAt ? formatTimeTooltip(row.recordedAt) : undefined}
+      >
         {positionAge === null
           ? "No position reported"
           : `Position ${formatAgeSeconds(positionAge)} ago`}

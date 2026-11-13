@@ -48,10 +48,9 @@ test.describe("playback faults", () => {
 
     await page.goto(`/playback?map=fake&vehicle=${VEHICLE}&fault=vehicle-events:unknown_enum`);
     await expect
-      .poll(
-        () => page.evaluate(() => window.__FLEET_DEBUG__?.playback?.eventCount ?? 0),
-        { timeout: 15_000 },
-      )
+      .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.playback?.eventCount ?? 0), {
+        timeout: 15_000,
+      })
       .toBeGreaterThan(0);
     await page.getByRole("button", { name: /^Events \(/ }).click();
     await expect(page.getByText("Unknown event: solar_flare")).toBeVisible();

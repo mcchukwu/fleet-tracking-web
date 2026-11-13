@@ -18,14 +18,9 @@ export interface ImportFailureNoticeProps {
 // client errors come from rendering, so neither reaches an upload failure.
 function canRetry(error: AppError): boolean {
   if (error.code === "invalid_request") return true;
-  return [
-    "network",
-    "timeout",
-    "server",
-    "unavailable",
-    "contract",
-    "rate_limited",
-  ].includes(error.kind);
+  return ["network", "timeout", "server", "unavailable", "contract", "rate_limited"].includes(
+    error.kind,
+  );
 }
 
 export function ImportFailureNotice({
@@ -47,12 +42,9 @@ export function ImportFailureNotice({
       tabIndex={-1}
       data-testid="import-failure"
       data-file={fileName}
-      className="flex flex-col gap-3 rounded-md border border-border-strong bg-surface p-3 outline-none"
+      className="border-border-strong bg-surface flex flex-col gap-3 rounded-md border p-3 outline-none"
     >
-      <InlineError
-        error={error}
-        copy={{ title: copy.title, detail: copy.detail }}
-      />
+      <InlineError error={error} copy={{ title: copy.title, detail: copy.detail }} />
       {forbidden ? (
         <div>
           <Button size="sm" onClick={onBack}>

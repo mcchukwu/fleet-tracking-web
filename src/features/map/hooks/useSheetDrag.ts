@@ -1,11 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type PointerEvent,
-  type RefObject,
-} from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent, type RefObject } from "react";
 import { SHEET_PEEK } from "../lib/constants";
 import {
   clampVisible,
@@ -65,8 +58,7 @@ export function useSheetDrag({
   // live outside this page and shrink it.
   const [containerHeight, setContainerHeight] = useState<number | null>(null);
   const availableHeight =
-    containerHeight ??
-    Math.max(0, viewportHeight - readToken("--spacing-topbar", TOP_BAR_HEIGHT));
+    containerHeight ?? Math.max(0, viewportHeight - readToken("--spacing-topbar", TOP_BAR_HEIGHT));
   const metrics = useMemo(
     () =>
       sheetMetricsFromAvailable(
@@ -179,8 +171,7 @@ export function useSheetDrag({
 
   function onPointerMove(event: PointerEvent<HTMLDivElement>): void {
     if (!dragRef.current) return;
-    pendingRef.current =
-      dragRef.current.startVisible + (dragRef.current.startY - event.clientY);
+    pendingRef.current = dragRef.current.startVisible + (dragRef.current.startY - event.clientY);
     schedule();
   }
 
@@ -192,9 +183,7 @@ export function useSheetDrag({
       frameRef.current = null;
     }
 
-    const target = snapToNearest
-      ? nearestSnap(pendingRef.current ?? visible, metrics)
-      : snap;
+    const target = snapToNearest ? nearestSnap(pendingRef.current ?? visible, metrics) : snap;
     pendingRef.current = null;
     // Resolve the snap before publishing: when the nearest snap is the snap the
     // sheet already reports, React does not re-render, so this imperative write
@@ -206,8 +195,7 @@ export function useSheetDrag({
 
   function onPointerUp(event: PointerEvent<HTMLDivElement>): void {
     if (dragRef.current) {
-      pendingRef.current =
-        dragRef.current.startVisible + (dragRef.current.startY - event.clientY);
+      pendingRef.current = dragRef.current.startVisible + (dragRef.current.startY - event.clientY);
     }
     endDrag(true);
   }

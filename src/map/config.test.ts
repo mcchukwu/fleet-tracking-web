@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  availableStyles,
-  mapTilerMapId,
-  mapTilerStyleUrl,
-  readMapTilerConfig,
-} from "./config";
+import { availableStyles, mapTilerMapId, mapTilerStyleUrl, readMapTilerConfig } from "./config";
 
 describe("readMapTilerConfig", () => {
   it("accepts a key", () => {
@@ -32,11 +27,7 @@ describe("availableStyles", () => {
   });
 
   it("offers all three styles with a key", () => {
-    expect(availableStyles({ apiKey: "abc123" })).toEqual([
-      "standard",
-      "streets",
-      "satellite",
-    ]);
+    expect(availableStyles({ apiKey: "abc123" })).toEqual(["standard", "streets", "satellite"]);
   });
 });
 

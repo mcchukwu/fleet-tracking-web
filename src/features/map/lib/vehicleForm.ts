@@ -62,10 +62,7 @@ const TEXT_FIELDS = [
 const DEVICE_FIELDS = ["sim_number", "device_model", "protocol"] as const;
 
 /** The server drops nulls, so the form never clears a driver or a year. */
-export function diffVehicle(
-  original: Vehicle,
-  values: Partial<VehicleFormValues>,
-): VehicleUpdate {
+export function diffVehicle(original: Vehicle, values: Partial<VehicleFormValues>): VehicleUpdate {
   const diff: VehicleUpdate = {};
 
   for (const field of TEXT_FIELDS) {
@@ -103,7 +100,8 @@ export interface ValidationIssue {
 export function validateVehicleForm(
   original: Vehicle,
   values: VehicleFormValues,
-): ValidationIssue[] {  const issues: ValidationIssue[] = [];
+): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
   if (trimmed(values.plate) === "") {
     issues.push({ field: "plate", message: "Plate is required." });
   }

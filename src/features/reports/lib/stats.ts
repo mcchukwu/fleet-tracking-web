@@ -2,13 +2,7 @@ import type { AlertStatus, TripStatus } from "../../../api/types";
 import { MISSING, formatPercent } from "../../../lib/format";
 
 export type StatId =
-  | "vehicles"
-  | "trips"
-  | "completedTrips"
-  | "activeTrips"
-  | "alerts"
-  | "openAlerts"
-  | "distance";
+  "vehicles" | "trips" | "completedTrips" | "activeTrips" | "alerts" | "openAlerts" | "distance";
 
 export type StatDestination =
   | { to: "/map" }

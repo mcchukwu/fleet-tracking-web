@@ -4,8 +4,7 @@ import type { Driver, DriverInput, DriverUpdate } from "../../../api/types";
 const PHONE_CHARACTERS = /^[+\d\s]+$/;
 const MINIMUM_PHONE_DIGITS = 7;
 
-export const DRIVER_PHONE_ERROR =
-  "Enter a phone number with at least seven digits.";
+export const DRIVER_PHONE_ERROR = "Enter a phone number with at least seven digits.";
 
 export function phoneDigitCount(value: string): number {
   return value.replace(/\D/g, "").length;
@@ -93,9 +92,6 @@ export function hasChanges(update: DriverUpdate): boolean {
  * Deactivation is allowed by the API and keeps the assignments, so the confirm
  * is a client guard against accidental loss of availability.
  */
-export function requiresDeactivationConfirmation(
-  driver: Driver,
-  update: DriverUpdate,
-): boolean {
+export function requiresDeactivationConfirmation(driver: Driver, update: DriverUpdate): boolean {
   return update.status === "inactive" && driver.status !== "inactive" && driver.vehicles > 0;
 }

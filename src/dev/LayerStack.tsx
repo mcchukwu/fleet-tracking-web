@@ -20,9 +20,9 @@ export function LayerStack() {
     >
       <h1 className="text-lg font-semibold">Layer stack</h1>
       <p className="text-muted max-w-prose text-sm">
-        Six layers overlap at the top-left point. The drawer is trapped in the
-        isolated content area, the top bar is shell chrome, and the four overlay
-        layers are portalled into the overlay root.
+        Six layers overlap at the top-left point. The drawer is trapped in the isolated content
+        area, the top bar is shell chrome, and the four overlay layers are portalled into the
+        overlay root.
       </p>
 
       <div data-testid="layer-swatch-drawer" className={`${SWATCH} z-drawer`}>

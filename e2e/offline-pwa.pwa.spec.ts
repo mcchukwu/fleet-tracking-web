@@ -76,11 +76,7 @@ async function expectOfflineBoot(page: Page): Promise<void> {
 }
 
 test.describe("offline and PWA", () => {
-  test("boots offline from the cached shell, data and map", async ({
-    page,
-    context,
-    pwa,
-  }) => {
+  test("boots offline from the cached shell, data and map", async ({ page, context, pwa }) => {
     await warmOnline(page);
     const before = pwa.apiRequests.length;
 
@@ -151,7 +147,10 @@ test.describe("offline and PWA", () => {
     context,
     pwa,
   }) => {
-    test.skip(page.viewportSize()?.width !== 390, "The mobile detail sheet is the surface under test.");
+    test.skip(
+      page.viewportSize()?.width !== 390,
+      "The mobile detail sheet is the surface under test.",
+    );
     await warmOnline(page);
     await clearCachedQueries(page);
 
@@ -176,7 +175,10 @@ test.describe("offline and PWA", () => {
     context,
     pwa,
   }) => {
-    test.skip(page.viewportSize()?.width !== 390, "The mobile detail sheet is the surface under test.");
+    test.skip(
+      page.viewportSize()?.width !== 390,
+      "The mobile detail sheet is the surface under test.",
+    );
     await warmOnline(page);
 
     const vehicleId = "4324a768-9b14-4223-a299-eb8da4d8d309";
@@ -220,9 +222,9 @@ test.describe("offline and PWA", () => {
     await expect(page.getByTestId("banner-region")).not.toContainText("You're offline", {
       timeout: 15_000,
     });
-    expect(
-      pwa.apiRequests.slice(before).some((request) => request.path === "/live/snapshot"),
-    ).toBe(true);
+    expect(pwa.apiRequests.slice(before).some((request) => request.path === "/live/snapshot")).toBe(
+      true,
+    );
   });
 
   test("prompts before activating a new service worker", async ({ page }) => {
@@ -237,10 +239,9 @@ test.describe("offline and PWA", () => {
         await registration?.update();
       });
 
-      await expect(page.getByTestId("banner-region")).toContainText(
-        "A new version is available",
-        { timeout: 60_000 },
-      );
+      await expect(page.getByTestId("banner-region")).toContainText("A new version is available", {
+        timeout: 60_000,
+      });
 
       const urlBefore = page.url();
       await expect(page.getByRole("button", { name: "Reload" })).toBeVisible();
@@ -253,10 +254,7 @@ test.describe("offline and PWA", () => {
     }
   });
 
-  test("manifest and install prompt are available in Chromium", async ({
-    page,
-    browserName,
-  }) => {
+  test("manifest and install prompt are available in Chromium", async ({ page, browserName }) => {
     test.skip(browserName !== "chromium", "The installability API is Chromium-only.");
     await warmOnline(page);
 

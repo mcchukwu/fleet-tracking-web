@@ -190,11 +190,27 @@ export function runAdapterContract(name: string, options: AdapterContractOptions
           id: "gf-1",
           name: "Depot",
           kind: "depot",
-          rings: [[[3.4, 6.5], [3.5, 6.5], [3.5, 6.6], [3.4, 6.5]]],
+          rings: [
+            [
+              [3.4, 6.5],
+              [3.5, 6.5],
+              [3.5, 6.6],
+              [3.4, 6.5],
+            ],
+          ],
           highlighted: false,
         },
       ]);
-      adapter.setRoute({ points: [[3.4, 6.5], [3.5, 6.6]], gapAfterIndex: [], cursorIndex: 0, cursorPosition: [3.4, 6.5], chevrons: true });
+      adapter.setRoute({
+        points: [
+          [3.4, 6.5],
+          [3.5, 6.6],
+        ],
+        gapAfterIndex: [],
+        cursorIndex: 0,
+        cursorPosition: [3.4, 6.5],
+        chevrons: true,
+      });
       adapter.setTheme("light", contractTokens);
       adapter.fitBounds({ south: 6, west: 3, north: 7, east: 4 });
       adapter.flyTo([3.5, 6.6], 12);

@@ -40,11 +40,7 @@ export function validateRange(from?: string, to?: string): RangeValidation {
   return validation;
 }
 
-export function activePreset(
-  from: string,
-  to: string,
-  now = Date.now(),
-): RangePresetId | null {
+export function activePreset(from: string, to: string, now = Date.now()): RangePresetId | null {
   const validation = validateRange(from, to);
   if (!validation.valid) return null;
   if (Math.abs(now - validation.toMs) > PRESET_MATCH_TOLERANCE_MS) return null;

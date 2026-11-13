@@ -49,8 +49,7 @@ export function useQueryView<TData>(
   const isPaused = query.fetchStatus === "paused";
   const isOfflineEmpty = !hasData && !isLoading && (offline || isPaused);
   const isError = !offline && !hasData && !isLoading && query.error != null;
-  const isEmpty =
-    data !== undefined && (options.isEmpty?.(data) ?? defaultIsEmpty(data));
+  const isEmpty = data !== undefined && (options.isEmpty?.(data) ?? defaultIsEmpty(data));
 
   const state: QueryViewState = isLoading
     ? "loading"

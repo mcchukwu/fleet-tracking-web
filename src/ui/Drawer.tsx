@@ -86,10 +86,8 @@ export function Drawer({
       if (event.key !== "Escape" || event.defaultPrevented) return;
       const active = document.activeElement;
       // A modal opened from the drawer owns Escape; it must not close the panel.
-      if (active instanceof HTMLElement && active.closest('[role="dialog"]'))
-        return;
-      if (!(active instanceof Node) || !panelRef.current?.contains(active))
-        return;
+      if (active instanceof HTMLElement && active.closest('[role="dialog"]')) return;
+      if (!(active instanceof Node) || !panelRef.current?.contains(active)) return;
       event.preventDefault();
       event.stopPropagation();
       onClose();
@@ -101,8 +99,7 @@ export function Drawer({
   if (!open) return null;
 
   const resolvedCloseLabel =
-    closeLabel ??
-    (placement === "map" ? "Close vehicle details" : "Close details");
+    closeLabel ?? (placement === "map" ? "Close vehicle details" : "Close details");
 
   const panel = (
     <aside
@@ -123,10 +120,7 @@ export function Drawer({
         <div className="flex min-w-0 items-center gap-2">
           <h2
             id={titleId}
-            className={cn(
-              "text-md text-text truncate font-medium",
-              titleClassName ?? "font-mono",
-            )}
+            className={cn("text-md text-text truncate font-medium", titleClassName ?? "font-mono")}
           >
             {title}
           </h2>

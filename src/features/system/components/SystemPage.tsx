@@ -12,16 +12,9 @@ import { useConnection } from "../../../stores/connection";
 import { Button } from "../../../ui/Button";
 import { PageFrame } from "../../../ui/PageFrame";
 import { EmptyState, Skeleton } from "../../../ui/StatePanel";
-import {
-  StateBoundary,
-  type StateBoundaryState,
-} from "../../../ui/StateBoundary";
+import { StateBoundary, type StateBoundaryState } from "../../../ui/StateBoundary";
 import { useSystemHealthFeed } from "../hooks/useSystemHealthFeed";
-import {
-  buildHealthGroups,
-  healthSummary,
-  type HealthSummary,
-} from "../lib/health";
+import { buildHealthGroups, healthSummary, type HealthSummary } from "../lib/health";
 import { SystemHealthGroup } from "./SystemHealthGroup";
 import { SystemSkeleton } from "./SystemSkeleton";
 import { SystemSummary } from "./SystemSummary";
@@ -51,14 +44,10 @@ function SystemPageContent() {
   const cancelled = feed.cancelled && !cached;
   const error = feed.online && feed.error ? normalize(feed.error) : null;
   const forbidden = error?.kind === "forbidden";
-  const pendingFirstLoad =
-    feed.isFetching && !cached && !cancelled && feed.online;
+  const pendingFirstLoad = feed.isFetching && !cached && !cancelled && feed.online;
 
   const groups = useMemo(
-    () =>
-      feed.data
-        ? buildHealthGroups(feed.data, lastDataAt, feed.trend, now)
-        : [],
+    () => (feed.data ? buildHealthGroups(feed.data, lastDataAt, feed.trend, now) : []),
     [feed.data, feed.trend, lastDataAt, now],
   );
   const summary: HealthSummary = useMemo(() => healthSummary(groups), [groups]);
@@ -88,10 +77,7 @@ function SystemPageContent() {
 
   return (
     <PageFrame layout="scroll" contentClassName="px-4 pt-6 sm:px-6">
-      <div
-        data-testid="system-page"
-        className="text-text flex w-full flex-col gap-4"
-      >
+      <div data-testid="system-page" className="text-text flex w-full flex-col gap-4">
         <header className="flex flex-col gap-2">
           <h1 className="text-text text-lg font-semibold">System health</h1>
           {feed.data && !forbidden ? (
@@ -117,19 +103,12 @@ function SystemPageContent() {
           ) : null}
         </header>
 
-        {pendingFirstLoad ? (
-          <SlowNotice onCancel={feed.cancel} onRetry={feed.refetch} />
-        ) : null}
+        {pendingFirstLoad ? <SlowNotice onCancel={feed.cancel} onRetry={feed.refetch} /> : null}
 
         {cancelled ? (
           <div className="border-border bg-surface flex items-center justify-between gap-2 rounded-lg border px-4 py-3">
             <p className="text-muted text-sm">Loading cancelled</p>
-            <Button
-              ref={retryRef}
-              size="sm"
-              variant="ghost"
-              onClick={feed.refetch}
-            >
+            <Button ref={retryRef} size="sm" variant="ghost" onClick={feed.refetch}>
               Retry
             </Button>
           </div>
@@ -215,10 +194,7 @@ function Boundary({
 }
 
 function apiTitle(kind: string): string | undefined {
-  return kind === "network" ||
-    kind === "timeout" ||
-    kind === "server" ||
-    kind === "unavailable"
+  return kind === "network" || kind === "timeout" || kind === "server" || kind === "unavailable"
     ? "Can't reach the API"
     : undefined;
 }

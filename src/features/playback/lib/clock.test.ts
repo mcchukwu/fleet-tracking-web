@@ -66,7 +66,11 @@ describe("clockReducer", () => {
   });
 
   it("steps to the next and previous point and pauses", () => {
-    const points = [{ t: new Date(fromMs).toISOString() }, { t: new Date(fromMs + 30_000).toISOString() }, { t: new Date(toMs).toISOString() }];
+    const points = [
+      { t: new Date(fromMs).toISOString() },
+      { t: new Date(fromMs + 30_000).toISOString() },
+      { t: new Date(toMs).toISOString() },
+    ];
     const forward = clockReducer(state({ playing: true, playheadMs: fromMs }), {
       type: "step",
       direction: 1,
@@ -97,15 +101,9 @@ describe("clockReducer", () => {
   });
 
   it("changes speed within the allowed steps", () => {
-    expect(
-      clockReducer(state({ speed: 1 }), { type: "speed", direction: -1 }).speed,
-    ).toBe(1);
-    expect(
-      clockReducer(state({ speed: 16 }), { type: "speed", direction: 1 }).speed,
-    ).toBe(16);
-    expect(
-      clockReducer(state({ speed: 2 }), { type: "speed", direction: 1 }).speed,
-    ).toBe(4);
+    expect(clockReducer(state({ speed: 1 }), { type: "speed", direction: -1 }).speed).toBe(1);
+    expect(clockReducer(state({ speed: 16 }), { type: "speed", direction: 1 }).speed).toBe(16);
+    expect(clockReducer(state({ speed: 2 }), { type: "speed", direction: 1 }).speed).toBe(4);
   });
 });
 
@@ -118,7 +116,10 @@ describe("helpers", () => {
   });
 
   it("steps to point times with clamping", () => {
-    const points = [{ t: new Date(fromMs + 10_000).toISOString() }, { t: new Date(fromMs + 20_000).toISOString() }];
+    const points = [
+      { t: new Date(fromMs + 10_000).toISOString() },
+      { t: new Date(fromMs + 20_000).toISOString() },
+    ];
     expect(stepTime(points, fromMs, 1)).toBe(fromMs + 10_000);
     expect(stepTime(points, fromMs + 15_000, 1)).toBe(fromMs + 20_000);
     expect(stepTime(points, fromMs + 15_000, -1)).toBe(fromMs + 10_000);

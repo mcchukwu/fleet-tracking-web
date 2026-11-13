@@ -3,11 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "../../../auth/store";
 import { useErrorStorm } from "../../../errors/global";
 import { formatClockTime } from "../../../lib/format";
-import {
-  useConnection,
-  useConnectionStore,
-  type SocketState,
-} from "../../../stores/connection";
+import { useConnection, useConnectionStore, type SocketState } from "../../../stores/connection";
 import { activateUpdate } from "../../../pwa/update";
 import { Banner } from "../../../ui/Banner";
 import { highestPriorityBanner, type BannerKind } from "./bannerPriority";
@@ -46,29 +42,18 @@ function useReconnectPhase(
   const [phase, setPhase] = useState<ReconnectPhase>("hidden");
 
   useEffect(() => {
-    const refresh = () =>
-      setPhase(reconnectPhase(socket, socketDownAt, Date.now()));
-    const timers: Array<ReturnType<typeof setTimeout>> = [
-      setTimeout(refresh, 0),
-    ];
+    const refresh = () => setPhase(reconnectPhase(socket, socketDownAt, Date.now()));
+    const timers: Array<ReturnType<typeof setTimeout>> = [setTimeout(refresh, 0)];
 
     if (socket === "reconnecting" && socketDownAt !== null) {
       const elapsed = Date.now() - socketDownAt;
       if (elapsed < RECONNECT_BANNER_DELAY_MS) {
         timers.push(
-          setTimeout(
-            () => setPhase("reconnecting"),
-            RECONNECT_BANNER_DELAY_MS - elapsed,
-          ),
+          setTimeout(() => setPhase("reconnecting"), RECONNECT_BANNER_DELAY_MS - elapsed),
         );
       }
       if (elapsed < RECONNECT_TERMINAL_MS) {
-        timers.push(
-          setTimeout(
-            () => setPhase("unavailable"),
-            RECONNECT_TERMINAL_MS - elapsed,
-          ),
-        );
+        timers.push(setTimeout(() => setPhase("unavailable"), RECONNECT_TERMINAL_MS - elapsed));
       }
     }
 
@@ -82,10 +67,7 @@ function useReconnectPhase(
 
 export function GlobalBanners() {
   const { network, socket, socketDownAt, lastDataAt } = useConnection();
-  const { phase, hide: hideReconnect } = useReconnectPhase(
-    socket,
-    socketDownAt,
-  );
+  const { phase, hide: hideReconnect } = useReconnectPhase(socket, socketDownAt);
   const retryLive = useConnectionStore((state) => state.retryLive);
   const storm = useErrorStorm();
   const update = useUpdateAvailable();
@@ -95,19 +77,15 @@ export function GlobalBanners() {
   const present: BannerKind[] = [];
   if (expired) present.push("session-expired");
   if (network === "offline") present.push("offline");
-  if (socket === "reconnecting" && phase === "unavailable")
-    present.push("unavailable");
+  if (socket === "reconnecting" && phase === "unavailable") present.push("unavailable");
   if (storm) present.push("storm");
-  if (socket === "reconnecting" && phase === "reconnecting")
-    present.push("reconnecting");
+  if (socket === "reconnecting" && phase === "reconnecting") present.push("reconnecting");
   if (update) present.push("update");
   const kind = highestPriorityBanner(present);
 
   let banner = null;
   if (kind === "session-expired") {
-    banner = (
-      <Banner tone="danger" message="Your session expired. Sign in again." />
-    );
+    banner = <Banner tone="danger" message="Your session expired. Sign in again." />;
   } else if (kind === "offline") {
     const time = formatClockTime(lastDataAt);
     banner = (

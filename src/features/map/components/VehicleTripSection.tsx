@@ -40,7 +40,7 @@ export function VehicleTripSection({
     if (!fallbackDestination && !fallbackStatus) {
       return (
         <VehicleSection title="Trip">
-          <p className="text-sm text-muted">No active trip.</p>
+          <p className="text-muted text-sm">No active trip.</p>
         </VehicleSection>
       );
     }
@@ -57,7 +57,7 @@ export function VehicleTripSection({
             )}
           </VehicleField>
         </dl>
-        <p className="mt-1 text-xs text-muted">Origin isn't included in the live vehicle record.</p>
+        <p className="text-muted mt-1 text-xs">Origin isn't included in the live vehicle record.</p>
       </VehicleSection>
     );
   }
@@ -82,7 +82,7 @@ export function VehicleTripSection({
     if (offline) {
       return (
         <VehicleSection title="Trip">
-          <p className="text-sm text-muted">Trip details need a connection.</p>
+          <p className="text-muted text-sm">Trip details need a connection.</p>
         </VehicleSection>
       );
     }
@@ -111,13 +111,13 @@ export function VehicleTripSection({
             )}
           </VehicleField>
         </dl>
-        <p className="mt-2 flex items-center justify-between gap-2 text-xs text-muted">
+        <p className="text-muted mt-2 flex items-center justify-between gap-2 text-xs">
           Trip details unavailable.
           {offline ? null : (
             <button
               type="button"
               onClick={() => void tripQuery.refetch()}
-              className="h-touch rounded-sm px-2 font-medium text-accent-fg hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus-ring md:h-control-sm"
+              className="h-touch text-accent-fg hover:bg-surface-2 focus-visible:outline-focus-ring md:h-control-sm rounded-sm px-2 font-medium focus-visible:outline-2"
             >
               Retry
             </button>
@@ -145,12 +145,12 @@ export function VehicleTripSection({
         <VehicleField label="Distance">{formatDistance(tripDistanceKm(trip))}</VehicleField>
       </dl>
       {tripQuery.isError && !offline ? (
-        <p className="mt-2 flex items-center justify-between gap-2 text-xs text-muted">
+        <p className="text-muted mt-2 flex items-center justify-between gap-2 text-xs">
           Couldn't refresh the trip.
           <button
             type="button"
             onClick={() => void tripQuery.refetch()}
-            className="h-touch rounded-sm px-2 font-medium text-accent-fg hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus-ring md:h-control-sm"
+            className="h-touch text-accent-fg hover:bg-surface-2 focus-visible:outline-focus-ring md:h-control-sm rounded-sm px-2 font-medium focus-visible:outline-2"
           >
             Retry
           </button>

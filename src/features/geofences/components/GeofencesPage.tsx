@@ -71,19 +71,14 @@ function GeofencesPageContent() {
     [feed.geofences, q],
   );
   const selected = useMemo(
-    () =>
-      selectedId
-        ? (feed.geofences.find((row) => row.id === selectedId) ?? null)
-        : null,
+    () => (selectedId ? (feed.geofences.find((row) => row.id === selectedId) ?? null) : null),
     [feed.geofences, selectedId],
   );
 
   useDocumentTitle("Geofences");
 
   const editingGeofence = editor.kind === "edit" ? editor.geofence : null;
-  const editingRing = editingGeofence
-    ? exteriorRing(editingGeofence.geometry)
-    : null;
+  const editingRing = editingGeofence ? exteriorRing(editingGeofence.geometry) : null;
   const editingRings = editingGeofence?.geometry.coordinates.length ?? 0;
   const drawingUnavailable = adapter !== null && !adapter.capabilities.drawing;
   const geometryEditable = editingGeofence
@@ -127,9 +122,7 @@ function GeofencesPageContent() {
     feed.dataUpdatedAt > 0 &&
     selected === null;
   const staleLabel =
-    feed.geofences.length > 0 &&
-    (offline || state === "error") &&
-    feed.dataUpdatedAt
+    feed.geofences.length > 0 && (offline || state === "error") && feed.dataUpdatedAt
       ? formatClockTime(feed.dataUpdatedAt)
       : undefined;
 
@@ -161,8 +154,7 @@ function GeofencesPageContent() {
     () => toMapGeofences(feed.geofences, selectedId),
     [feed.geofences, selectedId],
   );
-  const editingMapId =
-    editingGeofence && drawing.status === "ready" ? editingGeofence.id : null;
+  const editingMapId = editingGeofence && drawing.status === "ready" ? editingGeofence.id : null;
 
   const fitPadding = wide ? FIT_PADDING_DESKTOP : FIT_PADDING_MOBILE;
 
@@ -187,13 +179,8 @@ function GeofencesPageContent() {
     if (!adapter) return;
     const offFence = adapter.on("geofenceClick", ({ id }) => {
       if (editorOpen) return;
-      const hiddenBySearch = filterGeofences(feed.geofences, q).every(
-        (row) => row.id !== id,
-      );
-      updateSearch(
-        hiddenBySearch ? { q: undefined, selected: id } : { selected: id },
-        false,
-      );
+      const hiddenBySearch = filterGeofences(feed.geofences, q).every((row) => row.id !== id);
+      updateSearch(hiddenBySearch ? { q: undefined, selected: id } : { selected: id }, false);
     });
     const offMap = adapter.on("mapClick", () => {
       if (!editorOpen) updateSearch({ selected: undefined });
@@ -222,8 +209,7 @@ function GeofencesPageContent() {
     setMapDebug({
       mapLoaded: adapter !== null,
       provider: adapter?.id ?? null,
-      geofenceCount: mapGeofences.filter((row) => row.id !== editingMapId)
-        .length,
+      geofenceCount: mapGeofences.filter((row) => row.id !== editingMapId).length,
       selectedKey: selectedId,
       baseStyle: adapter?.getStyleState().style ?? null,
       styleState: adapter?.getStyleState().status ?? null,
@@ -276,9 +262,7 @@ function GeofencesPageContent() {
     drawing.cancel();
     setEditor({ kind: "closed" });
     setTimeout(() => {
-      const editButton = document.querySelector<HTMLElement>(
-        "[data-edit-geofence]",
-      );
+      const editButton = document.querySelector<HTMLElement>("[data-edit-geofence]");
       if (editButton) {
         editButton.focus();
         return;
@@ -297,20 +281,14 @@ function GeofencesPageContent() {
 
   async function refreshEditTarget(): Promise<void> {
     const rows = await feed.refetch();
-    if (
-      editor.kind === "edit" &&
-      !rows?.some((row) => row.id === editor.geofence.id)
-    ) {
+    if (editor.kind === "edit" && !rows?.some((row) => row.id === editor.geofence.id)) {
       closeEditor();
     }
   }
 
   async function refreshDeleteTarget(): Promise<void> {
     const rows = await feed.refetch();
-    if (
-      editor.kind === "delete" &&
-      !rows?.some((row) => row.id === editor.geofence.id)
-    ) {
+    if (editor.kind === "delete" && !rows?.some((row) => row.id === editor.geofence.id)) {
       setEditor({ kind: "closed" });
       updateSearch({ selected: undefined });
     }
@@ -334,31 +312,20 @@ function GeofencesPageContent() {
 
   return (
     <PageFrame layout="fill" width="full">
-      <div
-        data-testid="geofences-page"
-        className="text-text flex h-full min-h-0 w-full flex-col"
-      >
+      <div data-testid="geofences-page" className="text-text flex h-full min-h-0 w-full flex-col">
         <header className="flex shrink-0 flex-wrap items-end justify-between gap-2 px-4 py-4 sm:px-6">
           <div className="flex flex-col gap-1">
             <h1 className="text-text text-lg font-semibold">Geofences</h1>
             <p className="text-muted text-sm">
               {q.trim() !== "" ? (
                 <>
-                  Showing{" "}
-                  <span className="tabular-nums">
-                    {formatCount(visible.length)}
-                  </span>
+                  Showing <span className="tabular-nums">{formatCount(visible.length)}</span>
                   {" of "}
-                  <span className="tabular-nums">
-                    {formatCount(feed.geofences.length)}
-                  </span>
+                  <span className="tabular-nums">{formatCount(feed.geofences.length)}</span>
                 </>
               ) : (
                 <>
-                  <span className="tabular-nums">
-                    {formatCount(visible.length)}
-                  </span>{" "}
-                  geofences
+                  <span className="tabular-nums">{formatCount(visible.length)}</span> geofences
                 </>
               )}
             </p>
@@ -368,9 +335,7 @@ function GeofencesPageContent() {
             variant="primary"
             className="min-w-touch md:min-w-0"
             aria-label="Create geofence"
-            leadingIcon={
-              <Plus aria-hidden="true" className="size-4" strokeWidth={1.5} />
-            }
+            leadingIcon={<Plus aria-hidden="true" className="size-4" strokeWidth={1.5} />}
             data-create-geofence
             {...(createReason ? { disabledReason: createReason } : {})}
             onClick={() => setEditor({ kind: "create" })}
@@ -422,8 +387,7 @@ function GeofencesPageContent() {
                   if (selected) setEditor({ kind: "edit", geofence: selected });
                 }}
                 onDelete={() => {
-                  if (selected)
-                    setEditor({ kind: "delete", geofence: selected });
+                  if (selected) setEditor({ kind: "delete", geofence: selected });
                 }}
                 onCreate={() => setEditor({ kind: "create" })}
                 onClearSelection={clearSelection}

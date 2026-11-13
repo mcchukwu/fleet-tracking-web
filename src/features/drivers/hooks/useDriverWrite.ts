@@ -23,7 +23,10 @@ export type DriverUpdateOutcome =
   | { status: "error"; error: AppError };
 
 export interface DriverWriteController {
-  create: (input: DriverInput, beforeSubmitIds: ReadonlySet<string>) => Promise<DriverCreateOutcome>;
+  create: (
+    input: DriverInput,
+    beforeSubmitIds: ReadonlySet<string>,
+  ) => Promise<DriverCreateOutcome>;
   update: (driver: Driver, update: DriverUpdate) => Promise<DriverUpdateOutcome>;
   /** Abort the in-flight write and reconcile what the server did with it. */
   cancel: () => void;

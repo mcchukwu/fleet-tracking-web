@@ -33,8 +33,7 @@ export function useSystemHealthFeed(): SystemHealthFeed {
 
   const query = useSystemHealth({
     enabled: online && !cancelled,
-    refetchInterval:
-      online && visible && !cancelled ? SYSTEM_HEALTH_POLL_MS : false,
+    refetchInterval: online && visible && !cancelled ? SYSTEM_HEALTH_POLL_MS : false,
   });
   const { refetch } = query;
   const dataUpdatedAt = query.dataUpdatedAt;

@@ -8,8 +8,7 @@ import type { AppError } from "../errors/types";
 import { cn } from "./cn";
 import { EmptyState, ForbiddenState, LoadingState } from "./StatePanel";
 
-export type StateBoundaryState =
-  "loading" | "empty" | "error" | "stale" | "forbidden" | "ready";
+export type StateBoundaryState = "loading" | "empty" | "error" | "stale" | "forbidden" | "ready";
 
 export interface StateBoundaryProps {
   state: StateBoundaryState;

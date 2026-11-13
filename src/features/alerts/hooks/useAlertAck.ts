@@ -119,7 +119,8 @@ export function useAlertAck({ canAck }: { canAck: boolean }): AckController {
               alertId: alert.id,
               error: failure,
               title: "Couldn't acknowledge",
-              detail: "We couldn't confirm that it was acknowledged. Check the alert before trying again.",
+              detail:
+                "We couldn't confirm that it was acknowledged. Check the alert before trying again.",
             });
             return "unknown";
           }

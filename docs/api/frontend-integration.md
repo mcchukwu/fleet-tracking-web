@@ -9,14 +9,14 @@ The OpenAPI contract is [openapi.yaml](openapi.yaml), tagged `api-v0.1.0`. Gener
 `POST /api/v1/auth/login`
 
 ```json
-{"email": "dispatcher@demo.ftb", "password": "DemoPass123!"}
+{ "email": "dispatcher@demo.ftb", "password": "DemoPass123!" }
 ```
 
 The response sets two cookies and returns the CSRF token:
 
 ```json
 {
-  "user": {"id": "...", "tenant_id": "...", "email": "...", "name": "...", "role": "dispatcher"},
+  "user": { "id": "...", "tenant_id": "...", "email": "...", "name": "...", "role": "dispatcher" },
   "csrf_token": "..."
 }
 ```
@@ -29,12 +29,12 @@ The response sets two cookies and returns the CSRF token:
 
 Roles:
 
-| Role | Read | Mutate trips, vehicles, geofences, import | Acknowledge alerts | Audit |
-|---|---|---|---|---|
-| admin | yes | yes | yes | yes |
-| dispatcher | yes | yes | yes | no |
-| security | yes | no | yes | yes |
-| viewer | yes | no | no | no |
+| Role       | Read | Mutate trips, vehicles, geofences, import | Acknowledge alerts | Audit |
+| ---------- | ---- | ----------------------------------------- | ------------------ | ----- |
+| admin      | yes  | yes                                       | yes                | yes   |
+| dispatcher | yes  | yes                                       | yes                | no    |
+| security   | yes  | no                                        | yes                | yes   |
+| viewer     | yes  | no                                        | no                 | no    |
 
 Every response is scoped to the logged-in user's tenant. The client never sends a tenant id.
 
@@ -57,23 +57,23 @@ Rules:
 
 ## Screens and endpoints
 
-| Screen | Calls |
-|---|---|
-| Login | `POST /auth/login` |
-| App shell | `GET /me`, `POST /auth/logout` |
-| Map | `GET /live/snapshot`, `GET /live/ws`, `GET /vehicles?q=&status=` |
-| Vehicle drawer | `GET /vehicles/{id}`, `GET /vehicles/{id}/events` |
-| Vehicle edit | `PATCH /vehicles/{id}` |
-| Playback | `GET /vehicles/{id}/history?from=&to=&resolution=` |
-| Alerts | `GET /alerts?status=&type=`, `POST /alerts/{id}/ack` |
-| Alert rules | `GET /alert-rules`, `PATCH /alert-rules/{id}` |
-| Trips | `GET /trips?status=`, `POST /trips`, `PATCH /trips/{id}` |
-| Drivers | `GET /drivers`, `POST /drivers`, `PATCH /drivers/{id}` |
-| Geofences | `GET /geofences`, `POST /geofences`, `PATCH /geofences/{id}`, `DELETE /geofences/{id}` |
-| Import | `POST /import/vehicles` (multipart field `file`) |
-| Reports | `GET /reports/summary?from=&to=` |
-| System | `GET /system/health` |
-| Audit | `GET /audit` (admin, security) |
+| Screen         | Calls                                                                                  |
+| -------------- | -------------------------------------------------------------------------------------- |
+| Login          | `POST /auth/login`                                                                     |
+| App shell      | `GET /me`, `POST /auth/logout`                                                         |
+| Map            | `GET /live/snapshot`, `GET /live/ws`, `GET /vehicles?q=&status=`                       |
+| Vehicle drawer | `GET /vehicles/{id}`, `GET /vehicles/{id}/events`                                      |
+| Vehicle edit   | `PATCH /vehicles/{id}`                                                                 |
+| Playback       | `GET /vehicles/{id}/history?from=&to=&resolution=`                                     |
+| Alerts         | `GET /alerts?status=&type=`, `POST /alerts/{id}/ack`                                   |
+| Alert rules    | `GET /alert-rules`, `PATCH /alert-rules/{id}`                                          |
+| Trips          | `GET /trips?status=`, `POST /trips`, `PATCH /trips/{id}`                               |
+| Drivers        | `GET /drivers`, `POST /drivers`, `PATCH /drivers/{id}`                                 |
+| Geofences      | `GET /geofences`, `POST /geofences`, `PATCH /geofences/{id}`, `DELETE /geofences/{id}` |
+| Import         | `POST /import/vehicles` (multipart field `file`)                                       |
+| Reports        | `GET /reports/summary?from=&to=`                                                       |
+| System         | `GET /system/health`                                                                   |
+| Audit          | `GET /audit` (admin, security)                                                         |
 
 ## Conventions
 
@@ -82,7 +82,7 @@ Rules:
 - Errors:
 
 ```json
-{"error":{"code":"invalid_credentials","message":"invalid email or password"}}
+{ "error": { "code": "invalid_credentials", "message": "invalid email or password" } }
 ```
 
 - Enums:

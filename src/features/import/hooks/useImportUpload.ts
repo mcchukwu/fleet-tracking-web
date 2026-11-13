@@ -4,12 +4,7 @@ import type { ImportResult } from "../../../api/types";
 import { normalize } from "../../../errors/normalize";
 import type { AppError } from "../../../errors/types";
 
-export type ImportUploadStatus =
-  | "idle"
-  | "uploading"
-  | "cancelled"
-  | "success"
-  | "error";
+export type ImportUploadStatus = "idle" | "uploading" | "cancelled" | "success" | "error";
 
 export type ImportUploadOutcome =
   | { status: "success"; result: ImportResult }

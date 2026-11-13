@@ -3,23 +3,14 @@ import type { Ref } from "react";
 import { Link } from "@tanstack/react-router";
 import type { SnapshotVehicle } from "../../../api/types";
 import type { AppError } from "../../../errors/types";
-import {
-  MISSING,
-  formatClockTime,
-  formatHeading,
-  formatSpeed,
-} from "../../../lib/format";
+import { MISSING, formatClockTime, formatHeading, formatSpeed } from "../../../lib/format";
 import type { Cursor } from "../lib/history";
 import { Badge } from "../../../ui/Badge";
 import { Button } from "../../../ui/Button";
 import { Select } from "../../../ui/Select";
 import { Tooltip } from "../../../ui/Tooltip";
 import { cn } from "../../../ui/cn";
-import {
-  RESOLUTION_OPTIONS,
-  type RangePresetId,
-  type ResolutionSetting,
-} from "../lib/constants";
+import { RESOLUTION_OPTIONS, type RangePresetId, type ResolutionSetting } from "../lib/constants";
 import type { PlaybackEvent } from "../lib/events";
 import { PlaybackEventsMenu } from "./PlaybackEventsMenu";
 import { PlaybackRangeMenu } from "./PlaybackRangeMenu";
@@ -91,10 +82,7 @@ export function PlaybackOptions({
   return (
     <header
       data-testid="playback-options"
-      className={cn(
-        "rounded-lg bg-surface shadow-float ring-1 ring-border",
-        className,
-      )}
+      className={cn("bg-surface shadow-float ring-border rounded-lg ring-1", className)}
     >
       <h1 className="sr-only">Playback</h1>
       <div className="flex min-w-0 items-center gap-2 py-2">
@@ -102,7 +90,7 @@ export function PlaybackOptions({
           to="/map"
           search={{ v: vehicle.id }}
           aria-label="Back to map"
-          className="inline-flex size-touch shrink-0 items-center justify-center rounded-sm text-muted hover:text-text focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring md:size-control-md"
+          className="size-touch text-muted hover:text-text focus-visible:outline-focus-ring md:size-control-md inline-flex shrink-0 items-center justify-center rounded-sm focus-visible:outline-2 focus-visible:outline-offset-0"
         >
           <ArrowLeft aria-hidden="true" className="size-4" strokeWidth={1.5} />
         </Link>
@@ -118,7 +106,7 @@ export function PlaybackOptions({
             <span className="truncate font-mono">{vehicle.plate}</span>
             <ChevronDown
               aria-hidden="true"
-              className="size-4 shrink-0 text-subtle"
+              className="text-subtle size-4 shrink-0"
               strokeWidth={1.5}
             />
           </Button>
@@ -154,16 +142,14 @@ export function PlaybackOptions({
 
       <div
         data-testid="playback-options-info"
-        className="flex min-w-0 items-center gap-2 px-3 pb-2 text-xs text-muted"
+        className="text-muted flex min-w-0 items-center gap-2 px-3 pb-2 text-xs"
       >
         <Select
           label="Resolution"
           labelPlacement="inline"
           compact
           value={resolution}
-          onChange={(event) =>
-            onResolution(event.target.value as ResolutionSetting)
-          }
+          onChange={(event) => onResolution(event.target.value as ResolutionSetting)}
           className="w-20 shrink-0 text-xs"
         >
           {RESOLUTION_OPTIONS.map((option) => (
@@ -172,10 +158,7 @@ export function PlaybackOptions({
             </option>
           ))}
         </Select>
-        <span
-          data-testid="playback-options-info-text"
-          className="min-w-0 flex-1 truncate"
-        >
+        <span data-testid="playback-options-info-text" className="min-w-0 flex-1 truncate">
           Resolution: {responseResolution ?? MISSING} · {pointCount} points
           <span className="md:hidden">
             {" · "}
@@ -185,10 +168,7 @@ export function PlaybackOptions({
           </span>
         </span>
         {offline ? (
-          <Badge
-            tone="warning"
-            className="max-w-40 min-w-0 shrink overflow-hidden"
-          >
+          <Badge tone="warning" className="max-w-40 min-w-0 shrink overflow-hidden">
             <span className="truncate">{offlineLabel}</span>
           </Badge>
         ) : null}
@@ -196,12 +176,7 @@ export function PlaybackOptions({
           <span className="flex shrink-0 items-center gap-1">
             <span>Events unavailable</span>
             {eventsError.kind === "forbidden" ? null : (
-              <Button
-                size="md"
-                variant="ghost"
-                onClick={onEventsRetry}
-                className="shrink-0"
-              >
+              <Button size="md" variant="ghost" onClick={onEventsRetry} className="shrink-0">
                 Retry
               </Button>
             )}

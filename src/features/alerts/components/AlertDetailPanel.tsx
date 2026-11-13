@@ -75,16 +75,16 @@ function MissingAlertPanel({
         <ErrorState error={lookupError} onRetry={onRetryLookup} className="py-8" />
       ) : lookup === "offline" ? (
         <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
-          <p className="text-base font-medium text-text">Alert isn't available offline</p>
-          <p className="text-sm text-muted">Reconnect to load this alert.</p>
+          <p className="text-text text-base font-medium">Alert isn't available offline</p>
+          <p className="text-muted text-sm">Reconnect to load this alert.</p>
           <Button size="sm" onClick={onClose}>
             Back to alerts
           </Button>
         </div>
       ) : (
         <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
-          <p className="text-base font-medium text-text">Alert not found</p>
-          <p className="text-sm text-muted">It may have been removed.</p>
+          <p className="text-text text-base font-medium">Alert not found</p>
+          <p className="text-muted text-sm">It may have been removed.</p>
           <Button size="sm" onClick={onClose}>
             Back to alerts
           </Button>
@@ -156,9 +156,7 @@ function ResolvedAlertDetail({
           <Button
             size="sm"
             variant="ghost"
-            leadingIcon={
-              <MapPin aria-hidden="true" className="size-icon-sm" strokeWidth={1.5} />
-            }
+            leadingIcon={<MapPin aria-hidden="true" className="size-icon-sm" strokeWidth={1.5} />}
             onClick={() => void navigate({ to: "/map", search: { v: alert.vehicle_id } })}
           >
             Open on map
@@ -197,12 +195,7 @@ function ResolvedAlertDetail({
 
           <dt className="text-muted">Alert id</dt>
           <dd className="min-w-0">
-            <CopyButton
-              inline
-              value={alert.id}
-              label="alert id"
-              className="text-xs break-all"
-            />
+            <CopyButton inline value={alert.id} label="alert id" className="text-xs break-all" />
           </dd>
 
           <dt className="text-muted">Occurred</dt>
@@ -230,10 +223,10 @@ function ResolvedAlertDetail({
 
         <section aria-labelledby="alert-position-heading" className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">
-            <h3 id="alert-position-heading" className="text-sm font-medium text-text">
+            <h3 id="alert-position-heading" className="text-text text-sm font-medium">
               Position
             </h3>
-            <span className="text-xs text-muted">
+            <span className="text-muted text-xs">
               {position.state.status === "evidence"
                 ? positionSourceLabel("evidence")
                 : position.state.status === "history"
@@ -252,13 +245,13 @@ function ResolvedAlertDetail({
             <CopyButton
               value={formatCoordinates(positionState.position.lat, positionState.position.lon)}
               label="coordinates"
-              className="self-start text-xs text-muted"
+              className="text-muted self-start text-xs"
             />
           ) : null}
         </section>
 
         <section aria-labelledby="alert-trip-heading" className="flex flex-col gap-2">
-          <h3 id="alert-trip-heading" className="text-sm font-medium text-text">
+          <h3 id="alert-trip-heading" className="text-text text-sm font-medium">
             Trip
           </h3>
           <AlertTripSection
@@ -267,7 +260,7 @@ function ResolvedAlertDetail({
           />
         </section>
 
-        <div className="border-t border-border pt-4">
+        <div className="border-border border-t pt-4">
           <AlertEvidenceSection evidence={alert.evidence} />
         </div>
       </div>

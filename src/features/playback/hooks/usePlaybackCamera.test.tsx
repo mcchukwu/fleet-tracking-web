@@ -21,20 +21,17 @@ async function adapter() {
 }
 
 function renderCamera(instance: FakeAdapter, overrides: Record<string, unknown> = {}) {
-  return renderHook(
-    (props: Parameters<typeof usePlaybackCamera>[0]) => usePlaybackCamera(props),
-    {
-      initialProps: {
-        adapter: instance,
-        points,
-        fitKey: "vehicle|range",
-        topInset: 96,
-        bottomInset: 180,
-        reducedMotion: false,
-        ...overrides,
-      } as Parameters<typeof usePlaybackCamera>[0],
-    },
-  );
+  return renderHook((props: Parameters<typeof usePlaybackCamera>[0]) => usePlaybackCamera(props), {
+    initialProps: {
+      adapter: instance,
+      points,
+      fitKey: "vehicle|range",
+      topInset: 96,
+      bottomInset: 180,
+      reducedMotion: false,
+      ...overrides,
+    } as Parameters<typeof usePlaybackCamera>[0],
+  });
 }
 
 describe("usePlaybackCamera", () => {

@@ -210,9 +210,7 @@ describe("AuthProvider", () => {
 
   it("clears the query cache when a different user signs in", async () => {
     useAuthStore.getState().setSession(user, "token");
-    mocks.claimImportHistory
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce("user-1");
+    mocks.claimImportHistory.mockResolvedValueOnce(null).mockResolvedValueOnce("user-1");
     const queryClient = new QueryClient();
     const clear = vi.spyOn(queryClient, "clear");
     render(
@@ -224,10 +222,9 @@ describe("AuthProvider", () => {
     );
 
     await act(async () => {
-      useAuthStore.getState().setSession(
-        { ...user, id: "user-2", email: "admin@demo.ftb", role: "admin" },
-        "token-2",
-      );
+      useAuthStore
+        .getState()
+        .setSession({ ...user, id: "user-2", email: "admin@demo.ftb", role: "admin" }, "token-2");
     });
 
     await waitFor(() => expect(mocks.claimImportHistory).toHaveBeenCalledWith("user-2"));
@@ -236,10 +233,9 @@ describe("AuthProvider", () => {
   });
 
   it("claims the device history on the first user of a fresh load", async () => {
-    useAuthStore.getState().setSession(
-      { ...user, id: "user-2", email: "admin@demo.ftb", role: "admin" },
-      "token-2",
-    );
+    useAuthStore
+      .getState()
+      .setSession({ ...user, id: "user-2", email: "admin@demo.ftb", role: "admin" }, "token-2");
     mocks.claimImportHistory.mockResolvedValue("user-1");
     const queryClient = new QueryClient();
     const clear = vi.spyOn(queryClient, "clear");
@@ -251,9 +247,7 @@ describe("AuthProvider", () => {
       </QueryClientProvider>,
     );
 
-    await waitFor(() =>
-      expect(mocks.claimImportHistory).toHaveBeenCalledWith("user-2"),
-    );
+    await waitFor(() => expect(mocks.claimImportHistory).toHaveBeenCalledWith("user-2"));
     expect(clear).toHaveBeenCalledTimes(1);
   });
 

@@ -6,8 +6,7 @@ const port = Number(process.env.PLAYWRIGHT_PORT ?? 4173);
 const review = process.env.REVIEW === "1";
 const isCI = Boolean(process.env.CI);
 const localWorkers =
-  Number(process.env.PLAYWRIGHT_WORKERS) ||
-  Math.max(1, availableParallelism() - 1);
+  Number(process.env.PLAYWRIGHT_WORKERS) || Math.max(1, availableParallelism() - 1);
 const launchOptions = executablePath
   ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
   : {};
@@ -37,9 +36,7 @@ export default defineConfig({
         use: {
           ...devices["Desktop Chrome"],
           viewport:
-            device === "mobile"
-              ? { width: 390, height: 844 }
-              : { width: 1440, height: 900 },
+            device === "mobile" ? { width: 390, height: 844 } : { width: 1440, height: 900 },
           ...(device === "mobile" ? { hasTouch: true } : {}),
           launchOptions,
         },

@@ -7,7 +7,11 @@ import { App } from "./App";
 import { loadOfflineProfile } from "./auth/offlineProfile";
 import { useAuthStore } from "./auth/store";
 import { restorePersistedCache, reportStorageUnavailable } from "./api/persistedCache";
-import { createQueryClient, installPreloadErrorHandler, installWindowErrorHandlers } from "./errors/global";
+import {
+  createQueryClient,
+  installPreloadErrorHandler,
+  installWindowErrorHandlers,
+} from "./errors/global";
 import { normalize } from "./errors/normalize";
 import { recordError } from "./errors/report";
 import { withTimeout } from "./lib/withTimeout";
@@ -29,7 +33,9 @@ async function restoreProfile(): Promise<void> {
     if (user) useAuthStore.getState().setOfflineProfile(user);
   } catch (cause) {
     reportStorageUnavailable();
-    recordError(normalize(cause, { action: "restore the offline profile", resource: "device storage" }));
+    recordError(
+      normalize(cause, { action: "restore the offline profile", resource: "device storage" }),
+    );
   }
 }
 
@@ -38,7 +44,9 @@ async function restoreCache(queryClient: ReturnType<typeof createQueryClient>): 
     await withTimeout(restorePersistedCache(queryClient), STARTUP_STORAGE_TIMEOUT_MS);
   } catch (cause) {
     reportStorageUnavailable();
-    recordError(normalize(cause, { action: "restore the offline cache", resource: "device storage" }));
+    recordError(
+      normalize(cause, { action: "restore the offline cache", resource: "device storage" }),
+    );
   }
 }
 

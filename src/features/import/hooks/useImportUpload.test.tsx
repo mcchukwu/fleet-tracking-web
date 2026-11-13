@@ -90,9 +90,7 @@ describe("useImportUpload", () => {
     mocks.mutateAsync.mockImplementation(
       ({ signal }: { signal: AbortSignal }) =>
         new Promise((_resolve, reject) => {
-          signal.addEventListener("abort", () =>
-            reject(new DOMException("aborted", "AbortError")),
-          );
+          signal.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
         }),
     );
     const { result: hook } = renderHook(() => useImportUpload());
@@ -113,19 +111,18 @@ describe("useImportUpload", () => {
   it("retries once after the first attempt settles", async () => {
     const first = abortable();
     mocks.mutateAsync
-      .mockImplementationOnce(
-        ({ signal }: { signal: AbortSignal }) => {
-          signal.addEventListener("abort", () =>
-            first.reject(new DOMException("aborted", "AbortError")),
-          );
-          return first.promise;
-        },
-      )
+      .mockImplementationOnce(({ signal }: { signal: AbortSignal }) => {
+        signal.addEventListener("abort", () =>
+          first.reject(new DOMException("aborted", "AbortError")),
+        );
+        return first.promise;
+      })
       .mockResolvedValueOnce(result);
     const { result: hook } = renderHook(() => useImportUpload());
 
-    let attempt: Promise<Awaited<ReturnType<typeof hook.current.upload>>> =
-      Promise.resolve({ status: "ignored" });
+    let attempt: Promise<Awaited<ReturnType<typeof hook.current.upload>>> = Promise.resolve({
+      status: "ignored",
+    });
     act(() => {
       attempt = hook.current.upload(file);
     });
@@ -156,16 +153,12 @@ describe("useImportUpload", () => {
     expect(outcome?.status).toBe("error");
     expect(hook.current.error?.kind).toBe("network");
     expect(hook.current.error?.outcome).toBe("unknown");
-    expect(importFailureCopy(hook.current.error!).detail).toBe(
-      "It's safe to upload again.",
-    );
+    expect(importFailureCopy(hook.current.error!).detail).toBe("It's safe to upload again.");
     expect(mocks.mutateAsync).toHaveBeenCalledTimes(1);
   });
 
   it("does not call a server rejection an unknown outcome", async () => {
-    mocks.mutateAsync.mockRejectedValue(
-      new ApiError(500, "internal", "panic: nil pointer"),
-    );
+    mocks.mutateAsync.mockRejectedValue(new ApiError(500, "internal", "panic: nil pointer"));
     const { result: hook } = renderHook(() => useImportUpload());
 
     await act(async () => {

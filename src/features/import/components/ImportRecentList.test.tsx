@@ -34,7 +34,15 @@ afterEach(() => {
 
 describe("ImportRecentList", () => {
   it("labels the list as this device only", () => {
-    view(<ImportRecentList entries={[]} state="ready" error={null} onView={vi.fn()} onRetry={vi.fn()} />);
+    view(
+      <ImportRecentList
+        entries={[]}
+        state="ready"
+        error={null}
+        onView={vi.fn()}
+        onRetry={vi.fn()}
+      />,
+    );
     expect(screen.getByText("Recent imports")).toBeInTheDocument();
     expect(screen.getByText("This device")).toBeInTheDocument();
     expect(screen.getByText(/server has no import history/i)).toBeInTheDocument();
@@ -54,9 +62,7 @@ describe("ImportRecentList", () => {
     );
 
     expect(screen.getByText("vehicles.csv")).toBeInTheDocument();
-    await userEvent.click(
-      screen.getByRole("button", { name: "View result for vehicles.csv" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "View result for vehicles.csv" }));
     expect(onView).toHaveBeenCalledWith(entry);
   });
 
@@ -73,9 +79,7 @@ describe("ImportRecentList", () => {
     );
 
     expect(
-      screen.getByText(
-        "This import worked, but this device couldn't save it to Recent imports.",
-      ),
+      screen.getByText("This import worked, but this device couldn't save it to Recent imports."),
     ).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(onRetry).toHaveBeenCalledTimes(1);
@@ -94,9 +98,7 @@ describe("ImportRecentList", () => {
     );
 
     expect(
-      screen.getByText(
-        "This import worked, but this device couldn't save it to Recent imports.",
-      ),
+      screen.getByText("This import worked, but this device couldn't save it to Recent imports."),
     ).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(onRetry).toHaveBeenCalledTimes(1);
@@ -112,9 +114,7 @@ describe("ImportRecentList", () => {
         onRetry={vi.fn()}
       />,
     );
-    expect(
-      screen.getByText("Recent imports aren't available on this device."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Recent imports aren't available on this device.")).toBeInTheDocument();
   });
 
   it("shows two skeleton rows after the delay while loading", () => {

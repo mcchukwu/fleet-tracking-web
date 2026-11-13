@@ -119,13 +119,7 @@ const vehicles = [
 const statuses = ["moving", "idle", "offline", "alert"] as const;
 const severities: Severity[] = ["low", "medium", "high", "critical"];
 const alertStatuses: AlertStatus[] = ["open", "acked", "closed"];
-const tripStatuses: TripStatus[] = [
-  "planned",
-  "assigned",
-  "active",
-  "completed",
-  "cancelled",
-];
+const tripStatuses: TripStatus[] = ["planned", "assigned", "active", "completed", "cancelled"];
 
 const sampleError: AppError = {
   kind: "network",
@@ -147,8 +141,7 @@ const tableStates: Array<{ id: TableState; label: string }> = [
 
 type VehicleRow = (typeof vehicles)[number];
 
-const UNKNOWN_BADGE_VALUE =
-  "unmapped_status_returned_by_a_newer_server_build_12345678901";
+const UNKNOWN_BADGE_VALUE = "unmapped_status_returned_by_a_newer_server_build_12345678901";
 
 const unknownBadgeLabels = {
   status: `Unknown status: ${UNKNOWN_BADGE_VALUE}`,
@@ -204,9 +197,7 @@ function vehicleColumns(pending: boolean): DataTableColumn<VehicleRow>[] {
       id: "vehicle",
       header: "Vehicle",
       width: 160,
-      cell: (vehicle) => (
-        <span className="text-text font-mono text-sm">{vehicle.plate}</span>
-      ),
+      cell: (vehicle) => <span className="text-text font-mono text-sm">{vehicle.plate}</span>,
       title: (vehicle) => vehicle.plate,
       truncate: false,
     },
@@ -248,13 +239,7 @@ function vehicleColumns(pending: boolean): DataTableColumn<VehicleRow>[] {
           <IconButton
             label={`More actions for ${vehicle.plate}`}
             size="sm"
-            icon={
-              <MoreHorizontal
-                aria-hidden="true"
-                className="size-4"
-                strokeWidth={1.5}
-              />
-            }
+            icon={<MoreHorizontal aria-hidden="true" className="size-4" strokeWidth={1.5} />}
           />
         ),
     },
@@ -306,9 +291,7 @@ export function StyleGuidePage() {
             <span className="sm:hidden">
               <BrandLogo variant="symbol" />
             </span>
-            <span className="text-subtle hidden text-sm sm:inline">
-              Styleguide
-            </span>
+            <span className="text-subtle hidden text-sm sm:inline">Styleguide</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-muted hidden text-xs md:inline">Accent</span>
@@ -326,12 +309,10 @@ export function StyleGuidePage() {
         <main className="flex flex-col gap-12">
           <div className="max-w-prose space-y-2">
             <p className="label-caps text-accent-fg">Design system</p>
-            <h1 className="text-text text-lg font-semibold">
-              Fleet Console foundations
-            </h1>
+            <h1 className="text-text text-lg font-semibold">Fleet Console foundations</h1>
             <p className="text-muted text-sm">
-              Every token, component and state in one place. Switch the theme
-              and accent above; both persist across reloads.
+              Every token, component and state in one place. Switch the theme and accent above; both
+              persist across reloads.
             </p>
           </div>
 
@@ -351,13 +332,8 @@ export function StyleGuidePage() {
                 { label: "Idle", className: "bg-idle" },
                 { label: "Alert", className: "bg-alert" },
               ].map((swatch) => (
-                <div
-                  key={swatch.label}
-                  className="border-border bg-surface rounded-lg border p-3"
-                >
-                  <div
-                    className={`border-border h-12 rounded-md border ${swatch.className}`}
-                  />
+                <div key={swatch.label} className="border-border bg-surface rounded-lg border p-3">
+                  <div className={`border-border h-12 rounded-md border ${swatch.className}`} />
                   <p className="text-muted mt-2 text-xs">{swatch.label}</p>
                 </div>
               ))}
@@ -366,27 +342,17 @@ export function StyleGuidePage() {
             <div className="border-border bg-surface grid gap-4 rounded-lg border p-4 md:grid-cols-2">
               <div className="space-y-2">
                 <p className="label-caps text-muted">Typography</p>
-                <p className="text-text text-lg font-semibold">
-                  20 / 28 semibold
-                </p>
+                <p className="text-text text-lg font-semibold">20 / 28 semibold</p>
                 <p className="text-md text-text font-medium">16 / 24 medium</p>
                 <p className="text-text text-base">14 / 20 regular body text</p>
-                <p className="text-muted text-sm">
-                  13 / 20 dense table and secondary UI
-                </p>
-                <p className="text-subtle text-xs">
-                  12 / 16 caption and helper text
-                </p>
+                <p className="text-muted text-sm">13 / 20 dense table and secondary UI</p>
+                <p className="text-subtle text-xs">12 / 16 caption and helper text</p>
               </div>
               <div className="space-y-2">
                 <p className="label-caps text-muted">Data</p>
-                <p className="text-text font-mono text-sm">
-                  LSD-100-AA · 358192049182736
-                </p>
+                <p className="text-text font-mono text-sm">LSD-100-AA · 358192049182736</p>
                 <p className="text-stat text-text">1,248</p>
-                <p className="text-muted text-xs">
-                  Numbers use tabular figures everywhere.
-                </p>
+                <p className="text-muted text-xs">Numbers use tabular figures everywhere.</p>
               </div>
             </div>
           </Section>
@@ -397,10 +363,7 @@ export function StyleGuidePage() {
             description="One primary action per view. Loading keeps its label and disables the action."
           >
             <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="primary"
-                leadingIcon={<Plus className="size-4" strokeWidth={1.5} />}
-              >
+              <Button variant="primary" leadingIcon={<Plus className="size-4" strokeWidth={1.5} />}>
                 Create trip
               </Button>
               <Button variant="secondary">Assign driver</Button>
@@ -413,40 +376,20 @@ export function StyleGuidePage() {
               <Button size="lg">Large</Button>
               <Button loading>Saving</Button>
               <Button disabled>Disabled</Button>
-              <Button disabledReason="Your role can't change trips.">
-                Start
-              </Button>
+              <Button disabledReason="Your role can't change trips.">Start</Button>
               <IconButton
                 label="More actions"
-                icon={
-                  <MoreHorizontal
-                    aria-hidden="true"
-                    className="size-4"
-                    strokeWidth={1.5}
-                  />
-                }
+                icon={<MoreHorizontal aria-hidden="true" className="size-4" strokeWidth={1.5} />}
               />
               <IconButton
                 label="Filters"
                 variant="secondary"
-                icon={
-                  <Filter
-                    aria-hidden="true"
-                    className="size-4"
-                    strokeWidth={1.5}
-                  />
-                }
+                icon={<Filter aria-hidden="true" className="size-4" strokeWidth={1.5} />}
               />
               <IconButton
                 size="lg"
                 label="Zoom in"
-                icon={
-                  <ZoomIn
-                    aria-hidden="true"
-                    className="size-4"
-                    strokeWidth={1.5}
-                  />
-                }
+                icon={<ZoomIn aria-hidden="true" className="size-4" strokeWidth={1.5} />}
               />
             </div>
           </Section>
@@ -457,11 +400,7 @@ export function StyleGuidePage() {
             description="Labels stay visible. Errors are described, not colour-only."
           >
             <div className="grid gap-4 md:grid-cols-2">
-              <Input
-                label="Email"
-                placeholder="dispatcher@operator.example"
-                name="email"
-              />
+              <Input label="Email" placeholder="dispatcher@operator.example" name="email" />
               <Input
                 label="Password"
                 type="password"
@@ -475,12 +414,7 @@ export function StyleGuidePage() {
                 error="This plate is already registered."
                 name="plate"
               />
-              <Input
-                label="Disabled"
-                defaultValue="Read only"
-                disabled
-                name="disabled"
-              />
+              <Input label="Disabled" defaultValue="Read only" disabled name="disabled" />
               <SearchInput value={search} onChange={setSearch} />
               <SearchInput
                 compact
@@ -633,12 +567,7 @@ export function StyleGuidePage() {
                 label="Vehicles online"
                 value="20"
                 hint="of 20"
-                leading={
-                  <span
-                    aria-hidden="true"
-                    className="bg-moving size-2 rounded-full"
-                  />
-                }
+                leading={<span aria-hidden="true" className="bg-moving size-2 rounded-full" />}
               />
               <Stat label="Active trips" value="5" hint="2 behind schedule" />
               <Stat label="Open alerts" value="3" hint="1 critical" />
@@ -655,11 +584,7 @@ export function StyleGuidePage() {
               <Timestamp iso="2026-11-04T09:58:00Z" />
               <CopyButton value="LSD-100-AA" label="Plate" />
               <CopyButton value="demo-imei-0001" label="IMEI" />
-              <CopyButton
-                value="imei,plate,year"
-                label="Header row"
-                appearance="button"
-              />
+              <CopyButton value="imei,plate,year" label="Header row" appearance="button" />
               <div className="border-border bg-border grid w-full max-w-sm grid-cols-2 gap-px rounded-lg border">
                 <div className="bg-surface">
                   <Stat size="sm" label="Online" value="20 of 25" />
@@ -715,9 +640,7 @@ export function StyleGuidePage() {
               <div className="border-border bg-surface rounded-lg border p-4">
                 <p className="label-caps text-muted">Pending row</p>
                 <div className="border-border mt-3 flex items-center justify-between gap-2 rounded-md border px-3 py-2">
-                  <span className="text-text font-mono text-sm">
-                    LSD-100-AA
-                  </span>
+                  <span className="text-text font-mono text-sm">LSD-100-AA</span>
                   <span className="text-accent-fg inline-flex items-center gap-1 text-xs">
                     <Spinner />
                     Saving…
@@ -735,10 +658,7 @@ export function StyleGuidePage() {
             title="Table"
             description="Dense rows, sticky header, selected state and numeric alignment. Use the state switch to preview the list states."
           >
-            <fieldset
-              aria-label="Table states"
-              className="m-0 flex flex-wrap gap-1 border-0 p-0"
-            >
+            <fieldset aria-label="Table states" className="m-0 flex flex-wrap gap-1 border-0 p-0">
               {tableStates.map((state) => (
                 <Button
                   key={state.id}
@@ -778,10 +698,7 @@ export function StyleGuidePage() {
 
             {tableState === "error" ? (
               <div className="border-border bg-surface rounded-lg border">
-                <ErrorState
-                  error={sampleError}
-                  onRetry={() => setTableState("default")}
-                />
+                <ErrorState error={sampleError} onRetry={() => setTableState("default")} />
               </div>
             ) : null}
           </Section>
@@ -864,11 +781,7 @@ export function StyleGuidePage() {
                   <p className="label-caps text-muted">Recent events</p>
                   <div className="mt-2 space-y-2 text-sm">
                     <div className="text-text flex items-center gap-2">
-                      <Bell
-                        aria-hidden="true"
-                        className="text-alert-fg size-4"
-                        strokeWidth={1.5}
-                      />
+                      <Bell aria-hidden="true" className="text-alert-fg size-4" strokeWidth={1.5} />
                       Route deviation · 2 min ago
                     </div>
                     <div className="text-text flex items-center gap-2">
@@ -884,10 +797,7 @@ export function StyleGuidePage() {
               </div>
             </Drawer>
             <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="secondary"
-                onClick={() => setPageDrawerOpen(true)}
-              >
+              <Button variant="secondary" onClick={() => setPageDrawerOpen(true)}>
                 Open page drawer
               </Button>
               <span className="text-muted text-xs">
@@ -937,9 +847,7 @@ export function StyleGuidePage() {
                     <Button
                       size="sm"
                       variant="secondary"
-                      leadingIcon={
-                        <Search className="size-icon-sm" strokeWidth={1.5} />
-                      }
+                      leadingIcon={<Search className="size-icon-sm" strokeWidth={1.5} />}
                     >
                       Clear filter
                     </Button>
@@ -961,11 +869,7 @@ export function StyleGuidePage() {
                   <Badge tone="warning">Stale · 14:02</Badge>
                 </div>
                 <div className="text-muted mt-3 flex items-center gap-2 text-xs">
-                  <ChevronRight
-                    aria-hidden="true"
-                    className="size-4"
-                    strokeWidth={1.5}
-                  />
+                  <ChevronRight aria-hidden="true" className="size-4" strokeWidth={1.5} />
                   Showing the last known positions.
                 </div>
               </div>
@@ -981,12 +885,8 @@ export function StyleGuidePage() {
               <Button variant="primary" onClick={() => setDialogOpen(true)}>
                 Open dialog
               </Button>
-              <Button onClick={() => setBlockingOpen(true)}>
-                Open blocking dialog
-              </Button>
-              <Button onClick={() => setRangeOpen(true)}>
-                Open custom range
-              </Button>
+              <Button onClick={() => setBlockingOpen(true)}>Open blocking dialog</Button>
+              <Button onClick={() => setRangeOpen(true)}>Open custom range</Button>
             </div>
 
             <Dialog
@@ -997,20 +897,13 @@ export function StyleGuidePage() {
               footer={
                 <>
                   <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-                  <Button
-                    variant="primary"
-                    onClick={() => setDialogOpen(false)}
-                  >
+                  <Button variant="primary" onClick={() => setDialogOpen(false)}>
                     Assign
                   </Button>
                 </>
               }
             >
-              <Input
-                label="Driver"
-                placeholder="Search drivers"
-                name="dialog-driver"
-              />
+              <Input label="Driver" placeholder="Search drivers" name="dialog-driver" />
             </Dialog>
 
             <DateRangeDialog
@@ -1044,11 +937,7 @@ export function StyleGuidePage() {
             >
               <div className="space-y-3">
                 <Input label="Email" type="email" name="blocking-email" />
-                <Input
-                  label="Password"
-                  type="password"
-                  name="blocking-password"
-                />
+                <Input label="Password" type="password" name="blocking-password" />
               </div>
             </Dialog>
           </Section>
@@ -1061,13 +950,7 @@ export function StyleGuidePage() {
             <div className="flex flex-wrap items-center gap-3">
               <Tooltip label="Open the map">
                 <Button
-                  leadingIcon={
-                    <Map
-                      aria-hidden="true"
-                      className="size-4"
-                      strokeWidth={1.5}
-                    />
-                  }
+                  leadingIcon={<Map aria-hidden="true" className="size-4" strokeWidth={1.5} />}
                 >
                   Map
                 </Button>
@@ -1093,19 +976,13 @@ export function StyleGuidePage() {
                 <TabsTrigger value="events">Events</TabsTrigger>
               </TabsList>
               <TabsContent value="vehicle">
-                <p className="text-muted text-sm">
-                  Current state, driver and vehicle details.
-                </p>
+                <p className="text-muted text-sm">Current state, driver and vehicle details.</p>
               </TabsContent>
               <TabsContent value="trip">
-                <p className="text-muted text-sm">
-                  Origin, destination and trip status.
-                </p>
+                <p className="text-muted text-sm">Origin, destination and trip status.</p>
               </TabsContent>
               <TabsContent value="events">
-                <p className="text-muted text-sm">
-                  Geofence events and alerts, newest first.
-                </p>
+                <p className="text-muted text-sm">Geofence events and alerts, newest first.</p>
               </TabsContent>
             </Tabs>
           </Section>
@@ -1116,18 +993,10 @@ export function StyleGuidePage() {
             description="Bottom-right. Success and info dismiss after 4s; errors persist until dismissed and announce assertively."
           >
             <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={() =>
-                  toast({ title: "Trip created", tone: "success" })
-                }
-              >
+              <Button onClick={() => toast({ title: "Trip created", tone: "success" })}>
                 Success toast
               </Button>
-              <Button
-                onClick={() =>
-                  toast({ title: "Vehicle updated", tone: "info" })
-                }
-              >
+              <Button onClick={() => toast({ title: "Vehicle updated", tone: "info" })}>
                 Info toast
               </Button>
               <Button
@@ -1157,9 +1026,7 @@ export function StyleGuidePage() {
               <Badge tone="neutral">Stale · 14:02</Badge>
               <span title="Reconnect to verify your session.">
                 <Badge tone="neutral">Unverified offline</Badge>
-                <span className="sr-only">
-                  Reconnect to verify your session.
-                </span>
+                <span className="sr-only">Reconnect to verify your session.</span>
               </span>
             </div>
             <Banner
@@ -1168,8 +1035,8 @@ export function StyleGuidePage() {
               action={{ label: "Reload", onClick: () => undefined }}
             />
             <p className="text-muted text-sm">
-              Map isn&apos;t available offline. The vehicle list still works
-              with the data saved on this device.
+              Map isn&apos;t available offline. The vehicle list still works with the data saved on
+              this device.
             </p>
           </Section>
 
@@ -1182,11 +1049,7 @@ export function StyleGuidePage() {
               <div className="h-topbar border-border flex items-center gap-2 border-b px-4">
                 <BrandLogo variant="lockup" />
                 <div className="h-control-md w-panel border-border-strong bg-surface text-subtle mx-auto flex max-w-full items-center gap-2 rounded-md border px-3 text-sm">
-                  <Search
-                    aria-hidden="true"
-                    className="size-4"
-                    strokeWidth={1.5}
-                  />
+                  <Search aria-hidden="true" className="size-4" strokeWidth={1.5} />
                   Search vehicles
                   <kbd className="border-border bg-surface-2 text-muted ml-auto rounded-sm border px-1 font-mono text-xs">
                     /
@@ -1200,18 +1063,10 @@ export function StyleGuidePage() {
                   className="w-rail border-border flex flex-col items-center gap-1 border-r py-2"
                 >
                   <span className="size-control-lg bg-accent-soft text-accent-fg flex items-center justify-center rounded-md">
-                    <Map
-                      aria-hidden="true"
-                      className="size-5"
-                      strokeWidth={1.5}
-                    />
+                    <Map aria-hidden="true" className="size-5" strokeWidth={1.5} />
                   </span>
                   <span className="size-control-lg text-muted flex items-center justify-center rounded-md">
-                    <Bell
-                      aria-hidden="true"
-                      className="size-5"
-                      strokeWidth={1.5}
-                    />
+                    <Bell aria-hidden="true" className="size-5" strokeWidth={1.5} />
                   </span>
                 </nav>
                 <div className="bg-bg text-muted flex flex-1 items-center justify-center text-sm">
@@ -1222,15 +1077,8 @@ export function StyleGuidePage() {
 
             <div className="w-panel border-border bg-surface mx-auto max-w-full space-y-3 rounded-lg border p-4">
               <p className="text-md text-text font-medium">Sign in</p>
-              <p className="text-muted text-sm">
-                Use your Fleet Console account.
-              </p>
-              <Input
-                label="Email"
-                type="email"
-                name="preview-email"
-                autoComplete="username"
-              />
+              <p className="text-muted text-sm">Use your Fleet Console account.</p>
+              <Input label="Email" type="email" name="preview-email" autoComplete="username" />
               <Input
                 label="Password"
                 type="password"

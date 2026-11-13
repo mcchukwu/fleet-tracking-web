@@ -29,22 +29,13 @@ describe("ImportExpectedHeaders", () => {
     expect(screen.getByTestId("import-header-row")).toHaveTextContent(
       "imei,sim_number,device_model,protocol,plate,vehicle_type,make,model,year,colour,chassis_number,depot,department,driver_name,driver_phone,driver_licence",
     );
-    expect(
-      screen.getByRole("button", { name: "Copy header row" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copy header row" })).toBeInTheDocument();
   });
 
   it("downloads the sample CSV", async () => {
     const onDownloadSample = vi.fn();
-    view(
-      <ImportExpectedHeaders
-        preview={null}
-        onDownloadSample={onDownloadSample}
-      />,
-    );
-    await userEvent.click(
-      screen.getByRole("button", { name: "Download sample CSV" }),
-    );
+    view(<ImportExpectedHeaders preview={null} onDownloadSample={onDownloadSample} />);
+    await userEvent.click(screen.getByRole("button", { name: "Download sample CSV" }));
     expect(onDownloadSample).toHaveBeenCalledTimes(1);
   });
 

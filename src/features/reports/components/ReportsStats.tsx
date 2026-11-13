@@ -114,11 +114,7 @@ export function ReportsStats({ summary }: { summary: ReportSummary }) {
           );
           const destination = statDestination(cell.id);
           return destination ? (
-            <DestinationLink
-              key={cell.id}
-              destination={destination}
-              statId={cell.id}
-            >
+            <DestinationLink key={cell.id} destination={destination} statId={cell.id}>
               {stat}
             </DestinationLink>
           ) : (

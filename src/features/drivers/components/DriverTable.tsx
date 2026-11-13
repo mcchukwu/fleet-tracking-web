@@ -7,10 +7,7 @@ import { driverDescription, isDriverStatus } from "../../../lib/drivers";
 import { isDialablePhone } from "../lib/form";
 import { Button } from "../../../ui/Button";
 import { CopyButton } from "../../../ui/CopyButton";
-import {
-  DataTable,
-  type DataTableColumn,
-} from "../../../ui/DataTable";
+import { DataTable, type DataTableColumn } from "../../../ui/DataTable";
 import { EmptyState, Skeleton } from "../../../ui/StatePanel";
 import { StateBoundary, type StateBoundaryState } from "../../../ui/StateBoundary";
 import { cn } from "../../../ui/cn";
@@ -32,15 +29,13 @@ const COLUMN_ORDER = [
   ["vehicles", "Vehicles"],
 ] as const;
 
-const SKELETON_COLUMNS: DataTableColumn<{ id: string }>[] = COLUMN_ORDER.map(
-  ([id, label]) => ({
-    id,
-    header: label,
-    width: COLUMN_WIDTHS[id],
-    align: "left",
-    cell: () => <Skeleton className="h-3 w-full max-w-24" />,
-  }),
-);
+const SKELETON_COLUMNS: DataTableColumn<{ id: string }>[] = COLUMN_ORDER.map(([id, label]) => ({
+  id,
+  header: label,
+  width: COLUMN_WIDTHS[id],
+  align: "left",
+  cell: () => <Skeleton className="h-3 w-full max-w-24" />,
+}));
 
 export type DriverEmptyReason = "no-data" | "no-results";
 
@@ -84,7 +79,7 @@ function DriverOpenButton({ driver, onOpen }: DriverOpenButtonProps) {
       aria-label={`Open driver ${driver.name}, ${description || "no contact details"}`}
       title={driver.name}
       onClick={onOpen}
-      className="focus-visible:outline-focus-ring -my-2 inline-flex h-touch max-w-full items-center truncate rounded-sm text-left text-sm text-text underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 md:my-0 md:h-auto"
+      className="focus-visible:outline-focus-ring h-touch text-text -my-2 inline-flex max-w-full items-center truncate rounded-sm text-left text-sm underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 md:my-0 md:h-auto"
     >
       {driver.name}
     </button>
@@ -150,7 +145,7 @@ export function DriverTable({
           isDialablePhone(driver.phone) ? (
             <a
               href={phoneHref(driver.phone)}
-              className="focus-visible:outline-focus-ring -my-2 inline-flex h-touch items-center font-mono text-sm text-text underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 md:my-0 md:h-auto"
+              className="focus-visible:outline-focus-ring h-touch text-text -my-2 inline-flex items-center font-mono text-sm underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 md:my-0 md:h-auto"
             >
               {driver.phone}
             </a>
@@ -241,7 +236,12 @@ export function DriverTable({
       className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain"
     >
       {state === "error" && drivers.length === 0 ? null : (
-        <div className={cn("flex min-h-0 flex-1 flex-col", (offline || state === "error") && "opacity-80")}>
+        <div
+          className={cn(
+            "flex min-h-0 flex-1 flex-col",
+            (offline || state === "error") && "opacity-80",
+          )}
+        >
           <DataTable
             label="Drivers"
             columns={columns}

@@ -57,9 +57,7 @@ export function MobileVehicleSheet({
     ...(insetTarget ? { insetTarget } : {}),
     ...(onObscuredChange ? { onObscuredChange } : {}),
   });
-  const fitLabel = fitDisabled
-    ? "No vehicles are reporting a position"
-    : "Fit the fleet";
+  const fitLabel = fitDisabled ? "No vehicles are reporting a position" : "Fit the fleet";
 
   return (
     <section
@@ -67,20 +65,17 @@ export function MobileVehicleSheet({
       aria-label="Vehicles"
       data-snap={snap}
       style={sheetVisibleStyle(visible)}
-      className="mobile-sheet bg-surface shadow-float ring-border absolute inset-x-0 bottom-0 z-panel flex flex-col rounded-t-lg ring-1"
+      className="mobile-sheet bg-surface shadow-float ring-border z-panel absolute inset-x-0 bottom-0 flex flex-col rounded-t-lg ring-1"
     >
       <div
         data-testid="sheet-header"
-        className="h-sheet-peek border-border bg-surface relative z-map-controls flex shrink-0 touch-none flex-col border-b px-3"
+        className="h-sheet-peek border-border bg-surface z-map-controls relative flex shrink-0 touch-none flex-col border-b px-3"
         onPointerDown={handlers.onPointerDown}
         onPointerMove={handlers.onPointerMove}
         onPointerUp={handlers.onPointerUp}
         onPointerCancel={handlers.onPointerCancel}
       >
-        <span
-          aria-hidden="true"
-          className="bg-border-strong mx-auto mt-1 h-1 w-8 rounded-full"
-        />
+        <span aria-hidden="true" className="bg-border-strong mx-auto mt-1 h-1 w-8 rounded-full" />
 
         <div className="h-touch flex min-w-0 items-center gap-2">
           <button
@@ -110,9 +105,7 @@ export function MobileVehicleSheet({
               }
             }}
           >
-            <span className="text-md text-text shrink-0 font-medium">
-              Vehicles
-            </span>
+            <span className="text-md text-text shrink-0 font-medium">Vehicles</span>
             <span className="text-muted truncate text-xs tabular-nums">
               Showing {shown} of {total}
             </span>
@@ -131,13 +124,7 @@ export function MobileVehicleSheet({
               label={fitLabel}
               disabled={fitDisabled}
               onClick={onFit}
-              icon={
-                <Maximize2
-                  aria-hidden="true"
-                  className="size-4"
-                  strokeWidth={1.5}
-                />
-              }
+              icon={<Maximize2 aria-hidden="true" className="size-4" strokeWidth={1.5} />}
             />
           </span>
           <span data-sheet-action>
@@ -146,16 +133,8 @@ export function MobileVehicleSheet({
               label={geofencesVisible ? "Hide geofences" : "Show geofences"}
               aria-pressed={geofencesVisible}
               onClick={onToggleGeofences}
-              className={
-                geofencesVisible ? "bg-accent-soft text-accent-fg" : undefined
-              }
-              icon={
-                <Layers
-                  aria-hidden="true"
-                  className="size-4"
-                  strokeWidth={1.5}
-                />
-              }
+              className={geofencesVisible ? "bg-accent-soft text-accent-fg" : undefined}
+              icon={<Layers aria-hidden="true" className="size-4" strokeWidth={1.5} />}
             />
           </span>
           <span data-sheet-action>
@@ -170,11 +149,7 @@ export function MobileVehicleSheet({
 
         <div className="flex h-15 min-w-0 items-center">
           <div data-sheet-action className="w-full min-w-0">
-            <SearchInput
-              compact
-              value={filters.q}
-              onChange={(q) => onFilterChange({ q })}
-            />
+            <SearchInput compact value={filters.q} onChange={(q) => onFilterChange({ q })} />
           </div>
         </div>
       </div>

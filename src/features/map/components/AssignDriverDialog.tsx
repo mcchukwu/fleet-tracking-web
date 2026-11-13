@@ -54,8 +54,7 @@ export function AssignDriverDialog({
     }
   }
 
-  const conflict =
-    write.error?.kind === "conflict" || write.error?.kind === "not_found";
+  const conflict = write.error?.kind === "conflict" || write.error?.kind === "not_found";
   const blockedReason = readOnlyReason ?? "Your role can't assign drivers.";
 
   return (
@@ -111,12 +110,10 @@ export function AssignDriverDialog({
         ) : null}
       </div>
 
-      {readOnly ? (
-        <p className="mb-3 text-sm text-muted">{blockedReason}</p>
-      ) : null}
+      {readOnly ? <p className="text-muted mb-3 text-sm">{blockedReason}</p> : null}
 
       {!driversQuery.isLoading && !driversQuery.error && drivers.length === 0 ? (
-        <p className="mb-3 text-sm text-muted">No active drivers are available.</p>
+        <p className="text-muted mb-3 text-sm">No active drivers are available.</p>
       ) : null}
 
       <Combobox
@@ -134,7 +131,7 @@ export function AssignDriverDialog({
         placeholder="Search by name, phone or licence"
       />
 
-      <p className="mt-3 text-xs text-muted">
+      <p className="text-muted mt-3 text-xs">
         The current driver stays selected; this API can change a driver but not clear one.
       </p>
     </Dialog>

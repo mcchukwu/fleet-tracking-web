@@ -4,17 +4,17 @@ Project context for the control console. Read only the file you need.
 
 ## Map
 
-| Need | File |
-|---|---|
-| API contract | `api/openapi.yaml` |
-| Auth, CSRF, WebSocket, endpoints, enums, gaps | `api/frontend-integration.md` |
-| Reference types and client | `api/api-types.ts`, `api/api-client.ts` |
-| Screens, flows, states | `ui-brief.md` |
-| Visual rules and tokens | `design-system.md` |
-| Working agreement and quality gates | `workflow.md` |
-| Settled choices | `decisions.md` |
-| Error policy and recovery | `error-handling.md` |
-| Production hosting and release | `deployment.md` |
+| Need                                          | File                                    |
+| --------------------------------------------- | --------------------------------------- |
+| API contract                                  | `api/openapi.yaml`                      |
+| Auth, CSRF, WebSocket, endpoints, enums, gaps | `api/frontend-integration.md`           |
+| Reference types and client                    | `api/api-types.ts`, `api/api-client.ts` |
+| Screens, flows, states                        | `ui-brief.md`                           |
+| Visual rules and tokens                       | `design-system.md`                      |
+| Working agreement and quality gates           | `workflow.md`                           |
+| Settled choices                               | `decisions.md`                          |
+| Error policy and recovery                     | `error-handling.md`                     |
+| Production hosting and release                | `deployment.md`                         |
 
 The Bruno collection is in `~/Projects/fleet-tracking-handoff/bruno`, outside this repo.
 

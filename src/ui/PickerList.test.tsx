@@ -45,9 +45,7 @@ describe("PickerList", () => {
     render(list({ onSelect, onActive }));
 
     await user.click(screen.getByRole("option", { name: /Chinedu Musa/ }));
-    expect(onSelect).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "d2" }),
-    );
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: "d2" }));
   });
 
   it("puts the clear row first and selects nothing through it", async () => {
@@ -88,21 +86,15 @@ describe("PickerList", () => {
         onRetry,
       }),
     );
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Couldn't load drivers.",
-    );
+    expect(screen.getByRole("alert")).toHaveTextContent("Couldn't load drivers.");
     await user.click(screen.getByRole("button", { name: "Retry" }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
   it("keeps cached options visible beside the error", () => {
-    render(
-      list({ error: "Couldn't refresh drivers.", onRetry: () => undefined }),
-    );
+    render(list({ error: "Couldn't refresh drivers.", onRetry: () => undefined }));
     expect(screen.getAllByRole("option")).toHaveLength(2);
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Couldn't refresh drivers.",
-    );
+    expect(screen.getByRole("alert")).toHaveTextContent("Couldn't refresh drivers.");
   });
 
   it("virtualises above 100 options", () => {
@@ -123,8 +115,6 @@ describe("PickerList", () => {
     }));
     render(list({ items: many, activeIndex: 0 }));
     expect(screen.getAllByRole("option")).toHaveLength(100);
-    expect(document.querySelector("[data-picker-list]")).not.toHaveAttribute(
-      "data-virtualized",
-    );
+    expect(document.querySelector("[data-picker-list]")).not.toHaveAttribute("data-virtualized");
   });
 });

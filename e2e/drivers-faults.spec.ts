@@ -34,8 +34,7 @@ function collectErrors(page: Page): string[] {
 
 function unexpectedConsole(errors: string[]): string[] {
   return errors.filter(
-    (text) =>
-      !text.includes("above error occurred") && !text.includes("Failed to load resource"),
+    (text) => !text.includes("above error occurred") && !text.includes("Failed to load resource"),
   );
 }
 
@@ -111,9 +110,7 @@ test.describe("drivers faults", () => {
     await expectNoAxeViolations(page);
   });
 
-  test("a lost create reports that it was not saved and creates no duplicate", async ({
-    page,
-  }) => {
+  test("a lost create reports that it was not saved and creates no duplicate", async ({ page }) => {
     test.setTimeout(60_000);
     const errors = collectErrors(page);
     await page.goto("/drivers");
@@ -133,9 +130,7 @@ test.describe("drivers faults", () => {
       timeout: 45_000,
     });
     await expect
-      .poll(() =>
-        page.evaluate(() => Boolean(document.activeElement?.closest('[role="dialog"]'))),
-      )
+      .poll(() => page.evaluate(() => Boolean(document.activeElement?.closest('[role="dialog"]'))))
       .toBe(true);
     expect(await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? [])).toHaveLength(0);
     await expect(page.getByRole("dialog", { name: "Create driver" })).toBeVisible();
@@ -150,21 +145,25 @@ test.describe("drivers faults", () => {
     await page.goto("/drivers");
     await expectLoaded(page);
     await openEdit(page);
-    await page.getByRole("dialog", { name: "Edit driver" }).getByLabel("Phone").fill("0803 100 0199");
+    await page
+      .getByRole("dialog", { name: "Edit driver" })
+      .getByLabel("Phone")
+      .fill("0803 100 0199");
 
     await page.evaluate(() => {
       const url = new URL(window.location.href);
       url.searchParams.set("fault", "drivers-patch:lost");
       history.replaceState({}, "", `${url.pathname}${url.search}`);
     });
-    await page.getByRole("dialog", { name: "Edit driver" }).getByRole("button", { name: "Save changes" }).click();
+    await page
+      .getByRole("dialog", { name: "Edit driver" })
+      .getByRole("button", { name: "Save changes" })
+      .click();
 
     await expect(page.getByText("It wasn't saved.").first()).toBeVisible({ timeout: 45_000 });
     await expect(page.getByRole("dialog", { name: "Edit driver" })).toBeVisible();
     await expect
-      .poll(() =>
-        page.evaluate(() => Boolean(document.activeElement?.closest('[role="dialog"]'))),
-      )
+      .poll(() => page.evaluate(() => Boolean(document.activeElement?.closest('[role="dialog"]'))))
       .toBe(true);
     expect(await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? [])).toHaveLength(0);
     await expect(page.locator("body")).not.toContainText(/\.tsx:\d+/);
@@ -177,22 +176,26 @@ test.describe("drivers faults", () => {
     await page.goto("/drivers");
     await expectLoaded(page);
     await openEdit(page);
-    await page.getByRole("dialog", { name: "Edit driver" }).getByLabel("Phone").fill("0803 100 0198");
+    await page
+      .getByRole("dialog", { name: "Edit driver" })
+      .getByLabel("Phone")
+      .fill("0803 100 0198");
 
     await page.evaluate(() => {
       const url = new URL(window.location.href);
       url.searchParams.set("fault", "drivers-patch:not_found");
       history.replaceState({}, "", `${url.pathname}${url.search}`);
     });
-    await page.getByRole("dialog", { name: "Edit driver" }).getByRole("button", { name: "Save changes" }).click();
+    await page
+      .getByRole("dialog", { name: "Edit driver" })
+      .getByRole("button", { name: "Save changes" })
+      .click();
 
     await expect(page.getByText("This driver no longer exists.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Refresh" })).toBeVisible();
     await expect(page.getByRole("dialog", { name: "Edit driver" })).toBeVisible();
     await expect
-      .poll(() =>
-        page.evaluate(() => Boolean(document.activeElement?.closest('[role="dialog"]'))),
-      )
+      .poll(() => page.evaluate(() => Boolean(document.activeElement?.closest('[role="dialog"]'))))
       .toBe(true);
     await expect(page.locator("body")).not.toContainText(/\.tsx:\d+/);
     await expectNoAxeViolations(page);

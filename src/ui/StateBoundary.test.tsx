@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, render, screen } from "@testing-library/react";import { StateBoundary } from "./StateBoundary";
+import { act, render, screen } from "@testing-library/react";
+import { StateBoundary } from "./StateBoundary";
 import { recordRequestFailure, resetErrorStorm } from "../errors/global";
 import type { AppError } from "../errors/types";
 
@@ -60,9 +61,7 @@ describe("StateBoundary", () => {
       recordRequestFailure("trips", "unavailable");
     });
 
-    expect(
-      screen.queryByText("Check your connection. Your data is safe."),
-    ).toBeNull();
+    expect(screen.queryByText("Check your connection. Your data is safe.")).toBeNull();
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
 
@@ -89,10 +88,7 @@ describe("StateBoundary", () => {
 
   it("renders the forbidden state with a way back when given one", () => {
     render(
-      <StateBoundary
-        state="forbidden"
-        forbiddenAction={<a href="/map">Back to the map</a>}
-      />,
+      <StateBoundary state="forbidden" forbiddenAction={<a href="/map">Back to the map</a>} />,
     );
     expect(screen.getByText("You don't have access to this.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to the map" })).toBeInTheDocument();

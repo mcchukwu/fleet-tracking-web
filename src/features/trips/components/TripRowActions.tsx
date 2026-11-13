@@ -10,12 +10,7 @@ export interface TripRowActionsProps {
 }
 
 /** The next action and Cancel stay visible; they are never hover-only. */
-export function TripRowActions({
-  trip,
-  pending,
-  disabledReason,
-  onAction,
-}: TripRowActionsProps) {
+export function TripRowActions({ trip, pending, disabledReason, onAction }: TripRowActionsProps) {
   const next = nextTripAction(trip);
   const cancellable = canCancelTrip(trip);
   if (!next && !cancellable) return null;
@@ -42,7 +37,7 @@ export function TripRowActions({
         <Button
           size="sm"
           variant="ghost"
-          className="-my-1.5 text-danger hover:bg-alert-bg disabled:opacity-50 md:my-0"
+          className="text-danger hover:bg-alert-bg -my-1.5 disabled:opacity-50 md:my-0"
           disabled={pending}
           {...(reason ? { disabledReason: reason } : {})}
           data-trip-action

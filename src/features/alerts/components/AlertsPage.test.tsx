@@ -57,9 +57,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@tanstack/react-router", () => ({
   useSearch: () => mocks.search,
   useNavigate: () => mocks.navigate,
-  Link: ({ to, children }: { to: string; children: ReactNode }) => (
-    <a href={to}>{children}</a>
-  ),
+  Link: ({ to, children }: { to: string; children: ReactNode }) => <a href={to}>{children}</a>,
 }));
 
 vi.mock("../../../auth/useCanMutate", async () => {
@@ -158,12 +156,8 @@ describe("AlertsPage", () => {
   it("shows the counts and the document title", async () => {
     renderPage();
     expect(screen.getByRole("heading", { name: "Alerts" })).toBeVisible();
-    expect(screen.getByTestId("alerts-page")).toHaveTextContent(
-      "2 open · 1 loaded",
-    );
-    await waitFor(() =>
-      expect(document.title).toBe("(2) Alerts · Fleet Console"),
-    );
+    expect(screen.getByTestId("alerts-page")).toHaveTextContent("2 open · 1 loaded");
+    await waitFor(() => expect(document.title).toBe("(2) Alerts · Fleet Console"));
   });
 
   it("writes filter changes to the URL", async () => {
@@ -194,9 +188,7 @@ describe("AlertsPage", () => {
     mocks.feed.loadedCount = 0;
     mocks.feed.isLoading = true;
     const { rerender } = renderPage();
-    await waitFor(() =>
-      expect(screen.getByLabelText("Loading alerts")).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByLabelText("Loading alerts")).toBeInTheDocument());
 
     mocks.feed.isLoading = false;
     rerender(
@@ -257,12 +249,8 @@ describe("AlertsPage", () => {
 
   it("acknowledges from a row", async () => {
     renderPage();
-    await userEvent.click(
-      screen.getByRole("button", { name: "Acknowledge alert for LSD-101-AA" }),
-    );
-    expect(mocks.ack.acknowledge).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "alert-1" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Acknowledge alert for LSD-101-AA" }));
+    expect(mocks.ack.acknowledge).toHaveBeenCalledWith(expect.objectContaining({ id: "alert-1" }));
   });
 
   it("offers a retry when the open count fails", async () => {

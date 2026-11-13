@@ -80,8 +80,7 @@ function HealthPanel() {
       >
         {health.data ? (
           <p className="text-text text-sm">
-            {health.data.vehicles} vehicles · {health.data.open_alerts} open
-            alerts
+            {health.data.vehicles} vehicles · {health.data.open_alerts} open alerts
           </p>
         ) : null}
       </StateBoundary>
@@ -124,8 +123,7 @@ export function FaultLab() {
     >
       <h1 className="text-lg font-semibold">Fault lab</h1>
       <p className="text-muted text-sm">
-        Development-only page. Add ?fault=resource:kind to the URL to force
-        failures.
+        Development-only page. Add ?fault=resource:kind to the URL to force failures.
       </p>
 
       <section aria-labelledby="fault-crash" className="flex flex-col gap-2">

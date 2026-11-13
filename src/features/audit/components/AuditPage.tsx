@@ -45,10 +45,7 @@ function AuditPageContent() {
     [search.action, search.q],
   );
 
-  const entries = useMemo(
-    () => filterAuditEntries(feed.entries, filters),
-    [feed.entries, filters],
-  );
+  const entries = useMemo(() => filterAuditEntries(feed.entries, filters), [feed.entries, filters]);
   const actionOptions = useMemo(
     () => auditActionOptions(feed.entries, filters.action),
     [feed.entries, filters.action],
@@ -56,8 +53,7 @@ function AuditPageContent() {
 
   const selectedId = search.entry === undefined ? null : String(search.entry);
   const selectedInFeed = findAuditEntry(feed.entries, selectedId);
-  const lookupEnabled =
-    selectedId !== null && selectedInFeed === null && !feed.isLoading;
+  const lookupEnabled = selectedId !== null && selectedInFeed === null && !feed.isLoading;
   const lookup = useAuditLookup(selectedId, lookupEnabled && feed.online);
   const selectedEntry = selectedInFeed ?? lookup.data ?? null;
   const lookupState: AuditLookupState =
@@ -135,9 +131,7 @@ function AuditPageContent() {
   function focusRow(id: string | null): void {
     setTimeout(() => {
       if (id) {
-        const target = document.querySelector<HTMLElement>(
-          `[data-audit-id="${CSS.escape(id)}"]`,
-        );
+        const target = document.querySelector<HTMLElement>(`[data-audit-id="${CSS.escape(id)}"]`);
         if (target) {
           target.focus();
           return;
@@ -156,19 +150,14 @@ function AuditPageContent() {
 
   const countLabel = filtered
     ? `${formatCount(entries.length)} of ${formatCount(feed.loadedCount)} loaded`
-    : `${formatCount(feed.loadedCount)} ${
-        feed.loadedCount === 1 ? "entry" : "entries"
-      } loaded`;
+    : `${formatCount(feed.loadedCount)} ${feed.loadedCount === 1 ? "entry" : "entries"} loaded`;
   // Reserve the count line in every state, so the first page cannot push the
   // header (and the table below it) down when it arrives.
   const showCountLine = state !== "forbidden";
-  const showCountText =
-    !feed.isLoading && !(state === "error" && feed.loadedCount === 0);
+  const showCountText = !feed.isLoading && !(state === "error" && feed.loadedCount === 0);
   const countLoading = useDelayedFlag(feed.isLoading);
   const staleLabel =
-    feed.loadedCount > 0 &&
-    (offline || state === "error") &&
-    feed.dataUpdatedAt > 0
+    feed.loadedCount > 0 && (offline || state === "error") && feed.dataUpdatedAt > 0
       ? formatClockTime(feed.dataUpdatedAt)
       : undefined;
 
@@ -186,9 +175,7 @@ function AuditPageContent() {
                 {countLoading ? (
                   <Skeleton className="h-3 w-24" />
                 ) : showCountText ? (
-                  <p className="text-muted text-sm tabular-nums">
-                    {countLabel}
-                  </p>
+                  <p className="text-muted text-sm tabular-nums">{countLabel}</p>
                 ) : null}
               </div>
             ) : null}

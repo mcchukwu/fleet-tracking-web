@@ -12,12 +12,7 @@ import { Skeleton } from "../../../ui/StatePanel";
 import { Timestamp } from "../../../ui/Timestamp";
 import { auditActionLabel, auditEntityLabel } from "../lib/audit";
 
-export type AuditLookupState =
-  | "loading"
-  | "ready"
-  | "not-found"
-  | "error"
-  | "offline";
+export type AuditLookupState = "loading" | "ready" | "not-found" | "error" | "offline";
 
 export interface AuditDetailPanelProps {
   entry: AuditEntry | null;
@@ -70,9 +65,7 @@ function MissingAuditPanel({
         <ErrorState error={lookupError} onRetry={onRetryLookup} className="py-8" />
       ) : lookup === "offline" ? (
         <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
-          <p className="text-text text-base font-medium">
-            Audit entry isn't available offline
-          </p>
+          <p className="text-text text-base font-medium">Audit entry isn't available offline</p>
           <p className="text-muted text-sm">
             Reconnect to open this entry. It isn't stored on this device.
           </p>
@@ -83,9 +76,7 @@ function MissingAuditPanel({
       ) : (
         <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
           <p className="text-text text-base font-medium">Audit entry not found</p>
-          <p className="text-muted text-sm">
-            It may be older than the 500 most recent entries.
-          </p>
+          <p className="text-muted text-sm">It may be older than the 500 most recent entries.</p>
           <Button size="sm" onClick={onClose}>
             Close
           </Button>
@@ -109,9 +100,7 @@ function ResolvedAuditDetail({
       label="Audit entry details"
       title={auditActionLabel(entry.action)}
       titleClassName="font-sans"
-      headerAside={
-        <Badge tone="neutral">{auditEntityLabel(entry.entity)}</Badge>
-      }
+      headerAside={<Badge tone="neutral">{auditEntityLabel(entry.entity)}</Badge>}
       closeLabel="Close audit entry"
       onClose={onClose}
       returnFocus={returnFocus}
@@ -134,20 +123,12 @@ function ResolvedAuditDetail({
         </section>
 
         <section aria-labelledby="audit-identifiers-heading">
-          <h3
-            id="audit-identifiers-heading"
-            className="text-text mb-1 text-sm font-medium"
-          >
+          <h3 id="audit-identifiers-heading" className="text-text mb-1 text-sm font-medium">
             Identifiers
           </h3>
           <dl>
             <Field label="Entry ID">
-              <CopyButton
-                inline
-                value={String(entry.id)}
-                label="entry id"
-                className="text-xs"
-              />
+              <CopyButton inline value={String(entry.id)} label="entry id" className="text-xs" />
             </Field>
             <Field label="Entity ID">
               {entry.entity_id ? (

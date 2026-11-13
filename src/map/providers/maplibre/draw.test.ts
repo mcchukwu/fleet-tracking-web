@@ -48,8 +48,7 @@ const holder = vi.hoisted(() => {
     addFeatures(features: unknown[]): void {
       this.features = features;
       const feature = features[0] as
-        | { geometry?: { type: string; coordinates?: unknown } }
-        | undefined;
+        { geometry?: { type: string; coordinates?: unknown } } | undefined;
       if (feature?.geometry) this.snapshot = [feature as never];
     }
     selectFeature(id: string | number): void {
@@ -131,13 +130,26 @@ describe("polygonFromSnapshot", () => {
         {
           geometry: {
             type: "Polygon",
-            coordinates: [[[3.4, 6.4], [3.5, 6.4], [3.5, 6.5]]],
+            coordinates: [
+              [
+                [3.4, 6.4],
+                [3.5, 6.4],
+                [3.5, 6.5],
+              ],
+            ],
           },
         },
       ]),
     ).toEqual({
       type: "Polygon",
-      coordinates: [[[3.4, 6.4], [3.5, 6.4], [3.5, 6.5], [3.4, 6.4]]],
+      coordinates: [
+        [
+          [3.4, 6.4],
+          [3.5, 6.4],
+          [3.5, 6.5],
+          [3.4, 6.4],
+        ],
+      ],
     });
   });
 

@@ -1,14 +1,7 @@
 /* oxlint-disable jsx-a11y/prefer-tag-over-role -- ARIA 1.2 combobox input: the search field owns the listbox keyboard. */
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import {
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type CSSProperties,
-  type KeyboardEvent,
-} from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { IconButton } from "./IconButton";
 import { LayerPortal } from "./LayerPortal";
 import { PickerList } from "./PickerList";
@@ -96,9 +89,7 @@ export function PickerSheet({
 }: PickerSheetProps) {
   const listboxId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [viewport, setViewport] = useState<VisualViewportBox>(() =>
-    readVisualViewport(),
-  );
+  const [viewport, setViewport] = useState<VisualViewportBox>(() => readVisualViewport());
 
   useEffect(() => {
     if (!open) return;
@@ -180,9 +171,7 @@ export function PickerSheet({
           }}
           className="border-border bg-surface text-text shadow-float picker-sheet-safe fixed flex flex-col overflow-hidden rounded-t-lg border-x border-t"
         >
-          <DialogPrimitive.Title className="sr-only">
-            {label}
-          </DialogPrimitive.Title>
+          <DialogPrimitive.Title className="sr-only">{label}</DialogPrimitive.Title>
           <DialogPrimitive.Description className="sr-only">
             Search and choose an option. Escape closes the picker.
           </DialogPrimitive.Description>
@@ -212,9 +201,7 @@ export function PickerSheet({
               <IconButton
                 size="touch"
                 label="Close picker"
-                icon={
-                  <X aria-hidden="true" className="size-4" strokeWidth={1.5} />
-                }
+                icon={<X aria-hidden="true" className="size-4" strokeWidth={1.5} />}
               />
             </DialogPrimitive.Close>
           </div>

@@ -55,9 +55,7 @@ describe("mock data helpers", () => {
 
 describe("mock import", () => {
   it("imports rows, returns null errors and makes the vehicle searchable", async () => {
-    const outcome = applyMockImport(
-      "imei,plate,make,year\npreview-clean-1,LSD-900-AA,Volvo,2021",
-    );
+    const outcome = applyMockImport("imei,plate,make,year\npreview-clean-1,LSD-900-AA,Volvo,2021");
     expect(outcome).toMatchObject({
       ok: true,
       result: { total: 1, imported: 1, failed: 0, errors: null },
@@ -380,10 +378,7 @@ describe("mock trips", () => {
     const response = await fetch(`${API}/trips?limit=2&offset=1`);
     expect(response.status).toBe(200);
     const payload = (await response.json()) as { data: Array<{ id: string }> };
-    expect(payload.data.map((row) => row.id)).toEqual([
-      tripsFixture[1]?.id,
-      tripsFixture[2]?.id,
-    ]);
+    expect(payload.data.map((row) => row.id)).toEqual([tripsFixture[1]?.id, tripsFixture[2]?.id]);
 
     const active = await fetch(`${API}/trips?status=active`);
     const activePayload = (await active.json()) as { data: Array<{ status: string }> };
@@ -536,7 +531,9 @@ describe("mock drivers", () => {
     expect(response.status).toBe(200);
     const payload = (await response.json()) as { data: Array<{ id: string }> };
     expect(payload.data).toHaveLength(driversFixture.length);
-    expect(payload.data.map((driver) => driver.id)).toContain("c7d3e3a6-0b6e-4f2c-9a4e-2b1f6f2d8e19");
+    expect(payload.data.map((driver) => driver.id)).toContain(
+      "c7d3e3a6-0b6e-4f2c-9a4e-2b1f6f2d8e19",
+    );
   });
 
   it("supports the empty page flag and a driver-shaped unknown enum", async () => {
@@ -563,7 +560,13 @@ describe("mock drivers", () => {
 
     const list = await fetch(`${API}/drivers`);
     const payload = (await list.json()) as {
-      data: Array<{ name: string; phone: string; licence: string; status: string; vehicles: number }>;
+      data: Array<{
+        name: string;
+        phone: string;
+        licence: string;
+        status: string;
+        vehicles: number;
+      }>;
     };
     const created = payload.data.find((driver) => driver.name === "Ada Obi");
     expect(created).toMatchObject({ phone: "", licence: "", status: "active", vehicles: 0 });

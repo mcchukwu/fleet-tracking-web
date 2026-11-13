@@ -13,16 +13,14 @@ export interface RunOptions {
 }
 
 export type ActionResult<T> =
-  | { status: "success"; value: T }
-  | { status: "reconciled" }
-  | { status: "error"; error: AppError };
+  { status: "success"; value: T } | { status: "reconciled" } | { status: "error"; error: AppError };
 
 export function useActionError() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<AppError | null>(null);
 
   const run = useCallback(
-    async <T,>(action: () => Promise<T>, options: RunOptions = {}): Promise<ActionResult<T>> => {
+    async <T>(action: () => Promise<T>, options: RunOptions = {}): Promise<ActionResult<T>> => {
       setPending(true);
       setError(null);
 

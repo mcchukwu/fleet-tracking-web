@@ -21,7 +21,7 @@ const schema = z.object({
 });
 
 type LoginValues = z.infer<typeof schema>;
-type DemoHintsComponent = typeof import("./DemoHints")["DemoHints"];
+type DemoHintsComponent = (typeof import("./DemoHints"))["DemoHints"];
 
 export interface LoginFormProps {
   variant?: "page" | "dialog";
@@ -81,9 +81,8 @@ export function LoginForm({ variant = "page", onSuccess }: LoginFormProps) {
     login.error.kind !== "unauthenticated" &&
     login.error.kind !== "rate_limited";
   const describedBy =
-    [offline ? `${id}-offline` : "", login.error ? `${id}-error` : ""]
-      .filter(Boolean)
-      .join(" ") || undefined;
+    [offline ? `${id}-offline` : "", login.error ? `${id}-error` : ""].filter(Boolean).join(" ") ||
+    undefined;
 
   function handleOutcome(outcome: LoginOutcome): void {
     if (outcome.status === "success") {
@@ -114,7 +113,10 @@ export function LoginForm({ variant = "page", onSuccess }: LoginFormProps) {
       aria-describedby={describedBy}
     >
       {fieldErrors.length > 1 ? (
-        <div role="alert" className="rounded-md border border-danger bg-alert-bg p-3 text-sm text-danger">
+        <div
+          role="alert"
+          className="border-danger bg-alert-bg text-danger rounded-md border p-3 text-sm"
+        >
           <p className="font-medium">Check the highlighted fields.</p>
           <ul className="mt-1 list-inside list-disc">
             {fieldErrors.map((message) => (
@@ -158,7 +160,7 @@ export function LoginForm({ variant = "page", onSuccess }: LoginFormProps) {
       <div
         ref={errorRef}
         tabIndex={-1}
-        className="rounded-sm focus:outline-2 focus:outline-offset-2 focus:outline-focus-ring"
+        className="focus:outline-focus-ring rounded-sm focus:outline-2 focus:outline-offset-2"
       >
         {login.error && copy ? (
           <InlineError
@@ -171,7 +173,7 @@ export function LoginForm({ variant = "page", onSuccess }: LoginFormProps) {
       </div>
 
       {login.slow ? (
-        <output className="flex flex-wrap items-center gap-2 text-xs text-muted">
+        <output className="text-muted flex flex-wrap items-center gap-2 text-xs">
           <Spinner />
           <span>{slowStateCopy(login.slow)}</span>
           {login.slow === "long" ? (
@@ -188,7 +190,7 @@ export function LoginForm({ variant = "page", onSuccess }: LoginFormProps) {
       ) : null}
 
       {offline ? (
-        <p id={`${id}-offline`} className="text-xs text-muted">
+        <p id={`${id}-offline`} className="text-muted text-xs">
           You're offline. Reconnect to sign in.
         </p>
       ) : null}

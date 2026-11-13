@@ -186,9 +186,7 @@ describe("TripAssignDriverDialog", () => {
   it("clears the selection and write error when reopened", async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
-    const { rerender } = render(
-      <TripAssignDriverDialog open trip={trip} onClose={onClose} />,
-    );
+    const { rerender } = render(<TripAssignDriverDialog open trip={trip} onClose={onClose} />);
 
     await user.click(screen.getByLabelText("Driver"));
     await user.click(screen.getByRole("option", { name: /Adebayo Okafor/ }));

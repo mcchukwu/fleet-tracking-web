@@ -88,25 +88,13 @@ async function readLayout(page: Page): Promise<Layout> {
       };
     }
 
-    const sheet = document.querySelector<HTMLElement>(
-      'section[aria-label="Vehicles"]',
-    );
-    const header = document.querySelector<HTMLElement>(
-      '[data-testid="sheet-header"]',
-    );
-    const list = document.querySelector<HTMLElement>(
-      'ul[aria-label="Vehicles"]',
-    );
+    const sheet = document.querySelector<HTMLElement>('section[aria-label="Vehicles"]');
+    const header = document.querySelector<HTMLElement>('[data-testid="sheet-header"]');
+    const list = document.querySelector<HTMLElement>('ul[aria-label="Vehicles"]');
     const scroller = list?.parentElement ?? null;
-    const controls = document.querySelector<HTMLElement>(
-      'fieldset[aria-label="Map controls"]',
-    );
-    const attribution = document.querySelector<HTMLElement>(
-      '[data-testid="map-attribution"]',
-    );
-    const harness = document.querySelector<HTMLElement>(
-      '[data-testid="map-inset-harness"]',
-    );
+    const controls = document.querySelector<HTMLElement>('fieldset[aria-label="Map controls"]');
+    const attribution = document.querySelector<HTMLElement>('[data-testid="map-attribution"]');
+    const harness = document.querySelector<HTMLElement>('[data-testid="map-inset-harness"]');
     const panel = document.querySelector<HTMLElement>("aside");
 
     if (!sheet || !header || !scroller || !list || !controls || !attribution) {
@@ -116,9 +104,7 @@ async function readLayout(page: Page): Promise<Layout> {
     const probe = document.createElement("div");
     probe.style.paddingBottom = "env(safe-area-inset-bottom, 0px)";
     document.body.append(probe);
-    const safeBottom = Number.parseFloat(
-      window.getComputedStyle(probe).paddingBottom,
-    );
+    const safeBottom = Number.parseFloat(window.getComputedStyle(probe).paddingBottom);
     probe.remove();
 
     const attributionStyle = window.getComputedStyle(attribution);
@@ -127,24 +113,14 @@ async function readLayout(page: Page): Promise<Layout> {
     range.selectNodeContents(attribution);
     const attributionLines =
       lineHeight > 0
-        ? Math.max(
-            1,
-            Math.round(range.getBoundingClientRect().height / lineHeight),
-          )
+        ? Math.max(1, Math.round(range.getBoundingClientRect().height / lineHeight))
         : 0;
 
-    const rows = [
-      ...document.querySelectorAll<HTMLElement>("[data-vehicle-key]"),
-    ].map((row) => {
+    const rows = [...document.querySelectorAll<HTMLElement>("[data-vehicle-key]")].map((row) => {
       const content = row.querySelector<HTMLElement>("div.pointer-events-none");
-      const divider = row.querySelector<HTMLElement>(
-        '[data-testid="row-divider"]',
-      );
-      if (!content || !divider)
-        throw new Error("A vehicle row is missing its content or divider");
-      const lines = [...content.children].map((child) =>
-        child.getBoundingClientRect(),
-      );
+      const divider = row.querySelector<HTMLElement>('[data-testid="row-divider"]');
+      if (!content || !divider) throw new Error("A vehicle row is missing its content or divider");
+      const lines = [...content.children].map((child) => child.getBoundingClientRect());
       const contentBox = box(content);
       return {
         box: box(row),
@@ -157,11 +133,8 @@ async function readLayout(page: Page): Promise<Layout> {
         contentTop: lines[0]?.top ?? contentBox.y,
         contentBottom: lines[lines.length - 1]?.bottom ?? contentBox.bottom,
         inlineAction: (() => {
-          const action = row.querySelector<HTMLElement>(
-            "[data-row-inline-action] button",
-          );
-          if (!action)
-            throw new Error("A vehicle row is missing its inline action");
+          const action = row.querySelector<HTMLElement>("[data-row-inline-action] button");
+          if (!action) throw new Error("A vehicle row is missing its inline action");
           const rect = action.getBoundingClientRect();
           return { width: rect.width, height: rect.height };
         })(),
@@ -182,9 +155,7 @@ async function readLayout(page: Page): Promise<Layout> {
       attributionText: attribution.textContent?.trim() ?? "",
       attributionLines,
       safeBottom,
-      sheetPaddingBottom: Number.parseFloat(
-        window.getComputedStyle(sheet).paddingBottom,
-      ),
+      sheetPaddingBottom: Number.parseFloat(window.getComputedStyle(sheet).paddingBottom),
       vehicleCount: Number(sheet.dataset.vehicleCount ?? ""),
       harness: harness ? box(harness) : null,
       panel: panel ? box(panel) : null,
@@ -204,19 +175,13 @@ function assertRows(layout: Layout, scroll: Scroll, snap: Snap): void {
   // expose list rows or push the search field off screen.
   if (snap === "peek") {
     expect(layout.header.height, "peek header height").toBeCloseTo(113, 0);
-    expect(layout.viewportHeight - layout.sheet.y, "peek height").toBeCloseTo(
-      113,
-      0,
-    );
+    expect(layout.viewportHeight - layout.sheet.y, "peek height").toBeCloseTo(113, 0);
 
     // A collapsed sheet has no list viewport, so the virtualiser renders no
     // rows. The list region is exactly the header's height: zero.
     expect(rows, "peek renders list rows").toHaveLength(0);
     const peekInset = Math.max(layout.safeBottom, layout.sheetPaddingBottom);
-    expect(layout.scroller.y, "peek list top").toBeCloseTo(
-      layout.header.bottom,
-      0,
-    );
+    expect(layout.scroller.y, "peek list top").toBeCloseTo(layout.header.bottom, 0);
     expect(layout.scroller.bottom, "peek list bottom").toBeCloseTo(
       layout.sheetBottom - peekInset,
       0,
@@ -235,69 +200,42 @@ function assertRows(layout: Layout, scroll: Scroll, snap: Snap): void {
     expect(row.box.height, `row ${index} height`).toBeCloseTo(ROW_HEIGHT, 0);
     const next = rows[index + 1];
     if (next) {
-      expect(
-        row.box.bottom,
-        `row ${index} touches row ${index + 1}`,
-      ).toBeCloseTo(next.box.y, 0);
+      expect(row.box.bottom, `row ${index} touches row ${index + 1}`).toBeCloseTo(next.box.y, 0);
     }
 
     // Content fills the row, is centred and has symmetrical padding.
     expect(row.content.y, `row ${index} content top`).toBeCloseTo(row.box.y, 0);
-    expect(row.content.height, `row ${index} content height`).toBeCloseTo(
-      ROW_HEIGHT,
-      0,
-    );
+    expect(row.content.height, `row ${index} content height`).toBeCloseTo(ROW_HEIGHT, 0);
     expect(row.contentCentre, `row ${index} content centre`).toBeCloseTo(
       row.box.y + row.box.height / 2,
       0,
     );
     expect(row.justify, `row ${index} justify`).toBe("center");
     expect(row.paddingTop, `row ${index} top padding`).toBe(row.paddingBottom);
-    expect(
-      row.contentTop - row.box.y,
-      `row ${index} line group top`,
-    ).toBeCloseTo(row.box.bottom - row.contentBottom, 0);
+    expect(row.contentTop - row.box.y, `row ${index} line group top`).toBeCloseTo(
+      row.box.bottom - row.contentBottom,
+      0,
+    );
     expect(
       row.divider.y - row.contentBottom,
       `row ${index} space above the divider`,
     ).toBeGreaterThanOrEqual(6 - TOLERANCE);
-    expect(
-      row.inlineAction.height,
-      `row ${index} inline action height`,
-    ).toBeGreaterThanOrEqual(44);
-    expect(
-      row.inlineAction.width,
-      `row ${index} inline action width`,
-    ).toBeGreaterThanOrEqual(44);
+    expect(row.inlineAction.height, `row ${index} inline action height`).toBeGreaterThanOrEqual(44);
+    expect(row.inlineAction.width, `row ${index} inline action width`).toBeGreaterThanOrEqual(44);
 
     // The divider is a 1px line on the row's bottom edge, spanning its width.
     expect(row.divider.height, `row ${index} divider height`).toBeCloseTo(1, 0);
-    expect(row.divider.bottom, `row ${index} divider bottom`).toBeCloseTo(
-      row.box.bottom,
-      0,
-    );
-    expect(row.divider.x, `row ${index} divider left`).toBeCloseTo(
-      layout.header.x,
-      0,
-    );
-    expect(row.divider.right, `row ${index} divider right`).toBeCloseTo(
-      layout.header.right,
-      0,
-    );
+    expect(row.divider.bottom, `row ${index} divider bottom`).toBeCloseTo(row.box.bottom, 0);
+    expect(row.divider.x, `row ${index} divider left`).toBeCloseTo(layout.header.x, 0);
+    expect(row.divider.right, `row ${index} divider right`).toBeCloseTo(layout.header.right, 0);
   }
 
-  expect(layout.listHeight, "virtual total").toBeCloseTo(
-    layout.vehicleCount * ROW_HEIGHT,
-    0,
-  );
+  expect(layout.listHeight, "virtual total").toBeCloseTo(layout.vehicleCount * ROW_HEIGHT, 0);
 
   // The list starts at the header's bottom and fills down to the sheet's bottom.
   const bottomInset = Math.max(layout.safeBottom, layout.sheetPaddingBottom);
   expect(layout.scroller.y, "list top").toBeCloseTo(layout.header.bottom, 0);
-  expect(layout.scroller.bottom, "list bottom").toBeCloseTo(
-    layout.sheetBottom - bottomInset,
-    0,
-  );
+  expect(layout.scroller.bottom, "list bottom").toBeCloseTo(layout.sheetBottom - bottomInset, 0);
   expect(layout.scroller.height, "list height").toBeCloseTo(
     layout.sheet.height - layout.header.height - bottomInset,
     0,
@@ -309,9 +247,7 @@ function assertRows(layout: Layout, scroll: Scroll, snap: Snap): void {
     expect(last, "last row").toBeDefined();
     if (!last) return;
     const below = layout.sheetBottom - last.box.bottom;
-    expect(below, "space below the last row").toBeGreaterThanOrEqual(
-      12 + bottomInset - TOLERANCE,
-    );
+    expect(below, "space below the last row").toBeGreaterThanOrEqual(12 + bottomInset - TOLERANCE);
     expect(last.box.bottom, "last row inside the list").toBeLessThanOrEqual(
       layout.scroller.bottom + TOLERANCE,
     );
@@ -329,42 +265,27 @@ function assertAttribution(layout: Layout, snap: Snap): void {
   );
 
   // Directly below the controls, right-aligned, with an 8px gap.
-  expect(
-    attribution.y - controls.bottom,
-    "gap below controls",
-  ).toBeGreaterThanOrEqual(8 - TOLERANCE);
-  expect(attribution.right, "attribution right edge").toBeCloseTo(
-    controls.right,
-    0,
+  expect(attribution.y - controls.bottom, "gap below controls").toBeGreaterThanOrEqual(
+    8 - TOLERANCE,
   );
+  expect(attribution.right, "attribution right edge").toBeCloseTo(controls.right, 0);
 
   // Above the sheet at every snap, and clear of the other floating surfaces.
   expect(attribution.bottom, "attribution above the sheet").toBeLessThanOrEqual(
     layout.sheet.y + TOLERANCE,
   );
-  expect(
-    overlap(attribution, layout.sheet),
-    "attribution overlaps the sheet",
-  ).toBe(false);
+  expect(overlap(attribution, layout.sheet), "attribution overlaps the sheet").toBe(false);
   if (layout.harness) {
-    expect(
-      overlap(attribution, layout.harness),
-      "attribution overlaps the harness",
-    ).toBe(false);
+    expect(overlap(attribution, layout.harness), "attribution overlaps the harness").toBe(false);
   }
   if (layout.panel) {
-    expect(
-      overlap(attribution, layout.panel),
-      "attribution overlaps the panel",
-    ).toBe(false);
+    expect(overlap(attribution, layout.panel), "attribution overlaps the panel").toBe(false);
   }
 
   // The credit survives the controls hiding above 60% sheet height.
   if (snap === "full") {
     expect(Number.parseFloat(controls.opacity), "controls opacity").toBe(0);
-    expect(Number.parseFloat(attribution.opacity), "attribution opacity").toBe(
-      1,
-    );
+    expect(Number.parseFloat(attribution.opacity), "attribution opacity").toBe(1);
   }
 }
 
@@ -377,22 +298,16 @@ async function setSnap(page: Page, snap: Snap): Promise<void> {
     await page.keyboard.press("ArrowUp");
   }
   if (snap === "full") await page.keyboard.press("End");
-  await expect(handle).toHaveAttribute(
-    "aria-expanded",
-    snap === "peek" ? "false" : "true",
-  );
+  await expect(handle).toHaveAttribute("aria-expanded", snap === "peek" ? "false" : "true");
   await page.waitForTimeout(350);
 }
 
 async function setScroll(page: Page, scroll: Scroll): Promise<void> {
   await page.evaluate((mode) => {
-    const element = document.querySelector(
-      'ul[aria-label="Vehicles"]',
-    )?.parentElement;
+    const element = document.querySelector('ul[aria-label="Vehicles"]')?.parentElement;
     if (!element) return;
     if (mode === "top") element.scrollTop = 0;
-    if (mode === "middle")
-      element.scrollTop = (element.scrollHeight - element.clientHeight) / 2;
+    if (mode === "middle") element.scrollTop = (element.scrollHeight - element.clientHeight) / 2;
     if (mode === "end") element.scrollTop = element.scrollHeight;
   }, scroll);
   await page.waitForTimeout(150);
@@ -401,23 +316,17 @@ async function setScroll(page: Page, scroll: Scroll): Promise<void> {
 async function gotoFleet(page: Page, fleet: number): Promise<void> {
   await page.goto(`/map?map=fake&perf=${fleet}`);
   await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
-  await expect(
-    page.getByText(new RegExp(`Showing ${fleet} of ${fleet}`)),
-  ).toBeVisible();
+  await expect(page.getByText(new RegExp(`Showing ${fleet} of ${fleet}`))).toBeVisible();
   await page.getByRole("button", { name: /Showing \d+ of \d+/ }).waitFor();
   await page.evaluate((count) => {
-    const sheet = document.querySelector<HTMLElement>(
-      'section[aria-label="Vehicles"]',
-    );
+    const sheet = document.querySelector<HTMLElement>('section[aria-label="Vehicles"]');
     if (sheet) sheet.dataset.vehicleCount = String(count);
   }, fleet);
 }
 
 test.describe("mobile sheet rows and attribution", { tag: "@theme" }, () => {
   for (const viewport of VIEWPORTS) {
-    test(`rows line up at ${viewport.width}x${viewport.height}`, async ({
-      page,
-    }) => {
+    test(`rows line up at ${viewport.width}x${viewport.height}`, async ({ page }) => {
       test.skip(
         (page.viewportSize()?.width ?? 1440) >= 1024,
         "the bottom sheet only exists below lg",
@@ -447,18 +356,12 @@ test.describe("mobile sheet rows and attribution", { tag: "@theme" }, () => {
       await gotoFleet(page, 25);
       await setSnap(page, "peek");
       await setScroll(page, "top");
-      await captureForReview(
-        page,
-        `sheet-rows-${viewport.width}x${viewport.height}-peek`,
-      );
+      await captureForReview(page, `sheet-rows-${viewport.width}x${viewport.height}-peek`);
     });
   }
 
   test("the last row clears a bottom safe-area inset", async ({ page }) => {
-    test.skip(
-      (page.viewportSize()?.width ?? 1440) >= 1024,
-      "mobile-only layout",
-    );
+    test.skip((page.viewportSize()?.width ?? 1440) >= 1024, "mobile-only layout");
     await page.setViewportSize({ width: 390, height: 844 });
     await gotoFleet(page, 25);
     await setSnap(page, "full");

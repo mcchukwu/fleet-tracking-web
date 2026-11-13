@@ -113,7 +113,9 @@ test.describe("map", () => {
 
     await page.goto("/map?map=fake&q=LSD-100");
     await openPanel(page);
-    await expect((await panel(page)).getByRole("searchbox", { name: "Search vehicles" })).toHaveValue("LSD-100");
+    await expect(
+      (await panel(page)).getByRole("searchbox", { name: "Search vehicles" }),
+    ).toHaveValue("LSD-100");
     await expect((await panel(page)).getByText("Showing 1 of 25")).toBeVisible();
 
     await gotoMap(page);
@@ -186,14 +188,10 @@ test.describe("map", () => {
     await gotoMap(page);
     await openPanel(page);
 
-    await (await panel(page))
-      .getByRole("button", { name: "Select LSD-100-AA" })
-      .click();
+    await (await panel(page)).getByRole("button", { name: "Select LSD-100-AA" }).click();
     await expect(page).toHaveURL(/v=[0-9a-f-]{36}/);
     await expect(
-      isMobile(page)
-        ? page.getByTestId("vehicle-detail-sheet")
-        : page.getByTestId("drawer"),
+      isMobile(page) ? page.getByTestId("vehicle-detail-sheet") : page.getByTestId("drawer"),
     ).toBeVisible();
     await expect
       .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.selectedKey))
@@ -239,9 +237,7 @@ test.describe("map", () => {
     await gotoMap(page);
     await openPanel(page);
 
-    await (await panel(page))
-      .getByRole("searchbox", { name: "Search vehicles" })
-      .fill("ZZZ");
+    await (await panel(page)).getByRole("searchbox", { name: "Search vehicles" }).fill("ZZZ");
     await expect((await panel(page)).getByText('No vehicles match "ZZZ"')).toBeVisible();
     await expect((await panel(page)).getByText("Clear the filter to see all 25.")).toBeVisible();
     await captureForReview(page, "02-map-empty");
@@ -308,7 +304,9 @@ test.describe("map", () => {
     await captureForReview(page, "02-map-cached-error");
   });
 
-  test("a forbidden snapshot shows the forbidden state without inventing data", async ({ page }) => {
+  test("a forbidden snapshot shows the forbidden state without inventing data", async ({
+    page,
+  }) => {
     await page.goto("/map?map=fake&fault=live-snapshot:forbidden");
     await expect(page.getByText(/You don't have access to this/).first()).toBeVisible({
       timeout: 15_000,
@@ -332,13 +330,13 @@ test.describe("map", () => {
 
   test("an unknown geofence kind still renders the map", async ({ page }) => {
     await gotoMap(page, "fault=geofences:unknown_enum");
-    await expect
-      .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.geofenceCount))
-      .toBe(1);
+    await expect.poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.geofenceCount)).toBe(1);
     await expect(page.getByText("Geofences didn't load")).toHaveCount(0);
   });
 
-  test("offline keeps the cached fleet and marks it stale instead of erroring", async ({ page }) => {
+  test("offline keeps the cached fleet and marks it stale instead of erroring", async ({
+    page,
+  }) => {
     await gotoMap(page);
     await openPanel(page);
 
@@ -441,9 +439,7 @@ test.describe("map", () => {
     await gotoMap(page);
 
     await page.getByRole("button", { name: "Hide geofences" }).click();
-    await expect
-      .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.geofenceCount))
-      .toBe(0);
+    await expect.poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.geofenceCount)).toBe(0);
     await captureForReview(page, "02-map-geofences-off");
   });
 

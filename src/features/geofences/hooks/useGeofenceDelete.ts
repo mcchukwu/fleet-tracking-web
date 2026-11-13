@@ -28,9 +28,13 @@ export interface GeofenceDeleteController {
 }
 
 function markWriteUnknown(cause: unknown): AppError {
-  const error = normalize(cause, { action: "delete a geofence", resource: "the geofence" }, {
-    outcome: "unknown",
-  });
+  const error = normalize(
+    cause,
+    { action: "delete a geofence", resource: "the geofence" },
+    {
+      outcome: "unknown",
+    },
+  );
   if (
     error.outcome === "unknown" &&
     error.kind !== "network" &&
@@ -81,18 +85,25 @@ export function useGeofenceDelete(): GeofenceDeleteController {
         {
           action: "delete a geofence",
           resource: "the geofence",
-          reconcile: async () =>
-            reconcileGeofenceDelete(await fetchFreshGeofences(), geofence.id),
+          reconcile: async () => reconcileGeofenceDelete(await fetchFreshGeofences(), geofence.id),
         },
       );
 
       if (result.status === "success") {
-        toast({ title: "Geofence deleted.", tone: "success", key: `geofence-deleted:${geofence.id}` });
+        toast({
+          title: "Geofence deleted.",
+          tone: "success",
+          key: `geofence-deleted:${geofence.id}`,
+        });
         return { status: "deleted" };
       }
       if (result.status === "reconciled") {
         await invalidateGeofences();
-        toast({ title: "It was deleted.", tone: "success", key: `geofence-deleted:${geofence.id}` });
+        toast({
+          title: "It was deleted.",
+          tone: "success",
+          key: `geofence-deleted:${geofence.id}`,
+        });
         return { status: "reconciled" };
       }
 

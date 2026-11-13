@@ -1,10 +1,6 @@
 import { onlineManager } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  createConnectivity,
-  resetConnection,
-  useConnectionStore,
-} from "./connection";
+import { createConnectivity, resetConnection, useConnectionStore } from "./connection";
 
 const connectivityListeners: Array<() => void> = [];
 

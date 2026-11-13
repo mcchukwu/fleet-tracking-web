@@ -18,12 +18,7 @@ export interface TooltipProps {
   className?: string;
 }
 
-export function Tooltip({
-  label,
-  children,
-  side = "bottom",
-  className,
-}: TooltipProps) {
+export function Tooltip({ label, children, side = "bottom", className }: TooltipProps) {
   return (
     <TooltipPrimitive.Root>
       <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>

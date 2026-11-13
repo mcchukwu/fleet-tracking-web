@@ -22,8 +22,7 @@ const iconButtonStyles = cva(
 );
 
 interface IconButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof iconButtonStyles> {
+  extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof iconButtonStyles> {
   label: string;
   icon: ReactNode;
   ref?: Ref<HTMLButtonElement>;

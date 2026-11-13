@@ -38,9 +38,7 @@ describe("SearchInput", () => {
   });
 
   it("can suppress the global / hint without losing the clear button", () => {
-    const { rerender } = render(
-      <SearchInput value="" onChange={vi.fn()} shortcutHint={false} />,
-    );
+    const { rerender } = render(<SearchInput value="" onChange={vi.fn()} shortcutHint={false} />);
     expect(screen.queryByText("/")).toBeNull();
 
     rerender(<SearchInput value="Lekki" onChange={vi.fn()} shortcutHint={false} />);

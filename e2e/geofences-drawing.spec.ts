@@ -110,9 +110,7 @@ test.describe("geofences real drawing", () => {
     await clickMapPoint(page, 0.55, 0.45);
     await page.keyboard.press("Escape");
     await expect
-      .poll(() =>
-        page.evaluate(() => window.__FLEET_TEST_MAP__?.draw?.getGeometry() ?? null),
-      )
+      .poll(() => page.evaluate(() => window.__FLEET_TEST_MAP__?.draw?.getGeometry() ?? null))
       .toBeNull();
     await second.getByRole("button", { name: "Cancel" }).click();
     expect(await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? [])).toHaveLength(1);

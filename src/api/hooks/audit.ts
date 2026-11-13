@@ -1,4 +1,9 @@
-import { infiniteQueryOptions, queryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import {
+  infiniteQueryOptions,
+  queryOptions,
+  useInfiniteQuery,
+  useQuery,
+} from "@tanstack/react-query";
 import { api } from "../instance";
 import { queryKeys } from "../keys";
 
@@ -14,9 +19,7 @@ export function auditFeedQueryOptions(enabled = true) {
     // A dropped malformed row shrinks the parsed page, so page from the raw
     // count the server returned; otherwise one bad row hides older entries.
     getNextPageParam: (lastPage, _pages, lastPageParam) =>
-      lastPage.received >= AUDIT_PAGE_SIZE
-        ? lastPageParam + AUDIT_PAGE_SIZE
-        : undefined,
+      lastPage.received >= AUDIT_PAGE_SIZE ? lastPageParam + AUDIT_PAGE_SIZE : undefined,
     staleTime: 0,
     refetchOnWindowFocus: true,
     enabled,

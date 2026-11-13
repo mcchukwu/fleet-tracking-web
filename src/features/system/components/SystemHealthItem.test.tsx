@@ -17,9 +17,7 @@ describe("SystemHealthItem", () => {
       />,
     );
 
-    expect(
-      screen.getByRole("img", { name: "Redis: Critical" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Redis: Critical" })).toBeInTheDocument();
     expect(screen.getByText("Redis")).toBeVisible();
     expect(screen.getByText("Down")).toBeVisible();
     expect(screen.getByText("Dependency")).toBeVisible();

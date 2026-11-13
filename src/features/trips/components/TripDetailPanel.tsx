@@ -7,12 +7,7 @@ import { InlineError } from "../../../errors/InlineError";
 import type { AppError } from "../../../errors/types";
 import { MISSING, formatDistance } from "../../../lib/format";
 import { isTripStatus, tripStatusLabel } from "../../../lib/status";
-import {
-  canCancelTrip,
-  nextTripAction,
-  tripDistanceKm,
-  type TripAction,
-} from "../../../lib/trips";
+import { canCancelTrip, nextTripAction, tripDistanceKm, type TripAction } from "../../../lib/trips";
 import { Badge, TripStatusBadge } from "../../../ui/Badge";
 import { Button } from "../../../ui/Button";
 import { CopyButton } from "../../../ui/CopyButton";
@@ -237,12 +232,14 @@ function ResolvedTripDetail({
             Timeline
           </h3>
           <ol className="border-border border-l pl-3">
-            <TimelineRow label="Started" {...(trip.started_at ? { iso: trip.started_at } : {})} accent />
+            <TimelineRow
+              label="Started"
+              {...(trip.started_at ? { iso: trip.started_at } : {})}
+              accent
+            />
             <TimelineRow label="Ended" {...(trip.ended_at ? { iso: trip.ended_at } : {})} />
           </ol>
-          <p className="text-muted mt-1 text-xs">
-            The API records only the start and end times.
-          </p>
+          <p className="text-muted mt-1 text-xs">The API records only the start and end times.</p>
         </section>
 
         <section aria-labelledby="trip-vehicle-heading">
@@ -262,12 +259,7 @@ function ResolvedTripDetail({
               />
             </Field>
             <Field label="Trip id">
-              <CopyButton
-                inline
-                value={trip.id}
-                label="trip id"
-                className="text-xs break-all"
-              />
+              <CopyButton inline value={trip.id} label="trip id" className="text-xs break-all" />
             </Field>
           </dl>
         </section>

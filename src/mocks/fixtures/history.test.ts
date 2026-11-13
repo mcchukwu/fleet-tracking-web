@@ -25,7 +25,11 @@ describe("generateHistory", () => {
 
   it("keeps timestamps ascending with the five point fields", () => {
     const points = generateHistory("vehicle", fromMs, toMs, "30s");
-    expect(points.every((point, index) => index === 0 || Date.parse(point.t) > Date.parse(points[index - 1]!.t))).toBe(true);
+    expect(
+      points.every(
+        (point, index) => index === 0 || Date.parse(point.t) > Date.parse(points[index - 1]!.t),
+      ),
+    ).toBe(true);
     expect(points[0]).toMatchObject({
       speed_kph: expect.any(Number),
       heading_deg: expect.any(Number),
@@ -38,7 +42,9 @@ describe("generateHistory", () => {
     const normal = generateHistory("normal", fromMs, Date.parse("2026-11-08T16:00:00Z"), "30s");
     const gap = generateHistory(GAP_VEHICLE_ID, fromMs, Date.parse("2026-11-08T16:00:00Z"), "30s");
     expect(gap.length).toBeLessThan(normal.length);
-    const deltas = gap.slice(1).map((point, index) => Date.parse(point.t) - Date.parse(gap[index]!.t));
+    const deltas = gap
+      .slice(1)
+      .map((point, index) => Date.parse(point.t) - Date.parse(gap[index]!.t));
     expect(Math.max(...deltas)).toBeGreaterThan(5 * 60_000);
   });
 

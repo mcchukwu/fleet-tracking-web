@@ -1,12 +1,6 @@
 import type { ZodType } from "zod";
 import { onlineManager } from "@tanstack/react-query";
-import {
-  ApiError,
-  ContractError,
-  isApiError,
-  TimeoutError,
-  type AppError,
-} from "../errors/types";
+import { ApiError, ContractError, isApiError, TimeoutError, type AppError } from "../errors/types";
 import { normalize } from "../errors/normalize";
 import { recordError, recordSessionCheckSuccess } from "../errors/report";
 import { endpointTimeouts } from "./timeouts";
@@ -96,10 +90,7 @@ export class FleetApiClient {
   private readonly baseUrl: string;
   private readonly fetcher: typeof fetch;
 
-  constructor(
-    baseUrl = import.meta.env.VITE_API_BASE ?? "",
-    fetcher: typeof fetch = fetch,
-  ) {
+  constructor(baseUrl = import.meta.env.VITE_API_BASE ?? "", fetcher: typeof fetch = fetch) {
     this.baseUrl = baseUrl;
     this.fetcher = fetcher.bind(globalThis);
   }
@@ -136,11 +127,15 @@ export class FleetApiClient {
     // A write is never attempted or queued offline. The UI disables the control;
     // this guard makes a programmatic call fail immediately as well.
     if (method !== "GET" && !onlineManager.isOnline()) {
-      throw normalize(new TypeError("offline"), {
-        route: currentRoute(),
-        resource: path.split("?")[0],
-        action: method.toLowerCase(),
-      }, { offline: true });
+      throw normalize(
+        new TypeError("offline"),
+        {
+          route: currentRoute(),
+          resource: path.split("?")[0],
+          action: method.toLowerCase(),
+        },
+        { offline: true },
+      );
     }
     try {
       return await this.send<T>(method, path, body, options, true);
@@ -285,7 +280,11 @@ export class FleetApiClient {
     );
   }
 
-  async login(email: string, password: string, options: RequestOptions = {}): Promise<LoginResponse> {
+  async login(
+    email: string,
+    password: string,
+    options: RequestOptions = {},
+  ): Promise<LoginResponse> {
     const result = await this.validated(
       this.request<unknown>("POST", "/auth/login", { email, password }, options),
       loginResponseSchema,
@@ -313,7 +312,12 @@ export class FleetApiClient {
   }
 
   vehicles(filters: VehicleFilters = {}, options: RequestOptions = {}) {
-    return this.request<{ data: Vehicle[] }>("GET", `/vehicles${queryString(filters)}`, undefined, options);
+    return this.request<{ data: Vehicle[] }>(
+      "GET",
+      `/vehicles${queryString(filters)}`,
+      undefined,
+      options,
+    );
   }
 
   async vehicle(id: string, options: RequestOptions = {}) {
@@ -454,7 +458,10 @@ export class FleetApiClient {
   }
 
   systemHealth(options: RequestOptions = {}): Promise<SystemHealth> {
-    return this.validated(this.request<unknown>("GET", "/system/health", undefined, options), systemHealthSchema);
+    return this.validated(
+      this.request<unknown>("GET", "/system/health", undefined, options),
+      systemHealthSchema,
+    );
   }
 
   async audit(filters: AuditFilters, options: RequestOptions = {}) {
@@ -480,7 +487,6 @@ export class FleetApiClient {
       importResultSchema,
     );
   }
-
 }
 
 export type { AppError };

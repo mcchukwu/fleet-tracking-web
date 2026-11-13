@@ -32,9 +32,7 @@ describe("Drawer", () => {
     const user = userEvent.setup();
     render(<Harness />);
 
-    await user.click(
-      screen.getByRole("button", { name: "Open vehicle details" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Open vehicle details" }));
 
     const panel = screen.getByRole("complementary", {
       name: "Vehicle details for LSD-100-AA",
@@ -52,18 +50,12 @@ describe("Drawer", () => {
     const onReturn = vi.fn();
     render(<Harness onReturn={onReturn} />);
 
-    await user.click(
-      screen.getByRole("button", { name: "Open vehicle details" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Open vehicle details" }));
     await waitFor(() => {
-      expect(
-        screen.getByRole("button", { name: "Close vehicle details" }),
-      ).toHaveFocus();
+      expect(screen.getByRole("button", { name: "Close vehicle details" })).toHaveFocus();
     });
 
-    await user.click(
-      screen.getByRole("button", { name: "Close vehicle details" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Close vehicle details" }));
     await waitFor(() => expect(onReturn).toHaveBeenCalledTimes(1));
   });
 
@@ -73,11 +65,7 @@ describe("Drawer", () => {
       const originRef = useRef<HTMLButtonElement>(null);
       return (
         <div>
-          <button
-            ref={originRef}
-            type="button"
-            onClick={() => setOpen(true)}
-          >
+          <button ref={originRef} type="button" onClick={() => setOpen(true)}>
             Open vehicle details
           </button>
           {open ? (
@@ -105,13 +93,9 @@ describe("Drawer", () => {
         <MountedHarness />
       </StrictMode>,
     );
-    await user.click(
-      screen.getByRole("button", { name: "Open vehicle details" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Open vehicle details" }));
     await waitFor(() => {
-      expect(
-        screen.getByRole("button", { name: "Close vehicle details" }),
-      ).toHaveFocus();
+      expect(screen.getByRole("button", { name: "Close vehicle details" })).toHaveFocus();
     });
   });
 
@@ -125,9 +109,7 @@ describe("Drawer", () => {
       </div>,
     );
 
-    await user.click(
-      screen.getByRole("button", { name: "Open vehicle details" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Open vehicle details" }));
     await user.keyboard("{Escape}");
 
     await waitFor(() => {
@@ -166,9 +148,7 @@ describe("Drawer", () => {
     expect(panel).toHaveAttribute("data-placement", "page");
     expect(panel).toHaveClass("absolute", "top-1/4", "rounded-t-lg");
     expect(panel).toHaveClass("md:top-3", "md:rounded-lg");
-    expect(
-      screen.getByRole("button", { name: "Close alert details" }),
-    ).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Close alert details" })).toHaveFocus();
 
     await user.keyboard("{Escape}");
     expect(onClose).toHaveBeenCalledTimes(1);

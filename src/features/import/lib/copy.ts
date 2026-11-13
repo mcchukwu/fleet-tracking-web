@@ -62,10 +62,7 @@ export interface ImportFailureHints {
   remainingSec?: number;
 }
 
-export function importFailureCopy(
-  error: AppError,
-  hints: ImportFailureHints = {},
-): ImportCopy {
+export function importFailureCopy(error: AppError, hints: ImportFailureHints = {}): ImportCopy {
   if (error.kind === "aborted") {
     return { title: "Upload cancelled", detail: "Nothing was imported." };
   }
@@ -112,9 +109,7 @@ export function importFailureCopy(
     return {
       title: copy.title,
       detail:
-        hints.remainingSec > 0
-          ? `Try again in ${hints.remainingSec}s.`
-          : "You can try again now.",
+        hints.remainingSec > 0 ? `Try again in ${hints.remainingSec}s.` : "You can try again now.",
     };
   }
   return { title: copy.title, detail: copy.detail };

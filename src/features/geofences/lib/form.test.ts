@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { LngLat } from "../../../map/types";
-import {
-  GEOFENCE_FORM_DEFAULT,
-  geofenceFormSchema,
-  toCreateInput,
-  toUpdateInput,
-} from "./form";
+import { GEOFENCE_FORM_DEFAULT, geofenceFormSchema, toCreateInput, toUpdateInput } from "./form";
 
 const square: LngLat[] = [
   [3.4, 6.4],

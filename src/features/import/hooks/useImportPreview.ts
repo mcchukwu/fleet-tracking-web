@@ -19,9 +19,7 @@ function extensionIsCsv(name: string): boolean {
 }
 
 export function useImportPreview(file: File | null): ImportPreviewController {
-  const [state, setState] = useState<ImportPreviewState>(
-    file ? "parsing" : "idle",
-  );
+  const [state, setState] = useState<ImportPreviewState>(file ? "parsing" : "idle");
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [issue, setIssue] = useState<PreviewIssue | null>(null);
   const requestId = useRef(0);

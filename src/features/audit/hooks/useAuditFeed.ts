@@ -30,8 +30,7 @@ export function useAuditFeed(): AuditFeedController {
   // A successful page response after the marker clears the cancelled state
   // without an effect: the marker is the last update time at the moment of cancel.
   const [cancelMarker, setCancelMarker] = useState<number | null>(null);
-  const cancelled =
-    cancelMarker !== null && query.dataUpdatedAt <= cancelMarker;
+  const cancelled = cancelMarker !== null && query.dataUpdatedAt <= cancelMarker;
 
   const entries = useMemo(
     () => flattenAuditPages((query.data?.pages ?? []).map((page) => page.data)),

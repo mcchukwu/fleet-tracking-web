@@ -145,11 +145,7 @@ export function metadataSummary(metadata: Record<string, unknown>): string {
     .join(" · ");
 }
 
-export type AuditEmptyReason =
-  | "offline"
-  | "no-data"
-  | "no-results"
-  | "no-loaded-matches";
+export type AuditEmptyReason = "offline" | "no-data" | "no-results" | "no-loaded-matches";
 
 export interface AuditEmptyInput {
   loadedCount: number;

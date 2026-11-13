@@ -124,13 +124,9 @@ function tableRow(name: string, value: Box | null): void {
 }
 
 async function gotoPlayback(page: Page, events: number): Promise<void> {
-  await page.goto(
-    `${BASE_URL}/playback?map=fake&vehicle=${VEHICLE}&events=${events}`,
-  );
+  await page.goto(`${BASE_URL}/playback?map=fake&vehicle=${VEHICLE}&events=${events}`);
   await page.getByRole("region", { name: "Playback controls" }).waitFor();
-  await page
-    .getByRole("slider", { name: "Playback position" })
-    .waitFor();
+  await page.getByRole("slider", { name: "Playback position" }).waitFor();
   await page.waitForFunction(
     () => (window.__FLEET_DEBUG__?.playback?.pointCount ?? 0) > 0,
     undefined,
@@ -151,7 +147,10 @@ async function measureBar(page: Page): Promise<void> {
     ["transport step fwd", page.getByRole("button", { name: "Step forward one position" })],
     ["events trigger", page.getByRole("button", { name: /^Events \(/ })],
     ["fit route", page.getByRole("button", { name: "Fit route" })],
-    ["scrubber root", page.getByRole("slider", { name: "Playback position" }).locator("xpath=../..")],
+    [
+      "scrubber root",
+      page.getByRole("slider", { name: "Playback position" }).locator("xpath=../.."),
+    ],
     ["scrubber track", page.getByRole("slider", { name: "Playback position" }).locator("xpath=..")],
     ["slider", page.getByRole("slider", { name: "Playback position" })],
     ["current time", page.getByTestId("playback-current-time")],
@@ -174,9 +173,7 @@ async function measureMenu(page: Page, events: number): Promise<void> {
     const firstBox = await first.boundingBox();
     const secondBox = await items.nth(1).boundingBox();
     if (firstBox && secondBox) {
-      console.log(
-        `item gap: ${num(secondBox.y - (firstBox.y + firstBox.height))}px`,
-      );
+      console.log(`item gap: ${num(secondBox.y - (firstBox.y + firstBox.height))}px`);
     }
   }
   const badge = first.getByText(/^(Low|Medium|High|Critical)$/);
@@ -211,9 +208,7 @@ async function scrubberBoxes(page: Page): Promise<void> {
   await page.waitForTimeout(100);
   const end = await box(slider);
   const middleValue = await page.evaluate(() => {
-    const input = document.querySelector<HTMLInputElement>(
-      'input[aria-label="Playback position"]',
-    );
+    const input = document.querySelector<HTMLInputElement>('input[aria-label="Playback position"]');
     if (!input) return null;
     return String(Math.round((Number(input.min) + Number(input.max)) / 2));
   });
@@ -232,9 +227,7 @@ async function scrubberBoxes(page: Page): Promise<void> {
 async function main(): Promise<void> {
   const browser = await chromium.launch({
     executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH,
-    args: process.env.PLAYWRIGHT_CHROMIUM_PATH
-      ? ["--no-sandbox", "--disable-dev-shm-usage"]
-      : [],
+    args: process.env.PLAYWRIGHT_CHROMIUM_PATH ? ["--no-sandbox", "--disable-dev-shm-usage"] : [],
   });
   try {
     for (const theme of THEMES) {

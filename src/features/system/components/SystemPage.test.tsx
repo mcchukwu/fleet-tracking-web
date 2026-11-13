@@ -14,9 +14,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ to, children }: { to: string; children: ReactNode }) => (
-    <a href={to}>{children}</a>
-  ),
+  Link: ({ to, children }: { to: string; children: ReactNode }) => <a href={to}>{children}</a>,
 }));
 
 vi.mock("../hooks/useSystemHealthFeed", () => ({
@@ -63,22 +61,16 @@ describe("SystemPage", () => {
   it("renders the summary, updated line and all three groups", async () => {
     renderPage();
 
-    expect(
-      screen.getByRole("heading", { name: "System health", level: 1 }),
-    ).toBeVisible();
+    expect(screen.getByRole("heading", { name: "System health", level: 1 })).toBeVisible();
     expect(screen.getByText("All systems healthy")).toBeVisible();
     expect(screen.getByText(/Health updated/)).toBeVisible();
-    expect(
-      screen.getByRole("heading", { name: "Dependencies", level: 2 }),
-    ).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Dependencies", level: 2 })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Fleet", level: 2 })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Ingest", level: 2 })).toBeVisible();
     expect(screen.getByText("20 of 25")).toBeVisible();
     expect(screen.getByText("Received")).toBeVisible();
     expect(screen.getByText("72,180", { exact: true })).toBeVisible();
-    await waitFor(() =>
-      expect(document.title).toBe("System health · Fleet Console"),
-    );
+    await waitFor(() => expect(document.title).toBe("System health · Fleet Console"));
   });
 
   it("shows the skeleton after 200ms while the first load runs", async () => {
@@ -116,9 +108,7 @@ describe("SystemPage", () => {
     });
     renderPage();
 
-    expect(
-      screen.getByText("System health isn't available offline"),
-    ).toBeVisible();
+    expect(screen.getByText("System health isn't available offline")).toBeVisible();
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
   });
 
@@ -144,9 +134,7 @@ describe("SystemPage", () => {
     expect(screen.getByText("Couldn't refresh")).toBeVisible();
     expect(screen.getByText(/Stale ·/)).toBeVisible();
     expect(screen.getByText("20 of 25")).toBeVisible();
-    expect(
-      screen.queryByRole("button", { name: "Refresh" }),
-    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Refresh" })).toBeNull();
   });
 
   it("hides the data behind the forbidden state", () => {
@@ -171,12 +159,8 @@ describe("SystemPage", () => {
     });
     renderPage();
 
-    expect(
-      screen.getByText("Unexpected response from the server"),
-    ).toBeVisible();
-    expect(
-      screen.getByRole("button", { name: "Copy diagnostics" }),
-    ).toBeVisible();
+    expect(screen.getByText("Unexpected response from the server")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Copy diagnostics" })).toBeVisible();
     expect(screen.queryByText("Can't reach the API")).toBeNull();
   });
 

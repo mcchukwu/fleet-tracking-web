@@ -26,8 +26,7 @@ const buttonStyles = cva(
 );
 
 export interface ButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonStyles> {
+  extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonStyles> {
   loading?: boolean;
   leadingIcon?: ReactNode;
   /** Keeps the control focusable and visible, explains why it cannot act. */

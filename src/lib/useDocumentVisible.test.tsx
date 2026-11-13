@@ -35,9 +35,7 @@ describe("useDocumentVisible", () => {
     const remove = vi.spyOn(document, "removeEventListener");
     const { unmount } = renderHook(() => useDocumentVisible());
 
-    const listener = add.mock.calls.find(
-      ([type]) => type === "visibilitychange",
-    )?.[1];
+    const listener = add.mock.calls.find(([type]) => type === "visibilitychange")?.[1];
     expect(listener).toBeDefined();
 
     unmount();

@@ -1,10 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import {
-  captureForReview,
-  expectNoAxeViolations,
-  expectNoHorizontalScroll,
-} from "./helpers";
+import { captureForReview, expectNoAxeViolations, expectNoHorizontalScroll } from "./helpers";
 
 const COMPLETED_TRIP = "8aa551e2-f30b-467b-bd96-b85f342032ef";
 const COMPLETED_VEHICLE = "4324a768-9b14-4223-a299-eb8da4d8d309";
@@ -21,7 +17,9 @@ function row(page: Page, plate: string, status?: string) {
   return status ? base.filter({ hasText: status }) : base;
 }
 
-async function lastWrite(page: Page): Promise<{ method: string; url: string; body: unknown } | undefined> {
+async function lastWrite(
+  page: Page,
+): Promise<{ method: string; url: string; body: unknown } | undefined> {
   return page.evaluate(() => window.__FLEET_MOCK_WRITES__?.at(-1));
 }
 
@@ -40,7 +38,10 @@ test.describe("trips", () => {
     const create = page.getByRole("dialog").filter({ hasText: "Create trip" });
     await expect(create).toBeVisible();
     await create.getByLabel("Vehicle").click();
-    await page.getByRole("option", { name: /LSD-100-AA/ }).first().click();
+    await page
+      .getByRole("option", { name: /LSD-100-AA/ })
+      .first()
+      .click();
     await create.getByLabel("Origin").fill("Refinery Gate");
     await create.getByLabel("Destination").fill("Ibadan Customer");
     await captureForReview(page, "06-trips-create");
@@ -67,7 +68,10 @@ test.describe("trips", () => {
     await expect(assign).toBeVisible();
     await expectNoAxeViolations(page);
     await assign.getByLabel("Driver").click();
-    await page.getByRole("option", { name: /Chinedu Musa/ }).first().click();
+    await page
+      .getByRole("option", { name: /Chinedu Musa/ })
+      .first()
+      .click();
     await captureForReview(page, "06-trips-assign");
     await assign.getByRole("button", { name: "Assign driver" }).click();
 
@@ -200,9 +204,11 @@ test.describe("trips", () => {
     test.skip((page.viewportSize()?.width ?? 1440) < 1024, "desktop-only layout");
     await gotoTrips(page);
 
-    const origin = page.getByRole("button", {
-      name: /Open trip to Ibadan Customer for LSD-100-AA/,
-    }).first();
+    const origin = page
+      .getByRole("button", {
+        name: /Open trip to Ibadan Customer for LSD-100-AA/,
+      })
+      .first();
     await origin.click();
     const drawer = page.getByRole("complementary", { name: "Trip details" });
     await expect(drawer).toBeVisible();
@@ -221,9 +227,7 @@ test.describe("trips", () => {
 
   test("keeps focus in the detail drawer after a transition", async ({ page }) => {
     await gotoTrips(page);
-    await page
-      .getByRole("button", { name: /Open trip to Ibadan Customer for LSD-101-AA/ })
-      .click();
+    await page.getByRole("button", { name: /Open trip to Ibadan Customer for LSD-101-AA/ }).click();
     const drawer = page.getByRole("complementary", { name: "Trip details" });
     await expect(drawer).toBeVisible();
 

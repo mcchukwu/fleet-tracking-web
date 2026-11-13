@@ -22,9 +22,7 @@ function toItems(vehicles: readonly SnapshotVehicle[]): ComboboxItem[] {
   return vehicles.map((vehicle) => ({
     id: vehicle.id,
     label: vehicle.plate,
-    description: [vehicle.external_id, vehicle.depot]
-      .filter(Boolean)
-      .join(" · "),
+    description: [vehicle.external_id, vehicle.depot].filter(Boolean).join(" · "),
     labelClassName: "font-mono",
   }));
 }
@@ -55,9 +53,7 @@ export function VehiclePicker({
 
   if (rows.length === 0 && offline) {
     return (
-      <div
-        className={cn("border-border bg-surface rounded-lg border", className)}
-      >
+      <div className={cn("border-border bg-surface rounded-lg border", className)}>
         <EmptyState
           title="Not available offline"
           description="Vehicles aren't available offline."
@@ -79,9 +75,7 @@ export function VehiclePicker({
       action: "load vehicles",
     });
     return (
-      <div
-        className={cn("border-border bg-surface rounded-lg border", className)}
-      >
+      <div className={cn("border-border bg-surface rounded-lg border", className)}>
         {error.kind === "forbidden" ? (
           <ForbiddenState
             action={
@@ -101,10 +95,7 @@ export function VehiclePicker({
 
   if (showSkeleton) {
     return (
-      <div
-        className={cn("border-border bg-surface rounded-lg border", className)}
-        aria-busy="true"
-      >
+      <div className={cn("border-border bg-surface rounded-lg border", className)} aria-busy="true">
         <VehiclePickerSkeleton />
       </div>
     );
@@ -112,9 +103,7 @@ export function VehiclePicker({
 
   if (rows.length === 0) {
     return (
-      <div
-        className={cn("border-border bg-surface rounded-lg border", className)}
-      >
+      <div className={cn("border-border bg-surface rounded-lg border", className)}>
         <EmptyState
           title="No vehicles yet"
           description="Vehicles appear here when they report."

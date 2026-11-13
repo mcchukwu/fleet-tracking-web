@@ -68,7 +68,11 @@ function isTypingTarget(target: EventTarget | null): boolean {
 
 function pointInRing(point: LngLat, ring: readonly LngLat[]): boolean {
   let inside = false;
-  for (let index = 0, previous = ring.length - 1; index < ring.length; previous = index, index += 1) {
+  for (
+    let index = 0, previous = ring.length - 1;
+    index < ring.length;
+    previous = index, index += 1
+  ) {
     const a = ring[index];
     const b = ring[previous];
     if (!a || !b) continue;
@@ -435,7 +439,8 @@ export class FakeAdapter implements MapAdapter {
           [0, 0],
         );
         const worstStatus = group.reduce<MapVehicle["status"]>(
-          (worst, vehicle) => (statusRank[vehicle.status] < statusRank[worst] ? vehicle.status : worst),
+          (worst, vehicle) =>
+            statusRank[vehicle.status] < statusRank[worst] ? vehicle.status : worst,
           "offline",
         );
         return {

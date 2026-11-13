@@ -65,7 +65,7 @@ export function AlertRulesPanel() {
         staleLabel={staleLabel}
       >
         {rules.length > 0 ? (
-          <ul className="rounded-lg border border-border bg-surface px-4">
+          <ul className="border-border bg-surface rounded-lg border px-4">
             {rules.map((rule) => (
               <AlertRuleRow
                 key={rule.id}

@@ -21,9 +21,7 @@ const adapter = {
   on: () => () => undefined,
 } as unknown as MapAdapter;
 
-function renderControls(
-  overrides: { adapter?: MapAdapter | null; fitDisabled?: boolean } = {},
-) {
+function renderControls(overrides: { adapter?: MapAdapter | null; fitDisabled?: boolean } = {}) {
   const onFitAll = vi.fn();
   render(
     <TooltipProvider>

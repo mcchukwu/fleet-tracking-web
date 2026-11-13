@@ -1,15 +1,9 @@
 import type { Geofence, Polygon } from "../../../api/types";
 import type { Bounds, LngLat } from "../../../map/types";
 
-export type RingProblem =
-  | "too_few_points"
-  | "self_intersection"
-  | "no_area"
-  | "invalid_coordinate";
+export type RingProblem = "too_few_points" | "self_intersection" | "no_area" | "invalid_coordinate";
 
-export type RingValidation =
-  | { ok: true; ring: LngLat[] }
-  | { ok: false; problem: RingProblem };
+export type RingValidation = { ok: true; ring: LngLat[] } | { ok: false; problem: RingProblem };
 
 const EPSILON = 1e-9;
 const EQUALS_EPSILON = 1e-7;
@@ -150,9 +144,7 @@ export function exteriorRing(polygon: Polygon): LngLat[] | null {
 }
 
 function pointsEqual(a: LngLat, b: LngLat): boolean {
-  return (
-    Math.abs(a[0] - b[0]) <= EQUALS_EPSILON && Math.abs(a[1] - b[1]) <= EQUALS_EPSILON
-  );
+  return Math.abs(a[0] - b[0]) <= EQUALS_EPSILON && Math.abs(a[1] - b[1]) <= EQUALS_EPSILON;
 }
 
 function toLngLatRing(ring: readonly (readonly number[])[]): LngLat[] {

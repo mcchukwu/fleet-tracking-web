@@ -231,7 +231,14 @@ describe("FakeAdapter drawing", () => {
         id: "gf-1",
         name: "Gate",
         kind: "depot",
-        rings: [[[3.4, 6.4], [3.5, 6.4], [3.5, 6.5], [3.4, 6.4]]],
+        rings: [
+          [
+            [3.4, 6.4],
+            [3.5, 6.4],
+            [3.5, 6.5],
+            [3.4, 6.4],
+          ],
+        ],
         highlighted: false,
       },
     ]);

@@ -10,7 +10,7 @@ export function VehicleDriverSection({ driverName, driverPhone }: VehicleDriverS
   if (!driverName) {
     return (
       <VehicleSection title="Driver">
-        <p className="text-sm text-muted">No driver assigned.</p>
+        <p className="text-muted text-sm">No driver assigned.</p>
         <dl className="mt-2">
           <VehicleField label="Phone">{MISSING}</VehicleField>
         </dl>
@@ -28,7 +28,7 @@ export function VehicleDriverSection({ driverName, driverPhone }: VehicleDriverS
           {driverPhone && dialable ? (
             <a
               href={`tel:${dialable}`}
-              className="inline-flex h-touch items-center rounded-sm text-accent-fg underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-focus-ring md:h-auto"
+              className="h-touch text-accent-fg focus-visible:outline-focus-ring inline-flex items-center rounded-sm underline-offset-2 hover:underline focus-visible:outline-2 md:h-auto"
             >
               {driverPhone}
             </a>

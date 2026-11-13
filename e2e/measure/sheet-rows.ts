@@ -113,27 +113,15 @@ async function readLayout(page: Page): Promise<Layout> {
       };
     }
 
-    const sheet = document.querySelector<HTMLElement>(
-      'section[aria-label="Vehicles"]',
-    );
-    const header = document.querySelector<HTMLElement>(
-      '[data-testid="sheet-header"]',
-    );
-    const list = document.querySelector<HTMLElement>(
-      'ul[aria-label="Vehicles"]',
-    );
+    const sheet = document.querySelector<HTMLElement>('section[aria-label="Vehicles"]');
+    const header = document.querySelector<HTMLElement>('[data-testid="sheet-header"]');
+    const list = document.querySelector<HTMLElement>('ul[aria-label="Vehicles"]');
     const scroller = list?.parentElement ?? null;
-    const rows = [
-      ...document.querySelectorAll<HTMLElement>("[data-vehicle-key]"),
-    ].map((row) => {
+    const rows = [...document.querySelectorAll<HTMLElement>("[data-vehicle-key]")].map((row) => {
       const content = row.querySelector<HTMLElement>("div.pointer-events-none");
-      const lines = content
-        ? [...content.children].map((child) => box(child))
-        : [];
+      const lines = content ? [...content.children].map((child) => box(child)) : [];
       const contentStyle = content ? window.getComputedStyle(content) : null;
-      const action = row.querySelector<HTMLElement>(
-        "[data-row-inline-action] button",
-      );
+      const action = row.querySelector<HTMLElement>("[data-row-inline-action] button");
       return {
         ...box(row),
         content: box(content),
@@ -145,23 +133,17 @@ async function readLayout(page: Page): Promise<Layout> {
         inlineActionHeight: action?.getBoundingClientRect().height ?? 0,
       } as RowBox;
     });
-    const controls = document.querySelector<HTMLElement>(
-      'fieldset[aria-label="Map controls"]',
-    );
+    const controls = document.querySelector<HTMLElement>('fieldset[aria-label="Map controls"]');
     const attribution =
       document.querySelector<HTMLElement>(
         '.map-bottom-anchor a[href], .map-bottom-anchor [data-testid="map-attribution"]',
       ) ?? null;
-    const harness = document.querySelector<HTMLElement>(
-      '[data-testid="map-inset-harness"]',
-    );
+    const harness = document.querySelector<HTMLElement>('[data-testid="map-inset-harness"]');
     const panel = document.querySelector<HTMLElement>("aside");
     const probe = document.createElement("div");
     probe.style.paddingBottom = "env(safe-area-inset-bottom, 0px)";
     document.body.append(probe);
-    const safeBottom = Number.parseFloat(
-      window.getComputedStyle(probe).paddingBottom,
-    );
+    const safeBottom = Number.parseFloat(window.getComputedStyle(probe).paddingBottom);
     probe.remove();
 
     if (!sheet || !header || !scroller || !list || !controls || !attribution) {
@@ -174,10 +156,7 @@ async function readLayout(page: Page): Promise<Layout> {
     range.selectNodeContents(attribution);
     const lineCount =
       lineHeight > 0
-        ? Math.max(
-            1,
-            Math.round(range.getBoundingClientRect().height / lineHeight),
-          )
+        ? Math.max(1, Math.round(range.getBoundingClientRect().height / lineHeight))
         : 0;
 
     return {
@@ -221,14 +200,7 @@ function table(label: string, layout: Layout): void {
       "opacity".padStart(7),
     ].join(" "),
   );
-  for (const name of [
-    "sheet",
-    "header",
-    "scroller",
-    "list",
-    "controls",
-    "attribution",
-  ] as const) {
+  for (const name of ["sheet", "header", "scroller", "list", "controls", "attribution"] as const) {
     const element = layout[name];
     console.log(
       [
@@ -291,9 +263,7 @@ function check(layout: Layout, snap: Snap, scroll: Scroll): string[] {
     }
     const next = rows[index + 1];
     if (next && Math.abs(row.bottom - next.y) > eps) {
-      failures.push(
-        `row ${index} touches next by ${num(row.bottom - next.y)}px`,
-      );
+      failures.push(`row ${index} touches next by ${num(row.bottom - next.y)}px`);
     }
   }
   if (
@@ -314,9 +284,7 @@ function check(layout: Layout, snap: Snap, scroll: Scroll): string[] {
     const rowCentre = row.y + row.height / 2;
     const contentCentre = row.content.y + row.content.height / 2;
     if (Math.abs(rowCentre - contentCentre) > eps) {
-      failures.push(
-        `row ${index} content centre off by ${num(contentCentre - rowCentre)}px`,
-      );
+      failures.push(`row ${index} content centre off by ${num(contentCentre - rowCentre)}px`);
     }
     if (row.content.paddingTop !== row.content.paddingBottom) {
       failures.push(
@@ -331,9 +299,7 @@ function check(layout: Layout, snap: Snap, scroll: Scroll): string[] {
       failures.push(`row ${index} driver line to divider ${num(dividerGap)}px`);
     }
     if (row.inlineActionHeight < 24 - eps) {
-      failures.push(
-        `row ${index} inline action height ${num(row.inlineActionHeight)}px`,
-      );
+      failures.push(`row ${index} inline action height ${num(row.inlineActionHeight)}px`);
     }
   }
 
@@ -343,18 +309,12 @@ function check(layout: Layout, snap: Snap, scroll: Scroll): string[] {
       `scroller top vs header bottom ${num(layout.scroller.y - layout.header.bottom)}px`,
     );
   }
-  if (
-    Math.abs(layout.scroller.bottom - layout.sheetBottom) >
-    eps + layout.safeBottom
-  ) {
+  if (Math.abs(layout.scroller.bottom - layout.sheetBottom) > eps + layout.safeBottom) {
     failures.push(
       `scroller bottom vs sheet bottom ${num(layout.scroller.bottom - layout.sheetBottom)}px`,
     );
   }
-  if (
-    layout.scroller.height >
-    layout.sheet.height - layout.header.height + eps
-  ) {
+  if (layout.scroller.height > layout.sheet.height - layout.header.height + eps) {
     failures.push(
       `scroller height ${num(layout.scroller.height)} vs sheet ${num(layout.sheet.height)} - header ${num(layout.header.height)}`,
     );
@@ -394,12 +354,7 @@ function check(layout: Layout, snap: Snap, scroll: Scroll): string[] {
     );
   }
   const overlap = (a: Box | null, b: Box | null): boolean =>
-    a !== null &&
-    b !== null &&
-    a.x < b.right &&
-    a.right > b.x &&
-    a.y < b.bottom &&
-    a.bottom > b.y;
+    a !== null && b !== null && a.x < b.right && a.right > b.x && a.y < b.bottom && a.bottom > b.y;
   if (overlap(layout.attribution, layout.sheet)) {
     failures.push("attribution overlaps the sheet");
   }
@@ -437,13 +392,10 @@ async function setSnap(page: Page, snap: Snap): Promise<void> {
 
 async function setScroll(page: Page, scroll: Scroll): Promise<void> {
   await page.evaluate((mode) => {
-    const element = document.querySelector(
-      'ul[aria-label="Vehicles"]',
-    )?.parentElement;
+    const element = document.querySelector('ul[aria-label="Vehicles"]')?.parentElement;
     if (!element) return;
     if (mode === "top") element.scrollTop = 0;
-    if (mode === "middle")
-      element.scrollTop = (element.scrollHeight - element.clientHeight) / 2;
+    if (mode === "middle") element.scrollTop = (element.scrollHeight - element.clientHeight) / 2;
     if (mode === "end") element.scrollTop = element.scrollHeight;
   }, scroll);
   await page.waitForTimeout(150);
@@ -458,9 +410,7 @@ async function waitForFleet(page: Page, count: number): Promise<void> {
 async function main(): Promise<void> {
   const browser = await chromium.launch({
     executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH,
-    args: process.env.PLAYWRIGHT_CHROMIUM_PATH
-      ? ["--no-sandbox", "--disable-dev-shm-usage"]
-      : [],
+    args: process.env.PLAYWRIGHT_CHROMIUM_PATH ? ["--no-sandbox", "--disable-dev-shm-usage"] : [],
   });
   const allFailures: string[] = [];
   try {
@@ -476,9 +426,7 @@ async function main(): Promise<void> {
           await page.getByRole("region", { name: "Live map" }).waitFor();
           await waitForFleet(page, fleet);
           await page.evaluate((count) => {
-            const sheet = document.querySelector<HTMLElement>(
-              'section[aria-label="Vehicles"]',
-            );
+            const sheet = document.querySelector<HTMLElement>('section[aria-label="Vehicles"]');
             if (sheet) sheet.dataset.vehicleCount = String(count);
           }, fleet);
 

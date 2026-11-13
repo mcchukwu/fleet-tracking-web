@@ -55,10 +55,7 @@ export interface RouterContext {
   queryClient: QueryClient;
 }
 
-async function requireUser(
-  context: RouterContext,
-  href: string,
-): Promise<User> {
+async function requireUser(context: RouterContext, href: string): Promise<User> {
   const user = await ensureSession(context.queryClient);
   if (!user) {
     throw redirect({ to: "/login", search: { redirect: href } });
@@ -91,18 +88,9 @@ function RouteError({ error, reset }: ErrorComponentProps) {
 
   return (
     <div className="bg-bg text-text h-dvh">
-      <PageFrame
-        layout="scroll"
-        align="center"
-        contentClassName="px-4 pt-6 sm:px-6"
-      >
+      <PageFrame layout="scroll" align="center" contentClassName="px-4 pt-6 sm:px-6">
         <h1 className="sr-only">Something went wrong</h1>
-        <ErrorState
-          error={normalized}
-          blocking
-          onRetry={retry}
-          onAction={action}
-        />
+        <ErrorState error={normalized} blocking onRetry={retry} onAction={action} />
       </PageFrame>
     </div>
   );
@@ -139,11 +127,7 @@ function RootLayout() {
 function ForbiddenPage() {
   useDocumentTitle("Forbidden");
   return (
-    <PageFrame
-      layout="scroll"
-      align="center"
-      contentClassName="items-center px-4 pt-10 sm:px-6"
-    >
+    <PageFrame layout="scroll" align="center" contentClassName="items-center px-4 pt-10 sm:px-6">
       <h1 className="sr-only">Forbidden</h1>
       <ForbiddenState
         action={
@@ -290,26 +274,17 @@ const devRoutes = import.meta.env.DEV
       createRoute({
         getParentRoute: () => appRoute,
         path: "/dev/faults",
-        component: lazyRouteComponent(
-          () => import("../dev/FaultLab"),
-          "FaultLab",
-        ),
+        component: lazyRouteComponent(() => import("../dev/FaultLab"), "FaultLab"),
       }),
       createRoute({
         getParentRoute: () => appRoute,
         path: "/dev/layers",
-        component: lazyRouteComponent(
-          () => import("../dev/LayerStack"),
-          "LayerStack",
-        ),
+        component: lazyRouteComponent(() => import("../dev/LayerStack"), "LayerStack"),
       }),
       createRoute({
         getParentRoute: () => appRoute,
         path: "/dev/combobox",
-        component: lazyRouteComponent(
-          () => import("../dev/ComboboxLab"),
-          "ComboboxLab",
-        ),
+        component: lazyRouteComponent(() => import("../dev/ComboboxLab"), "ComboboxLab"),
       }),
     ]
   : [];

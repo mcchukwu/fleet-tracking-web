@@ -13,9 +13,7 @@ export interface PlaybackEvent {
   percent: number;
 }
 
-export function eventLabel(
-  event: Pick<VehicleEvent, "kind" | "type" | "name">,
-): string {
+export function eventLabel(event: Pick<VehicleEvent, "kind" | "type" | "name">): string {
   if (event.kind === "alert") return alertTypeLabel(event.type);
   if (event.kind === "geofence") {
     const name = event.name ? ` ${event.name}` : "";
@@ -28,10 +26,7 @@ export function eventLabel(
 
 const NEAREST_TIE_PERCENT = 0.01;
 
-export function nearestEventIndex(
-  events: readonly PlaybackEvent[],
-  percent: number,
-): number {
+export function nearestEventIndex(events: readonly PlaybackEvent[], percent: number): number {
   if (events.length === 0) return -1;
   let closest = Number.POSITIVE_INFINITY;
   for (const event of events) {
@@ -39,15 +34,8 @@ export function nearestEventIndex(
   }
   let best = -1;
   for (const [index, event] of events.entries()) {
-    if (
-      Math.abs(Math.abs(event.percent - percent) - closest) >
-      NEAREST_TIE_PERCENT
-    )
-      continue;
-    if (
-      best === -1 ||
-      event.atMs < (events[best]?.atMs ?? Number.POSITIVE_INFINITY)
-    ) {
+    if (Math.abs(Math.abs(event.percent - percent) - closest) > NEAREST_TIE_PERCENT) continue;
+    if (best === -1 || event.atMs < (events[best]?.atMs ?? Number.POSITIVE_INFINITY)) {
       best = index;
     }
   }
@@ -69,10 +57,7 @@ export function timelineEvents(
       kind: event.kind,
       type: event.type,
       label: eventLabel(event),
-      severity:
-        event.kind === "alert" && isAlertSeverity(event.severity)
-          ? event.severity
-          : null,
+      severity: event.kind === "alert" && isAlertSeverity(event.severity) ? event.severity : null,
       status: event.status ?? null,
       at: event.at,
       atMs,

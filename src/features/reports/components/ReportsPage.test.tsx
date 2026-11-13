@@ -126,9 +126,7 @@ describe("ReportsPage", () => {
     };
     expect(first.to).toBe("/reports");
     expect(first.replace).toBe(true);
-    expect(Date.parse(first.search.to) - Date.parse(first.search.from)).toBe(
-      7 * 86_400_000,
-    );
+    expect(Date.parse(first.search.to) - Date.parse(first.search.from)).toBe(7 * 86_400_000);
   });
 
   it("explains an invalid range and offers the default back", async () => {

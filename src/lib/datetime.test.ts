@@ -19,9 +19,7 @@ describe("local datetime fields", () => {
   });
 
   it("round-trips to minute precision through the field format", () => {
-    expect(toLocalInputValue(new Date(2026, 10, 8, 14, 30).toISOString())).toBe(
-      "2026-11-08T14:30",
-    );
+    expect(toLocalInputValue(new Date(2026, 10, 8, 14, 30).toISOString())).toBe("2026-11-08T14:30");
   });
 
   it("rejects an incomplete value", () => {
@@ -64,10 +62,7 @@ describe("isRfc3339", () => {
 
 describe("validateDatetimeRange", () => {
   it("returns both instants for a strict, ordered range", () => {
-    const result = validateDatetimeRange(
-      "2026-11-08T10:00:00Z",
-      "2026-11-08T12:00:00Z",
-    );
+    const result = validateDatetimeRange("2026-11-08T10:00:00Z", "2026-11-08T12:00:00Z");
     expect(result).toMatchObject({ valid: true });
     if (!result.valid) return;
     expect(result.fromMs).toBe(Date.parse("2026-11-08T10:00:00Z"));
@@ -86,15 +81,14 @@ describe("validateDatetimeRange", () => {
   });
 
   it("rejects equal and reversed ranges", () => {
-    expect(
-      validateDatetimeRange("2026-11-08T12:00:00Z", "2026-11-08T12:00:00Z"),
-    ).toMatchObject({
+    expect(validateDatetimeRange("2026-11-08T12:00:00Z", "2026-11-08T12:00:00Z")).toMatchObject({
       valid: false,
       reason: "order",
       message: "The end time must be after the start time.",
     });
-    expect(
-      validateDatetimeRange("2026-11-08T13:00:00Z", "2026-11-08T12:00:00Z"),
-    ).toMatchObject({ valid: false, reason: "order" });
+    expect(validateDatetimeRange("2026-11-08T13:00:00Z", "2026-11-08T12:00:00Z")).toMatchObject({
+      valid: false,
+      reason: "order",
+    });
   });
 });

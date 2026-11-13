@@ -28,11 +28,17 @@ describe("useRateLimitCountdown", () => {
     const { result } = renderHook(() => useRateLimitCountdown(error));
 
     expect(result.current).toBe(3);
-    await act(async () => { vi.advanceTimersByTime(1_000); });
+    await act(async () => {
+      vi.advanceTimersByTime(1_000);
+    });
     expect(result.current).toBe(2);
-    await act(async () => { vi.advanceTimersByTime(2_000); });
+    await act(async () => {
+      vi.advanceTimersByTime(2_000);
+    });
     expect(result.current).toBe(0);
-    await act(async () => { vi.advanceTimersByTime(5_000); });
+    await act(async () => {
+      vi.advanceTimersByTime(5_000);
+    });
     expect(result.current).toBe(0);
   });
 
@@ -48,7 +54,9 @@ describe("useRateLimitCountdown", () => {
     const error = rateLimited(30);
     const { result } = renderHook(() => useRateLimitCountdown(error));
 
-    await act(async () => { vi.advanceTimersByTime(45_000); });
+    await act(async () => {
+      vi.advanceTimersByTime(45_000);
+    });
     expect(result.current).toBe(0);
   });
 

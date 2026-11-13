@@ -108,12 +108,12 @@ export function VehicleDetailSheet({
       data-snap={snap}
       data-testid="vehicle-detail-sheet"
       style={sheetVisibleStyle(visible)}
-      className="mobile-sheet bg-surface shadow-float ring-border absolute inset-x-0 bottom-0 z-panel flex flex-col rounded-t-lg ring-1"
+      className="mobile-sheet bg-surface shadow-float ring-border z-panel absolute inset-x-0 bottom-0 flex flex-col rounded-t-lg ring-1"
     >
       <h2 className="sr-only">Vehicle details for {plate}</h2>
       <div
         data-testid="detail-sheet-header"
-        className="h-sheet-peek border-border bg-surface relative z-map-controls flex shrink-0 touch-none flex-col border-b px-3 pt-2"
+        className="h-sheet-peek border-border bg-surface z-map-controls relative flex shrink-0 touch-none flex-col border-b px-3 pt-2"
         onPointerDown={handlers.onPointerDown}
         onPointerMove={handlers.onPointerMove}
         onPointerUp={handlers.onPointerUp}
@@ -121,7 +121,7 @@ export function VehicleDetailSheet({
       >
         <span aria-hidden="true" className="bg-border-strong mx-auto h-1 w-8 rounded-full" />
 
-        <div className="mt-1 flex h-touch min-w-0 items-center gap-2">
+        <div className="h-touch mt-1 flex min-w-0 items-center gap-2">
           <button
             ref={handleRef}
             type="button"
@@ -149,7 +149,7 @@ export function VehicleDetailSheet({
               }
             }}
           >
-            <span className="truncate font-mono text-md font-medium text-text">{plate}</span>
+            <span className="text-md text-text truncate font-mono font-medium">{plate}</span>
             <StatusPill status={status} />
             {row?.stale ? <Badge tone="warning">Stale</Badge> : null}
             <ChevronUp
@@ -165,7 +165,7 @@ export function VehicleDetailSheet({
             <CopyButton
               value={plate}
               label="Plate"
-              className="w-touch justify-center rounded-md text-muted hover:bg-surface-2 md:w-control-sm"
+              className="w-touch text-muted hover:bg-surface-2 md:w-control-sm justify-center rounded-md"
             >
               <Copy aria-hidden="true" className="size-4" strokeWidth={1.5} />
             </CopyButton>
@@ -176,14 +176,14 @@ export function VehicleDetailSheet({
               type="button"
               aria-label="Close vehicle details"
               onClick={onClose}
-              className="inline-flex size-touch items-center justify-center rounded-md text-muted hover:bg-surface-2 hover:text-text focus-visible:outline-2 focus-visible:outline-focus-ring md:size-control-sm"
+              className="size-touch text-muted hover:bg-surface-2 hover:text-text focus-visible:outline-focus-ring md:size-control-sm inline-flex items-center justify-center rounded-md focus-visible:outline-2"
             >
               <X aria-hidden="true" className="size-4" strokeWidth={1.5} />
             </button>
           </span>
         </div>
 
-        <div className="mt-2 flex h-touch min-w-0 items-center">
+        <div className="h-touch mt-2 flex min-w-0 items-center">
           <span data-sheet-action>
             <VehicleActions
               variant="icons"

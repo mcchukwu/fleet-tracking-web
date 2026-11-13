@@ -158,7 +158,7 @@ export function VehicleEditDialog({
           </div>
 
           {readOnly ? (
-            <p className="mb-3 text-sm text-muted">
+            <p className="text-muted mb-3 text-sm">
               {blockedReason} The fields are shown for reference.
             </p>
           ) : null}
@@ -215,8 +215,8 @@ export function VehicleEditDialog({
             <Input label="Department" disabled={readOnly} {...register("department")} />
 
             <fieldset className="m-0 border-0 p-0 sm:col-span-2">
-              <legend className="label-caps mb-2 text-muted">Device (write-only)</legend>
-              <p className="mb-2 text-xs text-muted">
+              <legend className="label-caps text-muted mb-2">Device (write-only)</legend>
+              <p className="text-muted mb-2 text-xs">
                 The API accepts these fields but doesn't return them.
               </p>
               <div className="grid gap-3 sm:grid-cols-3">
@@ -227,7 +227,7 @@ export function VehicleEditDialog({
             </fieldset>
           </div>
 
-          <output className="mt-3 block text-xs text-muted">
+          <output className="text-muted mt-3 block text-xs">
             {noChanges ? "No changes to save." : "Only changed fields are sent."}
           </output>
         </form>

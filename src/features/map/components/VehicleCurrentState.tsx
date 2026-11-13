@@ -34,7 +34,8 @@ export function VehicleCurrentState({ row, vehicle }: VehicleCurrentStateProps) 
   const online = row?.online ?? vehicle?.online ?? false;
   const freshness = row?.freshness ?? "stale";
   const status = row?.status ?? (online ? "idle" : "offline");
-  const speedAt = row?.speedReportedAtMs ?? (vehicle?.recorded_at ? Date.parse(vehicle.recorded_at) : null);
+  const speedAt =
+    row?.speedReportedAtMs ?? (vehicle?.recorded_at ? Date.parse(vehicle.recorded_at) : null);
 
   return (
     <VehicleSection title="Current state">

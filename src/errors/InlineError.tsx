@@ -45,11 +45,7 @@ export function InlineError({
   }
 
   return (
-    <div
-      id={id}
-      role="alert"
-      className={cn("flex flex-col gap-1 text-sm text-danger", className)}
-    >
+    <div id={id} role="alert" className={cn("text-danger flex flex-col gap-1 text-sm", className)}>
       <div className="flex items-start gap-2">
         <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" strokeWidth={1.5} />
         <div className="min-w-0 flex-1">
@@ -68,7 +64,7 @@ export function InlineError({
             Copy diagnostics
           </Button>
           {copyStatus !== "idle" ? (
-            <output className="text-xs text-muted">
+            <output className="text-muted text-xs">
               {copyStatus === "copied"
                 ? "Copied"
                 : "Couldn't copy. Select the text and press Ctrl+C."}

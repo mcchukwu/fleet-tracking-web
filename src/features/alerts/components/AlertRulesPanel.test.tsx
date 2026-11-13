@@ -128,9 +128,10 @@ describe("AlertRulesPanel", () => {
     for (const checkbox of screen.getAllByRole("checkbox")) {
       expect(checkbox).toHaveAttribute("aria-disabled", "true");
     }
-    expect(
-      screen.getByRole("button", { name: "Edit settings for Speeding" }),
-    ).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("button", { name: "Edit settings for Speeding" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
   });
 
   it("explains a role-disabled control with a tooltip", async () => {

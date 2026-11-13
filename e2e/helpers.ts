@@ -5,10 +5,7 @@ import { join } from "node:path";
 
 export type ReviewTheme = "light" | "dark";
 
-export async function setStoredTheme(
-  page: Page,
-  theme: ReviewTheme,
-): Promise<void> {
+export async function setStoredTheme(page: Page, theme: ReviewTheme): Promise<void> {
   await page.addInitScript((value) => {
     try {
       localStorage.setItem("fleet.theme", value);
@@ -31,8 +28,7 @@ export async function primeOfflineSession(page: Page): Promise<void> {
     async ({ key }) => {
       const db = await new Promise<IDBDatabase>((resolve, reject) => {
         const request = indexedDB.open("keyval-store");
-        request.onupgradeneeded = () =>
-          request.result.createObjectStore("keyval");
+        request.onupgradeneeded = () => request.result.createObjectStore("keyval");
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
       });
@@ -66,13 +62,8 @@ export async function primeOfflineSession(page: Page): Promise<void> {
   });
 }
 
-export async function expectTheme(
-  page: Page,
-  theme: ReviewTheme,
-): Promise<void> {
-  await expect
-    .poll(() => page.evaluate(() => document.documentElement.dataset.theme))
-    .toBe(theme);
+export async function expectTheme(page: Page, theme: ReviewTheme): Promise<void> {
+  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe(theme);
 }
 
 /**
@@ -86,14 +77,12 @@ export async function expectLockedDocument(page: Page): Promise<void> {
     bodyHeight: document.body.scrollHeight,
     scrollY: window.scrollY,
   }));
-  expect(
-    snapshot.rootHeight,
-    "the document is taller than the viewport",
-  ).toBeLessThanOrEqual(snapshot.innerHeight + 1);
-  expect(
-    snapshot.bodyHeight,
-    "the body is taller than the viewport",
-  ).toBeLessThanOrEqual(snapshot.innerHeight + 1);
+  expect(snapshot.rootHeight, "the document is taller than the viewport").toBeLessThanOrEqual(
+    snapshot.innerHeight + 1,
+  );
+  expect(snapshot.bodyHeight, "the body is taller than the viewport").toBeLessThanOrEqual(
+    snapshot.innerHeight + 1,
+  );
   expect(snapshot.scrollY, "the document starts scrolled").toBe(0);
 
   await page.evaluate(() => window.scrollTo(0, 240));
@@ -104,10 +93,7 @@ export async function expectLockedDocument(page: Page): Promise<void> {
 /**
  * Exactly one page frame per route, with the layout the route declares.
  */
-export async function expectPageFrame(
-  page: Page,
-  layout: "fill" | "scroll",
-): Promise<Locator> {
+export async function expectPageFrame(page: Page, layout: "fill" | "scroll"): Promise<Locator> {
   const frames = page.locator("[data-page-frame]");
   await expect(frames).toHaveCount(1);
   const frame = frames.first();
@@ -134,9 +120,7 @@ export async function openPicker(
   label: string,
   scope?: Locator,
 ): Promise<PickerHandle> {
-  const trigger = (scope ?? page)
-    .getByRole("combobox", { name: label, exact: true })
-    .first();
+  const trigger = (scope ?? page).getByRole("combobox", { name: label, exact: true }).first();
   await trigger.click();
   const sheet = page.locator("[data-picker-sheet]");
   const shell = page.locator("[data-combobox-shell]");
@@ -185,9 +169,7 @@ export async function expectNoAxeViolations(
   const results = await builder.analyze();
   expect(
     results.violations,
-    results.violations
-      .map((violation) => `${violation.id}: ${violation.help}`)
-      .join("\n"),
+    results.violations.map((violation) => `${violation.id}: ${violation.help}`).join("\n"),
   ).toEqual([]);
 }
 
@@ -203,12 +185,8 @@ export async function expectFocusVisible(locator: Locator): Promise<void> {
   });
   // Inputs use an inset focus ring instead of an outline (design-system §12).
   const hasOutline = focus.outlineStyle !== "none" && focus.outlineWidth > 0;
-  const hasRing =
-    focus.boxShadow !== "none" && /[1-9]\d*px/.test(focus.boxShadow);
-  expect(
-    hasOutline || hasRing,
-    "focused element has no visible focus indicator",
-  ).toBe(true);
+  const hasRing = focus.boxShadow !== "none" && /[1-9]\d*px/.test(focus.boxShadow);
+  expect(hasOutline || hasRing, "focused element has no visible focus indicator").toBe(true);
 }
 
 export async function expectTabularNums(locator: Locator): Promise<void> {
@@ -254,10 +232,7 @@ export async function expectTouchTargets(
             return false;
           // A checkbox or radio is one target with its wrapping label.
           const label = element.closest("label");
-          if (
-            label &&
-            element.matches('input[type="checkbox"], input[type="radio"]')
-          ) {
+          if (label && element.matches('input[type="checkbox"], input[type="radio"]')) {
             const box = label.getBoundingClientRect();
             if (box.width >= size && box.height >= size) return false;
           }
@@ -267,9 +242,7 @@ export async function expectTouchTargets(
           const rect = element.getBoundingClientRect();
           return {
             label:
-              element.getAttribute("aria-label") ??
-              element.textContent?.trim() ??
-              element.tagName,
+              element.getAttribute("aria-label") ?? element.textContent?.trim() ?? element.tagName,
             width: Math.round(rect.width),
             height: Math.round(rect.height),
           };
@@ -281,33 +254,20 @@ export async function expectTouchTargets(
   expect(tooSmall, `touch targets below ${minimum}px`).toEqual([]);
 }
 
-export async function expectMinimumContrast(
-  locator: Locator,
-  minimum: number,
-): Promise<void> {
+export async function expectMinimumContrast(locator: Locator, minimum: number): Promise<void> {
   const ratio = await locator.evaluate((element) => {
     const parse = (value: string): [number, number, number] => {
       const match = value.match(/rgba?\(([^)]+)\)/);
       if (!match) throw new Error(`Unsupported colour: ${value}`);
-      const channels = match[1]
-        .split(",")
-        .map((part) => Number.parseFloat(part.trim()));
+      const channels = match[1].split(",").map((part) => Number.parseFloat(part.trim()));
       return [channels[0], channels[1], channels[2]];
     };
-    const luminance = ([red, green, blue]: [
-      number,
-      number,
-      number,
-    ]): number => {
+    const luminance = ([red, green, blue]: [number, number, number]): number => {
       const linear = (value: number): number => {
         const normalized = value / 255;
-        return normalized <= 0.04045
-          ? normalized / 12.92
-          : ((normalized + 0.055) / 1.055) ** 2.4;
+        return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
       };
-      return (
-        0.2126 * linear(red) + 0.7152 * linear(green) + 0.0722 * linear(blue)
-      );
+      return 0.2126 * linear(red) + 0.7152 * linear(green) + 0.0722 * linear(blue);
     };
 
     let node: Element | null = element;
@@ -321,33 +281,25 @@ export async function expectMinimumContrast(
       node = node.parentElement;
     }
 
-    const foregroundLuminance = luminance(
-      parse(window.getComputedStyle(element).color),
-    );
+    const foregroundLuminance = luminance(parse(window.getComputedStyle(element).color));
     const backgroundLuminance = luminance(parse(background));
     const lighter = Math.max(foregroundLuminance, backgroundLuminance);
     const darker = Math.min(foregroundLuminance, backgroundLuminance);
     return (lighter + 0.05) / (darker + 0.05);
   });
 
-  expect(
-    ratio,
-    `contrast ${ratio.toFixed(2)}:1 is below ${minimum}:1`,
-  ).toBeGreaterThanOrEqual(minimum);
+  expect(ratio, `contrast ${ratio.toFixed(2)}:1 is below ${minimum}:1`).toBeGreaterThanOrEqual(
+    minimum,
+  );
 }
 
-export async function captureForReview(
-  page: Page,
-  name: string,
-): Promise<void> {
+export async function captureForReview(page: Page, name: string): Promise<void> {
   if (process.env.REVIEW !== "1") return;
   const theme = await page.evaluate(() =>
     document.documentElement.classList.contains("dark") ? "dark" : "light",
   );
   const viewport = page.viewportSize();
-  const viewportName = viewport
-    ? `${viewport.width}x${viewport.height}`
-    : "unknown";
+  const viewportName = viewport ? `${viewport.width}x${viewport.height}` : "unknown";
   const directory = join(process.cwd(), "test-results", "review");
   await mkdir(directory, { recursive: true });
   await page.screenshot({
@@ -375,12 +327,9 @@ interface DataTableMeasurement {
 
 async function measureColumns(table: Locator): Promise<DataTableMeasurement> {
   return table.evaluate((root) => {
-    const scroller = root.querySelector<HTMLElement>(
-      "[data-data-table-scroll]",
-    );
+    const scroller = root.querySelector<HTMLElement>("[data-data-table-scroll]");
     const element = root.querySelector<HTMLTableElement>("table");
-    if (!scroller || !element)
-      throw new Error("The data table is missing its scroller or table");
+    if (!scroller || !element) throw new Error("The data table is missing its scroller or table");
     const scrollerRect = scroller.getBoundingClientRect();
     const read = (cell: HTMLTableCellElement): ColumnMeasurement => {
       const rect = cell.getBoundingClientRect();
@@ -391,19 +340,13 @@ async function measureColumns(table: Locator): Promise<DataTableMeasurement> {
         align: window.getComputedStyle(cell).textAlign,
       };
     };
-    const headers = [
-      ...element.querySelectorAll<HTMLTableCellElement>("thead th"),
-    ].map(read);
-    const firstRow = element.querySelector<HTMLTableRowElement>(
-      'tbody tr[data-row="data"]',
-    );
+    const headers = [...element.querySelectorAll<HTMLTableCellElement>("thead th")].map(read);
+    const firstRow = element.querySelector<HTMLTableRowElement>('tbody tr[data-row="data"]');
     const cells = firstRow
       ? [...firstRow.querySelectorAll<HTMLTableCellElement>("td")].map(read)
       : [];
     const rowHeights = [
-      ...element.querySelectorAll<HTMLTableRowElement>(
-        'tbody tr[data-row="data"]',
-      ),
+      ...element.querySelectorAll<HTMLTableRowElement>('tbody tr[data-row="data"]'),
     ].map((row) => row.getBoundingClientRect().height);
     return {
       scrollerLeft: scrollerRect.left,
@@ -423,17 +366,11 @@ async function measureColumns(table: Locator): Promise<DataTableMeasurement> {
  * movement, the header sticks to the scrollport, alignment never changes and
  * every data row keeps the fixed row height.
  */
-export async function expectStableColumns(
-  table: Locator,
-  rowHeight = 36,
-): Promise<void> {
+export async function expectStableColumns(table: Locator, rowHeight = 36): Promise<void> {
   const scroller = table.locator("[data-data-table-scroll]").first();
   const before = await measureColumns(table);
   const headerRowBox = await table.locator("thead tr").first().boundingBox();
-  const firstDataRowBox = await table
-    .locator('tbody tr[data-row="data"]')
-    .first()
-    .boundingBox();
+  const firstDataRowBox = await table.locator('tbody tr[data-row="data"]').first().boundingBox();
   if (headerRowBox && firstDataRowBox) {
     expect(
       Math.abs(firstDataRowBox.y - (headerRowBox.y + headerRowBox.height)),
@@ -449,31 +386,17 @@ export async function expectStableColumns(
     await scroller.evaluate((element) => {
       element.scrollTop = (element.scrollHeight - element.clientHeight) / 2;
     });
-    await expect
-      .poll(() => scroller.evaluate((element) => element.scrollTop))
-      .toBeGreaterThan(0);
+    await expect.poll(() => scroller.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
     afterVertical = await measureColumns(table);
   }
 
   for (const [index, header] of before.headers.entries()) {
     const moved = afterVertical.headers[index];
-    expect(
-      moved,
-      `column ${header.id} disappeared after vertical scrolling`,
-    ).toBeDefined();
+    expect(moved, `column ${header.id} disappeared after vertical scrolling`).toBeDefined();
     if (!moved) continue;
-    expect(
-      moved.width,
-      `column ${header.id} resized while scrolling`,
-    ).toBeCloseTo(header.width, 0);
-    expect(moved.x, `column ${header.id} moved while scrolling`).toBeCloseTo(
-      header.x,
-      0,
-    );
-    expect(
-      moved.align,
-      `column ${header.id} alignment changed while scrolling`,
-    ).toBe(header.align);
+    expect(moved.width, `column ${header.id} resized while scrolling`).toBeCloseTo(header.width, 0);
+    expect(moved.x, `column ${header.id} moved while scrolling`).toBeCloseTo(header.x, 0);
+    expect(moved.align, `column ${header.id} alignment changed while scrolling`).toBe(header.align);
   }
 
   expect(
@@ -483,35 +406,24 @@ export async function expectStableColumns(
   const stickyHeader = table.locator("thead th").first();
   const headerBox = await stickyHeader.boundingBox();
   const scrollerBox = await scroller.boundingBox();
-  if (!headerBox || !scrollerBox)
-    throw new Error("The table header has no box");
+  if (!headerBox || !scrollerBox) throw new Error("The table header has no box");
   expect(
     Math.abs(headerBox.y - scrollerBox.y),
     "the header did not stay at the top of the scrollport",
   ).toBeLessThanOrEqual(1);
 
   const heights = afterVertical.rowHeights.map((height) => Math.round(height));
-  expect(
-    new Set(heights).size,
-    "rows have different heights",
-  ).toBeLessThanOrEqual(1);
+  expect(new Set(heights).size, "rows have different heights").toBeLessThanOrEqual(1);
   if (heights[0] !== undefined) {
     expect(Math.abs(heights[0] - rowHeight)).toBeLessThanOrEqual(1);
   }
 
   const rowGaps = await table.evaluate((root) => {
-    const rows = [
-      ...root.querySelectorAll<HTMLTableRowElement>(
-        'tbody tr[data-row="data"]',
-      ),
-    ];
+    const rows = [...root.querySelectorAll<HTMLTableRowElement>('tbody tr[data-row="data"]')];
     return rows.slice(1).map((row, index) => {
       const previous = rows[index];
       if (!previous) return 0;
-      return (
-        row.getBoundingClientRect().top -
-        previous.getBoundingClientRect().bottom
-      );
+      return row.getBoundingClientRect().top - previous.getBoundingClientRect().bottom;
     });
   });
   for (const gap of rowGaps) {
@@ -521,17 +433,15 @@ export async function expectStableColumns(
   for (const [index, header] of before.headers.entries()) {
     const cell = before.cells[index];
     if (!cell) continue;
-    expect(cell.align, `column ${header.id} header and cells disagree`).toBe(
-      header.align,
+    expect(cell.align, `column ${header.id} header and cells disagree`).toBe(header.align);
+    expect(cell.width, `column ${header.id} header and cells disagree on width`).toBeCloseTo(
+      header.width,
+      0,
     );
-    expect(
-      cell.width,
-      `column ${header.id} header and cells disagree on width`,
-    ).toBeCloseTo(header.width, 0);
-    expect(
-      cell.x,
-      `column ${header.id} header and cells disagree on position`,
-    ).toBeCloseTo(header.x, 0);
+    expect(cell.x, `column ${header.id} header and cells disagree on position`).toBeCloseTo(
+      header.x,
+      0,
+    );
   }
 
   const canScrollHorizontally = await scroller.evaluate(
@@ -542,28 +452,26 @@ export async function expectStableColumns(
   await scroller.evaluate((element) => {
     element.scrollLeft = element.scrollWidth;
   });
-  await expect
-    .poll(() => scroller.evaluate((element) => element.scrollLeft))
-    .toBeGreaterThan(0);
+  await expect.poll(() => scroller.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
   const afterHorizontal = await measureColumns(table);
 
   for (const [index, header] of before.headers.entries()) {
     const moved = afterHorizontal.headers[index];
     if (!moved) continue;
-    expect(
-      moved.width,
-      `column ${header.id} resized while scrolling horizontally`,
-    ).toBeCloseTo(header.width, 0);
+    expect(moved.width, `column ${header.id} resized while scrolling horizontally`).toBeCloseTo(
+      header.width,
+      0,
+    );
     if (index === 0) {
       expect(
         Math.abs(moved.x - afterHorizontal.scrollLeft),
         "the first column did not stay at the scrollport edge",
       ).toBeLessThanOrEqual(1);
     } else {
-      expect(
-        moved.x,
-        `column ${header.id} shifted its content while scrolling`,
-      ).toBeCloseTo(header.x, 0);
+      expect(moved.x, `column ${header.id} shifted its content while scrolling`).toBeCloseTo(
+        header.x,
+        0,
+      );
     }
   }
 }
@@ -583,10 +491,7 @@ interface FakeVisualViewport {
  * Emulates the visual viewport shrinking when the software keyboard opens.
  * The layout viewport, and therefore the dialog, must not change.
  */
-export async function emulateSoftwareKeyboard(
-  page: Page,
-  height: number,
-): Promise<void> {
+export async function emulateSoftwareKeyboard(page: Page, height: number): Promise<void> {
   await page.evaluate((keyboard) => {
     const real = window.visualViewport;
     const listeners: EventListener[] = [];

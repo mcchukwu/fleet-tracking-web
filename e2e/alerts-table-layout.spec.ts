@@ -1,10 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test, type LiveSocketHarness } from "./fixtures";
-import {
-  captureForReview,
-  expectNoHorizontalScroll,
-  expectStableColumns,
-} from "./helpers";
+import { captureForReview, expectNoHorizontalScroll, expectStableColumns } from "./helpers";
 
 const VIEWPORTS = [
   { width: 1440, height: 900 },
@@ -19,10 +15,7 @@ async function openAlerts(page: Page): Promise<void> {
   await expect(page.getByRole("columnheader", { name: "Plate" })).toBeVisible();
 }
 
-async function seedAlerts(
-  page: Page,
-  liveSocket: LiveSocketHarness,
-): Promise<void> {
+async function seedAlerts(page: Page, liveSocket: LiveSocketHarness): Promise<void> {
   await page.evaluate(async (count) => {
     await fetch("/api/v1/__mock/alerts/bulk", {
       method: "POST",
@@ -44,9 +37,7 @@ async function seedAlerts(
     .poll(
       () =>
         page.evaluate(() => {
-          const text =
-            document.querySelector('[data-testid="alerts-page"]')
-              ?.textContent ?? "";
+          const text = document.querySelector('[data-testid="alerts-page"]')?.textContent ?? "";
           const match = text.match(/(\d+) loaded/);
           return match ? Number(match[1]) : 0;
         }),
@@ -59,19 +50,11 @@ async function seedAlerts(
 async function tableGeometry(page: Page) {
   return page.locator("[data-data-table]").evaluate((root) => {
     const table = root.querySelector<HTMLTableElement>("table");
-    const scroller = root.querySelector<HTMLElement>(
-      "[data-data-table-scroll]",
-    );
+    const scroller = root.querySelector<HTMLElement>("[data-data-table-scroll]");
     if (!table || !scroller) throw new Error("The data table did not render");
-    const row = table.querySelector<HTMLTableRowElement>(
-      'tbody tr[data-row="data"]',
-    );
-    const headers = [
-      ...table.querySelectorAll<HTMLTableCellElement>("thead th"),
-    ];
-    const cells = row
-      ? [...row.querySelectorAll<HTMLTableCellElement>("td")]
-      : [];
+    const row = table.querySelector<HTMLTableRowElement>('tbody tr[data-row="data"]');
+    const headers = [...table.querySelectorAll<HTMLTableCellElement>("thead th")];
+    const cells = row ? [...row.querySelectorAll<HTMLTableCellElement>("td")] : [];
     const badge = table.querySelector<HTMLElement>(
       'tbody tr[data-row="data"] td[data-column-id="status"] [data-cell-content] > span > span:first-child',
     );
@@ -81,9 +64,9 @@ async function tableGeometry(page: Page) {
     return {
       layout: window.getComputedStyle(table).tableLayout,
       minWidth: Number.parseFloat(window.getComputedStyle(table).minWidth),
-      declaredWidths: [
-        ...table.querySelectorAll<HTMLTableColElement>("col"),
-      ].map((col) => Number.parseFloat(col.style.width)),
+      declaredWidths: [...table.querySelectorAll<HTMLTableColElement>("col")].map((col) =>
+        Number.parseFloat(col.style.width),
+      ),
       scrollWidth: scroller.scrollWidth,
       clientWidth: scroller.clientWidth,
       headers: headers.map((header) => ({
@@ -96,26 +79,17 @@ async function tableGeometry(page: Page) {
         return {
           id: cell.dataset.columnId,
           align: window.getComputedStyle(cell).textAlign,
-          paddingLeft: Number.parseFloat(
-            window.getComputedStyle(cell).paddingLeft,
-          ),
-          paddingRight: Number.parseFloat(
-            window.getComputedStyle(cell).paddingRight,
-          ),
+          paddingLeft: Number.parseFloat(window.getComputedStyle(cell).paddingLeft),
+          paddingRight: Number.parseFloat(window.getComputedStyle(cell).paddingRight),
           whiteSpace: style?.whiteSpace ?? "",
-          truncated:
-            content !== null && content.scrollWidth > content.clientWidth + 1,
+          truncated: content !== null && content.scrollWidth > content.clientWidth + 1,
         };
       }),
-      rowHeights: [
-        ...table.querySelectorAll<HTMLTableRowElement>(
-          'tbody tr[data-row="data"]',
-        ),
-      ].map((rowElement) => rowElement.getBoundingClientRect().height),
-      badgeInsetLeft:
-        badgeRect && statusRect ? badgeRect.left - statusRect.left : null,
-      badgeInsetRight:
-        badgeRect && statusRect ? statusRect.right - badgeRect.right : null,
+      rowHeights: [...table.querySelectorAll<HTMLTableRowElement>('tbody tr[data-row="data"]')].map(
+        (rowElement) => rowElement.getBoundingClientRect().height,
+      ),
+      badgeInsetLeft: badgeRect && statusRect ? badgeRect.left - statusRect.left : null,
+      badgeInsetRight: badgeRect && statusRect ? statusRect.right - badgeRect.right : null,
     };
   });
 }
@@ -124,23 +98,17 @@ test.describe("alerts table layout", { tag: "@theme" }, () => {
   test("keeps a full plate and trip id whole", async ({ page }) => {
     await openAlerts(page);
     await page.getByLabel("Search plate").fill("LSD-101-AA");
-    await expect(
-      page.getByLabel("Copy plate LSD-101-AA").first(),
-    ).toBeVisible();
+    await expect(page.getByLabel("Copy plate LSD-101-AA").first()).toBeVisible();
 
     const trip = page
       .locator('[data-column-id="trip"] [data-cell-content]')
       .filter({ hasText: /[0-9a-f]{8}-/ })
       .first();
     await expect(trip).toBeVisible();
-    const overflow = await trip.evaluate(
-      (element) => element.scrollWidth - element.clientWidth,
-    );
+    const overflow = await trip.evaluate((element) => element.scrollWidth - element.clientWidth);
     expect(overflow, "a trip id must never truncate").toBeLessThanOrEqual(1);
 
-    const plate = page
-      .locator('[data-column-id="plate"] [data-cell-content]')
-      .first();
+    const plate = page.locator('[data-column-id="plate"] [data-cell-content]').first();
     const plateOverflow = await plate.evaluate(
       (element) => element.scrollWidth - element.clientWidth,
     );
@@ -148,21 +116,15 @@ test.describe("alerts table layout", { tag: "@theme" }, () => {
     await captureForReview(page, "04-alerts-table-whole-values");
   });
 
-  test("keeps the acknowledged badge and its time on one line", async ({
-    page,
-  }) => {
+  test("keeps the acknowledged badge and its time on one line", async ({ page }) => {
     await openAlerts(page);
     await page.getByLabel("Status").selectOption("acked");
-    const cell = page
-      .locator('tbody tr[data-row="data"] td[data-column-id="status"]')
-      .first();
+    const cell = page.locator('tbody tr[data-row="data"] td[data-column-id="status"]').first();
     await expect(cell).toBeVisible();
 
     const line = await cell.evaluate((element) => {
       const content = element.querySelector<HTMLElement>("[data-cell-content]");
-      const wrapper = element.querySelector<HTMLElement>(
-        "[data-cell-content] > span",
-      );
+      const wrapper = element.querySelector<HTMLElement>("[data-cell-content] > span");
       const badge = element.querySelector<HTMLElement>(
         "[data-cell-content] > span > span:first-child > span",
       );
@@ -198,9 +160,7 @@ test.describe("alerts table layout", { tag: "@theme" }, () => {
     expect(line.timeLeft).toBeGreaterThanOrEqual(line.badgeRight - 1);
     expect(line.contentHeight).toBeLessThanOrEqual(24);
     expect(line.cellHeight).toBeLessThanOrEqual(37);
-    expect(line.contentScrollWidth).toBeLessThanOrEqual(
-      line.contentClientWidth + 1,
-    );
+    expect(line.contentScrollWidth).toBeLessThanOrEqual(line.contentClientWidth + 1);
     expect(line.display).toContain("flex");
     expect(line.flexWrap).toBe("nowrap");
     expect(line.whiteSpace).toBe("nowrap");
@@ -239,24 +199,16 @@ test.describe("alerts table layout", { tag: "@theme" }, () => {
         expect(cell?.whiteSpace).toBe("nowrap");
       }
 
-      expect(geometry.cells.find((cell) => cell.id === "time")?.align).toBe(
-        "left",
-      );
-      expect(geometry.cells.find((cell) => cell.id === "actions")?.align).toBe(
-        "right",
-      );
+      expect(geometry.cells.find((cell) => cell.id === "time")?.align).toBe("left");
+      expect(geometry.cells.find((cell) => cell.id === "actions")?.align).toBe("right");
 
       expect(geometry.badgeInsetLeft).not.toBeNull();
       expect(geometry.badgeInsetRight).not.toBeNull();
       expect(geometry.badgeInsetLeft ?? 0).toBeGreaterThanOrEqual(12 - 1);
       expect(geometry.badgeInsetRight ?? 0).toBeGreaterThanOrEqual(12 - 1);
 
-      expect(
-        new Set(geometry.rowHeights.map((height) => Math.round(height))).size,
-      ).toBe(1);
-      expect(Math.abs((geometry.rowHeights[0] ?? 0) - 36)).toBeLessThanOrEqual(
-        1,
-      );
+      expect(new Set(geometry.rowHeights.map((height) => Math.round(height))).size).toBe(1);
+      expect(Math.abs((geometry.rowHeights[0] ?? 0) - 36)).toBeLessThanOrEqual(1);
 
       const wholeValues = geometry.cells.filter(
         (cell) => cell.id === "plate" || cell.id === "trip",

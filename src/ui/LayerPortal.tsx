@@ -72,10 +72,7 @@ export function LayerPortal({ layer, children }: LayerPortalProps) {
 
 /** True when a pointer event landed in a popover portalled above a dialog. */
 export function isPortalledPopoverTarget(target: EventTarget | null): boolean {
-  return (
-    target instanceof Element &&
-    target.closest(`[${LAYER_ATTRIBUTE}="popover"]`) !== null
-  );
+  return target instanceof Element && target.closest(`[${LAYER_ATTRIBUTE}="popover"]`) !== null;
 }
 
 const CONTENT_OVERLAY_ID = "content-overlay-root";

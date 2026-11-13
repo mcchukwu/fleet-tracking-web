@@ -36,10 +36,17 @@ test.describe("app shell", () => {
   test("the admin sees every destination", async ({ page }) => {
     await setRoleOnLoad(page, "admin");
     await page.goto("/map");
-    await expectNav(
-      page,
-      ["Map", "Alerts", "Trips", "Drivers", "Geofences", "Import", "Reports", "System", "Audit"],
-    );
+    await expectNav(page, [
+      "Map",
+      "Alerts",
+      "Trips",
+      "Drivers",
+      "Geofences",
+      "Import",
+      "Reports",
+      "System",
+      "Audit",
+    ]);
     await expectNoHorizontalScroll(page);
     await expectNoAxeViolations(page);
     if (isMobile(page)) await expectTouchTargets(page);
@@ -100,116 +107,122 @@ test.describe("app shell", () => {
     await expect(page.getByRole("navigation", { name: "Main" })).toHaveCount(0);
   });
 
-  test("the reconnecting banner is in flow and never covers the user menu", { tag: "@theme" }, async ({ page }) => {
-    await page.goto("/map?map=fake");
-    await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
+  test(
+    "the reconnecting banner is in flow and never covers the user menu",
+    { tag: "@theme" },
+    async ({ page }) => {
+      await page.goto("/map?map=fake");
+      await expect(page.getByRole("region", { name: "Live map" })).toBeVisible();
 
-    await page.evaluate(() => {
-      window.__FLEET_TEST_CONNECTION__?.({
-        network: "online",
-        socket: "reconnecting",
-        socketDownAt: Date.now() - 11_000,
+      await page.evaluate(() => {
+        window.__FLEET_TEST_CONNECTION__?.({
+          network: "online",
+          socket: "reconnecting",
+          socketDownAt: Date.now() - 11_000,
+        });
       });
-    });
 
-    const banner = page
-      .getByRole("status")
-      .filter({ hasText: "Reconnecting to live updates…" });
-    await expect(banner).toHaveText("Reconnecting to live updates…");
+      const banner = page.getByRole("status").filter({ hasText: "Reconnecting to live updates…" });
+      await expect(banner).toHaveText("Reconnecting to live updates…");
 
-    const flow = await page.evaluate(() => {
-      const bannerElement = document.querySelector<HTMLElement>(
-        '[data-testid="banner-region"]',
-      );
-      const content = document.querySelector<HTMLElement>(
-        '[data-testid="content-area"]',
-      );
-      if (!bannerElement || !content) return null;
-      return {
-        bannerBottom: bannerElement.getBoundingClientRect().bottom,
-        contentTop: content.getBoundingClientRect().top,
-        bannerZ: getComputedStyle(bannerElement).zIndex,
-      };
-    });
-    expect(flow).not.toBeNull();
-    expect(flow?.bannerBottom ?? 0).toBeLessThanOrEqual((flow?.contentTop ?? 0) + 1);
-    expect(flow?.bannerZ).toBe("auto");
+      const flow = await page.evaluate(() => {
+        const bannerElement = document.querySelector<HTMLElement>('[data-testid="banner-region"]');
+        const content = document.querySelector<HTMLElement>('[data-testid="content-area"]');
+        if (!bannerElement || !content) return null;
+        return {
+          bannerBottom: bannerElement.getBoundingClientRect().bottom,
+          contentTop: content.getBoundingClientRect().top,
+          bannerZ: getComputedStyle(bannerElement).zIndex,
+        };
+      });
+      expect(flow).not.toBeNull();
+      expect(flow?.bannerBottom ?? 0).toBeLessThanOrEqual((flow?.contentTop ?? 0) + 1);
+      expect(flow?.bannerZ).toBe("auto");
 
-    await page.getByRole("button", { name: "Account menu for Demo Dispatcher" }).click();
-    const menu = page.getByRole("menu");
-    await expect(menu).toBeVisible();
-    await expect(menu.getByText("Demo Dispatcher")).toBeVisible();
-    await expect(menu.getByText("dispatcher@demo.ftb")).toBeVisible();
+      await page.getByRole("button", { name: "Account menu for Demo Dispatcher" }).click();
+      const menu = page.getByRole("menu");
+      await expect(menu).toBeVisible();
+      await expect(menu.getByText("Demo Dispatcher")).toBeVisible();
+      await expect(menu.getByText("dispatcher@demo.ftb")).toBeVisible();
 
-    const layering = await page.evaluate(() => {
-      const menuElement = document.querySelector('[role="menu"]');
-      if (!menuElement) return null;
-      const menuBox = menuElement.getBoundingClientRect();
-      const inset = 2;
-      const points = [
-        { x: menuBox.left + inset, y: menuBox.top + inset },
-        { x: menuBox.right - inset, y: menuBox.top + inset },
-        { x: menuBox.left + inset, y: menuBox.bottom - inset },
-        { x: menuBox.right - inset, y: menuBox.bottom - inset },
-      ];
-      return {
-        inViewport:
-          menuBox.left >= 0 &&
-          menuBox.top >= 0 &&
-          menuBox.right <= window.innerWidth &&
-          menuBox.bottom <= window.innerHeight,
-        corners: points.map((point) => {
-          const hit = document.elementFromPoint(point.x, point.y);
-          return hit !== null && menuElement.contains(hit);
-        }),
-      };
-    });
+      const layering = await page.evaluate(() => {
+        const menuElement = document.querySelector('[role="menu"]');
+        if (!menuElement) return null;
+        const menuBox = menuElement.getBoundingClientRect();
+        const inset = 2;
+        const points = [
+          { x: menuBox.left + inset, y: menuBox.top + inset },
+          { x: menuBox.right - inset, y: menuBox.top + inset },
+          { x: menuBox.left + inset, y: menuBox.bottom - inset },
+          { x: menuBox.right - inset, y: menuBox.bottom - inset },
+        ];
+        return {
+          inViewport:
+            menuBox.left >= 0 &&
+            menuBox.top >= 0 &&
+            menuBox.right <= window.innerWidth &&
+            menuBox.bottom <= window.innerHeight,
+          corners: points.map((point) => {
+            const hit = document.elementFromPoint(point.x, point.y);
+            return hit !== null && menuElement.contains(hit);
+          }),
+        };
+      });
 
-    expect(layering).not.toBeNull();
-    expect(layering?.inViewport, "the menu must be fully inside the viewport").toBe(true);
-    expect(layering?.corners, "every menu corner belongs to the menu").toEqual([
-      true,
-      true,
-      true,
-      true,
-    ]);
+      expect(layering).not.toBeNull();
+      expect(layering?.inViewport, "the menu must be fully inside the viewport").toBe(true);
+      expect(layering?.corners, "every menu corner belongs to the menu").toEqual([
+        true,
+        true,
+        true,
+        true,
+      ]);
 
-    await captureForReview(page, "01-shell-banner-menu");
-  });
+      await captureForReview(page, "01-shell-banner-menu");
+    },
+  );
 
-  test("the appearance section switches the resolved theme", { tag: "@theme" }, async ({ page }) => {
-    await page.goto("/map");
+  test(
+    "the appearance section switches the resolved theme",
+    { tag: "@theme" },
+    async ({ page }) => {
+      await page.goto("/map");
 
-    await page.getByRole("button", { name: "Account menu for Demo Dispatcher" }).click();
-    const appearance = page.getByRole("group", { name: "Appearance" });
-    const dark = appearance.getByRole("menuitemradio", { name: "Dark" });
-    await dark.focus();
-    await expectNoAxeViolations(page);
-    if (isMobile(page)) await expectTouchTargets(page);
-    await page.keyboard.press("Enter");
+      await page.getByRole("button", { name: "Account menu for Demo Dispatcher" }).click();
+      const appearance = page.getByRole("group", { name: "Appearance" });
+      const dark = appearance.getByRole("menuitemradio", { name: "Dark" });
+      await dark.focus();
+      await expectNoAxeViolations(page);
+      if (isMobile(page)) await expectTouchTargets(page);
+      await page.keyboard.press("Enter");
 
-    await expect
-      .poll(() => page.evaluate(() => document.documentElement.dataset.theme))
-      .toBe("dark");
-    await expect(page.getByRole("menu")).toBeVisible();
-    await captureForReview(page, "01-shell-appearance");
-  });
+      await expect
+        .poll(() => page.evaluate(() => document.documentElement.dataset.theme))
+        .toBe("dark");
+      await expect(page.getByRole("menu")).toBeVisible();
+      await captureForReview(page, "01-shell-appearance");
+    },
+  );
 
-  test("the accent persists and the top bar has no theme control", { tag: "@theme" }, async ({ page }) => {
-    await page.goto("/map");
-    const header = page.locator("header").first();
-    await expect(header.getByRole("group", { name: "Colour theme" })).toHaveCount(0);
+  test(
+    "the accent persists and the top bar has no theme control",
+    { tag: "@theme" },
+    async ({ page }) => {
+      await page.goto("/map");
+      const header = page.locator("header").first();
+      await expect(header.getByRole("group", { name: "Colour theme" })).toHaveCount(0);
 
-    await page.getByRole("button", { name: "Account menu for Demo Dispatcher" }).click();
-    await page
-      .getByRole("group", { name: "Appearance" })
-      .getByRole("menuitemradio", { name: "Graphite accent" })
-      .click();
-    await expect(page.locator("html")).toHaveAttribute("data-accent", "graphite");
+      await page.getByRole("button", { name: "Account menu for Demo Dispatcher" }).click();
+      await page
+        .getByRole("group", { name: "Appearance" })
+        .getByRole("menuitemradio", { name: "Graphite accent" })
+        .click();
+      await expect(page.locator("html")).toHaveAttribute("data-accent", "graphite");
 
-    await page.reload();
-    await expect(page.locator("html")).toHaveAttribute("data-accent", "graphite");
-  });
+      await page.reload();
+      await expect(page.locator("html")).toHaveAttribute("data-accent", "graphite");
+    },
+  );
 
   test("mobile navigation opens as a menu and changes route", async ({ page }) => {
     test.skip(!isMobile(page), "mobile-only navigation");

@@ -98,14 +98,12 @@ test.describe("brand", { tag: "@theme" }, () => {
       sizes: "180x180",
     });
 
-    const themeColours = await page
-      .locator('meta[name="theme-color"]')
-      .evaluateAll((elements) =>
-        elements.map((element) => ({
-          media: element.getAttribute("media"),
-          content: element.getAttribute("content"),
-        })),
-      );
+    const themeColours = await page.locator('meta[name="theme-color"]').evaluateAll((elements) =>
+      elements.map((element) => ({
+        media: element.getAttribute("media"),
+        content: element.getAttribute("content"),
+      })),
+    );
     expect(themeColours).toContainEqual({
       media: "(prefers-color-scheme: light)",
       content: "#fafafa",

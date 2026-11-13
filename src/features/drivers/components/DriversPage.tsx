@@ -5,11 +5,7 @@ import type { DriversSearch } from "../../../app/search";
 import { useCanMutate } from "../../../auth/useCanMutate";
 import { normalize } from "../../../errors/normalize";
 import { formatClockTime, formatCount } from "../../../lib/format";
-import {
-  filterDrivers,
-  sortDrivers,
-  type DriverStatus,
-} from "../../../lib/drivers";
+import { filterDrivers, sortDrivers, type DriverStatus } from "../../../lib/drivers";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useConnection } from "../../../stores/connection";
 import { Button } from "../../../ui/Button";
@@ -102,20 +98,14 @@ function DriversPageContent() {
             : "not-found";
 
   const staleLabel =
-    feed.drivers.length > 0 &&
-    (offline || state === "error") &&
-    feed.dataUpdatedAt
+    feed.drivers.length > 0 && (offline || state === "error") && feed.dataUpdatedAt
       ? formatClockTime(feed.dataUpdatedAt)
       : undefined;
 
   const createReason =
-    mutate.blockedBy === "role"
-      ? "Your role can't create drivers."
-      : (mutate.reason ?? undefined);
+    mutate.blockedBy === "role" ? "Your role can't create drivers." : (mutate.reason ?? undefined);
   const editReason =
-    mutate.blockedBy === "role"
-      ? "Your role can't edit drivers."
-      : (mutate.reason ?? undefined);
+    mutate.blockedBy === "role" ? "Your role can't edit drivers." : (mutate.reason ?? undefined);
 
   function updateSearch(patch: Partial<DriversSearch>, replace = true): void {
     void navigate({ to: "/drivers", search: { ...search, ...patch }, replace });
@@ -135,9 +125,7 @@ function DriversPageContent() {
   function focusRow(id: string | null): void {
     setTimeout(() => {
       if (id) {
-        const target = document.querySelector<HTMLElement>(
-          `[data-driver-id="${CSS.escape(id)}"]`,
-        );
+        const target = document.querySelector<HTMLElement>(`[data-driver-id="${CSS.escape(id)}"]`);
         if (target) {
           target.focus();
           return;
@@ -177,11 +165,7 @@ function DriversPageContent() {
   /** After a 404 refresh, close the stale form if the row is gone from the list. */
   async function refreshEditTarget(): Promise<void> {
     const rows = await feed.refetch();
-    if (
-      rows &&
-      editDriver &&
-      !rows.some((driver) => driver.id === editDriver.id)
-    ) {
+    if (rows && editDriver && !rows.some((driver) => driver.id === editDriver.id)) {
       setEditDriver(null);
     }
   }
@@ -196,16 +180,11 @@ function DriversPageContent() {
           <div className="flex flex-col gap-1">
             <h1 className="text-text text-lg font-semibold">Drivers</h1>
             <p className="text-muted text-sm">
-              <span className="tabular-nums">
-                {formatCount(visible.length)}
-              </span>
+              <span className="tabular-nums">{formatCount(visible.length)}</span>
               {filtered ? (
                 <>
                   {" of "}
-                  <span className="tabular-nums">
-                    {formatCount(feed.drivers.length)}
-                  </span>{" "}
-                  drivers
+                  <span className="tabular-nums">{formatCount(feed.drivers.length)}</span> drivers
                 </>
               ) : (
                 " drivers"

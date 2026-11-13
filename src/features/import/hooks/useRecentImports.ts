@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  addImportHistory,
-  readImportHistory,
-  type RecentImport,
-} from "../../../lib/importHistory";
+import { addImportHistory, readImportHistory, type RecentImport } from "../../../lib/importHistory";
 import { normalize } from "../../../errors/normalize";
 import type { AppError } from "../../../errors/types";
 

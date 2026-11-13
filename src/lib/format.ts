@@ -17,8 +17,7 @@ export function formatCount(value: number | null | undefined): string {
 export function formatRate(perSecond: number | null | undefined): string {
   if (!isNumber(perSecond) || perSecond <= 0) return perSecond === 0 ? "0/s" : MISSING;
   if (perSecond < 0.1) return "<0.1/s";
-  const rounded =
-    perSecond >= 10 ? Math.round(perSecond) : Math.round(perSecond * 10) / 10;
+  const rounded = perSecond >= 10 ? Math.round(perSecond) : Math.round(perSecond * 10) / 10;
   return `${rounded}/s`;
 }
 
@@ -39,8 +38,7 @@ export function formatDistanceCompact(km: number | null | undefined): string {
   if (km < 100_000) return formatDistance(km);
   const [divisor, suffix] = km >= 1_000_000 ? [1_000_000, "M"] : [1_000, "k"];
   const scaled = km / divisor;
-  const rounded =
-    scaled >= 10 ? Math.round(scaled) : Math.round(scaled * 10) / 10;
+  const rounded = scaled >= 10 ? Math.round(scaled) : Math.round(scaled * 10) / 10;
   return `${rounded}${suffix} km`;
 }
 
@@ -119,11 +117,7 @@ export function formatTimeTooltip(iso: string, timeZone?: string): string {
   return `${local} · ${utc} UTC`;
 }
 
-export function formatRelativeTime(
-  iso: string,
-  now: number,
-  timeZone?: string,
-): string {
+export function formatRelativeTime(iso: string, now: number, timeZone?: string): string {
   const date = dateOf(iso);
   if (!date) return MISSING;
 

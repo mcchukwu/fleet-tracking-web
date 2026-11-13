@@ -93,8 +93,12 @@ export function ErrorState({
         role={blocking ? "alert" : "status"}
         className={cn("flex items-center gap-2 px-3 py-2", className)}
       >
-        <TriangleAlert aria-hidden="true" className="size-4 shrink-0 text-danger" strokeWidth={1.5} />
-        <p className="min-w-0 flex-1 truncate text-sm text-text">{title}</p>
+        <TriangleAlert
+          aria-hidden="true"
+          className="text-danger size-4 shrink-0"
+          strokeWidth={1.5}
+        />
+        <p className="text-text min-w-0 flex-1 truncate text-sm">{title}</p>
         {actionHandler ? (
           <Button size="sm" variant="ghost" onClick={actionHandler}>
             {actionLabels[copy.action === "none" ? "retry" : copy.action]}
@@ -109,9 +113,9 @@ export function ErrorState({
       role={blocking ? "alert" : "status"}
       className={cn("flex flex-col items-center gap-2 px-4 py-10 text-center", className)}
     >
-      <Icon aria-hidden="true" className="size-6 text-danger" strokeWidth={1.5} />
-      <p className="text-base font-medium text-text">{title}</p>
-      <p className="max-w-prose text-sm text-muted">{copy.detail}</p>
+      <Icon aria-hidden="true" className="text-danger size-6" strokeWidth={1.5} />
+      <p className="text-text text-base font-medium">{title}</p>
+      <p className="text-muted max-w-prose text-sm">{copy.detail}</p>
       <div className="flex flex-wrap items-center justify-center gap-2">
         {actionHandler ? (
           <Button size="sm" onClick={actionHandler}>
@@ -125,7 +129,7 @@ export function ErrorState({
         ) : null}
       </div>
       {copyStatus !== "idle" ? (
-        <output className="text-xs text-muted">
+        <output className="text-muted text-xs">
           {copyStatus === "copied" ? "Copied" : "Couldn't copy. Select the text and press Ctrl+C."}
         </output>
       ) : null}

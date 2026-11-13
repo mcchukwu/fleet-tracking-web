@@ -20,27 +20,15 @@ describe("SystemHealthGroup", () => {
       />,
     );
 
-    expect(
-      screen.getByRole("heading", { name: "Dependencies", level: 2 }),
-    ).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Dependencies", level: 2 })).toBeVisible();
     expect(screen.getByText("Services the API depends on.")).toBeVisible();
     const rows = screen.getAllByRole("listitem");
-    expect(rows.map((row) => row.getAttribute("data-health-id"))).toEqual([
-      "redis",
-      "postgres",
-    ]);
+    expect(rows.map((row) => row.getAttribute("data-health-id"))).toEqual(["redis", "postgres"]);
     expect(rows[0]).toHaveAttribute("data-health-tone", "critical");
   });
 
   it("renders a group-level empty line instead of a strip", () => {
-    render(
-      <SystemHealthGroup
-        id="dependencies"
-        title="Dependencies"
-        items={[]}
-        columns={2}
-      />,
-    );
+    render(<SystemHealthGroup id="dependencies" title="Dependencies" items={[]} columns={2} />);
     expect(screen.getByText("No dependencies reported.")).toBeVisible();
     expect(screen.queryByRole("list")).toBeNull();
   });

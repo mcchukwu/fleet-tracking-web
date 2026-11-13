@@ -19,10 +19,8 @@ function mockMatchMedia(initial: boolean) {
     },
     media: query,
     onchange: null,
-    addEventListener: (_type: string, listener: Listener) =>
-      listeners.add(listener),
-    removeEventListener: (_type: string, listener: Listener) =>
-      listeners.delete(listener),
+    addEventListener: (_type: string, listener: Listener) => listeners.add(listener),
+    removeEventListener: (_type: string, listener: Listener) => listeners.delete(listener),
     addListener: (listener: Listener) => listeners.add(listener),
     removeListener: (listener: Listener) => listeners.delete(listener),
     dispatchEvent: () => true,

@@ -3,15 +3,11 @@ import { describe, expect, it } from "vitest";
 import { PageFrame } from "./PageFrame";
 
 function frame(): HTMLElement {
-  return document.querySelector<HTMLElement>(
-    "[data-page-frame]",
-  ) as HTMLElement;
+  return document.querySelector<HTMLElement>("[data-page-frame]") as HTMLElement;
 }
 
 function content(): HTMLElement {
-  return document.querySelector<HTMLElement>(
-    "[data-page-frame-content]",
-  ) as HTMLElement;
+  return document.querySelector<HTMLElement>("[data-page-frame-content]") as HTMLElement;
 }
 
 describe("PageFrame", () => {
@@ -50,9 +46,7 @@ describe("PageFrame", () => {
     );
 
     expect(screen.getByText("Only child").parentElement).toBe(content());
-    expect(document.querySelectorAll("[data-page-frame-content]")).toHaveLength(
-      1,
-    );
+    expect(document.querySelectorAll("[data-page-frame-content]")).toHaveLength(1);
     expect(content().className).toContain("max-w-content");
     expect(content().className).toContain("mx-auto");
   });

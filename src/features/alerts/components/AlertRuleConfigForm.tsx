@@ -34,7 +34,7 @@ export function AlertRuleConfigForm({
   const disabled = Boolean(disabledReason);
 
   if (fields.length === 0) {
-    return <p className="text-xs text-muted">No settings.</p>;
+    return <p className="text-muted text-xs">No settings.</p>;
   }
 
   function update(key: string, value: string | boolean): void {
@@ -43,7 +43,7 @@ export function AlertRuleConfigForm({
 
   return (
     <form
-      className="flex flex-col gap-3 border-t border-border pt-3"
+      className="border-border flex flex-col gap-3 border-t pt-3"
       onSubmit={(event) => {
         event.preventDefault();
         setSubmitted(true);
@@ -80,8 +80,8 @@ export function AlertRuleConfigForm({
           }
           return (
             <div key={field.key} className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-text">{field.label}</span>
-              <span className="font-mono text-xs text-muted">
+              <span className="text-text text-sm font-medium">{field.label}</span>
+              <span className="text-muted font-mono text-xs">
                 {formatEvidenceValue(field.key, field.value)}
               </span>
             </div>
@@ -89,9 +89,7 @@ export function AlertRuleConfigForm({
         })}
       </div>
 
-      {disabled && disabledReason ? (
-        <p className="text-xs text-muted">{disabledReason}</p>
-      ) : null}
+      {disabled && disabledReason ? <p className="text-muted text-xs">{disabledReason}</p> : null}
 
       <div className="flex items-center gap-2">
         <Button size="sm" type="submit" loading={pending} disabled={disabled}>

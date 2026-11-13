@@ -16,11 +16,7 @@ import type {
 import { alertRulesFixture } from "./fixtures/alertRules";
 import { alertsFixture } from "./fixtures/alerts";
 import { driversFixture } from "./fixtures/drivers";
-import {
-  shiftEventsToRange,
-  vehicleEventsFixture,
-  vehicleEventsForCount,
-} from "./fixtures/events";
+import { shiftEventsToRange, vehicleEventsFixture, vehicleEventsForCount } from "./fixtures/events";
 import { geofencesFixture } from "./fixtures/geofences";
 import { validateRing } from "../features/geofences/lib/geometry";
 import { isGeofenceKind } from "../features/geofences/lib/kinds";
@@ -111,13 +107,14 @@ interface MockState {
 
 function createState(): MockState {
   return {
-    user: demoUsers["dispatcher@demo.ftb"] ?? Object.values(demoUsers)[0] ?? {
-      id: "demo",
-      tenant_id: "tenant-demo",
-      email: "dispatcher@demo.ftb",
-      name: "Demo Dispatcher",
-      role: "dispatcher",
-    },
+    user: demoUsers["dispatcher@demo.ftb"] ??
+      Object.values(demoUsers)[0] ?? {
+        id: "demo",
+        tenant_id: "tenant-demo",
+        email: "dispatcher@demo.ftb",
+        name: "Demo Dispatcher",
+        role: "dispatcher",
+      },
     csrf: "mock-csrf-token",
     vehicles: structuredClone(vehiclesFixture),
     alerts: structuredClone(alertsFixture),
@@ -400,9 +397,7 @@ export function applyMockImport(text: string): MockImportOutcome {
       continue;
     }
 
-    const existing = state.vehicles.find(
-      (vehicle) => vehicle.external_id === imei,
-    );
+    const existing = state.vehicles.find((vehicle) => vehicle.external_id === imei);
     const plate = row.cells.plate || existing?.plate || imei;
     const fields = {
       plate,
@@ -466,9 +461,7 @@ export function applyMockImport(text: string): MockImportOutcome {
 
   for (const driver of state.drivers) {
     if (!affectedDrivers.has(driver.id)) continue;
-    driver.vehicles = state.vehicles.filter(
-      (vehicle) => vehicle.driver_id === driver.id,
-    ).length;
+    driver.vehicles = state.vehicles.filter((vehicle) => vehicle.driver_id === driver.id).length;
   }
 
   const total = parsed.rows.length;
@@ -564,7 +557,10 @@ export const handlers = [
       );
       return vehicle
         ? HttpResponse.json({ data: vehicle })
-        : HttpResponse.json({ error: { code: "not_found", message: "not found" } }, { status: 404 });
+        : HttpResponse.json(
+            { error: { code: "not_found", message: "not found" } },
+            { status: 404 },
+          );
     });
   }),
 
@@ -581,7 +577,10 @@ export const handlers = [
         (item) => item.id === params.id || item.external_id === params.id,
       );
       if (!vehicle) {
-        return HttpResponse.json({ error: { code: "not_found", message: "vehicle not found" } }, { status: 404 });
+        return HttpResponse.json(
+          { error: { code: "not_found", message: "vehicle not found" } },
+          { status: 404 },
+        );
       }
 
       const raw = await readJson(request);
@@ -783,7 +782,9 @@ export const handlers = [
         severity: "medium",
         status: index % 5 === 0 ? "acked" : "open",
         occurred_at: new Date(now - index * 1_000).toISOString(),
-        ...(index % 5 === 0 ? { acked_at: new Date(now - index * 1_000 + 60_000).toISOString() } : {}),
+        ...(index % 5 === 0
+          ? { acked_at: new Date(now - index * 1_000 + 60_000).toISOString() }
+          : {}),
         evidence: { geofence_id: "00000000-0000-0000-0000-000000000203" },
       };
     });
@@ -810,13 +811,9 @@ export const handlers = [
       const status = url.searchParams.get("status");
       const limitParam = Number.parseInt(url.searchParams.get("limit") ?? "", 10);
       const offsetParam = Number.parseInt(url.searchParams.get("offset") ?? "", 10);
-      const limit = Number.isFinite(limitParam)
-        ? Math.min(500, Math.max(1, limitParam))
-        : 100;
+      const limit = Number.isFinite(limitParam) ? Math.min(500, Math.max(1, limitParam)) : 100;
       const offset = Number.isFinite(offsetParam) ? Math.max(0, offsetParam) : 0;
-      const data = status
-        ? state.trips.filter((trip) => trip.status === status)
-        : state.trips;
+      const data = status ? state.trips.filter((trip) => trip.status === status) : state.trips;
       return HttpResponse.json({ data: data.slice(offset, offset + limit) });
     });
   }),
@@ -837,9 +834,7 @@ export const handlers = [
           { status: 400 },
         );
       }
-      const vehicle = state.vehicles.find(
-        (item) => item.id === parsed.data.vehicle_id,
-      );
+      const vehicle = state.vehicles.find((item) => item.id === parsed.data.vehicle_id);
       const driver = parsed.data.driver_id
         ? state.drivers.find((item) => item.id === parsed.data.driver_id)
         : undefined;
@@ -852,9 +847,7 @@ export const handlers = [
           id,
           vehicle_id: parsed.data.vehicle_id,
           plate: vehicle?.plate ?? "—",
-          ...(driver
-            ? { driver_id: driver.id, driver_name: driver.name }
-            : {}),
+          ...(driver ? { driver_id: driver.id, driver_name: driver.name } : {}),
           origin: parsed.data.origin,
           destination: parsed.data.destination,
           status: "planned",
@@ -945,14 +938,10 @@ export const handlers = [
       const type = url.searchParams.get("type");
       const limitParam = Number.parseInt(url.searchParams.get("limit") ?? "", 10);
       const offsetParam = Number.parseInt(url.searchParams.get("offset") ?? "", 10);
-      const limit = Number.isFinite(limitParam)
-        ? Math.min(500, Math.max(1, limitParam))
-        : 100;
+      const limit = Number.isFinite(limitParam) ? Math.min(500, Math.max(1, limitParam)) : 100;
       const offset = Number.isFinite(offsetParam) ? Math.max(0, offsetParam) : 0;
       const data = state.alerts
-        .filter(
-          (alert) => (!status || alert.status === status) && (!type || alert.type === type),
-        )
+        .filter((alert) => (!status || alert.status === status) && (!type || alert.type === type))
         .sort((a, b) => Date.parse(b.occurred_at) - Date.parse(a.occurred_at));
       return HttpResponse.json({ data: data.slice(offset, offset + limit) });
     });
@@ -986,7 +975,10 @@ export const handlers = [
       if (!user || !can(user.role, "mutate")) return forbidden();
       const rule = state.alertRules.find((item) => item.id === params.id);
       if (!rule) {
-        return HttpResponse.json({ error: { code: "not_found", message: "rule not found" } }, { status: 404 });
+        return HttpResponse.json(
+          { error: { code: "not_found", message: "rule not found" } },
+          { status: 404 },
+        );
       }
       const raw = await readJson(request);
       if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return badRequest();
@@ -1039,7 +1031,10 @@ export const handlers = [
           { status: 400 },
         );
       }
-      if (body.kind !== undefined && !(typeof body.kind === "string" && isGeofenceKind(body.kind))) {
+      if (
+        body.kind !== undefined &&
+        !(typeof body.kind === "string" && isGeofenceKind(body.kind))
+      ) {
         return HttpResponse.json(
           {
             error: {
@@ -1104,7 +1099,10 @@ export const handlers = [
           { status: 400 },
         );
       }
-      if (body.kind !== undefined && !(typeof body.kind === "string" && isGeofenceKind(body.kind))) {
+      if (
+        body.kind !== undefined &&
+        !(typeof body.kind === "string" && isGeofenceKind(body.kind))
+      ) {
         return HttpResponse.json(
           {
             error: {
@@ -1237,7 +1235,12 @@ export const handlers = [
       const parsed = driverPatchSchema.safeParse(raw);
       if (!parsed.success) return badRequest();
       const { name, phone, licence, status } = parsed.data;
-      if (name === undefined && phone === undefined && licence === undefined && status === undefined) {
+      if (
+        name === undefined &&
+        phone === undefined &&
+        licence === undefined &&
+        status === undefined
+      ) {
         return HttpResponse.json(
           { error: { code: "invalid_request", message: "no fields to update" } },
           { status: 400 },
@@ -1314,9 +1317,7 @@ export const handlers = [
 
       const limitParam = Number.parseInt(url.searchParams.get("limit") ?? "", 10);
       const offsetParam = Number.parseInt(url.searchParams.get("offset") ?? "", 10);
-      const limit = Number.isFinite(limitParam)
-        ? Math.min(500, Math.max(1, limitParam))
-        : 100;
+      const limit = Number.isFinite(limitParam) ? Math.min(500, Math.max(1, limitParam)) : 100;
       const offset = Number.isFinite(offsetParam) ? Math.max(0, offsetParam) : 0;
       const data = auditForScenario();
       return HttpResponse.json({ data: data.slice(offset, offset + limit) });
@@ -1331,8 +1332,7 @@ export const handlers = [
         { status: 401 },
       );
     }
-    const body =
-      (await readJson(request)) as Partial<Omit<AuditEntry, "id" | "created_at">> | null;
+    const body = (await readJson(request)) as Partial<Omit<AuditEntry, "id" | "created_at">> | null;
     const newest = state.audit.reduce((max, entry) => {
       const id = typeof entry.id === "number" ? entry.id : 0;
       return Math.max(max, id);

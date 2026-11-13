@@ -45,10 +45,7 @@ export interface DriverWriteCopy {
 }
 
 /** Copy for a failed driver write; never raw server text. */
-export function driverWriteCopy(
-  error: AppError,
-  mode: "create" | "update",
-): DriverWriteCopy {
+export function driverWriteCopy(error: AppError, mode: "create" | "update"): DriverWriteCopy {
   const verb = mode === "create" ? "create" : "edit";
   if (error.kind === "not_found") {
     return {

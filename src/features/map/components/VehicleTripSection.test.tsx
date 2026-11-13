@@ -42,9 +42,7 @@ describe("VehicleTripSection", () => {
   });
 
   it("resolves a trip from the list", () => {
-    renderSection(
-      <VehicleTripSection tripId="trip-1" trips={[trip]} tripQuery={query} />,
-    );
+    renderSection(<VehicleTripSection tripId="trip-1" trips={[trip]} tripQuery={query} />);
     expect(screen.getByText("Refinery Gate")).toBeVisible();
     expect(screen.getByText("Ibadan Customer")).toBeVisible();
     expect(screen.getByText("Active")).toBeVisible();
@@ -77,7 +75,12 @@ describe("VehicleTripSection", () => {
     renderSection(
       <VehicleTripSection
         tripId="trip-1"
-        tripQuery={{ ...query, isError: true, error: new ApiError(500, "internal", "down"), refetch }}
+        tripQuery={{
+          ...query,
+          isError: true,
+          error: new ApiError(500, "internal", "down"),
+          refetch,
+        }}
       />,
     );
     expect(screen.getByRole("button", { name: "Retry" })).toBeVisible();
@@ -123,11 +126,7 @@ describe("VehicleTripSection", () => {
 
   it("does not keep a skeleton for a paused offline query", () => {
     renderSection(
-      <VehicleTripSection
-        tripId="trip-1"
-        tripQuery={{ ...query, isLoading: false }}
-        offline
-      />,
+      <VehicleTripSection tripId="trip-1" tripQuery={{ ...query, isLoading: false }} offline />,
     );
     expect(screen.queryByText("Trip details unavailable.")).not.toBeInTheDocument();
     expect(screen.getByText("Trip details need a connection.")).toBeVisible();

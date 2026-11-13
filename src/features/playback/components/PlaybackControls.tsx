@@ -17,10 +17,7 @@ import { Skeleton } from "../../../ui/StatePanel";
 import { cn } from "../../../ui/cn";
 import type { PlaybackEvent } from "../lib/events";
 import { gapLabel, type Cursor, type RouteGap } from "../lib/history";
-import {
-  MAX_VISIBLE_GAP_LABELS,
-  PLAYBACK_SPEEDS,
-} from "../lib/constants";
+import { MAX_VISIBLE_GAP_LABELS, PLAYBACK_SPEEDS } from "../lib/constants";
 import { PlaybackScrubber } from "./PlaybackScrubber";
 
 export interface PlaybackControlsProps {
@@ -101,10 +98,7 @@ export function PlaybackControls({
       ref={controlsRef}
       aria-label="Playback controls"
       tabIndex={-1}
-      className={cn(
-        "border-t border-border bg-surface px-3 py-2 text-text",
-        className,
-      )}
+      className={cn("border-border bg-surface text-text border-t px-3 py-2", className)}
     >
       {loading ? (
         <>
@@ -116,7 +110,10 @@ export function PlaybackControls({
       ) : (
         <>
           {refreshing ? <SlowNotice onRetry={onRetry} onCancel={onCancel} /> : null}
-          <div data-testid="playback-controls-body" className="flex flex-col gap-2 md:flex-row md:items-end md:gap-4">
+          <div
+            data-testid="playback-controls-body"
+            className="flex flex-col gap-2 md:flex-row md:items-end md:gap-4"
+          >
             <PlaybackScrubber
               fromMs={fromMs}
               toMs={toMs}
@@ -196,7 +193,7 @@ export function PlaybackControls({
           {error ? <ErrorState error={error} compact onRetry={onRetry} /> : null}
 
           {gaps.length > 0 ? (
-            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
+            <div className="text-muted mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs">
               {visibleGaps.map((gap) => (
                 <span key={`${gap.startMs}-${gap.endMs}`}>{gapLabel(gap, formatter)}</span>
               ))}

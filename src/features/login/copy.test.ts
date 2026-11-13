@@ -22,7 +22,9 @@ describe("loginErrorCopy", () => {
   });
 
   it("counts down a rate limit when Retry-After is known", () => {
-    expect(loginErrorCopy(error("rate_limited", { retryAfterSec: 30 }), { remainingSec: 12 })).toEqual({
+    expect(
+      loginErrorCopy(error("rate_limited", { retryAfterSec: 30 }), { remainingSec: 12 }),
+    ).toEqual({
       title: "Too many attempts",
       detail: "Try again in 12s.",
     });
@@ -40,9 +42,9 @@ describe("loginErrorCopy", () => {
   });
 
   it("tells the user when the rate limit has elapsed", () => {
-    expect(loginErrorCopy(error("rate_limited", { retryAfterSec: 30 }), { remainingSec: 0 }).detail).toBe(
-      "You can try again now.",
-    );
+    expect(
+      loginErrorCopy(error("rate_limited", { retryAfterSec: 30 }), { remainingSec: 0 }).detail,
+    ).toBe("You can try again now.");
   });
 
   it("has distinct copy for offline, network, timeout and server failures", () => {
@@ -64,7 +66,10 @@ describe("loginErrorCopy", () => {
 
   it("shows the safe validation message and no raw text for server errors", () => {
     const validation = loginErrorCopy(
-      error("validation", { code: "invalid_request", serverMessage: "email and password are required" }),
+      error("validation", {
+        code: "invalid_request",
+        serverMessage: "email and password are required",
+      }),
     );
     expect(validation.detail).toBe("email and password are required");
 

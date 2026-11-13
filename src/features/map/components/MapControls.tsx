@@ -96,8 +96,7 @@ export function MapControls({
     const active = document.activeElement;
     // An open menu renders in a portal, so its focused item is outside the
     // fieldset. Closing it would return focus to the now-inert trigger.
-    const focusInMenu =
-      active instanceof HTMLElement && active.closest('[role="menu"]') !== null;
+    const focusInMenu = active instanceof HTMLElement && active.closest('[role="menu"]') !== null;
     if (
       focusInMenu ||
       styleOpen ||
@@ -119,7 +118,7 @@ export function MapControls({
         className,
       )}
     >
-      <div className="flex flex-col gap-1 rounded-lg border border-border bg-surface p-1 shadow-float">
+      <div className="border-border bg-surface shadow-float flex flex-col gap-1 rounded-lg border p-1">
         <Tooltip label={atMax ? "Maximum zoom" : "Zoom in"} side="left">
           <IconButton
             size="lg"
@@ -216,7 +215,7 @@ export function MapControls({
         ) : null}
       </div>
 
-      <div className="rounded-lg border border-border bg-surface p-1 shadow-float">
+      <div className="border-border bg-surface shadow-float rounded-lg border p-1">
         <MapStyleMenu
           styles={styles}
           value={baseStyle}

@@ -4,12 +4,7 @@ import { formatCount } from "../../../lib/format";
 import type { DataTableColumn } from "../../../ui/DataTable";
 import { DataTable } from "../../../ui/DataTable";
 import { EmptyState } from "../../../ui/StatePanel";
-import {
-  chartDescription,
-  chartItems,
-  chartState,
-  type ChartItem,
-} from "../lib/chart";
+import { chartDescription, chartItems, chartState, type ChartItem } from "../lib/chart";
 import type { AlertTypeCount } from "../lib/chart";
 import { reportsCopy } from "../lib/copy";
 
@@ -35,10 +30,7 @@ export interface AlertsByTypeChartProps {
   alertCount: number;
 }
 
-export function AlertsByTypeChart({
-  items,
-  alertCount,
-}: AlertsByTypeChartProps) {
+export function AlertsByTypeChart({ items, alertCount }: AlertsByTypeChartProps) {
   const headingId = useId();
   const descriptionId = useId();
   const visible = chartItems(items);
@@ -91,13 +83,7 @@ export function AlertsByTypeChart({
                   preserveAspectRatio="none"
                   className="h-2 min-w-0 flex-1"
                 >
-                  <rect
-                    x="0"
-                    y="0"
-                    width="100"
-                    height="8"
-                    className="fill-surface-2"
-                  />
+                  <rect x="0" y="0" width="100" height="8" className="fill-surface-2" />
                   <rect
                     x="0"
                     y="0"
@@ -114,7 +100,7 @@ export function AlertsByTypeChart({
           </div>
 
           <details className="border-border border-t pt-2">
-            <summary className="text-text flex min-h-touch cursor-pointer items-center text-sm font-medium md:min-h-control-sm">
+            <summary className="text-text min-h-touch md:min-h-control-sm flex cursor-pointer items-center text-sm font-medium">
               View data table
             </summary>
             <div className="mt-2">

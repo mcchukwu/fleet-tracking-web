@@ -34,17 +34,19 @@ export function VehicleRow({ row, height, selected, onSelect, onHover }: Vehicle
         selected ? "bg-accent-soft" : "hover:bg-surface-2 focus-within:bg-surface-2",
       )}
     >
-      {selected ? <span aria-hidden="true" className="absolute inset-y-0 left-0 w-0.5 bg-accent" /> : null}
+      {selected ? (
+        <span aria-hidden="true" className="bg-accent absolute inset-y-0 left-0 w-0.5" />
+      ) : null}
       <span
         aria-hidden="true"
         data-testid="row-divider"
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-border"
+        className="bg-border pointer-events-none absolute inset-x-0 bottom-0 h-px"
       />
       <button
         type="button"
         aria-pressed={selected}
         aria-label={`Select ${row.plate}`}
-        className="absolute inset-0 w-full rounded-none focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus-ring"
+        className="focus-visible:outline-focus-ring absolute inset-0 w-full rounded-none focus-visible:outline-2 focus-visible:outline-offset-0"
         onClick={() => onSelect(row.key)}
         onPointerEnter={() => onHover(row.key)}
         onPointerLeave={() => onHover(null)}
@@ -55,12 +57,7 @@ export function VehicleRow({ row, height, selected, onSelect, onHover }: Vehicle
         <div className="flex min-w-0 items-center gap-2">
           <StatusPill status={row.status} />
           <span data-row-inline-action className="pointer-events-auto inline-flex shrink-0">
-            <CopyButton
-              inline
-              value={row.plate}
-              label="Plate"
-              className="text-sm"
-            />
+            <CopyButton inline value={row.plate} label="Plate" className="text-sm" />
           </span>
           <span className={cn("ml-auto shrink-0 text-xs tabular-nums", ageTone)}>
             {row.recordedAt ? (
@@ -70,7 +67,7 @@ export function VehicleRow({ row, height, selected, onSelect, onHover }: Vehicle
             )}
           </span>
         </div>
-        <div className="flex min-w-0 items-center gap-2 text-xs text-muted">
+        <div className="text-muted flex min-w-0 items-center gap-2 text-xs">
           <span className="truncate">{row.driverName ?? "—"}</span>
           <span className="ml-auto shrink-0 tabular-nums">
             {row.lat === null || row.lon === null

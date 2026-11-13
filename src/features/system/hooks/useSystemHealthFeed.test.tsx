@@ -10,9 +10,7 @@ import { useSystemHealthFeed } from "./useSystemHealthFeed";
 
 function wrapperFor(queryClient: QueryClient) {
   return function Wrapper({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   };
 }
 
@@ -48,9 +46,7 @@ afterEach(() => {
 
 describe("useSystemHealthFeed", () => {
   it("polls every 10s while visible and pauses while hidden", async () => {
-    const health = vi
-      .spyOn(api, "systemHealth")
-      .mockResolvedValue(systemHealthFixture);
+    const health = vi.spyOn(api, "systemHealth").mockResolvedValue(systemHealthFixture);
     const { result } = renderHook(() => useSystemHealthFeed(), {
       wrapper: wrapperFor(client()),
     });
@@ -109,9 +105,7 @@ describe("useSystemHealthFeed", () => {
 
   it("does not poll a document that was hidden before mount", async () => {
     setVisibility("hidden", false);
-    const health = vi
-      .spyOn(api, "systemHealth")
-      .mockResolvedValue(systemHealthFixture);
+    const health = vi.spyOn(api, "systemHealth").mockResolvedValue(systemHealthFixture);
     renderHook(() => useSystemHealthFeed(), { wrapper: wrapperFor(client()) });
 
     await flush();
@@ -125,9 +119,7 @@ describe("useSystemHealthFeed", () => {
 
   it("disables the query while offline and fetches on reconnect", async () => {
     useConnectionStore.setState({ network: "offline" });
-    const health = vi
-      .spyOn(api, "systemHealth")
-      .mockResolvedValue(systemHealthFixture);
+    const health = vi.spyOn(api, "systemHealth").mockResolvedValue(systemHealthFixture);
     renderHook(() => useSystemHealthFeed(), { wrapper: wrapperFor(client()) });
 
     await flush();
@@ -139,16 +131,14 @@ describe("useSystemHealthFeed", () => {
   });
 
   it("cancels the first load and a retry starts one request", async () => {
-    const health = vi
-      .spyOn(api, "systemHealth")
-      .mockImplementation(
-        (options = {}) =>
-          new Promise((_resolve, reject) => {
-            options.signal?.addEventListener("abort", () => {
-              reject(new DOMException("Aborted", "AbortError"));
-            });
-          }),
-      );
+    const health = vi.spyOn(api, "systemHealth").mockImplementation(
+      (options = {}) =>
+        new Promise((_resolve, reject) => {
+          options.signal?.addEventListener("abort", () => {
+            reject(new DOMException("Aborted", "AbortError"));
+          });
+        }),
+    );
     const { result } = renderHook(() => useSystemHealthFeed(), {
       wrapper: wrapperFor(client()),
     });
@@ -167,16 +157,14 @@ describe("useSystemHealthFeed", () => {
   });
 
   it("keeps the poll stopped after a cancel until Retry", async () => {
-    const health = vi
-      .spyOn(api, "systemHealth")
-      .mockImplementation(
-        (options = {}) =>
-          new Promise((_resolve, reject) => {
-            options.signal?.addEventListener("abort", () => {
-              reject(new DOMException("Aborted", "AbortError"));
-            });
-          }),
-      );
+    const health = vi.spyOn(api, "systemHealth").mockImplementation(
+      (options = {}) =>
+        new Promise((_resolve, reject) => {
+          options.signal?.addEventListener("abort", () => {
+            reject(new DOMException("Aborted", "AbortError"));
+          });
+        }),
+    );
     const { result } = renderHook(() => useSystemHealthFeed(), {
       wrapper: wrapperFor(client()),
     });

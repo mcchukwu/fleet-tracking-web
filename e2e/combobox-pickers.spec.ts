@@ -23,30 +23,19 @@ async function isHitTestable(page: Page, locator: Locator): Promise<boolean> {
   return page.evaluate(
     ({ x, y }) => {
       const element = document.elementFromPoint(x, y);
-      return (
-        element !== null &&
-        element.closest('[aria-label="Close picker"]') !== null
-      );
+      return element !== null && element.closest('[aria-label="Close picker"]') !== null;
     },
     { x: box.x + box.width / 2, y: box.y + box.height / 2 },
   );
 }
 
-async function expectPicker(
-  page: Page,
-  dialog: Locator,
-  label: string,
-): Promise<PickerHandle> {
-  const named = dialog
-    .getByRole("combobox", { name: label, exact: true })
-    .first();
+async function expectPicker(page: Page, dialog: Locator, label: string): Promise<PickerHandle> {
+  const named = dialog.getByRole("combobox", { name: label, exact: true }).first();
   // Once the modal sheet is open Radix hides the parent dialog from the
   // accessibility tree, so keep a selector that still measures the trigger.
   const id = await named.getAttribute("id");
   const trigger = id ? page.locator(`input[id="${id}"]`) : named;
-  const parent = page
-    .locator('[role="dialog"]:not([data-picker-sheet])')
-    .first();
+  const parent = page.locator('[role="dialog"]:not([data-picker-sheet])').first();
   const triggerBefore = await trigger.boundingBox();
   const dialogBefore = await parent.boundingBox();
 
@@ -98,10 +87,7 @@ async function expectPicker(
         const parentHit = await page.evaluate(
           ({ x, y }) => {
             const element = document.elementFromPoint(x, y);
-            return (
-              element !== null &&
-              element.closest('[aria-label="Close dialog"]') !== null
-            );
+            return element !== null && element.closest('[aria-label="Close dialog"]') !== null;
           },
           { x: box.x + box.width / 2, y: box.y + box.height / 2 },
         );
@@ -129,9 +115,7 @@ async function openDrawer(page: Page): Promise<void> {
     await page.keyboard.press("ArrowUp");
   }
   await page.getByRole("button", { name: "Select LSD-100-AA" }).click();
-  await expect(
-    page.getByText("Vehicle details", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText("Vehicle details", { exact: true })).toBeVisible();
   if (!desktop) {
     await page.keyboard.press("End");
     await page.waitForTimeout(250);
@@ -144,13 +128,11 @@ async function gotoMap(page: Page): Promise<void> {
 }
 
 test.describe("picker overlay in every dialog", () => {
-  test("the Playback change-vehicle picker respects the dialog", async ({
-    page,
-  }) => {
+  test("the Playback change-vehicle picker respects the dialog", async ({ page }) => {
     await page.goto(`/playback?map=fake&vehicle=${PLAYBACK_VEHICLE}`);
-    await expect(
-      page.getByRole("region", { name: "Playback controls" }),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("region", { name: "Playback controls" })).toBeVisible({
+      timeout: 15_000,
+    });
     await page.getByRole("button", { name: "Change vehicle" }).click();
     const dialog = page.getByRole("dialog", { name: "Change vehicle" });
     await expect(dialog).toBeVisible();
@@ -168,36 +150,23 @@ test.describe("picker overlay in every dialog", () => {
     await expect(dialog).toBeVisible();
 
     const picker = await expectPicker(page, dialog, "Driver");
-    await captureForReview(
-      page,
-      `13b-picker-assign-driver-${picker.presentation}`,
-    );
+    await captureForReview(page, `13b-picker-assign-driver-${picker.presentation}`);
   });
 
   test("the edit-vehicle picker respects the dialog", async ({ page }) => {
     await gotoMap(page);
     await openDrawer(page);
-    await page
-      .getByRole("button", { name: "Edit", exact: true })
-      .first()
-      .click();
+    await page.getByRole("button", { name: "Edit", exact: true }).first().click();
     const dialog = page.getByRole("dialog", { name: /^Edit / });
     await expect(dialog).toBeVisible();
 
     const picker = await expectPicker(page, dialog, "Driver");
-    await captureForReview(
-      page,
-      `13b-picker-edit-vehicle-${picker.presentation}`,
-    );
+    await captureForReview(page, `13b-picker-edit-vehicle-${picker.presentation}`);
   });
 
-  test("the trip-create vehicle picker respects the dialog", async ({
-    page,
-  }) => {
+  test("the trip-create vehicle picker respects the dialog", async ({ page }) => {
     await page.goto("/trips");
-    await expect(
-      page.getByRole("heading", { name: "Trips", level: 1 }),
-    ).toBeVisible({
+    await expect(page.getByRole("heading", { name: "Trips", level: 1 })).toBeVisible({
       timeout: 15_000,
     });
     await page.getByRole("button", { name: "Create trip" }).click();
@@ -205,25 +174,18 @@ test.describe("picker overlay in every dialog", () => {
     await expect(dialog).toBeVisible();
 
     const picker = await expectPicker(page, dialog, "Vehicle");
-    await captureForReview(
-      page,
-      `13b-picker-trip-create-${picker.presentation}`,
-    );
+    await captureForReview(page, `13b-picker-trip-create-${picker.presentation}`);
     await expectNoHorizontalScroll(page);
   });
 
-  test("the 500-option picker scrolls inside a real dialog", async ({
-    page,
-  }) => {
+  test("the 500-option picker scrolls inside a real dialog", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/dev/combobox");
-    await expect(
-      page.getByRole("heading", { name: "Combobox lab" }),
-    ).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("heading", { name: "Combobox lab" })).toBeVisible({
+      timeout: 30_000,
+    });
     await page.getByRole("button", { name: "Open 500-option dialog" }).click();
-    const dialog = page
-      .locator('[role="dialog"]:not([data-picker-sheet])')
-      .first();
+    const dialog = page.locator('[role="dialog"]:not([data-picker-sheet])').first();
     await expect(dialog).toBeVisible();
 
     const picker = await openPicker(page, "Vehicle", dialog);
@@ -232,9 +194,7 @@ test.describe("picker overlay in every dialog", () => {
     await list.evaluate((element) => {
       element.scrollTop = 120;
     });
-    await expect
-      .poll(() => list.evaluate((element) => element.scrollTop))
-      .toBeGreaterThan(0);
+    await expect.poll(() => list.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
     await expect(dialog).toBeVisible();
   });
 });

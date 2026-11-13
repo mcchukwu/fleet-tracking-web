@@ -29,19 +29,15 @@ describe("trip feed query", () => {
     const trips = vi.spyOn(api, "trips").mockImplementation((filters = {}) => {
       const offset = filters.offset ?? 0;
       return Promise.resolve({
-        data: Array.from(
-          { length: offset === 0 ? 100 : 5 },
-          (_, index) => row(offset + index),
-        ),
+        data: Array.from({ length: offset === 0 ? 100 : 5 }, (_, index) => row(offset + index)),
       });
     });
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
-    const { result } = renderHook(
-      () => useTripsFeed({ status: "active" }),
-      { wrapper: wrapperFor(queryClient) },
-    );
+    const { result } = renderHook(() => useTripsFeed({ status: "active" }), {
+      wrapper: wrapperFor(queryClient),
+    });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(trips).toHaveBeenCalledWith(

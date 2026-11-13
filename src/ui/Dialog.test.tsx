@@ -45,9 +45,7 @@ describe("Dialog", () => {
 
     await user.click(opener);
     await waitFor(() => {
-      expect(screen.getByRole("dialog")).toContainElement(
-        document.activeElement as HTMLElement,
-      );
+      expect(screen.getByRole("dialog")).toContainElement(document.activeElement as HTMLElement);
     });
 
     await user.keyboard("{Escape}");

@@ -20,9 +20,7 @@ describe("AlertAckButton", () => {
   it("acknowledges when enabled", async () => {
     const onAck = vi.fn();
     render(<AlertAckButton alert={alert} pending={false} onAck={onAck} />);
-    await userEvent.click(
-      screen.getByRole("button", { name: "Acknowledge alert for LSD-101-AA" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Acknowledge alert for LSD-101-AA" }));
     expect(onAck).toHaveBeenCalledTimes(1);
   });
 
@@ -61,8 +59,6 @@ describe("AlertAckButton", () => {
 
   it("carries an accessible name in the icon-only variant", () => {
     render(<AlertAckButton alert={alert} pending={false} onAck={() => undefined} iconOnly />);
-    expect(
-      screen.getByRole("button", { name: "Acknowledge alert for LSD-101-AA" }),
-    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Acknowledge alert for LSD-101-AA" })).toBeVisible();
   });
 });

@@ -28,9 +28,8 @@ describe("audit feed query", () => {
   it("requests 100 rows, pages by offset and stops on a short page", async () => {
     const audit = vi.spyOn(api, "audit").mockImplementation((filters) => {
       const offset = filters.offset;
-      const data = Array.from(
-        { length: offset === 0 ? 100 : 5 },
-        (_, index) => row(offset + index),
+      const data = Array.from({ length: offset === 0 ? 100 : 5 }, (_, index) =>
+        row(offset + index),
       );
       return Promise.resolve({ data, received: data.length });
     });

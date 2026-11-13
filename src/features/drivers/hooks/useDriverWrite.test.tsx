@@ -119,9 +119,7 @@ describe("useDriverWrite", () => {
     vi.spyOn(api, "drivers").mockResolvedValue({ data: [{ ...driver, status: "inactive" }] });
     const { result, invalidate } = setup();
 
-    const outcome = await act(() =>
-      result.current.update(driver, { status: "inactive" }),
-    );
+    const outcome = await act(() => result.current.update(driver, { status: "inactive" }));
     expect(outcome).toEqual({ status: "done", reconciled: true });
     const keys = invalidate.mock.calls.map(([filters]) => filters?.queryKey);
     expect(keys).toContainEqual(["drivers"]);
@@ -142,12 +140,12 @@ describe("useDriverWrite", () => {
   });
 
   it("returns the error for a failed update", async () => {
-    mocks.update.mockRejectedValue(new ApiError(400, "invalid_status", "status must be active or inactive"));
+    mocks.update.mockRejectedValue(
+      new ApiError(400, "invalid_status", "status must be active or inactive"),
+    );
     const { result } = setup();
 
-    const outcome = await act(() =>
-      result.current.update(driver, { status: "inactive" }),
-    );
+    const outcome = await act(() => result.current.update(driver, { status: "inactive" }));
     expect(outcome.status).toBe("error");
     if (outcome.status === "error") {
       expect(outcome.error.kind).toBe("validation");
@@ -159,9 +157,7 @@ describe("useDriverWrite", () => {
     mocks.create.mockImplementation(
       ({ signal }: { signal: AbortSignal }) =>
         new Promise((_resolve, reject) => {
-          signal.addEventListener("abort", () =>
-            reject(new DOMException("aborted", "AbortError")),
-          );
+          signal.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
         }),
     );
     vi.spyOn(api, "drivers").mockResolvedValue({
@@ -185,9 +181,7 @@ describe("useDriverWrite", () => {
   it("retries a cancelled create only when it did not reach the server", async () => {
     const abortable = ({ signal }: { signal: AbortSignal }) =>
       new Promise((_resolve, reject) => {
-        signal.addEventListener("abort", () =>
-          reject(new DOMException("aborted", "AbortError")),
-        );
+        signal.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
       });
     mocks.create.mockImplementationOnce(abortable).mockResolvedValueOnce({ id: "driver-2" });
     vi.spyOn(api, "drivers").mockResolvedValue({ data: [driver] });

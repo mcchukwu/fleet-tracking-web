@@ -15,14 +15,7 @@ describe("ChangeVehicleDialog", () => {
   it("selects a vehicle and closes", async () => {
     const onChange = vi.fn();
     const onClose = vi.fn();
-    render(
-      <ChangeVehicleDialog
-        open
-        value="vehicle-1"
-        onChange={onChange}
-        onClose={onClose}
-      />,
-    );
+    render(<ChangeVehicleDialog open value="vehicle-1" onChange={onChange} onClose={onClose} />);
     expect(screen.getByRole("dialog", { name: "Change vehicle" })).toBeVisible();
     await userEvent.click(screen.getByRole("button", { name: "Pick another vehicle" }));
     expect(onChange).toHaveBeenCalledWith("vehicle-2");

@@ -225,10 +225,7 @@ function fakeStyle(id: string, theme: string): LoadedBaseStyle {
   };
 }
 
-function defaultLoader(
-  id: MapStyleId,
-  theme: "light" | "dark",
-): Promise<LoadedBaseStyle> {
+function defaultLoader(id: MapStyleId, theme: "light" | "dark"): Promise<LoadedBaseStyle> {
   return Promise.resolve(fakeStyle(id, theme));
 }
 
@@ -261,9 +258,7 @@ function fakeDrawFactory(): TerraDrawController {
   };
 }
 
-function createAdapter(
-  options: Parameters<typeof createMapLibreAdapter>[0] = {},
-) {
+function createAdapter(options: Parameters<typeof createMapLibreAdapter>[0] = {}) {
   return createMapLibreAdapter({
     mapTiler: { apiKey: "test-key" },
     loadStyle: defaultLoader,
@@ -324,7 +319,11 @@ runAdapterContract("MapLibre", {
 
 describe("MapLibre adapter", () => {
   it("declares honest capabilities for this slice", () => {
-    const adapter = createMapLibreAdapter({ mapTiler: null, styles: ["standard"], loadStyle: defaultLoader });
+    const adapter = createMapLibreAdapter({
+      mapTiler: null,
+      styles: ["standard"],
+      loadStyle: defaultLoader,
+    });
     expect(adapter.capabilities.offline).toBe(false);
     expect(adapter.capabilities.drawing).toBe(true);
     expect(adapter.capabilities.styles).toEqual(["standard"]);
@@ -440,7 +439,11 @@ describe("MapLibre adapter", () => {
   });
 
   it("ignores a base style this build does not offer", async () => {
-    const adapter = createMapLibreAdapter({ mapTiler: null, styles: ["standard"], loadStyle: defaultLoader });
+    const adapter = createMapLibreAdapter({
+      mapTiler: null,
+      styles: ["standard"],
+      loadStyle: defaultLoader,
+    });
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
     adapter.setBaseStyle("satellite");
     expect(map().styles).toHaveLength(0);
@@ -455,7 +458,8 @@ describe("MapLibre adapter", () => {
     const adapter = createAdapter({ styles: ["standard", "streets"], loadStyle });
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
 
-    const events: Array<{ status: string; style: string; failedStyle?: string; reason?: string }> = [];
+    const events: Array<{ status: string; style: string; failedStyle?: string; reason?: string }> =
+      [];
     adapter.on("styleChange", (state) => events.push(state));
     adapter.setBaseStyle("streets");
     await vi.waitFor(() => expect(adapter.getStyleState().status).toBe("ready"));
@@ -465,9 +469,9 @@ describe("MapLibre adapter", () => {
       failedStyle: "streets",
       reason: "quota",
     });
-    expect(events.some((event) => event.status === "error" && event.failedStyle === "streets")).toBe(
-      true,
-    );
+    expect(
+      events.some((event) => event.status === "error" && event.failedStyle === "streets"),
+    ).toBe(true);
     expect(loadStyle.mock.calls.filter(([id]) => id === "streets")).toHaveLength(1);
     expect(events.at(-1)).toMatchObject({ style: "standard", status: "ready" });
     adapter.destroy();
@@ -510,8 +514,7 @@ describe("MapLibre adapter", () => {
     expect(instance.styles).toHaveLength(0);
     expect(instance.layers.has(LAYER_IDS.vehicleHalo)).toBe(true);
     const label = instance.layers.get(LAYER_IDS.vehicleLabel)?.paint as
-      | Record<string, unknown>
-      | undefined;
+      Record<string, unknown> | undefined;
     expect(label?.["text-halo-width"]).toBe(2);
     adapter.destroy();
   });
@@ -527,8 +530,7 @@ describe("MapLibre adapter", () => {
     expect(instance.layers.has(LAYER_IDS.routeLine)).toBe(true);
 
     const paint = instance.layers.get(LAYER_IDS.vehicleCircle)?.paint as
-      | Record<string, unknown>
-      | undefined;
+      Record<string, unknown> | undefined;
     expect(JSON.stringify(paint?.["circle-color"])).toContain("moving-token");
     adapter.destroy();
   });
@@ -578,9 +580,11 @@ describe("MapLibre adapter", () => {
     });
     expect(lineSource.data).toBe(lineData);
     expect(pointSource.data).not.toBe(pointData);
-    const cursor = (pointSource.data as {
-      features: Array<{ properties?: { role?: string }; geometry: { coordinates: number[] } }>;
-    }).features.find((feature) => feature.properties?.role === "cursor");
+    const cursor = (
+      pointSource.data as {
+        features: Array<{ properties?: { role?: string }; geometry: { coordinates: number[] } }>;
+      }
+    ).features.find((feature) => feature.properties?.role === "cursor");
     expect(cursor?.geometry.coordinates).toEqual(points[1]);
 
     adapter.setRoute({
@@ -635,7 +639,10 @@ describe("MapLibre adapter", () => {
     };
     const positionOf = (key: string): [number, number] | undefined => {
       const data = source.data as {
-        features: Array<{ properties: { key: string }; geometry: { coordinates: [number, number] } }>;
+        features: Array<{
+          properties: { key: string };
+          geometry: { coordinates: [number, number] };
+        }>;
       };
       return data.features.find((feature) => feature.properties.key === key)?.geometry.coordinates;
     };
@@ -665,7 +672,6 @@ describe("MapLibre adapter", () => {
     adapter.destroy();
   });
 
-
   it("swaps the style on a theme change without duplicating layers", async () => {
     const adapter = createAdapter();
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
@@ -694,8 +700,7 @@ describe("MapLibre adapter", () => {
 
     expect(instance.styles).toHaveLength(0);
     const paint = instance.layers.get(LAYER_IDS.vehicleSelected)?.paint as
-      | Record<string, unknown>
-      | undefined;
+      Record<string, unknown> | undefined;
     expect(JSON.stringify(paint?.["circle-stroke-color"])).toContain("violet-token");
     adapter.destroy();
   });
@@ -712,7 +717,9 @@ describe("MapLibre adapter", () => {
     adapter.on("vehicleHover", hovered);
     adapter.on("viewportChange", viewport);
 
-    instance.features = [{ properties: { key: "demo-imei-0001" }, geometry: { type: "Point", coordinates: [3, 6] } }];
+    instance.features = [
+      { properties: { key: "demo-imei-0001" }, geometry: { type: "Point", coordinates: [3, 6] } },
+    ];
     instance.emit("click", { point: { x: 10, y: 20 }, lngLat: { lng: 3, lat: 6 } });
     expect(clicked).toHaveBeenCalledWith({ key: "demo-imei-0001" });
 
@@ -741,9 +748,7 @@ describe("MapLibre adapter", () => {
     instance.emit("click", { point: { x: 10, y: 20 }, lngLat: { lng: 3, lat: 6 } });
 
     expect(clicked).toHaveBeenCalledWith({ clusterId: "42", count: 7 });
-    await vi.waitFor(() =>
-      expect(instance.easedTo).toEqual([{ center: [3.2, 6.4], zoom: 12.2 }]),
-    );
+    await vi.waitFor(() => expect(instance.easedTo).toEqual([{ center: [3.2, 6.4], zoom: 12.2 }]));
     adapter.destroy();
   });
 
@@ -778,9 +783,7 @@ describe("MapLibre adapter", () => {
     adapter.setVehicles(crowded);
 
     await vi.waitFor(() =>
-      expect(source.clusterOptions?.clusterMaxZoom).toBe(
-        contractTokens.marker.clusterMaxZoom + 2,
-      ),
+      expect(source.clusterOptions?.clusterMaxZoom).toBe(contractTokens.marker.clusterMaxZoom + 2),
     );
     adapter.destroy();
   });
@@ -789,8 +792,7 @@ describe("MapLibre adapter", () => {
     const adapter = createAdapter();
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
     const layout = map().layers.get(LAYER_IDS.vehicleGlyph)?.layout as
-      | Record<string, unknown>
-      | undefined;
+      Record<string, unknown> | undefined;
     const rotation = JSON.stringify(layout?.["icon-rotate"]);
 
     expect(rotation).toContain('"alert"');
@@ -817,7 +819,9 @@ describe("MapLibre adapter", () => {
     const onError = vi.fn();
     adapter.on("error", onError);
 
-    map().getCanvas().dispatchEvent(new Event("webglcontextlost", { cancelable: true }));
+    map()
+      .getCanvas()
+      .dispatchEvent(new Event("webglcontextlost", { cancelable: true }));
 
     expect(onError).toHaveBeenCalledTimes(1);
     expect(onError.mock.calls[0]?.[0]).toMatchObject({ kind: "map" });
@@ -863,7 +867,10 @@ describe("MapLibre adapter", () => {
     const adapter = createAdapter({ drawFactory: () => controller });
     await adapter.mount(document.createElement("div"), { theme: "light", tokens: contractTokens });
 
-    const dark: MapTokens = { ...contractTokens, colors: { ...contractTokens.colors, surface: "dark" } };
+    const dark: MapTokens = {
+      ...contractTokens,
+      colors: { ...contractTokens.colors, surface: "dark" },
+    };
     adapter.setTheme("dark", dark);
     expect(setTokens).toHaveBeenCalledWith(dark);
 

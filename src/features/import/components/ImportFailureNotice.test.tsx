@@ -40,9 +40,7 @@ describe("ImportFailureNotice", () => {
 
     expect(screen.getByText("Couldn't read this file")).toBeInTheDocument();
     expect(screen.getByText("the header must include imei")).toBeInTheDocument();
-    await userEvent.click(
-      screen.getByRole("button", { name: "Choose another file" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Choose another file" }));
     expect(onChooseAnother).toHaveBeenCalledTimes(1);
   });
 
@@ -58,9 +56,7 @@ describe("ImportFailureNotice", () => {
       />,
     );
 
-    expect(
-      screen.getByText("We couldn't confirm the import"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("We couldn't confirm the import")).toBeInTheDocument();
     expect(screen.getByText("It's safe to upload again.")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Upload again" }));
     expect(onRetry).toHaveBeenCalledTimes(1);
@@ -112,9 +108,7 @@ describe("ImportFailureNotice", () => {
         vi.advanceTimersByTime(31_000);
       });
 
-      expect(screen.getByRole("button", { name: "Retry" })).not.toHaveAttribute(
-        "aria-disabled",
-      );
+      expect(screen.getByRole("button", { name: "Retry" })).not.toHaveAttribute("aria-disabled");
       expect(screen.getByText("You can try again now.")).toBeInTheDocument();
     } finally {
       vi.useRealTimers();
@@ -132,9 +126,7 @@ describe("ImportFailureNotice", () => {
         onBack={onBack}
       />,
     );
-    await userEvent.click(
-      screen.getByRole("button", { name: "Back to the map" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Back to the map" }));
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 

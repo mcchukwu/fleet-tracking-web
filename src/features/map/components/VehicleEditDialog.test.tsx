@@ -197,16 +197,16 @@ describe("VehicleEditDialog", () => {
 
   it("read-only keeps fields visible and blocks saving", () => {
     renderDialog(true);
-    expect(screen.getByText("Your role can't edit vehicles. The fields are shown for reference.")).toBeVisible();
+    expect(
+      screen.getByText("Your role can't edit vehicles. The fields are shown for reference."),
+    ).toBeVisible();
     expect(screen.getByLabelText("Plate")).toBeDisabled();
     expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
   });
 
   it("names the offline reason when the network blocks the write", () => {
     renderDialog(true, "You're offline.");
-    expect(
-      screen.getByText("You're offline. The fields are shown for reference."),
-    ).toBeVisible();
+    expect(screen.getByText("You're offline. The fields are shown for reference.")).toBeVisible();
   });
 
   it("shows a server-error message and keeps the form", async () => {

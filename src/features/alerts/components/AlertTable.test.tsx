@@ -149,9 +149,7 @@ describe("AlertTable", () => {
       tripFor: () => tripId,
     });
     expect(screen.getByText(tripId)).toBeVisible();
-    expect(
-      screen.getByRole("button", { name: `Copy trip id ${tripId}` }),
-    ).toBeVisible();
+    expect(screen.getByRole("button", { name: `Copy trip id ${tripId}` })).toBeVisible();
     expect(screen.getAllByTitle(/UTC/)).toHaveLength(2);
   });
 

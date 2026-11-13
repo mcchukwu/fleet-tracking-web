@@ -95,8 +95,7 @@ function TripsPageContent() {
   const selectedInFeed = selectedId
     ? (feed.trips.find((trip) => trip.id === selectedId) ?? null)
     : null;
-  const lookupEnabled =
-    selectedId !== null && selectedInFeed === null && !feed.isLoading;
+  const lookupEnabled = selectedId !== null && selectedInFeed === null && !feed.isLoading;
   const lookup = useTrips(
     { limit: LOOKUP_LIMIT },
     {
@@ -144,13 +143,9 @@ function TripsPageContent() {
   });
 
   const changeReason =
-    mutate.blockedBy === "role"
-      ? "Your role can't change trips."
-      : (mutate.reason ?? undefined);
+    mutate.blockedBy === "role" ? "Your role can't change trips." : (mutate.reason ?? undefined);
   const createReason =
-    mutate.blockedBy === "role"
-      ? "Your role can't create trips."
-      : (mutate.reason ?? undefined);
+    mutate.blockedBy === "role" ? "Your role can't create trips." : (mutate.reason ?? undefined);
 
   function updateSearch(patch: Partial<TripsSearch>, replace = true): void {
     void navigate({ to: "/trips", search: { ...search, ...patch }, replace });
@@ -160,8 +155,7 @@ function TripsPageContent() {
     const next: Partial<TripsSearch> = {};
     if ("status" in patch) next.status = patch.status ?? undefined;
     if ("q" in patch) next.q = patch.q ?? undefined;
-    if ("sort" in patch)
-      next.order = patch.sort === "status" ? undefined : patch.sort;
+    if ("sort" in patch) next.order = patch.sort === "status" ? undefined : patch.sort;
     updateSearch(next);
   }
 
@@ -172,19 +166,13 @@ function TripsPageContent() {
   function focusRow(id: string | null): void {
     setTimeout(() => {
       if (id) {
-        const target = document.querySelector<HTMLElement>(
-          `[data-trip-id="${CSS.escape(id)}"]`,
-        );
+        const target = document.querySelector<HTMLElement>(`[data-trip-id="${CSS.escape(id)}"]`);
         if (target) {
           target.focus();
           return;
         }
       }
-      document
-        .querySelector<HTMLElement>(
-          '[data-testid="trips-page"] [data-create-trip]',
-        )
-        ?.focus();
+      document.querySelector<HTMLElement>('[data-testid="trips-page"] [data-create-trip]')?.focus();
     }, 0);
   }
 
@@ -193,23 +181,15 @@ function TripsPageContent() {
       const scope =
         origin === "detail"
           ? document.querySelector<HTMLElement>('[data-testid="drawer"]')
-          : document.querySelector<HTMLElement>(
-              `[data-trip-row="${CSS.escape(tripId)}"]`,
-            );
+          : document.querySelector<HTMLElement>(`[data-trip-row="${CSS.escape(tripId)}"]`);
       if (!scope) {
         document
-          .querySelector<HTMLElement>(
-            '[data-testid="trips-page"] [data-create-trip]',
-          )
+          .querySelector<HTMLElement>('[data-testid="trips-page"] [data-create-trip]')
           ?.focus();
         return;
       }
-      const action = scope.querySelector<HTMLElement>(
-        "[data-trip-action],[data-detail-action]",
-      );
-      const fallback = scope.querySelector<HTMLElement>(
-        "[data-trip-id],button",
-      );
+      const action = scope.querySelector<HTMLElement>("[data-trip-action],[data-detail-action]");
+      const fallback = scope.querySelector<HTMLElement>("[data-trip-id],button");
       (action ?? fallback)?.focus();
     }, 0);
   }
@@ -236,11 +216,7 @@ function TripsPageContent() {
     if (!canMutate || offline) return;
     setPendingTripId(trip.id);
     setActionError(null);
-    const outcome = await write.transition(
-      trip,
-      transitionPayload(action),
-      action,
-    );
+    const outcome = await write.transition(trip, transitionPayload(action), action);
     setPendingTripId(null);
     if (outcome.status === "done") focusAfterAction(trip.id, origin);
     if (outcome.status === "error") {
@@ -258,11 +234,7 @@ function TripsPageContent() {
     setActionError(null);
   }
 
-  function handleAction(
-    trip: Trip,
-    action: TripAction,
-    origin: "row" | "detail",
-  ): void {
+  function handleAction(trip: Trip, action: TripAction, origin: "row" | "detail"): void {
     if (action === "assign" && !trip.driver_id) {
       setAssignTrip({ trip, origin });
       return;
@@ -295,10 +267,7 @@ function TripsPageContent() {
           <div className="flex flex-col gap-1">
             <h1 className="text-text text-lg font-semibold">Trips</h1>
             <p className="text-muted text-sm">
-              <span className="tabular-nums">
-                {formatCount(feed.loadedCount)}
-              </span>{" "}
-              loaded
+              <span className="tabular-nums">{formatCount(feed.loadedCount)}</span> loaded
             </p>
           </div>
           <Button
@@ -395,8 +364,7 @@ function TripsPageContent() {
             pending={pendingTripId === selectedId}
             disabledReason={changeReason}
             actionError={
-              actionError?.origin === "detail" &&
-              actionError.tripId === selectedId
+              actionError?.origin === "detail" && actionError.tripId === selectedId
                 ? {
                     error: actionError.error,
                     title: actionError.title,

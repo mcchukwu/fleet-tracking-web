@@ -227,9 +227,7 @@ describe("TripsPage", () => {
       search: { status: undefined, q: undefined, trip: undefined },
       replace: true,
     });
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Create trip" })).toHaveFocus(),
-    );
+    await waitFor(() => expect(screen.getByRole("button", { name: "Create trip" })).toHaveFocus());
     expect(screen.getByTestId("trip-table").getAttribute("data-reset-key")).not.toBe(before);
   });
 

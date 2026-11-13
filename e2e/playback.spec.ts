@@ -14,9 +14,7 @@ const GAP_VEHICLE = "795b5251-1a04-475a-8df1-9aa1f9281bfc";
 
 async function gotoPlayback(page: Page, search = ""): Promise<void> {
   await page.goto(`/playback?map=fake${search ? `&${search}` : ""}`);
-  await expect(
-    page.getByRole("region", { name: "Playback map" }),
-  ).toBeVisible();
+  await expect(page.getByRole("region", { name: "Playback map" })).toBeVisible();
 }
 
 async function playback(page: Page) {
@@ -36,13 +34,9 @@ async function openVehicle(page: Page, plate: string): Promise<void> {
 }
 
 test.describe("playback", () => {
-  test("picks a vehicle, writes the default range and draws the route", async ({
-    page,
-  }) => {
+  test("picks a vehicle, writes the default range and draws the route", async ({ page }) => {
     await gotoPlayback(page);
-    await expect(
-      page.getByRole("heading", { name: "Choose a vehicle" }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Choose a vehicle" })).toBeVisible();
     await expect(page).toHaveURL(/resolution=30s/);
     await expect(page).toHaveURL(/from=/);
     await captureForReview(page, "05-playback-picker");
@@ -51,9 +45,7 @@ test.describe("playback", () => {
     await expect(page).toHaveURL(new RegExp(`vehicle=${VEHICLE}`));
     await waitForPoints(page);
     await expect(page.getByRole("heading", { name: "Playback" })).toBeVisible();
-    await expect(
-      page.getByRole("region", { name: "Playback controls" }),
-    ).toBeVisible();
+    await expect(page.getByRole("region", { name: "Playback controls" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Play" })).toBeFocused();
     await expect.poll(() => page.title()).toBe("Playback · Fleet Console");
 
@@ -62,9 +54,7 @@ test.describe("playback", () => {
     await expectNoAxeViolations(page);
   });
 
-  test("round-trips the range and resolution through the URL", async ({
-    page,
-  }) => {
+  test("round-trips the range and resolution through the URL", async ({ page }) => {
     const to = new Date();
     const from = new Date(to.getTime() - 2 * 60 * 60_000);
     const search = `vehicle=${VEHICLE}&from=${encodeURIComponent(
@@ -90,8 +80,7 @@ test.describe("playback", () => {
     expect(Math.round((times.to - times.from) / 60_000)).toBe(30);
 
     const autoRequest = page.waitForRequest(
-      (request) =>
-        request.url().includes("/history") && request.url().includes(VEHICLE),
+      (request) => request.url().includes("/history") && request.url().includes(VEHICLE),
     );
     await page.getByLabel("Resolution").selectOption("auto");
     await expect(page).toHaveURL(/resolution=auto/);
@@ -104,9 +93,7 @@ test.describe("playback", () => {
 
     await page.getByLabel("Range").click();
     await page.getByRole("menuitem", { name: "Custom…" }).click();
-    await expect(
-      page.getByRole("dialog", { name: "Custom range" }),
-    ).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Custom range" })).toBeVisible();
     await captureForReview(page, "05-playback-custom-range");
     await page.getByRole("button", { name: "Cancel" }).click();
   });
@@ -163,9 +150,7 @@ test.describe("playback", () => {
     await page.waitForTimeout(300);
     expect((await playback(page))?.playheadMs).toBe(paused);
 
-    await page
-      .getByRole("button", { name: "Step forward one position" })
-      .click();
+    await page.getByRole("button", { name: "Step forward one position" }).click();
     expect((await playback(page))?.playheadMs ?? 0).toBeGreaterThan(paused);
   });
 
@@ -208,10 +193,7 @@ test.describe("playback", () => {
       .toBeGreaterThan(1);
 
     await page.getByRole("button", { name: /^Events \(/ }).click();
-    const row = page
-      .getByRole("menuitem")
-      .filter({ hasText: "Speeding" })
-      .first();
+    const row = page.getByRole("menuitem").filter({ hasText: "Speeding" }).first();
     await expect(row).toBeVisible();
     await captureForReview(page, "05-playback-events");
     await row.click();
@@ -231,9 +213,7 @@ test.describe("playback", () => {
 
     await marker.focus();
     await page.keyboard.press("Enter");
-    await expect(
-      page.getByRole("slider", { name: "Playback position" }),
-    ).toHaveAttribute(
+    await expect(page.getByRole("slider", { name: "Playback position" })).toHaveAttribute(
       "aria-valuetext",
       new RegExp(time.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
     );
@@ -265,9 +245,7 @@ test.describe("playback", () => {
     await expect(page.getByText(/^Offline · showing data from /)).toBeHidden();
   });
 
-  test("renders the route through the real MapLibre adapter", async ({
-    page,
-  }) => {
+  test("renders the route through the real MapLibre adapter", async ({ page }) => {
     await page.route(/styles\.(test|openfreemap\.org)/, (route) =>
       route.fulfill({
         status: 200,
@@ -276,9 +254,7 @@ test.describe("playback", () => {
       }),
     );
     await page.goto(`/playback?vehicle=${VEHICLE}&resolution=30s`);
-    await expect(
-      page.getByRole("region", { name: "Playback map" }),
-    ).toBeVisible();
+    await expect(page.getByRole("region", { name: "Playback map" })).toBeVisible();
 
     const routeDebug = async () =>
       page.evaluate(() => {
@@ -316,10 +292,7 @@ test.describe("playback", () => {
 
       await expectNoHorizontalScroll(page);
       const controls = page.getByRole("region", { name: "Playback controls" });
-      await expectNoOverlap(
-        page.locator('[data-testid="playback-page"] header'),
-        controls,
-      );
+      await expectNoOverlap(page.locator('[data-testid="playback-page"] header'), controls);
       await expectNoOverlap(page.getByTestId("map-attribution"), controls);
       const viewport = page.viewportSize();
       const band = page.getByTestId("playback-event-band");

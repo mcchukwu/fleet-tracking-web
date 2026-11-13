@@ -76,9 +76,7 @@ export function GeofenceEditor({
   } = useForm<GeofenceFormValues>({
     resolver: zodResolver(geofenceFormSchema),
     mode: "onBlur",
-    defaultValues: geofence
-      ? { name: geofence.name, kind: geofence.kind }
-      : GEOFENCE_FORM_DEFAULT,
+    defaultValues: geofence ? { name: geofence.name, kind: geofence.kind } : GEOFENCE_FORM_DEFAULT,
   });
 
   useEffect(() => {
@@ -241,12 +239,7 @@ export function GeofenceEditor({
         }}
         className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3"
       >
-        <Input
-          label="Name"
-          autoComplete="off"
-          error={errors.name?.message}
-          {...register("name")}
-        />
+        <Input label="Name" autoComplete="off" error={errors.name?.message} {...register("name")} />
         <Select label="Kind" error={errors.kind?.message} {...register("kind")}>
           {GEOFENCE_KIND_ORDER.map((kind) => (
             <option key={kind} value={kind}>

@@ -8,9 +8,7 @@ describe("reports copy", () => {
   });
 
   it("distinguishes an empty range from a missing breakdown", () => {
-    expect(reportsCopy.alertsEmpty.title).not.toBe(
-      reportsCopy.breakdownUnavailable,
-    );
+    expect(reportsCopy.alertsEmpty.title).not.toBe(reportsCopy.breakdownUnavailable);
     expect(reportsCopy.breakdownUnavailable).toBe(
       "The alert breakdown isn't available for this range.",
     );

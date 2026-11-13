@@ -56,7 +56,9 @@ export function useMapStyle(options: UseMapStyleOptions = {}): MapStyleControlle
     if (wasOfflineRef.current === offline) return;
     wasOfflineRef.current = offline;
     // The chosen style stays stored, so it returns when the connection does.
-    setFallback(offline && chosenStyle !== "standard" ? { style: chosenStyle, reason: "offline" } : null);
+    setFallback(
+      offline && chosenStyle !== "standard" ? { style: chosenStyle, reason: "offline" } : null,
+    );
   }, [offline, chosenStyle]);
 
   const effectiveStyle: MapStyleId =

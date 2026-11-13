@@ -57,14 +57,8 @@ describe("ReportsStats", () => {
   it("links each scoped stat to a real destination", () => {
     render(<ReportsStats summary={summary()} />);
 
-    expect(screen.getByRole("link", { name: /^Vehicles/ })).toHaveAttribute(
-      "data-to",
-      "/map",
-    );
-    expect(screen.getByRole("link", { name: /^Trips/ })).toHaveAttribute(
-      "data-to",
-      "/trips",
-    );
+    expect(screen.getByRole("link", { name: /^Vehicles/ })).toHaveAttribute("data-to", "/map");
+    expect(screen.getByRole("link", { name: /^Trips/ })).toHaveAttribute("data-to", "/trips");
     expect(screen.getByRole("link", { name: /^Completed trips/ })).toHaveAttribute(
       "data-search",
       JSON.stringify({ status: "completed" }),
@@ -73,10 +67,7 @@ describe("ReportsStats", () => {
       "data-search",
       JSON.stringify({ status: "active" }),
     );
-    expect(screen.getByRole("link", { name: /^Alerts/ })).toHaveAttribute(
-      "data-to",
-      "/alerts",
-    );
+    expect(screen.getByRole("link", { name: /^Alerts/ })).toHaveAttribute("data-to", "/alerts");
     expect(screen.getByRole("link", { name: /^Open alerts/ })).toHaveAttribute(
       "data-search",
       JSON.stringify({ status: "open" }),
@@ -94,8 +85,6 @@ describe("ReportsStats", () => {
 
   it("states that the links open the full lists", () => {
     render(<ReportsStats summary={summary()} />);
-    expect(
-      screen.getByText(/Trip and alert numbers cover the selected range/),
-    ).toBeVisible();
+    expect(screen.getByText(/Trip and alert numbers cover the selected range/)).toBeVisible();
   });
 });

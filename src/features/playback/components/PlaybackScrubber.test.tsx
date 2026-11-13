@@ -59,10 +59,7 @@ describe("PlaybackScrubber", () => {
       />,
     );
     const slider = screen.getByRole("slider", { name: "Playback position" });
-    expect(slider).toHaveAttribute(
-      "aria-valuetext",
-      expect.stringContaining("no data"),
-    );
+    expect(slider).toHaveAttribute("aria-valuetext", expect.stringContaining("no data"));
   });
 
   it("renders gap bands and event markers that jump from the keyboard", async () => {
@@ -119,9 +116,7 @@ describe("PlaybackScrubber", () => {
       }),
     });
     fireEvent.pointerMove(lane, { clientX: 420 });
-    expect(screen.getByTestId("playback-current-time")).toHaveTextContent(
-      "Route deviation",
-    );
+    expect(screen.getByTestId("playback-current-time")).toHaveTextContent("Route deviation");
     fireEvent.pointerDown(lane, { clientX: 280 });
     expect(onSeek).toHaveBeenCalledWith(fromMs + 30 * 60_000);
   });
@@ -190,11 +185,7 @@ describe("PlaybackScrubber", () => {
       />,
     );
     const slider = screen.getByRole("slider", { name: "Playback position" });
-    expect(slider.getAttribute("aria-valuetext")).toMatch(
-      /\d{1,2} \w{3} \d{2}:\d{2}:\d{2}/,
-    );
-    expect(screen.getByTestId("playback-current-time")).toHaveTextContent(
-      /\d{1,2} \w{3}/,
-    );
+    expect(slider.getAttribute("aria-valuetext")).toMatch(/\d{1,2} \w{3} \d{2}:\d{2}:\d{2}/);
+    expect(screen.getByTestId("playback-current-time")).toHaveTextContent(/\d{1,2} \w{3}/);
   });
 });

@@ -1,10 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import {
-  captureForReview,
-  expectNoAxeViolations,
-  expectNoHorizontalScroll,
-} from "./helpers";
+import { captureForReview, expectNoAxeViolations, expectNoHorizontalScroll } from "./helpers";
 
 async function setRole(page: Page, role: string): Promise<void> {
   await page.addInitScript((value) => {
@@ -20,9 +16,9 @@ async function setScenario(page: Page, scenario: string): Promise<void> {
 
 async function gotoAudit(page: Page, search = ""): Promise<void> {
   await page.goto(`/audit${search ? `?${search}` : ""}`);
-  await expect(
-    page.getByRole("heading", { name: "Audit", level: 1 }),
-  ).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("heading", { name: "Audit", level: 1 })).toBeVisible({
+    timeout: 15_000,
+  });
 }
 
 async function asRole(page: Page, role: string, search = ""): Promise<void> {
@@ -57,16 +53,12 @@ test.describe("audit", () => {
   // suite needs more than Playwright's 30 s default (A9 flaky pattern).
   test.describe.configure({ timeout: 60_000 });
 
-  test("admin and security reach the log; dispatcher and viewer are blocked", async ({
-    page,
-  }) => {
+  test("admin and security reach the log; dispatcher and viewer are blocked", async ({ page }) => {
     await asRole(page, "admin");
     await expect(page.getByTestId("audit-page")).toContainText("12 entries loaded");
 
     await asRole(page, "security");
-    await expect(
-      page.getByRole("row").filter({ hasText: "Demo Admin" }).first(),
-    ).toBeVisible();
+    await expect(page.getByRole("row").filter({ hasText: "Demo Admin" }).first()).toBeVisible();
 
     await setRole(page, "dispatcher");
     await page.goto("/audit");
@@ -78,9 +70,7 @@ test.describe("audit", () => {
     await expect(page).toHaveURL(/\/forbidden$/);
   });
 
-  test("shows the six-column log, no invented total and the document title", async ({
-    page,
-  }) => {
+  test("shows the six-column log, no invented total and the document title", async ({ page }) => {
     await asRole(page, "admin");
 
     const headers = page.getByRole("columnheader");
@@ -145,9 +135,7 @@ test.describe("audit", () => {
     await expect(page.getByTestId("audit-page")).toContainText("1 of 12 loaded");
   });
 
-  test("opens a row in the drawer, closes with Escape and returns focus", async ({
-    page,
-  }) => {
+  test("opens a row in the drawer, closes with Escape and returns focus", async ({ page }) => {
     await asRole(page, "admin");
 
     const open = page.getByRole("button", {
@@ -157,16 +145,12 @@ test.describe("audit", () => {
 
     const drawer = page.getByRole("complementary", { name: "Audit entry details" });
     await expect(drawer).toBeVisible();
-    await expect(
-      drawer.getByRole("button", { name: "Close audit entry" }),
-    ).toBeFocused();
+    await expect(drawer.getByRole("button", { name: "Close audit entry" })).toBeFocused();
     await expect(drawer).toContainText("Demo Dispatcher");
     await expect(drawer).toContainText("import.vehicles");
     await expect(drawer).toContainText("Imported");
     await expect(drawer).toContainText("12");
-    await expect(
-      drawer.getByRole("button", { name: /Copy entity id/i }),
-    ).toBeVisible();
+    await expect(drawer.getByRole("button", { name: /Copy entity id/i })).toBeVisible();
     await expectNoAxeViolations(page);
     await captureForReview(page, "12-audit-detail");
 
@@ -187,9 +171,7 @@ test.describe("audit", () => {
   test("shows a not-found drawer for an entry beyond the lookup", async ({ page }) => {
     await asRole(page, "admin", "entry=999");
     await expect(page.getByText("Audit entry not found")).toBeVisible();
-    await expect(
-      page.getByText("It may be older than the 500 most recent entries."),
-    ).toBeVisible();
+    await expect(page.getByText("It may be older than the 500 most recent entries.")).toBeVisible();
   });
 
   test("pages a large log 100, 100 and 5 rows", async ({ page }) => {
@@ -252,9 +234,7 @@ test.describe("audit", () => {
       "aria-disabled",
       "true",
     );
-    await expect(
-      page.getByRole("row").filter({ hasText: "Demo Admin" }).first(),
-    ).toBeVisible();
+    await expect(page.getByRole("row").filter({ hasText: "Demo Admin" }).first()).toBeVisible();
     await captureForReview(page, "12-audit-stale");
 
     await context.setOffline(false);

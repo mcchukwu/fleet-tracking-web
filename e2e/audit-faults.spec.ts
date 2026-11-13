@@ -10,9 +10,9 @@ async function setRole(page: Page, role = "admin"): Promise<void> {
 
 async function gotoFault(page: Page, fault: string): Promise<void> {
   await page.goto(`/audit?fault=${encodeURIComponent(fault)}`);
-  await expect(
-    page.getByRole("heading", { name: "Audit", level: 1 }),
-  ).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("heading", { name: "Audit", level: 1 })).toBeVisible({
+    timeout: 15_000,
+  });
 }
 
 async function clearFault(page: Page): Promise<void> {
@@ -42,9 +42,7 @@ function collectErrors(page: Page): string[] {
 
 function unexpectedConsole(errors: string[]): string[] {
   return errors.filter(
-    (text) =>
-      !text.includes("above error occurred") &&
-      !text.includes("Failed to load resource"),
+    (text) => !text.includes("above error occurred") && !text.includes("Failed to load resource"),
   );
 }
 
@@ -62,9 +60,7 @@ test.describe("audit faults", () => {
     await expect(page.getByText("Something went wrong on our side")).toBeVisible({
       timeout: 15_000,
     });
-    await expect(
-      page.getByRole("button", { name: "Retry", exact: true }).first(),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Retry", exact: true }).first()).toBeVisible();
     await expect(page.getByText("Something broke.")).toHaveCount(0);
     await expect(page.locator("body")).not.toContainText(/\.tsx:\d+/);
     await expectNoAxeViolations(page);
@@ -91,9 +87,7 @@ test.describe("audit faults", () => {
     });
     await expect(page.getByText(/Stale ·/)).toBeVisible();
     await expect(page.getByTestId("audit-page")).toContainText("12 entries loaded");
-    await expect(
-      page.getByRole("row").filter({ hasText: "Demo Admin" }).first(),
-    ).toBeVisible();
+    await expect(page.getByRole("row").filter({ hasText: "Demo Admin" }).first()).toBeVisible();
     await expectNoAxeViolations(page);
     await captureForReview(page, "12-audit-stale");
     expect(unexpectedConsole(errors)).toEqual([]);
@@ -115,9 +109,7 @@ test.describe("audit faults", () => {
     await expect(page.getByText("Taking longer than usual")).toHaveCount(0);
     await expect(page.getByText("Loading cancelled")).toBeVisible();
     await expect(page.getByText("No audit entries yet")).toHaveCount(0);
-    await expect(
-      page.getByRole("button", { name: "Retry", exact: true }),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Retry", exact: true })).toBeVisible();
     expect(unexpectedConsole(errors)).toEqual([]);
   });
 
@@ -134,12 +126,10 @@ test.describe("audit faults", () => {
   test("a malformed body is a contract failure with diagnostics", async ({ page }) => {
     const errors = collectErrors(page);
     await gotoFault(page, "audit:malformed");
-    await expect(
-      page.getByText("Unexpected response from the server").first(),
-    ).toBeVisible({ timeout: 15_000 });
-    await expect(
-      page.getByRole("button", { name: "Copy diagnostics" }),
-    ).toBeVisible();
+    await expect(page.getByText("Unexpected response from the server").first()).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByRole("button", { name: "Copy diagnostics" })).toBeVisible();
     await expect(page.getByText(/Unexpected token|JSON/)).toHaveCount(0);
     await expect(page.locator("body")).not.toContainText(/\.tsx:\d+/);
     await expectNoAxeViolations(page);
@@ -155,9 +145,7 @@ test.describe("audit faults", () => {
       });
     });
     await page.goto("/audit");
-    await expect(
-      page.getByText("Audit isn't available offline"),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Audit isn't available offline")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole("button", { name: "Retry" })).toHaveCount(0);
     await expectNoAxeViolations(page);
     expect(unexpectedConsole(errors)).toEqual([]);
@@ -165,15 +153,11 @@ test.describe("audit faults", () => {
 
   test("a session expiry shows the dialog and keeps the page", async ({ page }) => {
     const errors = collectErrors(page);
-    await page.goto(
-      `/audit?fault=${encodeURIComponent("audit:unauthenticated")}`,
-    );
+    await page.goto(`/audit?fault=${encodeURIComponent("audit:unauthenticated")}`);
     const dialog = page.getByRole("dialog", { name: "Your session expired" });
     await expect(dialog).toBeVisible({ timeout: 15_000 });
     await expect
-      .poll(() =>
-        dialog.evaluate((element) => element.contains(document.activeElement)),
-      )
+      .poll(() => dialog.evaluate((element) => element.contains(document.activeElement)))
       .toBe(true);
     expect(new URL(page.url()).pathname).toBe("/audit");
     await expect(page.getByTestId("audit-page")).toHaveCount(1);
@@ -182,9 +166,9 @@ test.describe("audit faults", () => {
 
   test("a render crash is contained by the route boundary", async ({ page }) => {
     await page.goto("/audit?crash=audit");
-    await expect(
-      page.getByText("This part of the page stopped working"),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("This part of the page stopped working")).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.getByRole("banner")).toBeVisible();
   });
 });

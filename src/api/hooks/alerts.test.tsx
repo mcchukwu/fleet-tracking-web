@@ -73,10 +73,10 @@ describe("alert lookup query", () => {
   it("finds an alert that is outside the current feed and returns null for a stranger", async () => {
     vi.spyOn(api, "alerts").mockResolvedValue({ data: [row(1), row(2)] });
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    const { result, rerender } = renderHook(
-      ({ id }: { id: string }) => useAlertLookup(id),
-      { wrapper: wrapperFor(queryClient), initialProps: { id: "alert-2" } },
-    );
+    const { result, rerender } = renderHook(({ id }: { id: string }) => useAlertLookup(id), {
+      wrapper: wrapperFor(queryClient),
+      initialProps: { id: "alert-2" },
+    });
 
     await waitFor(() => expect(result.current.data?.id).toBe("alert-2"));
 

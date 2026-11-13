@@ -65,17 +65,11 @@ describe("TripConfirmDialog", () => {
 
     expect(screen.getByRole("heading", { name: "Complete trip" })).toBeVisible();
     expect(screen.getByText(/The server stores the distance/)).toBeVisible();
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Keep trip" })).toHaveFocus(),
-    );
+    await waitFor(() => expect(screen.getByRole("button", { name: "Keep trip" })).toHaveFocus());
 
     await user.click(screen.getByRole("button", { name: "Complete trip" }));
     await waitFor(() =>
-      expect(mocks.transition).toHaveBeenCalledWith(
-        trip,
-        { status: "completed" },
-        "complete",
-      ),
+      expect(mocks.transition).toHaveBeenCalledWith(trip, { status: "completed" }, "complete"),
     );
     expect(onFinished).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
@@ -89,11 +83,7 @@ describe("TripConfirmDialog", () => {
     expect(screen.getByText(/This can't be undone/)).toBeVisible();
     await user.click(screen.getByRole("button", { name: "Cancel trip" }));
     await waitFor(() =>
-      expect(mocks.transition).toHaveBeenCalledWith(
-        trip,
-        { status: "cancelled" },
-        "cancel",
-      ),
+      expect(mocks.transition).toHaveBeenCalledWith(trip, { status: "cancelled" }, "cancel"),
     );
     expect(onFinished).toHaveBeenCalled();
   });

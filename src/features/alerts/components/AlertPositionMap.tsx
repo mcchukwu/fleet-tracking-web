@@ -32,16 +32,20 @@ export function AlertPositionMap({
   const [map, setMap] = useState<MapAdapter | null>(null);
   const position =
     state.status === "evidence" || state.status === "history" ? state.position : null;
-  const bounds = position
-    ? boundsWithMinimumSpan(positionBounds(position, geofence))
-    : null;
+  const bounds = position ? boundsWithMinimumSpan(positionBounds(position, geofence)) : null;
   const south = bounds?.south;
   const west = bounds?.west;
   const north = bounds?.north;
   const east = bounds?.east;
 
   useEffect(() => {
-    if (!map || south === undefined || west === undefined || north === undefined || east === undefined) {
+    if (
+      !map ||
+      south === undefined ||
+      west === undefined ||
+      north === undefined ||
+      east === undefined
+    ) {
       return;
     }
     map.fitBounds({ south, west, north, east }, { animate: false, padding: FIT_PADDING });
@@ -52,9 +56,9 @@ export function AlertPositionMap({
 
   if (offlinePanel) {
     return (
-      <div className="flex h-24 flex-col items-center justify-center gap-1 rounded-md border border-border bg-surface-2 text-center">
-        <MapPin aria-hidden="true" className="size-5 text-subtle" strokeWidth={1.5} />
-        <p className="text-sm text-muted">Map isn't available offline</p>
+      <div className="border-border bg-surface-2 flex h-24 flex-col items-center justify-center gap-1 rounded-md border text-center">
+        <MapPin aria-hidden="true" className="text-subtle size-5" strokeWidth={1.5} />
+        <p className="text-muted text-sm">Map isn't available offline</p>
       </div>
     );
   }
@@ -64,7 +68,7 @@ export function AlertPositionMap({
       <div
         aria-busy="true"
         aria-label="Loading position"
-        className="flex h-40 items-center justify-center rounded-md border border-border bg-surface-2"
+        className="border-border bg-surface-2 flex h-40 items-center justify-center rounded-md border"
       >
         <Skeleton className="h-3 w-32" />
       </div>
@@ -73,18 +77,18 @@ export function AlertPositionMap({
 
   if (state.status === "unavailable") {
     return (
-      <div className="flex h-24 flex-col items-center justify-center gap-1 rounded-md border border-border bg-surface-2 text-center">
-        <MapPin aria-hidden="true" className="size-5 text-subtle" strokeWidth={1.5} />
-        <p className="text-sm text-muted">Position unavailable</p>
+      <div className="border-border bg-surface-2 flex h-24 flex-col items-center justify-center gap-1 rounded-md border text-center">
+        <MapPin aria-hidden="true" className="text-subtle size-5" strokeWidth={1.5} />
+        <p className="text-muted text-sm">Position unavailable</p>
       </div>
     );
   }
 
   if (state.status === "error") {
     return (
-      <div className="rounded-md border border-border bg-surface-2">
+      <div className="border-border bg-surface-2 rounded-md border">
         <ErrorState compact error={state.error} onRetry={onRetry} />
-        <p className="pb-2 text-center text-xs text-muted">Position unavailable</p>
+        <p className="text-muted pb-2 text-center text-xs">Position unavailable</p>
       </div>
     );
   }
@@ -104,7 +108,7 @@ export function AlertPositionMap({
   const geofences = geofence ? toMapGeofences([geofence], geofence.id) : [];
 
   return (
-    <div className="overflow-hidden rounded-md border border-border">
+    <div className="border-border overflow-hidden rounded-md border">
       <FleetMap
         {...(adapter ? { adapter } : {})}
         {...(bounds ? { bounds } : {})}
@@ -115,7 +119,7 @@ export function AlertPositionMap({
         geofences={geofences}
         className="h-40"
       />
-      <div className="flex justify-end bg-surface px-2 py-1">
+      <div className="bg-surface flex justify-end px-2 py-1">
         <MapAttribution styleId="standard" />
       </div>
     </div>

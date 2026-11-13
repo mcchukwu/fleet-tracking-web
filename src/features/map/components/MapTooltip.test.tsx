@@ -36,7 +36,13 @@ describe("MapTooltip", () => {
   it("does not render a missing age as '— ago'", () => {
     render(
       <MapTooltip
-        row={{ ...row, speedKph: null, speedReportedAtMs: null, ageSeconds: null, recordedAtMs: null }}
+        row={{
+          ...row,
+          speedKph: null,
+          speedReportedAtMs: null,
+          ageSeconds: null,
+          recordedAtMs: null,
+        }}
         point={{ x: 20, y: 20 }}
         now={now}
       />,
@@ -46,11 +52,15 @@ describe("MapTooltip", () => {
   });
 
   it("clamps the tooltip inside the map container", () => {
-    expect(tooltipStyle({ x: 380, y: 900 }, { width: 390, height: 844 }, { width: 200, height: 60 })).toEqual({
+    expect(
+      tooltipStyle({ x: 380, y: 900 }, { width: 390, height: 844 }, { width: 200, height: 60 }),
+    ).toEqual({
       left: 182,
       top: 776,
     });
-    expect(tooltipStyle({ x: 2, y: 4 }, { width: 390, height: 844 }, { width: 200, height: 60 })).toEqual({
+    expect(
+      tooltipStyle({ x: 2, y: 4 }, { width: 390, height: 844 }, { width: 200, height: 60 }),
+    ).toEqual({
       left: 16,
       top: 8,
     });

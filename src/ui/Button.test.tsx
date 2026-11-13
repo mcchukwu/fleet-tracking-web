@@ -33,9 +33,7 @@ describe("Button disabledReason", () => {
         <Button disabledReason="You're offline.">Cancel</Button>
       </TooltipProvider>,
     );
-    expect(screen.getByRole("button", { name: "Cancel" })).not.toHaveAttribute(
-      "disabled",
-    );
+    expect(screen.getByRole("button", { name: "Cancel" })).not.toHaveAttribute("disabled");
   });
 
   it("keeps native disabled semantics for loading and disabled", () => {

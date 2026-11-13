@@ -21,11 +21,8 @@ function renderTrend(initial: {
   mountedAt: number;
 }) {
   return renderHook(
-    (props: {
-      data: SystemHealth | undefined;
-      dataUpdatedAt: number;
-      mountedAt: number;
-    }) => useHealthTrend(props),
+    (props: { data: SystemHealth | undefined; dataUpdatedAt: number; mountedAt: number }) =>
+      useHealthTrend(props),
     { initialProps: initial },
   );
 }

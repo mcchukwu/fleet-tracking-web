@@ -63,11 +63,7 @@ export function ImportResultPanel({
       </p>
 
       {errors.length > 0 ? (
-        <ImportErrorTable
-          errors={errors}
-          failed={result.failed}
-          onDownload={onDownloadErrors}
-        />
+        <ImportErrorTable errors={errors} failed={result.failed} onDownload={onDownloadErrors} />
       ) : result.failed > 0 ? (
         <p className="text-muted text-sm">No row details were returned.</p>
       ) : null}

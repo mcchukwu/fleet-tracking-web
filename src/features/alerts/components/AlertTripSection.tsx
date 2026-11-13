@@ -15,7 +15,7 @@ export function AlertTripSection({ tripId, offline = false }: AlertTripSectionPr
   const query = useTrips({ limit: 500 }, { enabled: Boolean(tripId) });
 
   if (!tripId) {
-    return <p className="text-sm text-muted">No trip linked.</p>;
+    return <p className="text-muted text-sm">No trip linked.</p>;
   }
 
   if (query.isLoading) {
@@ -28,7 +28,7 @@ export function AlertTripSection({ tripId, offline = false }: AlertTripSectionPr
   }
 
   if (offline && !query.data) {
-    return <p className="text-sm text-muted">Trip details need a connection.</p>;
+    return <p className="text-muted text-sm">Trip details need a connection.</p>;
   }
 
   if (query.isError) {
@@ -42,11 +42,11 @@ export function AlertTripSection({ tripId, offline = false }: AlertTripSectionPr
   if (!trip) {
     return (
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm text-muted">Trip details unavailable.</p>
+        <p className="text-muted text-sm">Trip details unavailable.</p>
         <button
           type="button"
           onClick={() => void query.refetch()}
-          className="h-touch rounded-sm px-2 text-xs font-medium text-accent-fg hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus-ring md:h-control-sm"
+          className="h-touch text-accent-fg hover:bg-surface-2 focus-visible:outline-focus-ring md:h-control-sm rounded-sm px-2 text-xs font-medium focus-visible:outline-2"
         >
           Retry
         </button>
@@ -57,7 +57,7 @@ export function AlertTripSection({ tripId, offline = false }: AlertTripSectionPr
   return (
     <dl className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-x-3 gap-y-1 text-xs">
       <dt className="text-muted">Route</dt>
-      <dd className="min-w-0 break-words text-text">
+      <dd className="text-text min-w-0 break-words">
         {trip.origin} → {trip.destination}
       </dd>
       <dt className="text-muted">Status</dt>

@@ -105,8 +105,7 @@ describe("audit filtering", () => {
   });
 
   it("matches the actor, raw and labelled action, entity, ids and metadata", () => {
-    const ids = (q: string) =>
-      filterAuditEntries(rows, { action: null, q }).map((row) => row.id);
+    const ids = (q: string) => filterAuditEntries(rows, { action: null, q }).map((row) => row.id);
 
     expect(ids("demo dispatcher")).toEqual([196]);
     expect(ids("complete trip")).toEqual([196]);

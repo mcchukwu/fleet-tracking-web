@@ -130,7 +130,7 @@ function DriverDetails({ driver, offline }: { driver: Driver; offline: boolean }
             {isDialablePhone(driver.phone) ? (
               <a
                 href={phoneHref(driver.phone)}
-                className="focus-visible:outline-focus-ring inline-flex h-touch items-center rounded-sm font-mono underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 md:h-auto"
+                className="focus-visible:outline-focus-ring h-touch inline-flex items-center rounded-sm font-mono underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 md:h-auto"
               >
                 {driver.phone}
               </a>
@@ -147,12 +147,7 @@ function DriverDetails({ driver, offline }: { driver: Driver; offline: boolean }
           </Field>
           <Field label="Status">{statusLabel}</Field>
           <Field label="Driver id">
-            <CopyButton
-              inline
-              value={driver.id}
-              label="driver id"
-              className="text-xs break-all"
-            />
+            <CopyButton inline value={driver.id} label="driver id" className="text-xs break-all" />
           </Field>
         </dl>
       </section>
@@ -175,24 +170,17 @@ function DriverDetails({ driver, offline }: { driver: Driver; offline: boolean }
         ) : view.state === "offline-empty" ? (
           <p className="text-muted pt-1 text-sm">Vehicles need a connection.</p>
         ) : snapshotError ? (
-          <ErrorState
-            error={snapshotError}
-            compact
-            onRetry={() => void snapshot.refetch()}
-          />
+          <ErrorState error={snapshotError} compact onRetry={() => void snapshot.refetch()} />
         ) : assigned.length === 0 ? (
           <p className="text-muted pt-1 text-sm">No vehicles assigned.</p>
         ) : (
           <ul className="border-border mt-1 divide-y rounded-md border">
             {assigned.map((vehicle) => (
-              <li
-                key={vehicle.id}
-                className="flex items-center justify-between gap-2 px-3 py-2"
-              >
+              <li key={vehicle.id} className="flex items-center justify-between gap-2 px-3 py-2">
                 <Link
                   to="/map"
                   search={{ v: vehicle.id }}
-                  className="focus-visible:outline-focus-ring inline-flex h-touch items-center rounded-sm font-mono text-sm text-text underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 md:h-auto"
+                  className="focus-visible:outline-focus-ring h-touch text-text inline-flex items-center rounded-sm font-mono text-sm underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 md:h-auto"
                 >
                   {vehicle.plate}
                 </Link>
@@ -204,8 +192,8 @@ function DriverDetails({ driver, offline }: { driver: Driver; offline: boolean }
 
         {snapshot.data && assigned.length !== driver.vehicles ? (
           <p className="text-muted mt-2 text-xs">
-            The server counts {formatCount(driver.vehicles)}; this list shows the current snapshot
-            ({formatCount(assigned.length)}).
+            The server counts {formatCount(driver.vehicles)}; this list shows the current snapshot (
+            {formatCount(assigned.length)}).
           </p>
         ) : null}
 

@@ -16,8 +16,22 @@ const mocks = vi.hoisted(() => ({
     error: null as unknown,
     refetch: vi.fn(),
   },
-  trips: { data: [], isPending: false, isLoading: false, isError: false, error: null, refetch: vi.fn() },
-  events: { data: [], isPending: false, isLoading: false, isError: false, error: null, refetch: vi.fn() },
+  trips: {
+    data: [],
+    isPending: false,
+    isLoading: false,
+    isError: false,
+    error: null,
+    refetch: vi.fn(),
+  },
+  events: {
+    data: [],
+    isPending: false,
+    isLoading: false,
+    isError: false,
+    error: null,
+    refetch: vi.fn(),
+  },
 }));
 
 vi.mock("../../../api/hooks/vehicles", () => ({
@@ -72,29 +86,29 @@ const row = {
   stale: false,
 };
 
-function renderSheet(
-  overrides: Partial<Parameters<typeof VehicleDetailSheet>[0]> = {},
-) {
+function renderSheet(overrides: Partial<Parameters<typeof VehicleDetailSheet>[0]> = {}) {
   const onSnap = vi.fn();
   const onClose = vi.fn();
   render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
       <TooltipProvider>
         <ToastProvider>
-        <VehicleDetailSheet
-          vehicleId="vehicle-1"
-          row={row}
-          snapshotVehicle={snapshot}
-          snap="half"
-          onSnap={onSnap}
-          mapReady
-          canMutate
-          offline={false}
-          onClose={onClose}
-          onCentre={vi.fn()}
-          onPlayback={vi.fn()}
-          {...overrides}
-        />
+          <VehicleDetailSheet
+            vehicleId="vehicle-1"
+            row={row}
+            snapshotVehicle={snapshot}
+            snap="half"
+            onSnap={onSnap}
+            mapReady
+            canMutate
+            offline={false}
+            onClose={onClose}
+            onCentre={vi.fn()}
+            onPlayback={vi.fn()}
+            {...overrides}
+          />
         </ToastProvider>
       </TooltipProvider>
     </QueryClientProvider>,
@@ -104,15 +118,27 @@ function renderSheet(
 
 describe("VehicleDetailSheet", () => {
   beforeEach(() => {
-    mocks.vehicle = { ...mocks.vehicle, data: vehicle, isPending: false, isLoading: false, isError: false, error: null };
-    mocks.events = { ...mocks.events, data: [], isPending: false, isLoading: false, isError: false, error: null };
+    mocks.vehicle = {
+      ...mocks.vehicle,
+      data: vehicle,
+      isPending: false,
+      isLoading: false,
+      isError: false,
+      error: null,
+    };
+    mocks.events = {
+      ...mocks.events,
+      data: [],
+      isPending: false,
+      isLoading: false,
+      isError: false,
+      error: null,
+    };
   });
 
   it("shows the plate, status, actions and the same sections as the drawer", () => {
     renderSheet();
-    expect(
-      screen.getByRole("region", { name: "Vehicle details for LSD-100-AA" }),
-    ).toBeVisible();
+    expect(screen.getByRole("region", { name: "Vehicle details for LSD-100-AA" })).toBeVisible();
     expect(screen.getByText("62 km/h")).toBeVisible();
     expect(screen.getByRole("heading", { name: "Trip" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Vehicle details" })).toBeVisible();
@@ -125,22 +151,22 @@ describe("VehicleDetailSheet", () => {
     const { rerender } = render(
       <QueryClientProvider client={client}>
         <TooltipProvider>
-        <ToastProvider>
-          <VehicleDetailSheet
-            vehicleId="vehicle-1"
-            row={row}
-            snapshotVehicle={snapshot}
-            snap="peek"
-            onSnap={vi.fn()}
-            mapReady
-            canMutate
-            offline={false}
-            onClose={vi.fn()}
-            onCentre={vi.fn()}
-            onPlayback={vi.fn()}
-          />
-        </ToastProvider>
-      </TooltipProvider>
+          <ToastProvider>
+            <VehicleDetailSheet
+              vehicleId="vehicle-1"
+              row={row}
+              snapshotVehicle={snapshot}
+              snap="peek"
+              onSnap={vi.fn()}
+              mapReady
+              canMutate
+              offline={false}
+              onClose={vi.fn()}
+              onCentre={vi.fn()}
+              onPlayback={vi.fn()}
+            />
+          </ToastProvider>
+        </TooltipProvider>
       </QueryClientProvider>,
     );
     expect(screen.getByTestId("detail-sheet-content")).toHaveAttribute("inert");
@@ -148,22 +174,22 @@ describe("VehicleDetailSheet", () => {
     rerender(
       <QueryClientProvider client={client}>
         <TooltipProvider>
-        <ToastProvider>
-          <VehicleDetailSheet
-            vehicleId="vehicle-1"
-            row={row}
-            snapshotVehicle={snapshot}
-            snap="half"
-            onSnap={vi.fn()}
-            mapReady
-            canMutate
-            offline={false}
-            onClose={vi.fn()}
-            onCentre={vi.fn()}
-            onPlayback={vi.fn()}
-          />
-        </ToastProvider>
-      </TooltipProvider>
+          <ToastProvider>
+            <VehicleDetailSheet
+              vehicleId="vehicle-1"
+              row={row}
+              snapshotVehicle={snapshot}
+              snap="half"
+              onSnap={vi.fn()}
+              mapReady
+              canMutate
+              offline={false}
+              onClose={vi.fn()}
+              onCentre={vi.fn()}
+              onPlayback={vi.fn()}
+            />
+          </ToastProvider>
+        </TooltipProvider>
       </QueryClientProvider>,
     );
     expect(screen.getByTestId("detail-sheet-content")).not.toHaveAttribute("inert");
@@ -193,7 +219,13 @@ describe("VehicleDetailSheet", () => {
       ...mocks.vehicle,
       data: undefined,
       isError: true,
-      error: { kind: "not_found", retryable: false, outcome: "failed", context: { route: "/map" }, at: 0 },
+      error: {
+        kind: "not_found",
+        retryable: false,
+        outcome: "failed",
+        context: { route: "/map" },
+        at: 0,
+      },
     };
     renderSheet();
     expect(screen.getByText("Vehicle not found")).toBeVisible();

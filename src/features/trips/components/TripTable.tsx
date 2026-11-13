@@ -7,19 +7,11 @@ import { InlineError } from "../../../errors/InlineError";
 import { SlowNotice } from "../../../errors/SlowNotice";
 import { MISSING, formatDistance } from "../../../lib/format";
 import { isTripStatus } from "../../../lib/status";
-import {
-  tripDistanceKm,
-  type TripAction,
-  type TripEmptyReason,
-} from "../../../lib/trips";
+import { tripDistanceKm, type TripAction, type TripEmptyReason } from "../../../lib/trips";
 import { Badge, TripStatusBadge } from "../../../ui/Badge";
 import { Button } from "../../../ui/Button";
 import { CopyButton } from "../../../ui/CopyButton";
-import {
-  DataTable,
-  DATA_TABLE_ROW_HEIGHT,
-  type DataTableColumn,
-} from "../../../ui/DataTable";
+import { DataTable, DATA_TABLE_ROW_HEIGHT, type DataTableColumn } from "../../../ui/DataTable";
 import { EmptyState, Skeleton } from "../../../ui/StatePanel";
 import { StateBoundary, type StateBoundaryState } from "../../../ui/StateBoundary";
 import { Timestamp } from "../../../ui/Timestamp";
@@ -50,10 +42,7 @@ const COLUMN_ORDER = [
   ["actions", ""],
 ] as const;
 
-const TABLE_MIN_WIDTH = COLUMN_ORDER.reduce(
-  (total, [id]) => total + COLUMN_WIDTHS[id],
-  0,
-);
+const TABLE_MIN_WIDTH = COLUMN_ORDER.reduce((total, [id]) => total + COLUMN_WIDTHS[id], 0);
 
 function cellWidth(width: number): CSSProperties {
   return { width };
@@ -102,15 +91,11 @@ function TripOpenButton({ trip, onOpen }: TripOpenButtonProps) {
         aria-label={`Open trip to ${trip.destination} for ${trip.plate}`}
         title={trip.plate}
         onClick={onOpen}
-        className="focus-visible:outline-focus-ring -my-2 inline-flex h-touch min-w-0 items-center truncate rounded-sm font-mono text-sm text-text underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 md:my-0 md:h-auto"
+        className="focus-visible:outline-focus-ring h-touch text-text -my-2 inline-flex min-w-0 items-center truncate rounded-sm font-mono text-sm underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-0 md:my-0 md:h-auto"
       >
         {trip.plate}
       </button>
-      <CopyButton
-        value={trip.plate}
-        label="plate"
-        className="-my-2 shrink-0 px-1 md:my-0"
-      >
+      <CopyButton value={trip.plate} label="plate" className="-my-2 shrink-0 px-1 md:my-0">
         <Copy aria-hidden="true" className="size-3" strokeWidth={1.5} />
       </CopyButton>
     </span>
@@ -251,18 +236,12 @@ export function TripTable({
     }
   }
   const rowsToRender =
-    scroller && (virtualItems.length > 0 || displayRows.length === 0)
-      ? virtualRows
-      : displayRows;
+    scroller && (virtualItems.length > 0 || displayRows.length === 0) ? virtualRows : displayRows;
 
   const paddingTop =
-    virtualItems.length > 0
-      ? Math.max(0, virtualItems[0].start - DATA_TABLE_ROW_HEIGHT)
-      : 0;
+    virtualItems.length > 0 ? Math.max(0, virtualItems[0].start - DATA_TABLE_ROW_HEIGHT) : 0;
   const lastItem = virtualItems[virtualItems.length - 1];
-  const paddingBottom = lastItem
-    ? Math.max(0, virtualizer.getTotalSize() - lastItem.end)
-    : 0;
+  const paddingBottom = lastItem ? Math.max(0, virtualizer.getTotalSize() - lastItem.end) : 0;
 
   const columns = useMemo<DataTableColumn<DisplayRow>[]>(
     () => [
@@ -272,9 +251,7 @@ export function TripTable({
         width: COLUMN_WIDTHS.vehicle,
         align: "left",
         truncate: false,
-        cell: (row) => (
-          <TripOpenButton trip={row.trip} onOpen={() => onOpen(row.trip.id)} />
-        ),
+        cell: (row) => <TripOpenButton trip={row.trip} onOpen={() => onOpen(row.trip.id)} />,
       },
       {
         id: "driver",
@@ -282,9 +259,7 @@ export function TripTable({
         width: COLUMN_WIDTHS.driver,
         align: "left",
         title: (row) => row.trip.driver_name ?? MISSING,
-        cell: (row) => (
-          <span className="text-text text-sm">{row.trip.driver_name ?? MISSING}</span>
-        ),
+        cell: (row) => <span className="text-text text-sm">{row.trip.driver_name ?? MISSING}</span>,
       },
       {
         id: "origin",
@@ -300,9 +275,7 @@ export function TripTable({
         width: COLUMN_WIDTHS.destination,
         align: "left",
         title: (row) => row.trip.destination,
-        cell: (row) => (
-          <span className="text-text text-sm">{row.trip.destination}</span>
-        ),
+        cell: (row) => <span className="text-text text-sm">{row.trip.destination}</span>,
       },
       {
         id: "status",
@@ -315,9 +288,7 @@ export function TripTable({
           isTripStatus(row.trip.status) ? (
             <TripStatusBadge status={row.trip.status} />
           ) : (
-            <Badge tone="neutral">
-              Unknown status: {row.trip.status}
-            </Badge>
+            <Badge tone="neutral">Unknown status: {row.trip.status}</Badge>
           ),
       },
       {
@@ -329,7 +300,7 @@ export function TripTable({
         title: (row) => row.trip.started_at ?? MISSING,
         cell: (row) =>
           row.trip.started_at ? (
-            <Timestamp iso={row.trip.started_at} className="text-xs text-muted" />
+            <Timestamp iso={row.trip.started_at} className="text-muted text-xs" />
           ) : (
             <span className="text-muted text-xs">{MISSING}</span>
           ),
@@ -343,7 +314,7 @@ export function TripTable({
         title: (row) => row.trip.ended_at ?? MISSING,
         cell: (row) =>
           row.trip.ended_at ? (
-            <Timestamp iso={row.trip.ended_at} className="text-xs text-muted" />
+            <Timestamp iso={row.trip.ended_at} className="text-muted text-xs" />
           ) : (
             <span className="text-muted text-xs">{MISSING}</span>
           ),
@@ -393,10 +364,7 @@ export function TripTable({
       }
     />
   ) : offline && !hasLoadedRows ? (
-    <EmptyState
-      title="No trips available offline"
-      description="Reconnect to load the trip list."
-    />
+    <EmptyState title="No trips available offline" description="Reconnect to load the trip list." />
   ) : emptyReason === "no-loaded-matches" ? (
     <EmptyState
       title="No trips match in the loaded trips"
@@ -450,9 +418,7 @@ export function TripTable({
               label="Trips"
               columns={columns}
               rows={rowsToRender}
-              rowKey={(row, index) =>
-                `${row.kind}:${row.trip.id}:${row.virtualIndex ?? index}`
-              }
+              rowKey={(row, index) => `${row.kind}:${row.trip.id}:${row.virtualIndex ?? index}`}
               className="min-h-0 flex-1"
               topSpacer={paddingTop}
               bottomSpacer={paddingBottom}
@@ -461,10 +427,7 @@ export function TripTable({
                 row.kind === "trip"
                   ? {
                       "data-trip-row": row.trip.id,
-                      className: cn(
-                        "cursor-pointer",
-                        pendingId === row.trip.id && "opacity-60",
-                      ),
+                      className: cn("cursor-pointer", pendingId === row.trip.id && "opacity-60"),
                       onClick: (event) => {
                         if ((event.target as HTMLElement).closest("button, a")) return;
                         onOpen(row.trip.id);
@@ -483,19 +446,14 @@ export function TripTable({
                       if (element) virtualizer.measureElement(element);
                     }}
                   >
-                    <td
-                      colSpan={columns.length}
-                      className="border-border border-b px-3 py-2"
-                    >
+                    <td colSpan={columns.length} className="border-border border-b px-3 py-2">
                       <InlineError
                         error={row.actionError.error}
                         copy={{
                           title: row.actionError.title,
                           detail: row.actionError.detail,
                         }}
-                        {...(row.actionError.onRetry
-                          ? { onRetry: row.actionError.onRetry }
-                          : {})}
+                        {...(row.actionError.onRetry ? { onRetry: row.actionError.onRetry } : {})}
                       />
                     </td>
                   </tr>

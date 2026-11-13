@@ -36,8 +36,7 @@ function collectErrors(page: Page): string[] {
 
 function unexpectedConsole(errors: string[]): string[] {
   return errors.filter(
-    (text) =>
-      !text.includes("above error occurred") && !text.includes("Failed to load resource"),
+    (text) => !text.includes("above error occurred") && !text.includes("Failed to load resource"),
   );
 }
 
@@ -223,9 +222,7 @@ test.describe("geofences faults", () => {
     await expect(form).toBeVisible();
   });
 
-  test("a lost create reports that it was not saved and creates no duplicate", async ({
-    page,
-  }) => {
+  test("a lost create reports that it was not saved and creates no duplicate", async ({ page }) => {
     test.setTimeout(60_000);
     const errors = collectErrors(page);
     await page.goto("/geofences?map=fake");
@@ -315,9 +312,7 @@ test.describe("geofences faults", () => {
 
     await expect(dialog.getByText("It wasn't deleted.")).toBeVisible({ timeout: 45_000 });
     await expect(dialog).toBeVisible();
-    await expect(
-      page.locator("[data-geofence-row]").filter({ hasText: "Border" }),
-    ).toBeVisible();
+    await expect(page.locator("[data-geofence-row]").filter({ hasText: "Border" })).toBeVisible();
     expect(await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? [])).toHaveLength(0);
   });
 

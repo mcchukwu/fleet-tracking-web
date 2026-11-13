@@ -8,10 +8,7 @@ import { normalize } from "../../../errors/normalize";
 import type { AppError } from "../../../errors/types";
 import { useActionError } from "../../../errors/useActionError";
 import { useToast } from "../../../ui/Toast";
-import {
-  findCreatedGeofence,
-  reconcileGeofenceUpdate,
-} from "../lib/reconcile";
+import { findCreatedGeofence, reconcileGeofenceUpdate } from "../lib/reconcile";
 
 export type GeofenceCreateOutcome =
   | { status: "created"; id: string }
@@ -127,9 +124,11 @@ export function useGeofenceWrite(): GeofenceWriteController {
     ): Promise<GeofenceUpdateOutcome> => {
       const result = await run(
         () =>
-          updateMutation.mutateAsync({ id: geofence.id, update, signal }).catch((cause: unknown) => {
-            throw markWriteUnknown(cause, "edit a geofence");
-          }),
+          updateMutation
+            .mutateAsync({ id: geofence.id, update, signal })
+            .catch((cause: unknown) => {
+              throw markWriteUnknown(cause, "edit a geofence");
+            }),
         {
           action: "edit a geofence",
           resource: "the geofence",

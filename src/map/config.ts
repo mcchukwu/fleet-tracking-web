@@ -71,15 +71,24 @@ export const availableMapStyles = availableStyles(mapTilerConfig);
 export const mapConfig = {
   provider: readProvider(),
   styleUrls: {
-    light: readUrl(import.meta.env.VITE_MAP_STYLE_URL_LIGHT, "https://tiles.openfreemap.org/styles/positron"),
-    dark: readUrl(import.meta.env.VITE_MAP_STYLE_URL_DARK, "https://tiles.openfreemap.org/styles/dark"),
+    light: readUrl(
+      import.meta.env.VITE_MAP_STYLE_URL_LIGHT,
+      "https://tiles.openfreemap.org/styles/positron",
+    ),
+    dark: readUrl(
+      import.meta.env.VITE_MAP_STYLE_URL_DARK,
+      "https://tiles.openfreemap.org/styles/dark",
+    ),
   },
   // Only the standard base style uses this override; hosted styles bring their
   // own glyphs and sprites.
   glyphsUrl: import.meta.env.VITE_MAP_GLYPHS_URL?.trim() ?? "",
   /** Empty means the hosted OpenFreeMap standard style and no offline map. */
   pmtilesUrl: import.meta.env.VITE_MAP_PMTILES_URL?.trim() ?? "",
-  localGlyphsUrl: readUrl(import.meta.env.VITE_MAP_GLYPHS_URL, "/map/fonts/{fontstack}/{range}.pbf"),
+  localGlyphsUrl: readUrl(
+    import.meta.env.VITE_MAP_GLYPHS_URL,
+    "/map/fonts/{fontstack}/{range}.pbf",
+  ),
   localSpriteBaseUrl: readUrl(import.meta.env.VITE_MAP_SPRITE_URL, "/map/sprites"),
   attribution: {
     label: "© OpenStreetMap · OpenFreeMap",

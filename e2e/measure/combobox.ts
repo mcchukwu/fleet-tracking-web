@@ -110,12 +110,7 @@ async function measure(
   dialogSelector: string,
 ): Promise<Measurement> {
   return page.evaluate(
-    ({
-      stateName,
-      themeName,
-      inputSelector: inputSel,
-      dialogSelector: dialogSel,
-    }) => {
+    ({ stateName, themeName, inputSelector: inputSel, dialogSelector: dialogSel }) => {
       const rounder = (value: number) => Math.round(value * 100) / 100;
       const toBox = (rect: DOMRect) => ({
         x: rounder(rect.x),
@@ -124,17 +119,11 @@ async function measure(
         height: rounder(rect.height),
       });
 
-      const input = inputSel
-        ? document.querySelector<HTMLInputElement>(inputSel)
-        : null;
-      const dialog = dialogSel
-        ? document.querySelector<HTMLElement>(dialogSel)
-        : null;
+      const input = inputSel ? document.querySelector<HTMLInputElement>(inputSel) : null;
+      const dialog = dialogSel ? document.querySelector<HTMLElement>(dialogSel) : null;
       const list = document.querySelector<HTMLElement>('[role="listbox"]');
 
-      const openMenu = input
-        ? document.querySelector<HTMLElement>("[data-combobox-list]")
-        : null;
+      const openMenu = input ? document.querySelector<HTMLElement>("[data-combobox-list]") : null;
       const resolvedList = list ?? openMenu;
 
       const control = input?.parentElement ?? null;
@@ -151,9 +140,7 @@ async function measure(
           y: rounder(rect.y),
           width: rounder(rect.width),
           height: rounder(rect.height),
-          centerOffset: rounder(
-            rect.y + rect.height / 2 - (inputRect.y + inputRect.height / 2),
-          ),
+          centerOffset: rounder(rect.y + rect.height / 2 - (inputRect.y + inputRect.height / 2)),
         };
       };
 
@@ -165,32 +152,17 @@ async function measure(
       }> = [];
       if (resolvedList) {
         const listRect = resolvedList.getBoundingClientRect();
-        const candidates = dialog
-          ? [...dialog.querySelectorAll<HTMLElement>("button")]
-          : [];
+        const candidates = dialog ? [...dialog.querySelectorAll<HTMLElement>("button")] : [];
         for (const button of candidates) {
           const label =
-            button.getAttribute("aria-label") ??
-            button.textContent?.trim() ??
-            "(button)";
+            button.getAttribute("aria-label") ?? button.textContent?.trim() ?? "(button)";
           if (!/^(Cancel|Close dialog)$/.test(label)) continue;
           if (button.hasAttribute("disabled")) continue;
           const rect = button.getBoundingClientRect();
           const overlap =
-            Math.max(
-              0,
-              Math.min(listRect.right, rect.right) -
-                Math.max(listRect.left, rect.left),
-            ) *
-            Math.max(
-              0,
-              Math.min(listRect.bottom, rect.bottom) -
-                Math.max(listRect.top, rect.top),
-            );
-          const hit = document.elementFromPoint(
-            rect.x + rect.width / 2,
-            rect.y + rect.height / 2,
-          );
+            Math.max(0, Math.min(listRect.right, rect.right) - Math.max(listRect.left, rect.left)) *
+            Math.max(0, Math.min(listRect.bottom, rect.bottom) - Math.max(listRect.top, rect.top));
+          const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
           hits.push({
             label,
             hit: hit
@@ -208,9 +180,7 @@ async function measure(
 
       const listRect = resolvedList?.getBoundingClientRect() ?? null;
       const inputRect = input?.getBoundingClientRect() ?? null;
-      const listStyle = resolvedList
-        ? window.getComputedStyle(resolvedList)
-        : null;
+      const listStyle = resolvedList ? window.getComputedStyle(resolvedList) : null;
 
       const describe = (role: string, element: Element | null) => {
         if (!element) return null;
@@ -239,13 +209,9 @@ async function measure(
       ].filter((row): row is NonNullable<typeof row> => row !== null);
 
       const viewport = window.visualViewport;
-      const sheetElement = document.querySelector<HTMLElement>(
-        "[data-picker-sheet]",
-      );
+      const sheetElement = document.querySelector<HTMLElement>("[data-picker-sheet]");
       const sheetRect = sheetElement?.getBoundingClientRect() ?? null;
-      const closeElement = sheetElement?.querySelector<HTMLElement>(
-        '[aria-label="Close picker"]',
-      );
+      const closeElement = sheetElement?.querySelector<HTMLElement>('[aria-label="Close picker"]');
       const closeRect = closeElement?.getBoundingClientRect() ?? null;
       const closeHit =
         closeRect && closeElement
@@ -257,9 +223,7 @@ async function measure(
               return hit !== null && closeElement.contains(hit);
             })()
           : false;
-      const header = sheetElement?.querySelector<HTMLElement>(
-        "[data-picker-sheet] > div",
-      );
+      const header = sheetElement?.querySelector<HTMLElement>("[data-picker-sheet] > div");
       const options = resolvedList
         ? [...resolvedList.querySelectorAll<HTMLElement>('[role="option"]')]
         : [];
@@ -267,9 +231,7 @@ async function measure(
       const visibleRows = listBox
         ? options.filter((option) => {
             const rect = option.getBoundingClientRect();
-            return (
-              rect.top >= listBox.top - 1 && rect.bottom <= listBox.bottom + 1
-            );
+            return rect.top >= listBox.top - 1 && rect.bottom <= listBox.bottom + 1;
           }).length
         : 0;
 
@@ -336,10 +298,7 @@ async function measure(
                           : inputRect.top - listRect.bottom,
                       )
                     : 0,
-                side:
-                  inputRect && listRect && listRect.top >= inputRect.bottom
-                    ? "below"
-                    : "above",
+                side: inputRect && listRect && listRect.top >= inputRect.bottom ? "below" : "above",
               }
             : null,
         listWidthTarget: inputRect ? rounder(inputRect.width) : null,
@@ -410,9 +369,7 @@ function failuresFor(measurement: Measurement): string[] {
     ["trailing", measurement.trailing],
   ] as const) {
     if (icon && Math.abs(icon.centerOffset) > 0.5) {
-      failures.push(
-        `${name} icon centre is ${icon.centerOffset}px from the input centre`,
-      );
+      failures.push(`${name} icon centre is ${icon.centerOffset}px from the input centre`);
     }
   }
   if (
@@ -454,18 +411,14 @@ function failuresFor(measurement: Measurement): string[] {
       failures.push("the sheet close is not hit-testable");
     }
     if (Math.abs(measurement.rows.height - 56) > 0.5) {
-      failures.push(
-        `sheet row height is ${measurement.rows.height}px, not 56px`,
-      );
+      failures.push(`sheet row height is ${measurement.rows.height}px, not 56px`);
     }
     if (measurement.rows.mounted >= 4 && measurement.rows.visible < 4) {
       failures.push(`only ${measurement.rows.visible} rows are visible`);
     }
   } else if (measurement.list) {
     if (Math.abs(measurement.rows.height - 44) > 0.5) {
-      failures.push(
-        `popover row height is ${measurement.rows.height}px, not 44px`,
-      );
+      failures.push(`popover row height is ${measurement.rows.height}px, not 44px`);
     }
     if (measurement.listWidthTarget !== null) {
       const expected = Math.max(
@@ -473,16 +426,13 @@ function failuresFor(measurement: Measurement): string[] {
         Math.min(measurement.listWidthTarget, measurement.viewport.width - 16),
       );
       if (Math.abs(measurement.list.width - expected) > 0.5) {
-        failures.push(
-          `list width ${measurement.list.width}px, expected ${expected}px`,
-        );
+        failures.push(`list width ${measurement.list.width}px, expected ${expected}px`);
       }
     }
     if (measurement.list.position !== "fixed") {
       failures.push(`list position is ${measurement.list.position}, not fixed`);
     }
-    const visibleBottom =
-      measurement.visualViewport.offsetTop + measurement.visualViewport.height;
+    const visibleBottom = measurement.visualViewport.offsetTop + measurement.visualViewport.height;
     if (measurement.list.y + measurement.list.height > visibleBottom + 0.5) {
       failures.push(
         `list bottom ${round(measurement.list.y + measurement.list.height)} is below the visual viewport ${visibleBottom}`,
@@ -541,26 +491,18 @@ async function openDrawer(page: Page, width: number): Promise<void> {
 
 async function gotoPlayback(page: Page): Promise<void> {
   await page.goto(`${BASE_URL}/playback?map=fake&vehicle=${PLAYBACK_VEHICLE}`);
-  await page
-    .getByRole("region", { name: "Playback controls" })
-    .waitFor({ timeout: 15_000 });
+  await page.getByRole("region", { name: "Playback controls" }).waitFor({ timeout: 15_000 });
 }
 
-async function revealInVisualViewport(
-  page: Page,
-  selector: string,
-): Promise<void> {
+async function revealInVisualViewport(page: Page, selector: string): Promise<void> {
   await page.evaluate((inputSelector) => {
-    const viewport = window.visualViewport as
-      (VisualViewport & { offsetTop: number }) | null;
+    const viewport = window.visualViewport as (VisualViewport & { offsetTop: number }) | null;
     const fake = (
       window as unknown as {
         __FAKE_VV__?: { offsetTop: number; height: number };
       }
     ).__FAKE_VV__;
-    const input = inputSelector
-      ? document.querySelector<HTMLElement>(inputSelector)
-      : null;
+    const input = inputSelector ? document.querySelector<HTMLElement>(inputSelector) : null;
     if (!viewport || !fake || !input) return;
     const rect = input.getBoundingClientRect();
     let offset = fake.offsetTop;
@@ -595,19 +537,11 @@ async function measureBeforeAfter(
         width: rounder(rect.width),
         height: rounder(rect.height),
       });
-      const inputElement = inputSel
-        ? document.querySelector<HTMLElement>(inputSel)
-        : null;
-      const dialogElement = dialogSel
-        ? document.querySelector<HTMLElement>(dialogSel)
-        : null;
+      const inputElement = inputSel ? document.querySelector<HTMLElement>(inputSel) : null;
+      const dialogElement = dialogSel ? document.querySelector<HTMLElement>(dialogSel) : null;
       return {
-        input: inputElement
-          ? toBox(inputElement.getBoundingClientRect())
-          : null,
-        dialog: dialogElement
-          ? toBox(dialogElement.getBoundingClientRect())
-          : null,
+        input: inputElement ? toBox(inputElement.getBoundingClientRect()) : null,
+        dialog: dialogElement ? toBox(dialogElement.getBoundingClientRect()) : null,
       };
     },
     { inputSel: inputSelector, dialogSel: dialogSelector },
@@ -615,13 +549,7 @@ async function measureBeforeAfter(
   await input.click();
   await page.locator("[data-combobox-list]").waitFor();
   await page.waitForTimeout(150);
-  const measurement = await measure(
-    page,
-    state,
-    theme,
-    inputSelector,
-    dialogSelector,
-  );
+  const measurement = await measure(page, state, theme, inputSelector, dialogSelector);
   measurement.inputBefore = before.input;
   measurement.dialogBefore = before.dialog;
   measurement.viewport = viewport;
@@ -705,9 +633,7 @@ async function main(): Promise<void> {
               "",
             );
             await page.keyboard.press("Escape");
-            await page
-              .getByRole("button", { name: `Open ${count}-option dialog` })
-              .click();
+            await page.getByRole("button", { name: `Open ${count}-option dialog` }).click();
             await page.getByRole("dialog").waitFor();
             await measureBeforeAfter(
               page,
@@ -757,10 +683,7 @@ async function main(): Promise<void> {
           await page.getByRole("button", { name: "Cancel" }).click();
           await page.getByRole("dialog").waitFor({ state: "hidden" });
 
-          await page
-            .getByRole("button", { name: "Edit", exact: true })
-            .first()
-            .click();
+          await page.getByRole("button", { name: "Edit", exact: true }).first().click();
           await page.getByRole("dialog").waitFor();
           await measureBeforeAfter(
             page,

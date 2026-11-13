@@ -42,64 +42,68 @@ function badRows(count: number): string {
 }
 
 test.describe("import layout", () => {
-  test("the preview and result hold their columns and stay inside the page", { tag: "@theme" }, async ({
-    page,
-  }) => {
-    await gotoImport(page);
-    await expectNoHorizontalScroll(page);
-    await captureForReview(page, "09-import-empty");
-    await expectNoAxeViolations(page);
+  test(
+    "the preview and result hold their columns and stay inside the page",
+    { tag: "@theme" },
+    async ({ page }) => {
+      await gotoImport(page);
+      await expectNoHorizontalScroll(page);
+      await captureForReview(page, "09-import-empty");
+      await expectNoAxeViolations(page);
 
-    await uploadCsv(page, validCsv);
-    const preview = page.getByTestId("import-preview");
-    await expect(preview).toBeVisible();
-    await expectStableColumns(
-      page.getByTestId("import-preview").locator("[data-data-table]"),
-      36,
-    );
-    await expectNoHorizontalScroll(page);
-    await expectNoAxeViolations(page);
-    await captureForReview(page, "09-import-preview");
-    if ((page.viewportSize()?.width ?? 1440) < 768) {
-      await expectTouchTargets(page, 44, '[data-testid="import-file-input"]');
-    }
+      await uploadCsv(page, validCsv);
+      const preview = page.getByTestId("import-preview");
+      await expect(preview).toBeVisible();
+      await expectStableColumns(
+        page.getByTestId("import-preview").locator("[data-data-table]"),
+        36,
+      );
+      await expectNoHorizontalScroll(page);
+      await expectNoAxeViolations(page);
+      await captureForReview(page, "09-import-preview");
+      if ((page.viewportSize()?.width ?? 1440) < 768) {
+        await expectTouchTargets(page, 44, '[data-testid="import-file-input"]');
+      }
 
-    await page.getByRole("button", { name: "Upload file" }).click();
-    await expect(page.getByTestId("import-result")).toBeVisible({ timeout: 15_000 });
-    await expectTabularNums(
-      page.getByTestId("import-result").locator('span[class*="tabular-nums"]').first(),
-    );
-    await expectNoHorizontalScroll(page);
-    await expectNoAxeViolations(page);
-    await captureForReview(page, "09-import-result");
-  });
+      await page.getByRole("button", { name: "Upload file" }).click();
+      await expect(page.getByTestId("import-result")).toBeVisible({ timeout: 15_000 });
+      await expectTabularNums(
+        page.getByTestId("import-result").locator('span[class*="tabular-nums"]').first(),
+      );
+      await expectNoHorizontalScroll(page);
+      await expectNoAxeViolations(page);
+      await captureForReview(page, "09-import-result");
+    },
+  );
 
-  test("the capped error table keeps its rows fixed and scrolls inside itself", { tag: "@theme" }, async ({
-    page,
-  }) => {
-    test.setTimeout(60_000);
-    await gotoImport(page);
-    await uploadCsv(page, `imei,plate,year\n${badRows(105)}`, "broken.csv");
-    await expect(page.getByTestId("import-preview")).toBeVisible();
-    await page.getByRole("button", { name: "Upload file" }).click();
-    await expect(page.getByTestId("import-error-table")).toBeVisible({
-      timeout: 15_000,
-    });
+  test(
+    "the capped error table keeps its rows fixed and scrolls inside itself",
+    { tag: "@theme" },
+    async ({ page }) => {
+      test.setTimeout(60_000);
+      await gotoImport(page);
+      await uploadCsv(page, `imei,plate,year\n${badRows(105)}`, "broken.csv");
+      await expect(page.getByTestId("import-preview")).toBeVisible();
+      await page.getByRole("button", { name: "Upload file" }).click();
+      await expect(page.getByTestId("import-error-table")).toBeVisible({
+        timeout: 15_000,
+      });
 
-    await expectStableColumns(
-      page.getByTestId("import-error-table").locator("[data-data-table]"),
-      36,
-    );
-    await expectTabularNums(
-      page.getByTestId("import-error-table").locator('td[data-column-id="row"]').first(),
-    );
-    await expectNoHorizontalScroll(page);
-    await expectNoAxeViolations(page);
-    if ((page.viewportSize()?.width ?? 1440) < 768) {
-      await expectTouchTargets(page, 44, '[data-testid="import-file-input"]');
-    }
-    await captureForReview(page, "09-import-partial");
-  });
+      await expectStableColumns(
+        page.getByTestId("import-error-table").locator("[data-data-table]"),
+        36,
+      );
+      await expectTabularNums(
+        page.getByTestId("import-error-table").locator('td[data-column-id="row"]').first(),
+      );
+      await expectNoHorizontalScroll(page);
+      await expectNoAxeViolations(page);
+      if ((page.viewportSize()?.width ?? 1440) < 768) {
+        await expectTouchTargets(page, 44, '[data-testid="import-file-input"]');
+      }
+      await captureForReview(page, "09-import-partial");
+    },
+  );
 
   test("holds the preview, result and recent rows at 360px", async ({ page }) => {
     test.skip(!isMobile(page), "mobile-only layout");
@@ -109,10 +113,7 @@ test.describe("import layout", () => {
 
     await uploadCsv(page, validCsv);
     await expect(page.getByTestId("import-preview")).toBeVisible();
-    await expectStableColumns(
-      page.getByTestId("import-preview").locator("[data-data-table]"),
-      36,
-    );
+    await expectStableColumns(page.getByTestId("import-preview").locator("[data-data-table]"), 36);
     await expectNoHorizontalScroll(page);
 
     await page.getByRole("button", { name: "Upload file" }).click();
@@ -130,16 +131,12 @@ test.describe("import layout", () => {
     for (const height of heights) expect(Math.abs(height - 56)).toBeLessThanOrEqual(1);
 
     await expectNoHorizontalScroll(page);
-    await expectTabularNums(
-      page.getByTestId("import-recent").locator(".tabular-nums").first(),
-    );
+    await expectTabularNums(page.getByTestId("import-recent").locator(".tabular-nums").first());
     await expectNoAxeViolations(page);
     await captureForReview(page, "09-import-layout-360");
   });
 
-  test("the failure notice stays readable in both themes", { tag: "@theme" }, async ({
-    page,
-  }) => {
+  test("the failure notice stays readable in both themes", { tag: "@theme" }, async ({ page }) => {
     await page.goto("/import?fault=import%3Aserver");
     await expect(page.getByRole("heading", { name: "Import", level: 1 })).toBeVisible({
       timeout: 15_000,

@@ -16,20 +16,13 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
     const page = await browser.newPage({
       viewport: { width: 1440, height: 900 },
     });
-    for (const path of [
-      "/map?map=fake",
-      "/alerts",
-      "/dev/combobox",
-      "/styleguide",
-    ]) {
+    for (const path of ["/map?map=fake", "/alerts", "/dev/combobox", "/styleguide"]) {
       try {
         await page.goto(`${baseURL}${path}`, {
           waitUntil: "load",
           timeout: 180_000,
         });
-        await page
-          .locator("[data-page-frame]")
-          .waitFor({ state: "visible", timeout: 180_000 });
+        await page.locator("[data-page-frame]").waitFor({ state: "visible", timeout: 180_000 });
       } catch {
         continue;
       }

@@ -67,7 +67,13 @@ describe("useGeofenceDrawing", () => {
   it("reports an adapter without a draw controller as an error", async () => {
     const adapter = {
       id: "no-draw",
-      capabilities: { offline: false, drawing: false, clustering: "emulated", comfortableVehicleCount: 1, styles: ["standard"] },
+      capabilities: {
+        offline: false,
+        drawing: false,
+        clustering: "emulated",
+        comfortableVehicleCount: 1,
+        styles: ["standard"],
+      },
       draw: undefined,
     } as unknown as MapAdapter;
     const { result } = renderHook(() =>

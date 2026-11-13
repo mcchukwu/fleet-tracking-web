@@ -19,7 +19,13 @@ describe("route search schemas", () => {
   it("keeps valid map filters", () => {
     const id = "4324a768-9b14-4223-a299-eb8da4d8d309";
     expect(
-      mapSearchSchema.parse({ q: "LSD", status: "moving,idle", sort: "lastSeen", view: "1", v: id }),
+      mapSearchSchema.parse({
+        q: "LSD",
+        status: "moving,idle",
+        sort: "lastSeen",
+        view: "1",
+        v: id,
+      }),
     ).toEqual({
       q: "LSD",
       status: "moving,idle",
@@ -30,9 +36,9 @@ describe("route search schemas", () => {
   });
 
   it("drops an invalid sort, view or vehicle id", () => {
-    expect(
-      mapSearchSchema.parse({ sort: "nonsense", view: "yes", v: "demo-imei-0001" }),
-    ).toEqual({});
+    expect(mapSearchSchema.parse({ sort: "nonsense", view: "yes", v: "demo-imei-0001" })).toEqual(
+      {},
+    );
   });
 
   it("falls back when a value has the wrong type", () => {
@@ -60,9 +66,9 @@ describe("route search schemas", () => {
   });
 
   it("drops an unknown alert enum or tab", () => {
-    expect(alertsSearchSchema.parse({ status: "pending", severity: "extreme", tab: "other" })).toEqual(
-      {},
-    );
+    expect(
+      alertsSearchSchema.parse({ status: "pending", severity: "extreme", tab: "other" }),
+    ).toEqual({});
   });
 
   it("falls back to an automatic playback resolution", () => {
@@ -97,16 +103,14 @@ describe("route search schemas", () => {
   });
 
   it("drops repeated and malformed audit values", () => {
-    expect(
-      auditSearchSchema.parse({ q: ["LSD", "trip"], action: 42, entry: ["1", "2"] }),
-    ).toEqual({});
+    expect(auditSearchSchema.parse({ q: ["LSD", "trip"], action: 42, entry: ["1", "2"] })).toEqual(
+      {},
+    );
   });
 
   it("recovers a malformed or repeated login redirect", () => {
     expect(loginSearchSchema.parse({ redirect: "/map" }).redirect).toBe("/map");
-    expect(
-      loginSearchSchema.parse({ redirect: ["/map", "/alerts"] }).redirect,
-    ).toBeUndefined();
+    expect(loginSearchSchema.parse({ redirect: ["/map", "/alerts"] }).redirect).toBeUndefined();
     expect(loginSearchSchema.parse({ redirect: 42 }).redirect).toBeUndefined();
   });
 
@@ -156,9 +160,9 @@ describe("trips route search", () => {
 
 describe("drivers route search", () => {
   it("keeps a valid status, search and selected driver", () => {
-    expect(
-      driversSearchSchema.parse({ status: "inactive", q: "ada", driver: "driver-1" }),
-    ).toEqual({ status: "inactive", q: "ada", driver: "driver-1" });
+    expect(driversSearchSchema.parse({ status: "inactive", q: "ada", driver: "driver-1" })).toEqual(
+      { status: "inactive", q: "ada", driver: "driver-1" },
+    );
   });
 
   it("drops an unknown status and repeated values", () => {

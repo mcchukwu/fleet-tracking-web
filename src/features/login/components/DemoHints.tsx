@@ -19,7 +19,7 @@ export interface DemoHintsProps {
 
 export function DemoHints({ onPrefill, submitRef }: DemoHintsProps) {
   return (
-    <div className="space-y-2 border-t border-border pt-4">
+    <div className="border-border space-y-2 border-t pt-4">
       <p className="label-caps text-muted">Demo accounts</p>
       <div className="flex flex-wrap gap-1">
         {demoAccounts.map((account) => (

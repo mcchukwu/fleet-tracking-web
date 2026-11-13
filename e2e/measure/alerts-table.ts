@@ -68,10 +68,7 @@ interface HarnessSocket {
   send: (message: string) => void;
 }
 
-async function seedAlerts(
-  page: Page,
-  sockets: { current: unknown }[],
-): Promise<void> {
+async function seedAlerts(page: Page, sockets: { current: unknown }[]): Promise<void> {
   await page.evaluate(async (count) => {
     await fetch("/api/v1/__mock/alerts/bulk", {
       method: "POST",
@@ -92,9 +89,7 @@ async function seedAlerts(
   );
   await page.waitForFunction(
     () => {
-      const text =
-        document.querySelector('[data-testid="alerts-page"]')?.textContent ??
-        "";
+      const text = document.querySelector('[data-testid="alerts-page"]')?.textContent ?? "";
       const match = text.match(/(\d+) loaded/);
       return match ? Number(match[1]) >= 200 : false;
     },
@@ -106,29 +101,19 @@ async function seedAlerts(
 
 async function readLayout(page: Page): Promise<Layout> {
   return page.evaluate(() => {
-    const table = document
-      .querySelector<HTMLTableElement>("[data-alert-row]")
-      ?.closest("table");
+    const table = document.querySelector<HTMLTableElement>("[data-alert-row]")?.closest("table");
     if (!table) throw new Error("The alerts table did not render");
     const scroller = table.parentElement;
-    const headerCells = [
-      ...table.querySelectorAll<HTMLTableCellElement>("thead th"),
-    ];
+    const headerCells = [...table.querySelectorAll<HTMLTableCellElement>("thead th")];
     const firstRow = table.querySelector<HTMLTableRowElement>("tbody tr");
-    const rowCells = firstRow
-      ? [...firstRow.querySelectorAll<HTMLTableCellElement>("td")]
-      : [];
+    const rowCells = firstRow ? [...firstRow.querySelectorAll<HTMLTableCellElement>("td")] : [];
 
     function cell(index: number, element: HTMLTableCellElement): CellBox {
       const rect = element.getBoundingClientRect();
       const style = window.getComputedStyle(element);
-      const contentElement = element.querySelector<HTMLElement>(
-        "[data-cell-content]",
-      );
+      const contentElement = element.querySelector<HTMLElement>("[data-cell-content]");
       const content = contentElement?.getBoundingClientRect() ?? rect;
-      const contentStyle = contentElement
-        ? window.getComputedStyle(contentElement)
-        : style;
+      const contentStyle = contentElement ? window.getComputedStyle(contentElement) : style;
       return {
         index,
         text: (element.textContent ?? "").trim(),
@@ -142,9 +127,7 @@ async function readLayout(page: Page): Promise<Layout> {
         paddingLeft: Number.parseFloat(style.paddingLeft),
         paddingRight: Number.parseFloat(style.paddingRight),
         title: element.getAttribute("title") ?? "",
-        hasTooltip:
-          element.hasAttribute("title") ||
-          element.querySelector("[title]") !== null,
+        hasTooltip: element.hasAttribute("title") || element.querySelector("[title]") !== null,
         contentOverflow: contentStyle.overflow,
         contentTextOverflow: contentStyle.textOverflow,
         truncate: contentElement?.dataset.truncate !== "false",
@@ -155,11 +138,7 @@ async function readLayout(page: Page): Promise<Layout> {
       };
     }
 
-    const rows = [
-      ...table.querySelectorAll<HTMLTableRowElement>(
-        'tbody tr[data-row="data"]',
-      ),
-    ];
+    const rows = [...table.querySelectorAll<HTMLTableRowElement>('tbody tr[data-row="data"]')];
     const tableStyle = window.getComputedStyle(table);
     const headerCell = headerCells[0];
     const scrollerRect = scroller?.getBoundingClientRect();
@@ -173,16 +152,12 @@ async function readLayout(page: Page): Promise<Layout> {
       headerTop: headerCell?.getBoundingClientRect().top ?? 0,
       scrollerTop: scrollerRect?.top ?? 0,
       scrollerLeft: scrollerRect?.left ?? 0,
-      headerPosition: headerCell
-        ? window.getComputedStyle(headerCell).position
-        : "",
+      headerPosition: headerCell ? window.getComputedStyle(headerCell).position : "",
       header: headerCells.map((element, index) => cell(index, element)),
       row: rowCells.map((element, index) => cell(index, element)),
       rowHeights: rows.map((row) => row.getBoundingClientRect().height),
       firstColumnPosition: firstRow
-        ? window.getComputedStyle(
-            firstRow.querySelector("td") as HTMLTableCellElement,
-          ).position
+        ? window.getComputedStyle(firstRow.querySelector("td") as HTMLTableCellElement).position
         : "none",
     } satisfies Layout;
   });
@@ -219,28 +194,21 @@ function printTable(label: string, layout: Layout): void {
         (rowCell?.align ?? "").padEnd(6),
         (rowCell?.whiteSpace ?? "").padEnd(8),
         (rowCell?.overflow ?? "").padEnd(9),
-        `${num(rowCell?.paddingLeft ?? 0)}/${num(rowCell?.paddingRight ?? 0)}`.padEnd(
-          11,
-        ),
+        `${num(rowCell?.paddingLeft ?? 0)}/${num(rowCell?.paddingRight ?? 0)}`.padEnd(11),
         (rowCell?.title ? "yes" : "no").padEnd(10),
       ].join(" "),
     );
   }
-  console.log(
-    `row heights: ${[...new Set(layout.rowHeights.map(num))].join(", ")}`,
-  );
+  console.log(`row heights: ${[...new Set(layout.rowHeights.map(num))].join(", ")}`);
 }
 
 function check(label: string, layout: Layout): string[] {
   const failures: string[] = [];
   const eps = 1;
 
-  if (layout.tableLayout !== "fixed")
-    failures.push(`table-layout=${layout.tableLayout}`);
-  if (layout.tableMinWidth < 1)
-    failures.push("table has no explicit min-width");
-  if (layout.header.some((cell) => cell.width < 1))
-    failures.push("header has no column widths");
+  if (layout.tableLayout !== "fixed") failures.push(`table-layout=${layout.tableLayout}`);
+  if (layout.tableMinWidth < 1) failures.push("table has no explicit min-width");
+  if (layout.header.some((cell) => cell.width < 1)) failures.push("header has no column widths");
 
   if (layout.headerPosition !== "sticky") failures.push("header is not sticky");
   if (Math.abs(layout.headerTop - layout.scrollerTop) > eps) {
@@ -259,26 +227,17 @@ function check(label: string, layout: Layout): string[] {
       continue;
     }
     if (Math.abs(headerCell.x - rowCell.x) > eps) {
-      failures.push(
-        `column ${index} x differs by ${num(headerCell.x - rowCell.x)}px`,
-      );
+      failures.push(`column ${index} x differs by ${num(headerCell.x - rowCell.x)}px`);
     }
     if (Math.abs(headerCell.width - rowCell.width) > eps) {
-      failures.push(
-        `column ${index} width differs by ${num(headerCell.width - rowCell.width)}px`,
-      );
+      failures.push(`column ${index} width differs by ${num(headerCell.width - rowCell.width)}px`);
     }
     if (rowCell.whiteSpace !== "nowrap")
       failures.push(`column ${index} white-space=${rowCell.whiteSpace}`);
     if (rowCell.truncate && rowCell.contentTextOverflow !== "ellipsis") {
-      failures.push(
-        `column ${index} text-overflow=${rowCell.contentTextOverflow}`,
-      );
+      failures.push(`column ${index} text-overflow=${rowCell.contentTextOverflow}`);
     }
-    if (
-      !rowCell.truncate &&
-      rowCell.contentScrollWidth > rowCell.contentClientWidth + 1
-    ) {
+    if (!rowCell.truncate && rowCell.contentScrollWidth > rowCell.contentClientWidth + 1) {
       failures.push(
         `column ${index} truncates a value that must stay whole by ${num(rowCell.contentScrollWidth - rowCell.contentClientWidth)}px`,
       );
@@ -286,35 +245,26 @@ function check(label: string, layout: Layout): string[] {
     if (rowCell.paddingLeft < 12 - eps)
       failures.push(`column ${index} left inset ${num(rowCell.paddingLeft)}px`);
     if (rowCell.paddingRight < 12 - eps)
-      failures.push(
-        `column ${index} right inset ${num(rowCell.paddingRight)}px`,
-      );
+      failures.push(`column ${index} right inset ${num(rowCell.paddingRight)}px`);
     if (!rowCell.hasTooltip && rowCell.text !== "")
       failures.push(`column ${index} has no full-value tooltip`);
 
     const rightAligned = rowCell.align === "right";
     const leftAligned = rowCell.align === "left" || rowCell.align === "start";
-    if (!rightAligned && !leftAligned)
-      failures.push(`column ${index} align=${rowCell.align}`);
+    if (!rightAligned && !leftAligned) failures.push(`column ${index} align=${rowCell.align}`);
   }
 
   // Header alignment must equal cell alignment.
   for (const [index, headerCell] of layout.header.entries()) {
     const rowCell = layout.row[index];
     if (rowCell && headerCell.align !== rowCell.align) {
-      failures.push(
-        `column ${index} header align ${headerCell.align} != cell ${rowCell.align}`,
-      );
+      failures.push(`column ${index} header align ${headerCell.align} != cell ${rowCell.align}`);
     }
   }
 
   const distinctHeights = [...new Set(layout.rowHeights.map(num))];
-  if (distinctHeights.length > 1)
-    failures.push(`row heights vary: ${distinctHeights.join(", ")}`);
-  if (
-    distinctHeights.length === 1 &&
-    Math.abs(Number(distinctHeights[0]) - 36) > eps
-  ) {
+  if (distinctHeights.length > 1) failures.push(`row heights vary: ${distinctHeights.join(", ")}`);
+  if (distinctHeights.length === 1 && Math.abs(Number(distinctHeights[0]) - 36) > eps) {
     failures.push(`row height ${distinctHeights[0]}px != 36px`);
   }
 
@@ -325,11 +275,7 @@ function check(label: string, layout: Layout): string[] {
     }
   }
 
-  console.log(
-    failures.length === 0
-      ? `PASS ${label}`
-      : `FAIL ${label}: ${failures.join("; ")}`,
-  );
+  console.log(failures.length === 0 ? `PASS ${label}` : `FAIL ${label}: ${failures.join("; ")}`);
   return failures;
 }
 
@@ -354,9 +300,7 @@ async function scrollAndMeasure(
 async function main(): Promise<void> {
   const browser = await chromium.launch({
     executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH,
-    args: process.env.PLAYWRIGHT_CHROMIUM_PATH
-      ? ["--no-sandbox", "--disable-dev-shm-usage"]
-      : [],
+    args: process.env.PLAYWRIGHT_CHROMIUM_PATH ? ["--no-sandbox", "--disable-dev-shm-usage"] : [],
   });
   const allFailures: string[] = [];
   try {
@@ -377,8 +321,7 @@ async function main(): Promise<void> {
         await seedAlerts(page, sockets);
 
         const label = `${theme} ${viewport.width}x${viewport.height}`;
-        const { before, afterVertical, afterHorizontal } =
-          await scrollAndMeasure(page);
+        const { before, afterVertical, afterHorizontal } = await scrollAndMeasure(page);
         printTable(label, before);
         const failures = check(label, before);
 
@@ -390,9 +333,7 @@ async function main(): Promise<void> {
             continue;
           }
           if (Math.abs(headerCell.x - moved.x) > 1) {
-            failures.push(
-              `column ${index} moved ${num(moved.x - headerCell.x)}px while scrolling`,
-            );
+            failures.push(`column ${index} moved ${num(moved.x - headerCell.x)}px while scrolling`);
           }
           if (Math.abs(headerCell.width - moved.width) > 1) {
             failures.push(
@@ -409,10 +350,7 @@ async function main(): Promise<void> {
               `column ${index} resized ${num(moved.width - headerCell.width)}px while scrolling horizontally`,
             );
           }
-          if (
-            index === 0 &&
-            Math.abs(moved.x - afterHorizontal.scrollerLeft) > 1
-          ) {
+          if (index === 0 && Math.abs(moved.x - afterHorizontal.scrollerLeft) > 1) {
             failures.push("first column did not stay at the scrollport edge");
           }
         }
@@ -432,8 +370,7 @@ async function main(): Promise<void> {
         }
 
         if (failures.length) {
-          for (const failure of failures)
-            allFailures.push(`${label}: ${failure}`);
+          for (const failure of failures) allFailures.push(`${label}: ${failure}`);
         }
         await context.close();
       }

@@ -31,29 +31,22 @@ async function openDrawer(page: Page): Promise<void> {
     .getByRole("button", { name: /Open driver Adebayo Okafor/ })
     .first()
     .click();
-  await expect(
-    page.getByRole("complementary", { name: "Driver details" }),
-  ).toBeVisible();
+  await expect(page.getByRole("complementary", { name: "Driver details" })).toBeVisible();
 }
 
 test.describe("drivers layout", { tag: "@theme" }, () => {
   test("keeps one fixed column geometry and 36px rows", async ({ page }) => {
     await gotoDrivers(page);
-    await expect(
-      page.getByRole("columnheader", { name: "Name" }),
-    ).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Name" })).toBeVisible();
     await page.locator('[data-row="data"]').first().waitFor();
 
     await expectStableColumns(page.locator("[data-data-table]").first());
     const rows = await page
       .locator('[data-row="data"]')
       .evaluateAll((elements) =>
-        elements.map((element) =>
-          Math.round(element.getBoundingClientRect().height),
-        ),
+        elements.map((element) => Math.round(element.getBoundingClientRect().height)),
       );
-    for (const height of rows)
-      expect(Math.abs(height - 36)).toBeLessThanOrEqual(1);
+    for (const height of rows) expect(Math.abs(height - 36)).toBeLessThanOrEqual(1);
 
     await expectNoHorizontalScroll(page);
     await expectTabularNums(
@@ -64,9 +57,7 @@ test.describe("drivers layout", { tag: "@theme" }, () => {
     await captureForReview(page, "07-drivers-layout-list");
   });
 
-  test("the table is the only horizontal scroller on a narrow viewport", async ({
-    page,
-  }) => {
+  test("the table is the only horizontal scroller on a narrow viewport", async ({ page }) => {
     test.skip(!isMobile(page), "mobile-only layout");
     await gotoDrivers(page);
     const table = page.locator("[data-data-table-scroll]").first();
@@ -95,9 +86,7 @@ test.describe("drivers layout", { tag: "@theme" }, () => {
     await captureForReview(page, "07-drivers-layout-360");
   });
 
-  test("the drawer, create, edit and deactivate states are axe clean", async ({
-    page,
-  }) => {
+  test("the drawer, create, edit and deactivate states are axe clean", async ({ page }) => {
     await gotoDrivers(page);
 
     await page.getByRole("button", { name: "Create driver" }).click();
@@ -149,9 +138,7 @@ test.describe("drivers layout", { tag: "@theme" }, () => {
 
     await clearPersistedCache(page);
     await gotoDrivers(page, "fault=drivers%3Aserver");
-    await expect(
-      page.getByText("Something went wrong on our side").first(),
-    ).toBeVisible({
+    await expect(page.getByText("Something went wrong on our side").first()).toBeVisible({
       timeout: 15_000,
     });
     await expectNoAxeViolations(page);
@@ -159,16 +146,12 @@ test.describe("drivers layout", { tag: "@theme" }, () => {
     await captureForReview(page, "07-drivers-layout-error");
 
     await gotoDrivers(page, "fault=drivers%3Aforbidden");
-    await expect(
-      page.getByText("You don't have access to this."),
-    ).toBeVisible();
+    await expect(page.getByText("You don't have access to this.")).toBeVisible();
     await expectNoAxeViolations(page);
     await captureForReview(page, "07-drivers-layout-forbidden");
 
     await gotoDrivers(page, "fault=drivers%3Acontract");
-    await expect(
-      page.getByText("Unexpected response from the server").first(),
-    ).toBeVisible({
+    await expect(page.getByText("Unexpected response from the server").first()).toBeVisible({
       timeout: 15_000,
     });
     await expectNoAxeViolations(page);
@@ -182,9 +165,7 @@ test.describe("drivers layout", { tag: "@theme" }, () => {
     await gotoDrivers(page);
     await expect(page.getByTestId("drivers-page")).toContainText("26 drivers");
     await context.setOffline(true);
-    await expect(
-      page.getByText("You're offline", { exact: false }).first(),
-    ).toBeVisible();
+    await expect(page.getByText("You're offline", { exact: false }).first()).toBeVisible();
     await expect(page.getByText(/Stale ·/)).toBeVisible();
     await expectNoAxeViolations(page);
     await captureForReview(page, "07-drivers-layout-offline");

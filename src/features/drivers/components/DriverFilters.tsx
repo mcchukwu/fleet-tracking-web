@@ -1,5 +1,10 @@
 import { RotateCcw } from "lucide-react";
-import { driverStatusLabels, driverStatusOptions, isDriverStatus, type DriverStatus } from "../../../lib/drivers";
+import {
+  driverStatusLabels,
+  driverStatusOptions,
+  isDriverStatus,
+  type DriverStatus,
+} from "../../../lib/drivers";
 import { Button } from "../../../ui/Button";
 import { SearchInput } from "../../../ui/SearchInput";
 import { Select } from "../../../ui/Select";

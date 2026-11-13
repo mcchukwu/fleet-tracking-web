@@ -12,11 +12,7 @@ import { useAuthStore } from "../../../auth/store";
 import { errorCopy } from "../../../errors/catalog";
 import { ErrorBoundary } from "../../../errors/ErrorBoundary";
 import { normalize } from "../../../errors/normalize";
-import {
-  formatAgeSeconds,
-  formatClockTime,
-  formatNumber,
-} from "../../../lib/format";
+import { formatAgeSeconds, formatClockTime, formatNumber } from "../../../lib/format";
 import { STALE_AFTER_MS } from "../../../lib/status";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useMediaQuery } from "../../../lib/useMediaQuery";
@@ -37,11 +33,7 @@ import { useMapShortcuts } from "../hooks/useMapShortcuts";
 import { useMapStyle } from "../hooks/useMapStyle";
 import { useCanMutate } from "../../../auth/useCanMutate";
 import { openAlertCountLabel } from "../../../lib/alerts";
-import {
-  MAP_ROW_HEIGHT,
-  MAP_ROW_HEIGHT_TOUCH,
-  SOCKET_STALE_GRACE_MS,
-} from "../lib/constants";
+import { MAP_ROW_HEIGHT, MAP_ROW_HEIGHT_TOUCH, SOCKET_STALE_GRACE_MS } from "../lib/constants";
 import {
   filterRows,
   filterSignature,
@@ -70,9 +62,7 @@ export function MapPage() {
   const queryClient = useQueryClient();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const isXl = useMediaQuery("(min-width: 1280px)");
-  const authenticated = useAuthStore(
-    (state) => state.status === "authenticated",
-  );
+  const authenticated = useAuthStore((state) => state.status === "authenticated");
   const mutate = useCanMutate("mutate");
   const canMutate = mutate.allowed;
   const snapshotQuery = useLiveSnapshot(authenticated);
@@ -94,25 +84,17 @@ export function MapPage() {
   const { toast } = useToast();
 
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
-  const [hoverPoint, setHoverPoint] = useState<{ x: number; y: number } | null>(
-    null,
-  );
+  const [hoverPoint, setHoverPoint] = useState<{ x: number; y: number } | null>(null);
   const [loadingCancelled, setLoadingCancelled] = useState(false);
   const [viewport, setViewport] = useState<Viewport | null>(null);
   const bounds = viewport?.bounds ?? null;
   const [listSnap, setListSnap] = useState<SheetSnap>("peek");
   const [detailSnap, setDetailSnap] = useState<SheetSnap>("half");
   const [sheetObscured, setSheetObscured] = useState(false);
-  const [mapStyleState, setMapStyleState] = useState<MapStyleState | null>(
-    null,
-  );
-  const [mapOfflineAvailable, setMapOfflineAvailable] = useState(() =>
-    mapOfflineHint(),
-  );
+  const [mapStyleState, setMapStyleState] = useState<MapStyleState | null>(null);
+  const [mapOfflineAvailable, setMapOfflineAvailable] = useState(() => mapOfflineHint());
   const [mapReady, setMapReady] = useState(false);
-  const [styleAttribution, setStyleAttribution] = useState<
-    readonly string[] | null
-  >(null);
+  const [styleAttribution, setStyleAttribution] = useState<readonly string[] | null>(null);
   const [writeVehicle, setWriteVehicle] = useState<Vehicle | null>(null);
   const [writeMode, setWriteMode] = useState<"edit" | "assign" | null>(null);
   const adapterRef = useRef<MapAdapter | null>(null);
@@ -150,19 +132,16 @@ export function MapPage() {
 
   const depots = useMemo(
     () =>
-      [
-        ...new Set(
-          data.rows.map((row) => row.depot).filter((depot) => depot !== ""),
-        ),
-      ].sort((a, b) => a.localeCompare(b, "en")),
+      [...new Set(data.rows.map((row) => row.depot).filter((depot) => depot !== ""))].sort((a, b) =>
+        a.localeCompare(b, "en"),
+      ),
     [data.rows],
   );
 
   const selectedId = search.v ?? null;
   const selectedRow = data.rows.find((row) => row.id === selectedId) ?? null;
   const selectedKey = selectedRow?.key ?? null;
-  const snapshotVehicle =
-    snapshotQuery.data?.find((vehicle) => vehicle.id === selectedId) ?? null;
+  const snapshotVehicle = snapshotQuery.data?.find((vehicle) => vehicle.id === selectedId) ?? null;
   const hoveredRow = data.rows.find((row) => row.key === hoveredKey) ?? null;
   const drawerOpen = selectedId !== null;
   const panelVisible = preferences.panelOpen && (!drawerOpen || isXl);
@@ -173,20 +152,14 @@ export function MapPage() {
   const listOnly = offline && !mapOfflineAvailable;
   // Offline is a state, not an error: keep the cached map and rows and let the
   // banner and stale treatment explain why nothing is refreshing.
-  const snapshotError =
-    !offline && snapshotQuery.error ? normalize(snapshotQuery.error) : null;
+  const snapshotError = !offline && snapshotQuery.error ? normalize(snapshotQuery.error) : null;
   const geofenceError = useMemo(
-    () =>
-      !offline && geofencesFailed && geofencesCause
-        ? normalize(geofencesCause)
-        : null,
+    () => (!offline && geofencesFailed && geofencesCause ? normalize(geofencesCause) : null),
     [offline, geofencesFailed, geofencesCause],
   );
-  const alertsError =
-    !offline && alertsQuery.error ? normalize(alertsQuery.error) : null;
+  const alertsError = !offline && alertsQuery.error ? normalize(alertsQuery.error) : null;
   const hasData = data.total > 0;
-  const loadingCancelledActive =
-    loadingCancelled && !snapshotQuery.isFetching && !hasData;
+  const loadingCancelledActive = loadingCancelled && !snapshotQuery.isFetching && !hasData;
   const snapshotPending = snapshotQuery.isLoading && !loadingCancelledActive;
   const snapshotUnavailable = snapshotError !== null && !hasData;
 
@@ -267,11 +240,9 @@ export function MapPage() {
     (patch: Partial<MapFilterValues>) => {
       const next: Record<string, string | number | undefined> = {};
       if ("q" in patch) next.q = patch.q?.trim() || undefined;
-      if ("statuses" in patch)
-        next.status = serializeStatuses(patch.statuses ?? []);
+      if ("statuses" in patch) next.status = serializeStatuses(patch.statuses ?? []);
       if ("depot" in patch) next.depot = patch.depot ?? undefined;
-      if ("sort" in patch)
-        next.sort = patch.sort === "plate" ? undefined : patch.sort;
+      if ("sort" in patch) next.sort = patch.sort === "plate" ? undefined : patch.sort;
       if ("onlyInView" in patch) next.view = patch.onlyInView ? 1 : undefined;
       updateSearch(next);
     },
@@ -294,9 +265,7 @@ export function MapPage() {
         const rowButton =
           key === null
             ? null
-            : document.querySelector<HTMLElement>(
-                `[data-vehicle-key="${CSS.escape(key)}"] button`,
-              );
+            : document.querySelector<HTMLElement>(`[data-vehicle-key="${CSS.escape(key)}"] button`);
         if (rowButton) {
           rowButton.focus();
           return;
@@ -306,9 +275,7 @@ export function MapPage() {
           sheetHandleRef.current?.focus();
           return;
         }
-        const search = document.querySelector<HTMLElement>(
-          'input[name="vehicle-search"]',
-        );
+        const search = document.querySelector<HTMLElement>('input[name="vehicle-search"]');
         (search ?? mapRootRef.current)?.focus();
       });
     },
@@ -333,13 +300,9 @@ export function MapPage() {
           ? { lat: selectedRow.lat, lon: selectedRow.lon }
           : null);
       if (!adapter || !target) return;
-      adapter.flyTo(
-        [target.lon, target.lat],
-        Math.max(adapter.getViewport().zoom, 13),
-        {
-          padding,
-        },
-      );
+      adapter.flyTo([target.lon, target.lat], Math.max(adapter.getViewport().zoom, 13), {
+        padding,
+      });
       if (!isDesktop) setDetailSnap("peek");
     },
     [isDesktop, padding, selectedRow],
@@ -379,8 +342,7 @@ export function MapPage() {
       if (!root) return;
       const target = [...root.querySelectorAll<HTMLElement>("button")].find(
         (button) =>
-          button.textContent?.trim() === label ||
-          button.getAttribute("aria-label") === label,
+          button.textContent?.trim() === label || button.getAttribute("aria-label") === label,
       );
       target?.focus();
     });
@@ -413,9 +375,7 @@ export function MapPage() {
   const fitFleet = useCallback(() => {
     const adapter = adapterRef.current;
     if (!adapter) return;
-    const positioned = data.rows.filter(
-      (row) => row.lat !== null && row.lon !== null,
-    );
+    const positioned = data.rows.filter((row) => row.lat !== null && row.lon !== null);
     const lats = positioned
       .map((row) => row.lat)
       .filter((value): value is number => value !== null);
@@ -448,9 +408,7 @@ export function MapPage() {
   const handleAdapterReady = useCallback((adapter: MapAdapter | null) => {
     adapterRef.current = adapter;
     setMapReady(adapter !== null);
-    setMapOfflineAvailable((current) =>
-      adapter ? adapter.capabilities.offline : current,
-    );
+    setMapOfflineAvailable((current) => (adapter ? adapter.capabilities.offline : current));
     if (import.meta.env.DEV && import.meta.env.VITE_MOCK === "1") {
       window.__FLEET_TEST_MAP__ = adapter;
     }
@@ -486,10 +444,7 @@ export function MapPage() {
 
   const zoomIn = useCallback(() => adapterRef.current?.zoomIn(), []);
   const zoomOut = useCallback(() => adapterRef.current?.zoomOut(), []);
-  const resetBearing = useCallback(
-    () => adapterRef.current?.resetBearing(),
-    [],
-  );
+  const resetBearing = useCallback(() => adapterRef.current?.resetBearing(), []);
 
   const closePanel = useCallback(() => {
     preferences.setPanelOpen(false);
@@ -513,8 +468,7 @@ export function MapPage() {
   }, []);
 
   useEffect(() => {
-    if (fittedOnce.current || !adapterRef.current || data.positioned === 0)
-      return;
+    if (fittedOnce.current || !adapterRef.current || data.positioned === 0) return;
     fittedOnce.current = true;
     fitFleet();
   }, [data.positioned, fitFleet]);
@@ -579,16 +533,12 @@ export function MapPage() {
     {
       label: "Active trips",
       value: snapshotUnavailable ? "—" : formatNumber(data.activeTrips),
-      onClick: () =>
-        void navigate({ to: "/trips", search: { status: "active" } }),
+      onClick: () => void navigate({ to: "/trips", search: { status: "active" } }),
     },
     {
       label: "Open alerts",
-      value: alertsError
-        ? "—"
-        : openAlertCountLabel(openAlertCount, OPEN_ALERT_LIMIT),
-      onClick: () =>
-        void navigate({ to: "/alerts", search: { status: "open" } }),
+      value: alertsError ? "—" : openAlertCountLabel(openAlertCount, OPEN_ALERT_LIMIT),
+      onClick: () => void navigate({ to: "/alerts", search: { status: "open" } }),
       ...(alertsError
         ? {
             error: true,
@@ -603,9 +553,7 @@ export function MapPage() {
         snapshotUnavailable || freshness.ageSeconds === null
           ? "—"
           : formatAgeSeconds(freshness.ageSeconds),
-      ...(lastDataAt && !snapshotUnavailable
-        ? { hint: formatClockTime(lastDataAt) }
-        : {}),
+      ...(lastDataAt && !snapshotUnavailable ? { hint: formatClockTime(lastDataAt) } : {}),
       onClick: retrySnapshot,
     },
   ];
@@ -640,9 +588,7 @@ export function MapPage() {
   const kpiHidden = !isDesktop && sheetSnap === "full";
   const activeStyle = mapStyleState?.style ?? "standard";
   const loadingStyle =
-    mapStyleState?.status === "loading"
-      ? (mapStyleState.targetStyle ?? null)
-      : null;
+    mapStyleState?.status === "loading" ? (mapStyleState.targetStyle ?? null) : null;
   const hostedActive = isHostedMapStyle(activeStyle);
   const controlsProps = {
     bearing: viewport?.bearing ?? 0,
@@ -653,9 +599,7 @@ export function MapPage() {
     styleLoading: loadingStyle,
     panelOpen: panelVisible,
     panelToggleReason:
-      drawerOpen && !isXl
-        ? "Close the vehicle drawer to show the list."
-        : undefined,
+      drawerOpen && !isXl ? "Close the vehicle drawer to show the list." : undefined,
     geofencesVisible: preferences.geofencesVisible,
     fitDisabled: data.positioned === 0,
     panelToggleRef,
@@ -717,28 +661,17 @@ export function MapPage() {
           >
             <div className="pointer-events-auto w-full max-w-md">
               <ErrorBoundary level="panel">
-                <KpiStrip
-                  cells={kpiCells}
-                  compact={!isDesktop}
-                  loading={snapshotPending}
-                />
+                <KpiStrip cells={kpiCells} compact={!isDesktop} loading={snapshotPending} />
               </ErrorBoundary>
             </div>
           </div>
         )}
 
         {listOnly ? (
-          <div
-            data-testid="map-list-only"
-            className="z-panel absolute inset-3 flex flex-col gap-2"
-          >
+          <div data-testid="map-list-only" className="z-panel absolute inset-3 flex flex-col gap-2">
             <div data-testid="map-kpi" className="shrink-0">
               <ErrorBoundary level="panel">
-                <KpiStrip
-                  cells={kpiCells}
-                  compact={!isDesktop}
-                  loading={snapshotPending}
-                />
+                <KpiStrip cells={kpiCells} compact={!isDesktop} loading={snapshotPending} />
               </ErrorBoundary>
             </div>
             <Banner tone="neutral" message={pwaCopy.mapOfflineTitle} />
@@ -799,9 +732,7 @@ export function MapPage() {
                 onSnap={setDetailSnap}
                 mapReady={viewport !== null && !listOnly}
                 canMutate={canMutate}
-                mutateReason={
-                  mutate.blockedBy === "role" ? null : mutate.reason
-                }
+                mutateReason={mutate.blockedBy === "role" ? null : mutate.reason}
                 offline={offline}
                 onClose={closeDetailSheet}
                 onCentre={centreSelected}
@@ -849,10 +780,7 @@ export function MapPage() {
             className={cn(
               "map-bottom-anchor z-map-controls pointer-events-none absolute right-3 left-3 flex flex-col items-end gap-2",
               isDesktop
-                ? cn(
-                    "map-inset-right",
-                    preferences.panelOpen ? "lg:left-93" : "lg:left-3",
-                  )
+                ? cn("map-inset-right", preferences.panelOpen ? "lg:left-93" : "lg:left-3")
                 : "map-inset-bottom",
             )}
           >
@@ -907,9 +835,7 @@ export function MapPage() {
             className="z-map h-sheet-strip focus-visible:outline-focus-ring absolute inset-x-0 top-0 w-full focus-visible:outline-2 focus-visible:outline-offset-0"
           >
             <span className="sr-only">
-              {drawerOpen
-                ? "Collapse the vehicle details"
-                : "Collapse the vehicle list"}
+              {drawerOpen ? "Collapse the vehicle details" : "Collapse the vehicle list"}
             </span>
           </button>
         ) : null}

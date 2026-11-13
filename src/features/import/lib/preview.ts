@@ -2,11 +2,7 @@ import Papa from "papaparse";
 import { IMPORT_HEADERS, PREVIEW_ROW_LIMIT } from "./constants";
 
 export type PreviewIssue =
-  | "wrong-type"
-  | "empty-file"
-  | "no-data-rows"
-  | "missing-imei"
-  | "unreadable";
+  "wrong-type" | "empty-file" | "no-data-rows" | "missing-imei" | "unreadable";
 
 export interface ImportPreview {
   headers: string[];
@@ -18,8 +14,7 @@ export interface ImportPreview {
 }
 
 export type PreviewParseResult =
-  | { status: "ready"; preview: ImportPreview }
-  | { status: "error"; issue: PreviewIssue };
+  { status: "ready"; preview: ImportPreview } | { status: "error"; issue: PreviewIssue };
 
 const knownHeaders: ReadonlySet<string> = new Set(IMPORT_HEADERS);
 const previewConfig = {
@@ -40,9 +35,7 @@ function normaliseHeader(value: string): string {
 }
 
 export function stripBom(text: string): { text: string; bom: boolean } {
-  return text.startsWith("\uFEFF")
-    ? { text: text.slice(1), bom: true }
-    : { text, bom: false };
+  return text.startsWith("\uFEFF") ? { text: text.slice(1), bom: true } : { text, bom: false };
 }
 
 export function parseImportCsvText(text: string): {
@@ -82,9 +75,7 @@ export function buildImportPreview(
   const duplicateHeaders = [...seen.entries()]
     .filter(([, count]) => count > 1)
     .map(([value]) => value);
-  const unknownHeaders = headers.filter(
-    (value) => value !== "" && !knownHeaders.has(value),
-  );
+  const unknownHeaders = headers.filter((value) => value !== "" && !knownHeaders.has(value));
 
   const previewRows: string[][] = [];
   for (const row of dataRows) {

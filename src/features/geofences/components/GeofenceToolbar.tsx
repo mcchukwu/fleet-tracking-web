@@ -11,12 +11,7 @@ export interface GeofenceToolbarProps {
   onDelete: () => void;
 }
 
-export function GeofenceToolbar({
-  selected,
-  mutate,
-  onEdit,
-  onDelete,
-}: GeofenceToolbarProps) {
+export function GeofenceToolbar({ selected, mutate, onEdit, onDelete }: GeofenceToolbarProps) {
   const reason =
     mutate.blockedBy === "role"
       ? "Your role can't change geofences."

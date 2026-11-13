@@ -188,10 +188,14 @@ describe("LoginForm", () => {
       fireEvent.click(credentials().submit);
     });
 
-    await act(async () => { vi.advanceTimersByTime(3_100); });
+    await act(async () => {
+      vi.advanceTimersByTime(3_100);
+    });
     expect(screen.getByText("Still working…")).toBeVisible();
 
-    await act(async () => { vi.advanceTimersByTime(7_000); });
+    await act(async () => {
+      vi.advanceTimersByTime(7_000);
+    });
     expect(screen.getByText("Taking longer than usual")).toBeVisible();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Retry" })).toBeVisible();

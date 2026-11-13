@@ -232,9 +232,7 @@ describe("MapPage", () => {
   it("returns focus to the panel toggle after closing the panel", async () => {
     renderPage();
 
-    await userEvent.click(
-      screen.getAllByRole("button", { name: "Hide the vehicle panel" })[0]!,
-    );
+    await userEvent.click(screen.getAllByRole("button", { name: "Hide the vehicle panel" })[0]!);
 
     const toggle = await screen.findByRole("button", { name: "Show the vehicle panel" });
     await waitFor(() => expect(document.activeElement).toBe(toggle));
@@ -245,9 +243,7 @@ describe("MapPage", () => {
     const strip = container.querySelector(".pointer-events-none.absolute");
     expect(strip).toHaveClass("lg:left-93");
 
-    await userEvent.click(
-      screen.getAllByRole("button", { name: "Hide the vehicle panel" })[0]!,
-    );
+    await userEvent.click(screen.getAllByRole("button", { name: "Hide the vehicle panel" })[0]!);
 
     await waitFor(() => expect(strip).toHaveClass("lg:left-3"));
   });
@@ -292,9 +288,7 @@ describe("MapPage", () => {
     mocks.search = { v: "uuid-1" };
     renderPage();
 
-    expect(
-      screen.getByRole("region", { name: "Vehicle details for AAA-100" }),
-    ).toBeVisible();
+    expect(screen.getByRole("region", { name: "Vehicle details for AAA-100" })).toBeVisible();
     expect(screen.queryByRole("button", { name: /Showing 3 of 3/ })).not.toBeInTheDocument();
   });
 
@@ -406,7 +400,9 @@ describe("MapPage", () => {
       "href",
       "https://www.maptiler.com",
     );
-    expect(screen.queryByRole("link", { name: /OpenStreetMap · OpenFreeMap/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /OpenStreetMap · OpenFreeMap/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("hides the compact KPI when the sheet is full", async () => {
@@ -428,9 +424,7 @@ describe("MapPage", () => {
     handle.focus();
     await userEvent.keyboard("{End}");
 
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Collapse the vehicle list" }),
-    );
+    await userEvent.click(await screen.findByRole("button", { name: "Collapse the vehicle list" }));
 
     await waitFor(() => expect(document.activeElement).toBe(handle));
   });

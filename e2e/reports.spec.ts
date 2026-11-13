@@ -44,16 +44,13 @@ function isSummaryRequest(url: string): boolean {
 }
 
 async function nextSummaryRequest(page: Page): Promise<URL> {
-  const request = await page.waitForRequest((candidate) =>
-    isSummaryRequest(candidate.url()),
-  );
+  const request = await page.waitForRequest((candidate) => isSummaryRequest(candidate.url()));
   return new URL(request.url());
 }
 
 function requestedDuration(url: URL): number {
   return (
-    Date.parse(url.searchParams.get("to") ?? "") -
-    Date.parse(url.searchParams.get("from") ?? "")
+    Date.parse(url.searchParams.get("to") ?? "") - Date.parse(url.searchParams.get("from") ?? "")
   );
 }
 
@@ -64,9 +61,7 @@ test.describe("reports", () => {
     await expect(page.getByRole("heading", { name: "Reports", level: 1 })).toBeVisible({
       timeout: 15_000,
     });
-    await expect
-      .poll(() => searchParam(page, "from"))
-      .toMatch(/^\d{4}-\d{2}-\d{2}T.*Z$/);
+    await expect.poll(() => searchParam(page, "from")).toMatch(/^\d{4}-\d{2}-\d{2}T.*Z$/);
     expect(await rangeDuration(page)).toBe(7 * DAY);
     await expect(page.getByRole("button", { name: "Range, 7 days" })).toBeVisible();
 
@@ -103,9 +98,7 @@ test.describe("reports", () => {
       .getByRole("link", { name: "Reports" })
       .click();
 
-    await expect
-      .poll(() => searchParam(page, "from"))
-      .toMatch(/^\d{4}-\d{2}-\d{2}T.*Z$/);
+    await expect.poll(() => searchParam(page, "from")).toMatch(/^\d{4}-\d{2}-\d{2}T.*Z$/);
     expect(await rangeDuration(page)).toBe(7 * DAY);
     const requested = await summary;
     expect(requested.searchParams.get("from")).toBe(searchParam(page, "from"));
@@ -146,9 +139,7 @@ test.describe("reports", () => {
       const summary = nextSummaryRequest(page);
       await dialog.getByRole("button", { name: "Apply" }).click();
 
-      await expect
-        .poll(() => searchParam(page, "from"))
-        .toBe("2026-11-01T08:00:00.000Z");
+      await expect.poll(() => searchParam(page, "from")).toBe("2026-11-01T08:00:00.000Z");
       expect(searchParam(page, "to")).toBe("2026-11-02T09:00:00.000Z");
       const requested = await summary;
       expect(requested.searchParams.get("from")).toBe("2026-11-01T08:00:00.000Z");
@@ -157,9 +148,7 @@ test.describe("reports", () => {
       await expect(page.getByTestId("reports-stats")).toBeVisible();
 
       await page.reload();
-      await expect
-        .poll(() => searchParam(page, "from"))
-        .toBe("2026-11-01T08:00:00.000Z");
+      await expect.poll(() => searchParam(page, "from")).toBe("2026-11-01T08:00:00.000Z");
       await expect(page.getByTestId("reports-stats")).toBeVisible({ timeout: 15_000 });
     });
   });
@@ -215,16 +204,12 @@ test.describe("reports", () => {
     await gotoReports(page, rangeUrl());
     const strip = page.getByTestId("reports-stats");
     await expect(strip.getByText("0.0 km")).toBeVisible();
-    await expect(
-      strip.locator('[data-stat-id="completedTrips"]').getByText("—"),
-    ).toBeVisible();
+    await expect(strip.locator('[data-stat-id="completedTrips"]').getByText("—")).toBeVisible();
     await expect(page.getByText("No alerts in this range")).toBeVisible();
     await expect(page.getByText(/Can't reach the server/)).toHaveCount(0);
   });
 
-  test("the large fixture formats counts, sorts bars and drops zero rows", async ({
-    page,
-  }) => {
+  test("the large fixture formats counts, sorts bars and drops zero rows", async ({ page }) => {
     await setScenario(page, "large");
     await gotoReports(page, rangeUrl());
 
@@ -233,20 +218,12 @@ test.describe("reports", () => {
     await expect(strip.getByText("1.3M km")).toBeVisible();
 
     const labels = page.getByTestId("chart-label");
-    await expect(labels).toHaveText([
-      "Speeding",
-      "Geofence exit",
-      "Unknown type: solar_flare",
-    ]);
-    await expect(page.getByRole("img", { name: /Alerts by type/ })).toContainText(
-      "30,120",
-    );
+    await expect(labels).toHaveText(["Speeding", "Geofence exit", "Unknown type: solar_flare"]);
+    await expect(page.getByRole("img", { name: /Alerts by type/ })).toContainText("30,120");
     await expectNoHorizontalScroll(page);
   });
 
-  test("the chart has an accessible description and a matching data table", async ({
-    page,
-  }) => {
+  test("the chart has an accessible description and a matching data table", async ({ page }) => {
     await gotoReports(page, rangeUrl());
     await expect(page.getByRole("img", { name: /Alerts by type/ })).toHaveAccessibleDescription(
       "Alerts by type: Geofence exit 31, Geofence entry 28, Route deviation 7.",

@@ -57,9 +57,7 @@ export function ImportExpectedHeaders({
           </CopyButton>
           <Button
             size="sm"
-            leadingIcon={
-              <Download aria-hidden="true" className="size-3" strokeWidth={1.5} />
-            }
+            leadingIcon={<Download aria-hidden="true" className="size-3" strokeWidth={1.5} />}
             onClick={onDownloadSample}
             disabledReason={disabledReason}
           >
@@ -71,7 +69,7 @@ export function ImportExpectedHeaders({
         data-testid="import-header-row"
         tabIndex={0}
         aria-label="Expected column names"
-        className="border-border bg-surface-2 text-muted block min-h-touch overflow-x-auto rounded-md border px-3 py-2 font-mono text-xs whitespace-nowrap md:min-h-0"
+        className="border-border bg-surface-2 text-muted min-h-touch block overflow-x-auto rounded-md border px-3 py-2 font-mono text-xs whitespace-nowrap md:min-h-0"
       >
         {header}
       </code>

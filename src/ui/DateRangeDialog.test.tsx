@@ -5,13 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { DateRangeDialog } from "./DateRangeDialog";
 import { validateDatetimeRange } from "../lib/datetime";
 
-function localIso(
-  y: number,
-  m: number,
-  d: number,
-  h: number,
-  min: number,
-): string {
+function localIso(y: number, m: number, d: number, h: number, min: number): string {
   return new Date(y, m - 1, d, h, min).toISOString();
 }
 
@@ -60,9 +54,7 @@ describe("DateRangeDialog", () => {
       target: { value: "2026-11-08T11:00" },
     });
     await userEvent.click(screen.getByRole("button", { name: "Apply" }));
-    expect(
-      screen.getAllByText("The end time must be after the start time.")[0],
-    ).toBeVisible();
+    expect(screen.getAllByText("The end time must be after the start time.")[0]).toBeVisible();
     const start = screen.getByLabelText("Start");
     const end = screen.getByLabelText("End");
     expect(start).toHaveAttribute("aria-invalid", "true");
@@ -122,9 +114,7 @@ describe("DateRangeDialog", () => {
       target: { value: "2026-11-09T00:00" },
     });
     await userEvent.click(screen.getByRole("button", { name: "Apply" }));
-    expect(
-      screen.getAllByText("Choose a range of 7 days or less.")[0],
-    ).toBeVisible();
+    expect(screen.getAllByText("Choose a range of 7 days or less.")[0]).toBeVisible();
   });
 
   it("returns focus to the opener when cancelled", async () => {
@@ -188,13 +178,8 @@ describe("DateRangeDialog", () => {
     const end = screen.getByLabelText("End");
     fireEvent.change(end, { target: { value: "2026-11-08T11:00" } });
     fireEvent.blur(end);
-    expect(
-      screen.getAllByText("The end time must be after the start time.")[0],
-    ).toBeVisible();
-    expect(screen.getByLabelText("Start")).toHaveAttribute(
-      "aria-invalid",
-      "true",
-    );
+    expect(screen.getAllByText("The end time must be after the start time.")[0]).toBeVisible();
+    expect(screen.getByLabelText("Start")).toHaveAttribute("aria-invalid", "true");
     expect(end).toHaveAttribute("aria-invalid", "true");
   });
 
@@ -211,8 +196,6 @@ describe("DateRangeDialog", () => {
       />,
     );
     expect(screen.getByRole("dialog", { name: "Report range" })).toBeVisible();
-    expect(
-      screen.getByText("Times are local; the request uses UTC."),
-    ).toBeVisible();
+    expect(screen.getByText("Times are local; the request uses UTC.")).toBeVisible();
   });
 });

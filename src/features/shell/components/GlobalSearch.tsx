@@ -38,7 +38,7 @@ export function GlobalSearch({
       </label>
       <Search
         aria-hidden="true"
-        className="pointer-events-none absolute left-3 size-4 text-subtle"
+        className="text-subtle pointer-events-none absolute left-3 size-4"
         strokeWidth={1.5}
       />
       <input
@@ -55,7 +55,7 @@ export function GlobalSearch({
             setValue("");
           }
         }}
-        className="h-touch w-full rounded-md border border-border-strong bg-surface pl-8 pr-12 text-sm text-text transition-colors duration-100 placeholder:text-subtle focus-visible:border-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus-ring/30 md:h-control-md md:pr-8"
+        className="h-touch border-border-strong bg-surface text-text placeholder:text-subtle focus-visible:border-accent focus-visible:ring-focus-ring/30 md:h-control-md w-full rounded-md border pr-12 pl-8 text-sm transition-colors duration-100 focus-visible:ring-1 focus-visible:outline-none focus-visible:ring-inset md:pr-8"
       />
       {value ? (
         <IconButton
@@ -69,7 +69,7 @@ export function GlobalSearch({
           icon={<X aria-hidden="true" className="size-icon-sm" strokeWidth={1.5} />}
         />
       ) : (
-        <kbd className="pointer-events-none absolute right-3 rounded-sm border border-border bg-surface-2 px-1 font-mono text-xs text-muted">
+        <kbd className="border-border bg-surface-2 text-muted pointer-events-none absolute right-3 rounded-sm border px-1 font-mono text-xs">
           /
         </kbd>
       )}

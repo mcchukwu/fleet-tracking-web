@@ -58,10 +58,9 @@ describe("KpiStrip", () => {
     expect(container.firstElementChild).toHaveAttribute("aria-busy", "true");
     expect(container.querySelectorAll(".animate-pulse-soft")).toHaveLength(0);
 
-    await waitFor(
-      () => expect(container.querySelectorAll(".animate-pulse-soft")).toHaveLength(4),
-      { timeout: 1_000 },
-    );
+    await waitFor(() => expect(container.querySelectorAll(".animate-pulse-soft")).toHaveLength(4), {
+      timeout: 1_000,
+    });
   });
 
   it("renders a compact grid without borders between cells", () => {

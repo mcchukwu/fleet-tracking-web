@@ -38,11 +38,7 @@ export function nearestPoint(
     if (Number.isNaN(at)) continue;
     const distance = Math.abs(at - target);
     if (distance > windowMs) continue;
-    if (
-      best === null ||
-      distance < best.distance ||
-      (distance === best.distance && at < best.at)
-    ) {
+    if (best === null || distance < best.distance || (distance === best.distance && at < best.at)) {
       best = { point, distance, at };
     }
   }
