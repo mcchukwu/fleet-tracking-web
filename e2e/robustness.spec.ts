@@ -40,7 +40,11 @@ test.describe("robustness", () => {
       await expect(page.locator("[data-page-frame]").first()).toBeVisible({ timeout: 20_000 });
     }
     await page.waitForTimeout(1_000);
+    await expect
+      .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.layerCount ?? 0))
+      .toBeGreaterThan(0);
     const before = await page.evaluate(() => window.__FLEET_DEBUG__?.leaks);
+    const layersBefore = await page.evaluate(() => window.__FLEET_DEBUG__?.map.layerCount ?? -1);
     expect(before).toBeDefined();
 
     for (let round = 0; round < 10; round += 1) {
@@ -50,6 +54,19 @@ test.describe("robustness", () => {
       }
     }
     await page.waitForTimeout(1_000);
+    await expect
+      .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.layerCount ?? 0))
+      .toBeGreaterThan(0);
+    // Route teardown can finish a microtask after the last frame; allow that
+    // settle window before treating a transient subscription as a leak.
+    await expect
+      .poll(
+        async () =>
+          (await page.evaluate(() => window.__FLEET_DEBUG__?.leaks?.listeners ?? 0)) -
+          (before?.listeners ?? 0),
+        { timeout: 5_000, message: "listener growth" },
+      )
+      .toBeLessThanOrEqual(5);
     const after = await page.evaluate(() => window.__FLEET_DEBUG__?.leaks);
     expect(after).toBeDefined();
     if (!before || !after) return;
@@ -57,9 +74,15 @@ test.describe("robustness", () => {
     // Window/document listeners must not accumulate per screen. Timers include
     // TanStack Query's 5-minute gc timers, one per unmounted query, so a bounded
     // growth is expected; a linear listener or socket leak is not.
-    expect(after.listeners - before.listeners, "listener growth").toBeLessThanOrEqual(20);
+    expect(after.listeners - before.listeners, "listener growth").toBeLessThanOrEqual(5);
     expect(after.timers - before.timers, "timer growth").toBeLessThanOrEqual(80);
     expect(after.sockets - before.sockets, "socket growth").toBeLessThanOrEqual(1);
+
+    // Every navigation destroys the map and its layers; returning to the map
+    // must rebuild exactly the layer count the baseline map had.
+    const layersAfter = await page.evaluate(() => window.__FLEET_DEBUG__?.map.layerCount ?? -1);
+    expect(layersBefore, "map layers are installed").toBeGreaterThan(0);
+    expect(layersAfter, "map layer count").toBe(layersBefore);
   });
 
   test("the map never downloads the geofence drawing library", async ({ page }) => {

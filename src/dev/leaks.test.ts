@@ -28,6 +28,14 @@ describe("leak counters", () => {
     expect(readLeakCounts().timers).toBe(0);
   });
 
+  it("stops counting a timeout once it fires", async () => {
+    uninstall = installLeakCounters();
+    window.setTimeout(() => undefined, 0);
+    expect(readLeakCounts().timers).toBe(1);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(readLeakCounts().timers).toBe(0);
+  });
+
   it("restores the original primitives on uninstall", () => {
     const original = window.setTimeout;
     const stop = installLeakCounters();

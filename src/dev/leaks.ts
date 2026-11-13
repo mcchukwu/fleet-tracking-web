@@ -136,7 +136,15 @@ export function installLeakCounters(): () => void {
   window.removeEventListener = trackedWindowRemove;
 
   const trackTimeout = (handler: TimerHandler, timeout?: number, ...args: unknown[]): number => {
-    const id = (originalSetTimeout as (...values: unknown[]) => number)(handler, timeout, ...args);
+    let id = 0;
+    const wrapped =
+      typeof handler === "function"
+        ? (...values: unknown[]) => {
+            timerIds.delete(id);
+            (handler as (...values: unknown[]) => void)(...values);
+          }
+        : handler;
+    id = (originalSetTimeout as (...values: unknown[]) => number)(wrapped, timeout, ...args);
     timerIds.add(id);
     return id;
   };
