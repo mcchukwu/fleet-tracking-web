@@ -33,4 +33,5 @@ if [ -n "$mutate" ]; then echo "GUARD FAIL: mutating capability outside useCanMu
 online=$(rg -n --no-heading --glob '!src/stores/connection.ts' --glob '!**/*.test.*' \
       "navigator\.onLine" "$target" | rg -v 'guard-ignore')
 if [ -n "$online" ]; then echo "GUARD FAIL: navigator.onLine outside the connection store"; echo "$online"; fail=1; fi
+if [ -n "$sdk" ]; then echo "GUARD FAIL: map SDK used outside src/map/providers"; echo "$sdk"; fail=1; fi
 exit $fail

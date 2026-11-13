@@ -122,7 +122,10 @@ describe("LoginForm", () => {
 
     await user.click(credentials().submit);
 
-    const summary = await screen.findByRole("alert");
+    const summary = (await screen.findByText("Check the highlighted fields.")).closest(
+      '[role="alert"]',
+    );
+    expect(summary).not.toBeNull();
     expect(summary).toHaveTextContent("Check the highlighted fields.");
     expect(summary).toHaveTextContent("Enter a valid email address.");
     expect(summary).toHaveTextContent("Enter your password.");

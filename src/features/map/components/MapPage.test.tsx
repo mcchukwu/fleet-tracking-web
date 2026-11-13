@@ -241,7 +241,7 @@ describe("MapPage", () => {
   it("centres the KPI strip in the map area when the panel closes", async () => {
     const { container } = renderPage();
     const strip = container.querySelector(".pointer-events-none.absolute");
-    expect(strip).toHaveClass("lg:left-93");
+    expect(strip).toHaveClass("lg:left-panel-offset");
 
     await userEvent.click(screen.getAllByRole("button", { name: "Hide the vehicle panel" })[0]!);
 
@@ -453,7 +453,7 @@ describe("MapPage", () => {
     expect(
       screen.getByRole("complementary", { name: "Vehicle details for AAA-100" }),
     ).toBeVisible();
-    expect(container.querySelector(".map-kpi")).toHaveClass("lg:left-93");
+    expect(container.querySelector(".map-kpi")).toHaveClass("lg:left-panel-offset");
   });
 
   it("hides the left panel below xl while the drawer is open", async () => {

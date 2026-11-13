@@ -27,7 +27,9 @@ describe("SearchField", () => {
       <SearchField label="Vehicle search" trailing={<button type="button">Clear search</button>} />,
     );
     expect(screen.getByRole("button", { name: "Clear search" })).toBeInTheDocument();
-    expect(screen.getByRole("textbox", { name: "Vehicle search" })).toHaveClass("pr-14");
+    expect(screen.getByRole("textbox", { name: "Vehicle search" })).toHaveClass(
+      "pr-search-trailing",
+    );
   });
 
   it("links the hint and the error to the input", async () => {

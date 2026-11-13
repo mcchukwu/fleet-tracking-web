@@ -19,6 +19,7 @@ let installed = false;
 let restore: (() => void) | null = null;
 
 function isLongLivedTarget(target: EventTarget): boolean {
+  if (typeof window !== "undefined" && target === window) return true;
   if (typeof Window !== "undefined" && target instanceof Window) return true;
   if (typeof Document !== "undefined" && target instanceof Document) return true;
   if (typeof AbortSignal !== "undefined" && target instanceof AbortSignal) return true;
