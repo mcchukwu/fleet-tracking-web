@@ -149,7 +149,7 @@ export function FleetMap({
       if (cleanup) cleanup();
       else instance.destroy();
     };
-  }, [activeAdapter, attempt]);
+  }, [activeAdapter, attempt, variant]);
 
   useEffect(() => {
     if (loaded && activeAdapter) {
