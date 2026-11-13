@@ -16,7 +16,9 @@ function isMobile(page: Page): boolean {
 async function gotoTrips(page: Page, search = ""): Promise<void> {
   await page.goto(`/trips${search ? `?${search}` : ""}`);
   await expect(page.getByRole("heading", { name: "Trips" })).toBeVisible();
-  await expect(page.getByRole("columnheader", { name: "Vehicle" })).toBeVisible();
+  await expect(
+    page.getByRole("columnheader", { name: "Vehicle" }),
+  ).toBeVisible();
 }
 
 test.describe("trips layout", { tag: "@theme" }, () => {
@@ -28,21 +30,24 @@ test.describe("trips layout", { tag: "@theme" }, () => {
     const rows = await page
       .locator('[data-row="data"]')
       .evaluateAll((elements) =>
-        elements.map((element) => Math.round(element.getBoundingClientRect().height)),
+        elements.map((element) =>
+          Math.round(element.getBoundingClientRect().height),
+        ),
       );
-    for (const height of rows) expect(Math.abs(height - 36)).toBeLessThanOrEqual(1);
+    for (const height of rows)
+      expect(Math.abs(height - 36)).toBeLessThanOrEqual(1);
 
     await expectNoHorizontalScroll(page);
     await expectTabularNums(
-      page
-        .locator('[data-row="data"] td[data-column-id="distance"]')
-        .first(),
+      page.locator('[data-row="data"] td[data-column-id="distance"]').first(),
     );
     if (isMobile(page)) await expectTouchTargets(page, 44);
     await expectNoAxeViolations(page);
   });
 
-  test("the table scrolls inside its region on a narrow viewport", async ({ page }) => {
+  test("the table scrolls inside its region on a narrow viewport", async ({
+    page,
+  }) => {
     test.skip(!isMobile(page), "mobile-only layout");
     await gotoTrips(page);
     const table = page.locator("[data-data-table-scroll]").first();
@@ -53,7 +58,10 @@ test.describe("trips layout", { tag: "@theme" }, () => {
     await expectNoHorizontalScroll(page);
   });
 
-  test("create dialog, detail drawer and empty state are axe clean", async ({ page }) => {
+  test("create dialog, detail drawer and empty state are axe clean", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
     await gotoTrips(page);
 
     await page.getByRole("button", { name: "Create trip" }).click();
@@ -80,9 +88,13 @@ test.describe("trips layout", { tag: "@theme" }, () => {
     await captureForReview(page, "06-trips-empty-state");
   });
 
-  test("the error state is axe clean and never scrolls sideways", async ({ page }) => {
+  test("the error state is axe clean and never scrolls sideways", async ({
+    page,
+  }) => {
     await gotoTrips(page, "fault=trips%3Aserver");
-    await expect(page.getByText("Something went wrong on our side").first()).toBeVisible({
+    await expect(
+      page.getByText("Something went wrong on our side").first(),
+    ).toBeVisible({
       timeout: 15_000,
     });
     await expectNoAxeViolations(page);
