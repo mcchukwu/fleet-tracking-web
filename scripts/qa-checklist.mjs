@@ -21,7 +21,11 @@ const shots = files.map((file) => {
   const viewport = parts.pop() ?? "unknown";
   const theme = parts.pop() ?? "unknown";
   const name = parts.join("-");
-  const [screen = "other", ...stateParts] = name.split("-");
+  const segments = name.split("-");
+  // Review names start with the slice number (`04-alerts-list`); group by the
+  // screen word and keep the rest as the state.
+  if (/^\d+[a-z]?$/.test(segments[0] ?? "")) segments.shift();
+  const [screen = "other", ...stateParts] = segments;
   return { file, screen, state: stateParts.join("-") || "ready", theme, viewport, name };
 });
 

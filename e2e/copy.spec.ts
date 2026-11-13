@@ -83,8 +83,10 @@ test.describe("copy and consistency", () => {
     await expect(row).toBeVisible({ timeout: 20_000 });
     await expect(row).toContainText("—");
 
-    await page.goto("/map?map=fake");
-    const plate = page.getByText("LSD-100-AA", { exact: true }).first();
+    await page.goto("/map?map=fake&v=4324a768-9b14-4223-a299-eb8da4d8d309");
+    const drawer = page.getByTestId("drawer").or(page.getByTestId("vehicle-detail-sheet"));
+    await expect(drawer).toBeVisible({ timeout: 20_000 });
+    const plate = drawer.getByText("LSD-100-AA", { exact: true }).first();
     await expect(plate).toBeVisible({ timeout: 20_000 });
     const family = await plate.evaluate((element) => window.getComputedStyle(element).fontFamily);
     expect(family.toLowerCase()).toContain("jetbrains");

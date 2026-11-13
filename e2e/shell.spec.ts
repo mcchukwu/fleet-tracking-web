@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import {
   captureForReview,
+  primeOfflineSession,
   expectFocusVisible,
   expectNoAxeViolations,
   expectNoHorizontalScroll,
@@ -326,10 +327,8 @@ test.describe("app shell", () => {
   });
 
   test("offline shows the global banner with a disabled-change warning", async ({ page }) => {
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator, "onLine", { configurable: true, get: () => false });
-    });
-    await page.goto("/map");
+    await primeOfflineSession(page);
+    await page.goto("/map?map=fake");
 
     await expect(page.getByText(/You're offline/)).toBeVisible();
     await expect(page.getByText(/Changes are disabled/)).toBeVisible();

@@ -63,7 +63,7 @@ export function VehicleDrawer({
     <Drawer
       open
       label={`Vehicle details for ${plate}`}
-      title={plate}
+      title={<span className="font-mono">{plate}</span>}
       headerAside={
         <div className="flex items-center gap-2">
           <StatusPill status={status} />
