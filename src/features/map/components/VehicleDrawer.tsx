@@ -1,7 +1,7 @@
 import type { SnapshotVehicle, Vehicle } from "../../../api/types";
 import { useVehicle } from "../../../api/hooks/vehicles";
 import { normalize } from "../../../errors/normalize";
-import { StatusPill } from "../../../ui/Badge";
+import { Badge, StatusPill } from "../../../ui/Badge";
 import { CopyButton } from "../../../ui/CopyButton";
 import { Drawer } from "../../../ui/Drawer";
 import type { VehicleRow } from "../lib/filter";
@@ -67,6 +67,7 @@ export function VehicleDrawer({
       headerAside={
         <div className="flex items-center gap-2">
           <StatusPill status={status} />
+          {row?.stale ? <Badge tone="warning">Stale</Badge> : null}
           <CopyButton value={plate} label="Plate" />
         </div>
       }

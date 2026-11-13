@@ -33,6 +33,8 @@ export function VehicleRow({ row, height, selected, onSelect, onHover }: Vehicle
         "group relative",
         selected ? "bg-accent-soft" : "hover:bg-surface-2 focus-within:bg-surface-2",
       )}
+      onPointerEnter={() => onHover(row.key)}
+      onPointerLeave={() => onHover(null)}
     >
       {selected ? (
         <span aria-hidden="true" className="bg-accent absolute inset-y-0 left-0 w-0.5" />
@@ -48,8 +50,6 @@ export function VehicleRow({ row, height, selected, onSelect, onHover }: Vehicle
         aria-label={`Select ${row.plate}`}
         className="focus-visible:outline-focus-ring absolute inset-0 w-full rounded-none focus-visible:outline-2 focus-visible:outline-offset-0"
         onClick={() => onSelect(row.key)}
-        onPointerEnter={() => onHover(row.key)}
-        onPointerLeave={() => onHover(null)}
         onFocus={() => onHover(row.key)}
         onBlur={() => onHover(null)}
       />

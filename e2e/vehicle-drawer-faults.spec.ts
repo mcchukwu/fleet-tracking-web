@@ -123,13 +123,12 @@ test.describe("vehicle drawer faults", { tag: "@fault" }, () => {
     await expectNoHorizontalScroll(page);
   });
 
-  test("offline keeps cached detail, marks it stale and disables writes", async ({
-    page,
-    context,
-  }) => {
+  test("offline keeps cached detail, marks it stale and disables writes", async ({ page }) => {
     await page.goto(`/map?map=fake&v=${VEHICLE_2}`);
     await expect(drawer(page)).toBeVisible();
-    await context.setOffline(true);
+    await page.getByTestId("banner-region").waitFor({ state: "attached" });
+    await page.evaluate(() => window.__FLEET_TEST_CONNECTION__?.({ network: "offline" }));
+    await expect(page.getByTestId("banner-region")).toContainText("You're offline");
     await expect(drawer(page).getByRole("button", { name: "Edit" })).toHaveAttribute(
       "aria-disabled",
       "true",
@@ -139,7 +138,7 @@ test.describe("vehicle drawer faults", { tag: "@fault" }, () => {
       "true",
     );
     await captureForReview(page, "03-drawer-offline");
-    await context.setOffline(false);
+    await page.evaluate(() => window.__FLEET_TEST_CONNECTION__?.({ network: "online" }));
   });
 
   test("a lost write is reconciled and reported as not saved", async ({ page }) => {

@@ -168,7 +168,7 @@ export function PlaybackOptions({
           </span>
         </span>
         {offline ? (
-          <Badge tone="warning" className="max-w-40 min-w-0 shrink overflow-hidden">
+          <Badge tone="neutral" className="max-w-40 min-w-0 shrink overflow-hidden">
             <span className="truncate">{offlineLabel}</span>
           </Badge>
         ) : null}

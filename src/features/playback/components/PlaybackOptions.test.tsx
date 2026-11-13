@@ -118,7 +118,9 @@ describe("PlaybackOptions", () => {
 
   it("shows the offline badge with the saved-data age", () => {
     renderOptions({ offline: true, savedAt: Date.parse("2026-11-08T14:02:00Z") });
-    expect(screen.getByText(/^Offline · showing data from \d{2}:\d{2}$/)).toBeVisible();
+    const label = screen.getByText(/^Offline · showing data from \d{2}:\d{2}$/);
+    expect(label).toBeVisible();
+    expect(label.closest(".bg-surface-2")).not.toBeNull();
   });
 
   it("disables fit route with no positions", () => {
