@@ -21,24 +21,56 @@ import { normalize } from "../errors/normalize";
 import { recordError } from "../errors/report";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
 import { LoginPage } from "../features/login/components/LoginPage";
-import { AlertsPage } from "../features/alerts/components/AlertsPage";
-import { AuditPage } from "../features/audit/components/AuditPage";
-import { DriversPage } from "../features/drivers/components/DriversPage";
-import { GeofencesPage } from "../features/geofences/components/GeofencesPage";
-import { ImportPage } from "../features/import/components/ImportPage";
-import { MapPage } from "../features/map/components/MapPage";
-import { PlaybackPage } from "../features/playback/components/PlaybackPage";
-import { ReportsPage } from "../features/reports/components/ReportsPage";
 import { AppShell } from "../features/shell/components/AppShell";
 import { SessionExpiryDialog } from "../features/shell/components/SessionExpiryDialog";
 import { ShellSkeleton } from "../features/shell/components/ShellSkeleton";
-import { StyleGuidePage } from "../features/styleguide/StyleGuidePage";
-import { SystemPage } from "../features/system/components/SystemPage";
-import { TripsPage } from "../features/trips/components/TripsPage";
 import { PageFrame } from "../ui/PageFrame";
 import { ForbiddenState } from "../ui/StatePanel";
 import { NotFound } from "./NotFound";
 import { safeRedirect } from "./redirect";
+import { RouteLoading } from "./RouteLoading";
+
+const MapPage = lazyRouteComponent(() => import("../features/map/components/MapPage"), "MapPage");
+const AlertsPage = lazyRouteComponent(
+  () => import("../features/alerts/components/AlertsPage"),
+  "AlertsPage",
+);
+const TripsPage = lazyRouteComponent(
+  () => import("../features/trips/components/TripsPage"),
+  "TripsPage",
+);
+const DriversPage = lazyRouteComponent(
+  () => import("../features/drivers/components/DriversPage"),
+  "DriversPage",
+);
+const GeofencesPage = lazyRouteComponent(
+  () => import("../features/geofences/components/GeofencesPage"),
+  "GeofencesPage",
+);
+const ImportPage = lazyRouteComponent(
+  () => import("../features/import/components/ImportPage"),
+  "ImportPage",
+);
+const ReportsPage = lazyRouteComponent(
+  () => import("../features/reports/components/ReportsPage"),
+  "ReportsPage",
+);
+const SystemPage = lazyRouteComponent(
+  () => import("../features/system/components/SystemPage"),
+  "SystemPage",
+);
+const AuditPage = lazyRouteComponent(
+  () => import("../features/audit/components/AuditPage"),
+  "AuditPage",
+);
+const PlaybackPage = lazyRouteComponent(
+  () => import("../features/playback/components/PlaybackPage"),
+  "PlaybackPage",
+);
+const StyleGuidePage = lazyRouteComponent(
+  () => import("../features/styleguide/StyleGuidePage"),
+  "StyleGuidePage",
+);
 import {
   alertsSearchSchema,
   auditSearchSchema,
@@ -315,6 +347,8 @@ export function createAppRouter(queryClient: QueryClient) {
     context: { queryClient },
     defaultPreload: "intent",
     defaultErrorComponent: RouteError,
+    defaultPendingComponent: RouteLoading,
+    defaultPendingMs: 0,
   });
 }
 

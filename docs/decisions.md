@@ -781,3 +781,37 @@ When a route component throws, TanStack renders `RouteError` inside the shell's 
 ## 2026-11-13: e2e warms the dev server once
 
 Vite's first transform of the map, picker and styleguide graphs can exceed a spec's timeout, which made the 13b tier red on a cold run. `e2e/global-setup.ts` loads `/map?map=fake`, `/alerts`, `/dev/combobox` and `/styleguide` in a real browser before the workers start; the page-frame route wait is 30s and the picker axe test has 60s. Trade-off: every e2e invocation pays one short warm-up, and a route that cannot render is reported once by the setup rather than as scattered timeouts.
+
+## 2026-11-13: Prettier owns formatting, at 100 columns
+
+`format:check` now joins `npm run check`, so formatting is a gate rather than a review note. The config is `printWidth: 100`, double quotes, semicolons, trailing commas, `proseWrap: "preserve"` and the Tailwind class-sorting plugin. At 100 columns the source/e2e set produced 471 changed files; 80 would have touched 518 and 120 would have touched 528. The normalisation is one isolated `chore(format)` commit so the semantic diff stays readable.
+
+Trade-off: one large mechanical commit in the history. A suppression comment that sat on a single-line JSX element can move away from the rule it silences when Prettier wraps the attributes (`LoadingBar` needed a scoped disable), so a format change is still verified with the full check.
+
+## 2026-11-13: Every feature route is its own chunk
+
+The shell, login, route error and forbidden surfaces stay in the entry graph; every feature page and the styleguide use `lazyRouteComponent`. `RouteLoading` is the one pending surface (the 2px indeterminate bar) and `defaultPendingMs: 0` makes navigation feedback immediate. The Vite manifest feeds `scripts/bundle-report.mjs`, which runs in `npm run build` and fails on breach.
+
+Measured on 2026-11-13: entry 243.6 KB gzip (budget 350), largest route chunk 43.1 KB (budget 200), MapLibre provider 299.4 KB plus worker 144.4 KB = 443.8 KB (budget 500), CSS 23.4 KB (budget 25). The numbers live in `docs/bundle-report.md`.
+
+Trade-off: a first direct load of a route pays one extra module request and Vite transform. `e2e/global-setup.ts` warms every route once before the workers, and Playwright's expect timeout is 10s rather than 5s, so the extra request does not turn into a flaky timeout.
+
+## 2026-11-13: The contract check is a separate Node test
+
+`npm run contract:check` runs `src/api/contract-check.spec.ts` under `vitest.contract.config.ts` with a memory-only cookie jar and the real parsers. It is deliberately outside `npm run check` because it needs staging credentials and the network, and it fails with the missing variable names instead of skipping.
+
+It logs in once as an admin (audit is admin/security only) and validates one response per endpoint, plus the 401 and CSRF-403 envelopes. The only write is a header-only CSV upload: the import response creates a zero-row job, and a second header-only upload without CSRF proves the `csrf_failed` envelope. No cookie, token, credential or response body is printed or written.
+
+Trade-off: staging must stay reachable and the account must remain an admin. The check is explicit rather than part of every commit.
+
+## 2026-11-13: The live feed still carries positions only
+
+A 30-second staging capture on 2026-11-13 recorded 560 frames, all `position`, with exactly `type, tenant_id, vehicle_id, lat, lon, recorded_at`. No `speed_kph` or `heading_deg` arrives on the frame, and no `alert` frame was observed. `scripts/capture-live.mjs` repeats the capture and writes a sanitised field summary under `test-results/`; the committed fixture keeps its last-known speed and heading from the snapshot, as A5.3 requires.
+
+Trade-off: an alert can only reach the map through the REST list and the provisional `demoLiveScenario`, so the demo story still uses the mock for alert frames.
+
+## 2026-11-13: Local Playwright workers are capped at four
+
+`playwright.config.ts` uses `min(4, CPU cores - 1)` locally and writes `test-results/playwright-report.json` for `npm run e2e:slowest`. The recorded full-suite failures were cold-compile and parallel-load timeouts, not product defects; four workers keeps the host below the memory cliff while CI can still shard.
+
+Trade-off: a local T3 run takes longer than the old unbounded worker count. That is the price of a signal that means something.

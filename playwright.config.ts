@@ -6,7 +6,7 @@ const port = Number(process.env.PLAYWRIGHT_PORT ?? 4173);
 const review = process.env.REVIEW === "1";
 const isCI = Boolean(process.env.CI);
 const localWorkers =
-  Number(process.env.PLAYWRIGHT_WORKERS) || Math.max(1, availableParallelism() - 1);
+  Number(process.env.PLAYWRIGHT_WORKERS) || Math.min(4, Math.max(1, availableParallelism() - 1));
 const launchOptions = executablePath
   ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
   : {};
@@ -18,9 +18,16 @@ export default defineConfig({
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
   ...(isCI ? {} : { workers: localWorkers }),
-  reporter: [["list"], ["html", { open: "never" }]],
+  reporter: [
+    ["list"],
+    ["html", { open: "never" }],
+    ["json", { outputFile: "test-results/playwright-report.json" }],
+  ],
   outputDir: "test-results/artifacts",
   globalSetup: "./e2e/global-setup.ts",
+  // The dev server compiles route chunks on first request. Assertions stay
+  // strict; they just get a moment longer than Playwright's 5s default.
+  expect: { timeout: 10_000 },
   use: {
     baseURL: `http://127.0.0.1:${port}`,
     trace: "retain-on-failure",
