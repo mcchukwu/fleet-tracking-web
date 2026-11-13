@@ -49,6 +49,12 @@ const ROUTES: readonly RouteCase[] = [
   { path: "/reports", layout: "scroll", heading: "Reports", shell: true },
   { path: "/system", layout: "scroll", heading: "System health", shell: true },
   { path: "/import", layout: "scroll", heading: "Import", shell: true },
+  {
+    path: "/styleguide",
+    layout: "scroll",
+    heading: "Fleet Console foundations",
+    shell: true,
+  },
   { path: "/forbidden", layout: "scroll", heading: "Forbidden", shell: true },
   { path: "/no-such-route", layout: "scroll", heading: "Page not found" },
   { path: "/dev/faults", layout: "scroll", heading: "Fault lab", shell: true },
@@ -87,11 +93,11 @@ async function gotoRoute(page: Page, route: RouteCase): Promise<void> {
   await page.goto(route.path);
   await expect(
     page.getByRole("heading", { name: route.heading, level: 1 }),
-  ).toBeVisible({ timeout: 15_000 });
+  ).toBeVisible({ timeout: 30_000 });
   if (route.map) {
     await expect
       .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.map.mapLoaded), {
-        timeout: 15_000,
+        timeout: 30_000,
       })
       .toBe(true);
   }
@@ -231,6 +237,74 @@ test.describe("page frames", { tag: "@theme" }, () => {
     });
   }
 
+  for (const viewport of [
+    { width: 320, height: 568 },
+    { width: 360, height: 640 },
+  ] as const) {
+    test(`the alerts no-results recovery scrolls inside the fill frame at ${viewport.width}x${viewport.height}`, async ({
+      page,
+    }) => {
+      await useAdmin(page);
+      await page.setViewportSize(viewport);
+      await page.goto("/alerts?map=fake&q=zzzz");
+      await expect(
+        page.getByRole("heading", { name: "Alerts", level: 1 }),
+      ).toBeVisible({ timeout: 30_000 });
+      const frame = await expectPageFrame(page, "fill");
+      await expect(page.getByText("No alerts match")).toBeVisible();
+
+      const overflow = await frame.evaluate(
+        (element) => element.scrollHeight - element.clientHeight,
+      );
+      expect(
+        overflow,
+        "the alerts frame clips its empty state",
+      ).toBeLessThanOrEqual(1);
+
+      const body = page.getByTestId("alerts-table-body");
+      const metrics = await body.evaluate((element) => ({
+        clientHeight: element.clientHeight,
+        scrollHeight: element.scrollHeight,
+        overflowY: window.getComputedStyle(element).overflowY,
+      }));
+      expect(metrics.overflowY).toBe("auto");
+      expect(metrics.scrollHeight).toBeGreaterThan(metrics.clientHeight);
+
+      const clear = page.getByRole("button", { name: "Clear filters" });
+      await body.evaluate((element) => {
+        element.scrollTop = element.scrollHeight;
+      });
+      await expect(clear).toBeInViewport();
+      await clear.click();
+      await expect(page).toHaveURL((url) => !url.searchParams.has("q"));
+    });
+  }
+
+  test("the alerts loading skeleton scrolls inside the fill frame at 320x568", async ({
+    page,
+  }) => {
+    await useAdmin(page);
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.goto("/alerts?map=fake&fault=alerts%3Aslow");
+    await expect(page.getByLabel("Loading alerts")).toBeVisible({
+      timeout: 30_000,
+    });
+    const frame = await expectPageFrame(page, "fill");
+    const overflow = await frame.evaluate(
+      (element) => element.scrollHeight - element.clientHeight,
+    );
+    expect(
+      overflow,
+      "the alerts frame clips its loading skeleton",
+    ).toBeLessThanOrEqual(1);
+    const body = page.getByTestId("alerts-table-body");
+    const metrics = await body.evaluate((element) => ({
+      clientHeight: element.clientHeight,
+      scrollHeight: element.scrollHeight,
+    }));
+    expect(metrics.scrollHeight).toBeGreaterThan(metrics.clientHeight);
+  });
+
   test("a collapsing mobile toolbar leaves no gap", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await gotoRoute(page, ROUTES[3] ?? ROUTES[0]);
@@ -273,7 +347,7 @@ test.describe("page frames", { tag: "@theme" }, () => {
     ]) {
       await page.goto(path);
       await expect(page.locator("[data-page-frame]")).toBeVisible({
-        timeout: 15_000,
+        timeout: 30_000,
       });
       await expect(page.locator("[data-page-frame]")).toHaveCount(1);
       await expectNoAxeViolations(page);

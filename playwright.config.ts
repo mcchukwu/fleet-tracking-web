@@ -21,6 +21,7 @@ export default defineConfig({
   ...(isCI ? {} : { workers: localWorkers }),
   reporter: [["list"], ["html", { open: "never" }]],
   outputDir: "test-results/artifacts",
+  globalSetup: "./e2e/global-setup.ts",
   use: {
     baseURL: `http://127.0.0.1:${port}`,
     trace: "retain-on-failure",

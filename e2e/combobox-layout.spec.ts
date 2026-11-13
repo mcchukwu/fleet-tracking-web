@@ -6,6 +6,7 @@ import {
   expectNoAxeViolations,
   expectNoHorizontalScroll,
   openPicker,
+  setStoredTheme,
 } from "./helpers";
 
 /**
@@ -24,7 +25,7 @@ const VIEWPORTS = [
   { width: 360, height: 640 },
   { width: 320, height: 568 },
 ] as const;
-const COUNTS = [3, 25, 500] as const;
+const COUNTS = [3, 4, 25, 500] as const;
 const KEYBOARD = 260;
 const TOLERANCE = 1;
 
@@ -38,9 +39,9 @@ interface Box {
 
 async function openLab(page: Page): Promise<void> {
   await page.goto("/dev/combobox");
-  await expect(
-    page.getByRole("heading", { name: "Combobox lab" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Combobox lab" })).toBeVisible(
+    { timeout: 30_000 },
+  );
 }
 
 async function box(locator: Locator): Promise<Box> {
@@ -167,12 +168,14 @@ test.describe(
             );
             expect(maxHeight).toBeLessThanOrEqual(viewport.height * 0.85 + 1);
             await expect(picker.search).toBeFocused();
-            if (count >= 25) {
+            if (count >= 4) {
               expect(await visibleRowCount(sheet)).toBeGreaterThanOrEqual(4);
             }
-            await expect(
-              sheet.getByRole("button", { name: "Close picker" }),
-            ).toBeVisible();
+            const close = sheet.getByRole("button", { name: "Close picker" });
+            await expect(close).toBeVisible();
+            const closeBox = await box(close);
+            expect(closeBox.width).toBeGreaterThanOrEqual(44 - TOLERANCE);
+            expect(closeBox.height).toBeGreaterThanOrEqual(44 - TOLERANCE);
           } else {
             const shell = picker.scope;
             const shellBox = await box(shell);
@@ -198,6 +201,15 @@ test.describe(
           await expect(picker.trigger).toBeFocused();
         }
 
+        if (sheetExpected) {
+          const stale = await openPicker(page, "Vehicle with a stale list");
+          const retry = stale.scope.getByRole("button", { name: "Retry" });
+          await expect(retry).toBeVisible();
+          const retryBox = await box(retry);
+          expect(retryBox.height).toBeGreaterThanOrEqual(44 - TOLERANCE);
+          await page.keyboard.press("Escape");
+        }
+
         await expectNoHorizontalScroll(page);
         await captureForReview(
           page,
@@ -205,6 +217,42 @@ test.describe(
         );
       });
     }
+
+    test("a coarse pointer at 1024 keeps the 44px sheet controls", async ({
+      browser,
+    }) => {
+      const baseURL = test.info().project.use.baseURL;
+      const theme = test.info().project.name.includes("dark")
+        ? "dark"
+        : "light";
+      const context = await browser.newContext({
+        viewport: { width: 1024, height: 768 },
+        hasTouch: true,
+        ...(baseURL ? { baseURL } : {}),
+      });
+      const page = await context.newPage();
+      await setStoredTheme(page, theme);
+      try {
+        await openLab(page);
+        const picker = await openPicker(page, "Vehicle (25 options)");
+        expect(picker.presentation).toBe("sheet");
+        const close = picker.scope.getByRole("button", {
+          name: "Close picker",
+        });
+        const closeBox = await box(close);
+        expect(closeBox.width).toBeGreaterThanOrEqual(44 - TOLERANCE);
+        expect(closeBox.height).toBeGreaterThanOrEqual(44 - TOLERANCE);
+        await page.keyboard.press("Escape");
+
+        const stale = await openPicker(page, "Vehicle with a stale list");
+        const retry = stale.scope.getByRole("button", { name: "Retry" });
+        await expect(retry).toBeVisible();
+        const retryBox = await box(retry);
+        expect(retryBox.height).toBeGreaterThanOrEqual(44 - TOLERANCE);
+      } finally {
+        await context.close();
+      }
+    });
   },
 );
 
@@ -298,6 +346,7 @@ test.describe("picker interaction", { tag: "@theme" }, () => {
   });
 
   test("the open and closed picker states are axe clean", async ({ page }) => {
+    test.setTimeout(60_000);
     await page.setViewportSize({ width: 390, height: 844 });
     await openLab(page);
     await expectNoAxeViolations(page);

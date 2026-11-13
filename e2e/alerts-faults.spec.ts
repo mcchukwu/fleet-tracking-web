@@ -253,6 +253,7 @@ test.describe("alerts faults", () => {
     await expect(page.getByText("This part of the page stopped working")).toBeVisible();
     await expect(page.getByRole("banner")).toBeVisible();
     await expectNoHorizontalScroll(page);
+    await expectNoAxeViolations(page);
     await captureForReview(page, "04-alerts-crash");
   });
 });

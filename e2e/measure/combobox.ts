@@ -691,7 +691,7 @@ async function main(): Promise<void> {
 
           await gotoLab(page);
           if (keyboard) await emulateKeyboard(page);
-          for (const count of [3, 25, 500] as const) {
+          for (const count of [3, 4, 25, 500] as const) {
             await measureBeforeAfter(
               page,
               `lab-standalone-${count}`,

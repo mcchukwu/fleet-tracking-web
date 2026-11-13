@@ -211,4 +211,30 @@ test.describe("picker overlay in every dialog", () => {
     );
     await expectNoHorizontalScroll(page);
   });
+
+  test("the 500-option picker scrolls inside a real dialog", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/dev/combobox");
+    await expect(
+      page.getByRole("heading", { name: "Combobox lab" }),
+    ).toBeVisible({ timeout: 30_000 });
+    await page.getByRole("button", { name: "Open 500-option dialog" }).click();
+    const dialog = page
+      .locator('[role="dialog"]:not([data-picker-sheet])')
+      .first();
+    await expect(dialog).toBeVisible();
+
+    const picker = await openPicker(page, "Vehicle", dialog);
+    const list = picker.scope.locator('[role="listbox"]');
+    expect(await list.evaluate((element) => element.scrollTop)).toBe(0);
+    await list.evaluate((element) => {
+      element.scrollTop = 120;
+    });
+    await expect
+      .poll(() => list.evaluate((element) => element.scrollTop))
+      .toBeGreaterThan(0);
+    await expect(dialog).toBeVisible();
+  });
 });

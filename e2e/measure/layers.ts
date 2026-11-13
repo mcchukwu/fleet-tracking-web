@@ -65,6 +65,8 @@ const SELECTORS: Array<[string, string]> = [
   ["attribution", '[data-testid="map-attribution"]'],
   ["maptiler", '[data-testid="maptiler-logo"]'],
   ["dialog", '[role="dialog"]'],
+  ["pickerSheet", "[data-picker-sheet]"],
+  ["pickerClose", '[aria-label="Close picker"]'],
   ["menu", '[role="menu"]'],
   ["listbox", '[role="listbox"]'],
   ["tooltip", '[role="tooltip"]'],
@@ -340,7 +342,14 @@ async function main(): Promise<void> {
         await openEditDialog(page, viewport.width);
         await measureState(page, "dialog", viewport, theme);
         await openCombobox(page);
-        await measureState(page, "dialog-combobox", viewport, theme);
+        const sheetOpen =
+          (await page.locator("[data-picker-sheet]").count()) > 0;
+        await measureState(
+          page,
+          sheetOpen ? "dialog-picker-sheet" : "dialog-combobox",
+          viewport,
+          theme,
+        );
 
         await context.close();
 

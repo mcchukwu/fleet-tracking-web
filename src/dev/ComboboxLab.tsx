@@ -6,7 +6,7 @@ import { Dialog } from "../ui/Dialog";
 import { PageFrame } from "../ui/PageFrame";
 import { SearchField } from "../ui/SearchField";
 
-const COUNTS = [3, 25, 500] as const;
+const COUNTS = [3, 4, 25, 500] as const;
 type Count = (typeof COUNTS)[number];
 
 const PLATES = ["LSD-100-AA", "KJA-441-BB", "ABJ-902-CC"];
@@ -40,6 +40,7 @@ export function ComboboxLab() {
   useDocumentTitle("Combobox lab");
   const [standalone, setStandalone] = useState<Record<Count, string | null>>({
     3: null,
+    4: null,
     25: null,
     500: null,
   });
