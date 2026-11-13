@@ -179,11 +179,14 @@ test.describe("alerts", () => {
     await expect(drawer.getByText(/Nearest position at/)).toBeVisible();
     await expect(drawer.getByText("No trip linked.")).toBeVisible();
     await expect(drawer.getByText("Geofence id")).toBeVisible();
-    await expect(drawer.getByRole("region", { name: "Alert position" })).toBeVisible();
+    const position = drawer.getByRole("region", { name: "Alert position" });
+    await expect(position).toBeVisible();
+    await expect(position).not.toHaveAttribute("aria-busy", "true");
 
     await drawer.getByRole("button", { name: "Raw JSON" }).click();
     await expect(drawer.getByText(/"geofence_id"/)).toBeVisible();
     await captureForReview(page, "04-alerts-detail");
+    await expectNoAxeViolations(page);
 
     await page.keyboard.press("Escape");
     await expect(drawer).toHaveCount(0);

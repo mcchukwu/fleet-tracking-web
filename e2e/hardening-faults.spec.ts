@@ -61,6 +61,7 @@ test.describe("hardening faults", { tag: "@fault" }, () => {
   test("a crashed route resets when another route is opened", async ({ page }) => {
     await page.goto("/trips?crash=trips");
     await expect(page.getByText("This part of the page stopped working")).toBeVisible();
+    await expectNoAxeViolations(page);
 
     await page.keyboard.press("g");
     await page.keyboard.press("d");

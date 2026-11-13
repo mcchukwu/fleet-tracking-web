@@ -77,13 +77,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     }
 
     return (
-      <ErrorState
-        error={error}
-        compact={this.props.level === "panel"}
-        blocking={this.props.level === "route"}
-        onAction={this.reset}
-        onRetry={this.reset}
-      />
+      <>
+        {this.props.level === "panel" ? <h1 className="sr-only">Something went wrong</h1> : null}
+        <ErrorState
+          error={error}
+          compact={this.props.level === "panel"}
+          blocking={this.props.level === "route"}
+          onAction={this.reset}
+          onRetry={this.reset}
+        />
+      </>
     );
   }
 }

@@ -237,6 +237,7 @@ test.describe("trips faults", { tag: "@fault" }, () => {
     await page.goto("/trips?crash=trips");
     await expect(page.getByText("This part of the page stopped working")).toBeVisible();
     await expect(page.getByRole("banner")).toBeVisible();
+    await expectNoAxeViolations(page);
     await captureForReview(page, "06-trips-crash");
   });
 });
@@ -261,5 +262,30 @@ test.describe("trips uncertain writes", { tag: "@fault" }, () => {
     await expect(page.getByTestId("trips-page")).toContainText("6 loaded", { timeout: 20_000 });
     const writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
     expect(writes.filter((write) => write.method === "POST")).toHaveLength(1);
+  });
+
+  test("a response lost after the transition saved reconciles once", async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.goto("/trips");
+    await expectLoaded(page);
+    const active = page
+      .getByRole("row")
+      .filter({ hasText: "LSD-101-AA" })
+      .filter({ hasText: "Active" });
+    await expect(active).toBeVisible();
+    await page.clock.install();
+    await page.evaluate(() => {
+      history.replaceState({}, "", "/trips?fault=trips-patch:lost_after_save");
+    });
+
+    await active.getByRole("button", { name: "Complete LSD-101-AA" }).click();
+    const confirm = page.getByRole("dialog").filter({ hasText: "Complete trip" });
+    await confirm.getByRole("button", { name: "Complete trip" }).click();
+    await page.clock.runFor(16_000);
+
+    await expect(page.getByText("Trip completed.").first()).toBeVisible({ timeout: 20_000 });
+    await expectLoaded(page);
+    const writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
+    expect(writes.filter((write) => write.method === "PATCH")).toHaveLength(1);
   });
 });

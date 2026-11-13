@@ -245,6 +245,7 @@ test.describe("import faults", { tag: "@fault" }, () => {
     await expect(page.getByText("This part of the page stopped working")).toBeVisible();
     await expect(page.getByRole("banner")).toBeVisible();
     await expectNoHorizontalScroll(page);
+    await expectNoAxeViolations(page);
     await captureForReview(page, "09-import-crash");
   });
 });

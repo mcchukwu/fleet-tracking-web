@@ -192,6 +192,7 @@ test.describe("reports faults", { tag: "@fault" }, () => {
     await page.goto(`${rangeUrl()}&crash=reports`);
     await expect(page.getByText("This part of the page stopped working")).toBeVisible();
     await expect(page.getByRole("banner")).toBeVisible();
+    await expectNoAxeViolations(page);
     await captureForReview(page, "10-reports-crash");
   });
 });

@@ -137,5 +137,6 @@ test.describe("system health faults", { tag: "@fault" }, () => {
       timeout: 15_000,
     });
     await expect(page.getByRole("banner")).toBeVisible();
+    await expectNoAxeViolations(page);
   });
 });

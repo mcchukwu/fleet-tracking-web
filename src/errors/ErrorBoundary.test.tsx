@@ -20,6 +20,7 @@ describe("ErrorBoundary", () => {
     );
     expect(screen.getByText("map still works")).toBeInTheDocument();
     expect(screen.getByText("This part of the page stopped working")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
   });
 
   it("resets when its reset keys change", () => {

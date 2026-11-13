@@ -26,6 +26,7 @@ test.describe("playback faults", { tag: "@fault" }, () => {
       timeout: 15_000,
     });
     await expect(page.getByRole("button", { name: "Copy diagnostics" })).toBeVisible();
+    await expectNoAxeViolations(page);
   });
 
   test("shows the forbidden state", async ({ page }) => {
@@ -34,6 +35,7 @@ test.describe("playback faults", { tag: "@fault" }, () => {
       timeout: 15_000,
     });
     await expect(page.getByRole("button", { name: "Back to map" })).toBeVisible();
+    await expectNoAxeViolations(page);
   });
 
   test("shows the slow state and keeps Cancel available", async ({ page }) => {
@@ -65,11 +67,13 @@ test.describe("playback faults", { tag: "@fault" }, () => {
         timeout: 20_000,
       })
       .toBe(true);
+    await expectNoAxeViolations(page);
   });
 
   test("keeps the route usable when events fail and names unknown events", async ({ page }) => {
     await gotoFault(page, "vehicle-events:server");
     await expect(page.getByRole("region", { name: "Playback controls" })).toBeVisible();
+    await expectNoAxeViolations(page);
 
     await page.goto(`/playback?map=fake&vehicle=${VEHICLE}&fault=vehicle-events:unknown_enum`);
     await expect
@@ -85,12 +89,14 @@ test.describe("playback faults", { tag: "@fault" }, () => {
     await page.goto(`/playback?map=fake&vehicle=${VEHICLE}&adapter=error`);
     await expect(page.getByText("The map couldn't load")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole("region", { name: "Playback controls" })).toBeVisible();
+    await expectNoAxeViolations(page);
   });
 
   test("contains an injected render crash in the panel boundary", async ({ page }) => {
     await page.goto(`/playback?map=fake&vehicle=${VEHICLE}&crash=playback`);
     await expect(page.getByText("This part of the page stopped working")).toBeVisible();
     await expect(page.getByRole("button", { name: "Reload" })).toBeVisible();
+    await expectNoAxeViolations(page);
   });
 
   test("shows an unknown vehicle as empty, not an error", async ({ page }) => {
@@ -100,5 +106,6 @@ test.describe("playback faults", { tag: "@fault" }, () => {
     await expect(page.getByText("No positions in this range")).toBeVisible({ timeout: 15_000 });
     await captureForReview(page, "05-playback-empty");
     await expectNoHorizontalScroll(page);
+    await expectNoAxeViolations(page);
   });
 });

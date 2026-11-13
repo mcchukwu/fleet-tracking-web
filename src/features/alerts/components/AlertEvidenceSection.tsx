@@ -28,7 +28,12 @@ export function AlertEvidenceSection({ evidence }: AlertEvidenceSectionProps) {
       </div>
 
       {raw ? (
-        <pre className="border-border bg-surface-2 text-text max-h-64 overflow-auto rounded-md border p-3 font-mono text-xs">
+        /* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- focusable so a keyboard user can scroll the raw JSON (axe scrollable-region-focusable) */
+        <pre
+          tabIndex={0}
+          aria-label="Raw evidence JSON"
+          className="border-border bg-surface-2 text-text max-h-64 overflow-auto rounded-md border p-3 font-mono text-xs"
+        >
           {JSON.stringify(evidence, null, 2)}
         </pre>
       ) : (

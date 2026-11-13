@@ -324,6 +324,7 @@ test.describe("geofences faults", { tag: "@fault" }, () => {
     await expect(page.getByText("This part of the page stopped working")).toBeVisible();
     await expect(page.getByRole("banner")).toBeVisible();
     await expectNoHorizontalScroll(page);
+    await expectNoAxeViolations(page);
     await captureForReview(page, "08-geofences-crash");
   });
 });
@@ -348,6 +349,34 @@ test.describe("geofences uncertain writes", { tag: "@fault" }, () => {
 
     await expect(page.getByText("It was saved.").first()).toBeVisible({ timeout: 20_000 });
     await expect(row(page, "Border North")).toBeVisible({ timeout: 20_000 });
+  });
+
+  test("a response lost after the create saved reconciles without a duplicate", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    await page.goto("/geofences?map=fake");
+    await expectLoaded(page);
+    await page.getByRole("button", { name: "Create geofence" }).click();
+    const form = page.getByRole("form", { name: "New geofence" });
+    await drawTriangle(page);
+    await form.getByLabel("Name").fill("Lost Gate");
+    await page.clock.install();
+    await page.evaluate(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("fault", "geofences-post:lost_after_save");
+      history.replaceState({}, "", `${url.pathname}${url.search}`);
+    });
+    await form.getByRole("button", { name: "Create geofence" }).click();
+    await page.clock.runFor(16_000);
+
+    await expect(page.getByText("It was saved.").first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator("[data-geofence-row]").filter({ hasText: "Lost Gate" })).toHaveCount(
+      1,
+      { timeout: 20_000 },
+    );
+    const writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
+    expect(writes.filter((write) => write.method === "POST")).toHaveLength(1);
   });
 
   test("a response lost after the delete saved reconciles the removal", async ({ page }) => {

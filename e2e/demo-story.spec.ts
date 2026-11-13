@@ -37,6 +37,10 @@ test.describe("demo story", { tag: "@theme" }, () => {
     });
     await expect(exitDrawer.getByText("Ibadan Customer")).toBeVisible();
     await expect(exitDrawer.getByText("Geofence id")).toBeVisible();
+    await expect(exitDrawer.getByRole("region", { name: "Alert position" })).not.toHaveAttribute(
+      "aria-busy",
+      "true",
+    );
     await captureForReview(page, "14-demo-exit-alert");
     await expectNoAxeViolations(page);
 

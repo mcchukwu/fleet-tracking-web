@@ -207,6 +207,7 @@ test.describe("drivers faults", { tag: "@fault" }, () => {
     await expect(page.getByText("This part of the page stopped working")).toBeVisible();
     await expect(page.getByRole("banner")).toBeVisible();
     await expectNoHorizontalScroll(page);
+    await expectNoAxeViolations(page);
     await captureForReview(page, "07-drivers-crash");
   });
 });
@@ -234,5 +235,26 @@ test.describe("drivers uncertain writes", { tag: "@fault" }, () => {
     await expect(page.getByTestId("drivers-page")).toContainText("27 drivers", { timeout: 20_000 });
     const writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
     expect(writes.filter((write) => write.method === "POST")).toHaveLength(1);
+  });
+
+  test("a response lost after the update saved reconciles once", async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.goto("/drivers");
+    await expectLoaded(page);
+    await openEdit(page);
+    const dialog = page.getByRole("dialog", { name: "Edit driver" });
+    await dialog.getByLabel("Name").fill("Test Driver Six Updated");
+    await page.clock.install();
+    await page.evaluate(() => {
+      history.replaceState({}, "", "/drivers?fault=drivers-patch:lost_after_save");
+    });
+    await dialog.getByRole("button", { name: "Save changes" }).click();
+    await page.clock.runFor(16_000);
+
+    await expect(page.getByText("Driver updated.").first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("drivers-page")).toContainText("26 drivers", { timeout: 20_000 });
+    await expect(page.getByTestId("drivers-page")).toContainText("Test Driver Six Updated");
+    const writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
+    expect(writes.filter((write) => write.method === "PATCH")).toHaveLength(1);
   });
 });
