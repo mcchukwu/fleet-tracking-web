@@ -725,6 +725,7 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
         center: centerOf(bounds),
         zoom: 7,
         attributionControl: false,
+        interactive: options.interactive ?? true,
         ...mapConfig.options,
       });
       map = instance;

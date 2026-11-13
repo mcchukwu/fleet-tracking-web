@@ -114,6 +114,7 @@ describe("FleetMap", () => {
     );
     expect(screen.getByRole("region", { name: "Alert position" })).toBeInTheDocument();
     await waitFor(() => expect(adapter.mounted).toBe(true));
+    expect(adapter.interactive).toBe(false);
   });
 
   it("mounts with the requested base style and switches it later", async () => {

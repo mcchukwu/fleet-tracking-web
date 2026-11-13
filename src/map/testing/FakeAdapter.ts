@@ -18,7 +18,11 @@ import type {
 } from "../types";
 import type { GeofenceKind, Polygon } from "../../api/types";
 import { MapError } from "../../errors/types";
+import { setMapDebug } from "../../dev/debug";
 import { repairRing } from "../geofences";
+
+/** Mounted emulated adapters, published as the debug layer count. */
+let mountedAdapters = 0;
 
 export const FAKE_MAPTILER_ATTRIBUTION = "© MapTiler © OpenStreetMap contributors";
 
@@ -247,6 +251,7 @@ export class FakeAdapter implements MapAdapter {
   mounted = false;
   theme: "light" | "dark" = "light";
   tokens: MapTokens | null = null;
+  interactive: boolean | undefined;
   baseStyle: MapStyleId = "standard";
   vehicles: readonly MapVehicle[] = [];
   clusters: readonly FakeCluster[] = [];
@@ -298,6 +303,7 @@ export class FakeAdapter implements MapAdapter {
     element.addEventListener("click", this.handleMapClick);
     this.theme = options.theme;
     this.tokens = options.tokens;
+    this.interactive = options.interactive;
     this.baseStyle = options.baseStyle ?? "standard";
     this.clusterMaxZoom = options.tokens.marker.clusterMaxZoom;
     this.clusterRadius = options.tokens.marker.clusterRadius;
@@ -312,6 +318,8 @@ export class FakeAdapter implements MapAdapter {
         bounds: options.bounds,
       };
     }
+    mountedAdapters += 1;
+    setMapDebug({ layerCount: mountedAdapters });
     this.recomputeClusters();
     queueMicrotask(() => this.emit("ready", undefined));
     return Promise.resolve();
@@ -321,6 +329,10 @@ export class FakeAdapter implements MapAdapter {
     this.controller?.dispose();
     this.controller = null;
     this.element?.removeEventListener("click", this.handleMapClick);
+    if (this.mounted) {
+      mountedAdapters = Math.max(0, mountedAdapters - 1);
+      setMapDebug({ layerCount: mountedAdapters });
+    }
     this.mounted = false;
     this.element = null;
     this.destroyCount += 1;

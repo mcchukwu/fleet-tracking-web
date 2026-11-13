@@ -114,6 +114,7 @@ export function FleetMap({
           tokens: readMapTokens(target),
           ...(boundsRef.current ? { bounds: boundsRef.current } : {}),
           ...(baseStyleRef.current ? { baseStyle: baseStyleRef.current } : {}),
+          interactive: variant !== "static",
         });
         if (cancelled) return;
         if (variant === "static") {

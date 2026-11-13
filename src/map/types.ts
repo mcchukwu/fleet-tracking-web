@@ -171,6 +171,8 @@ export interface MountOptions {
   tokens: MapTokens;
   bounds?: Bounds;
   baseStyle?: MapStyleId;
+  /** A static mini map must not take pointer or keyboard focus. */
+  interactive?: boolean;
 }
 
 export interface MapAdapter {
