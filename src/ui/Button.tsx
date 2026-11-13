@@ -18,6 +18,7 @@ const buttonStyles = cva(
         sm: "h-touch px-3 text-xs md:h-control-sm",
         md: "h-touch px-3 text-base md:h-control-md",
         lg: "h-touch px-4 text-base md:h-control-lg",
+        touch: "h-touch px-3 text-xs",
       },
     },
     defaultVariants: { variant: "secondary", size: "md" },

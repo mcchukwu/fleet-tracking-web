@@ -23,6 +23,8 @@ export interface PickerListProps {
   error?: string;
   emptyMessage?: string;
   onRetry?: () => void;
+  /** The picker sheet keeps 44px controls at every width. */
+  touchTargets?: boolean;
   className?: string;
   style?: CSSProperties;
 }
@@ -98,6 +100,7 @@ export function PickerList({
   error,
   emptyMessage = "No matches",
   onRetry,
+  touchTargets = false,
   className,
   style,
 }: PickerListProps) {
@@ -286,7 +289,7 @@ export function PickerList({
           <span className="truncate">{error}</span>
           {onRetry ? (
             <Button
-              size="sm"
+              size={touchTargets ? "touch" : "sm"}
               variant="ghost"
               onMouseDown={(event) => event.preventDefault()}
               onClick={onRetry}
@@ -300,7 +303,7 @@ export function PickerList({
       {error && status === "empty" && onRetry ? (
         <div className="border-border border-t px-3 py-2">
           <Button
-            size="sm"
+            size={touchTargets ? "touch" : "sm"}
             variant="ghost"
             onMouseDown={(event) => event.preventDefault()}
             onClick={onRetry}

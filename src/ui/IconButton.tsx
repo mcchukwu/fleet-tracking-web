@@ -14,6 +14,7 @@ const iconButtonStyles = cva(
         sm: "size-touch md:size-control-sm",
         md: "size-touch md:size-control-md",
         lg: "size-touch md:size-control-lg",
+        touch: "size-touch",
       },
     },
     defaultVariants: { variant: "ghost", size: "md" },

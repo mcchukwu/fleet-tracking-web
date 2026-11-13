@@ -210,6 +210,7 @@ export function PickerSheet({
             </div>
             <DialogPrimitive.Close asChild>
               <IconButton
+                size="touch"
                 label="Close picker"
                 icon={
                   <X aria-hidden="true" className="size-4" strokeWidth={1.5} />
@@ -227,6 +228,7 @@ export function PickerSheet({
             label={label}
             onSelect={onSelect}
             onActive={onActive}
+            touchTargets
             loading={loading}
             {...(error ? { error } : {})}
             {...(emptyMessage ? { emptyMessage } : {})}
