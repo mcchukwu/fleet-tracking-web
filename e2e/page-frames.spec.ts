@@ -272,6 +272,9 @@ test.describe("page frames", { tag: "@theme" }, () => {
       "/no-such-route",
     ]) {
       await page.goto(path);
+      await expect(page.locator("[data-page-frame]")).toBeVisible({
+        timeout: 15_000,
+      });
       await expect(page.locator("[data-page-frame]")).toHaveCount(1);
       await expectNoAxeViolations(page);
     }
