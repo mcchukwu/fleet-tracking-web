@@ -877,3 +877,15 @@ Trade-off: a fixture change updates behaviour without editing the demo copy. The
 `npm run csp:hash` hashes the inline theme bootstrap, and `docs/deployment.md` carries the recommended policy (self for scripts, the hash, `blob:` workers for MapLibre, `data:`/`blob:` images, self and the API/WebSocket origins for connect). The policy is deliberately not in `public/_headers` yet: the tile and style origins depend on deployment env, and the first enforcement should be Report-Only on a deployed build.
 
 Trade-off: no CSP protection on the current demo deploy. The hash workflow keeps the policy from going stale, and enforcement is a roadmap item.
+
+## 2026-11-13: Static mini maps mount non-interactive
+
+`FleetMap` passes `interactive: false` through `MountOptions` when `variant="static"`, so the alert-detail MapLibre canvas is created without the default `tabindex="0"`. The map stays inside an `aria-hidden` frame; axe no longer reports a focusable child, and the desktop alert drawer is axe-checked while open.
+
+Trade-off: the mini map cannot be panned or zoomed. It is decorative; the full map remains one action away. The fake adapter records the same option, so the unit test fails if the variant stops forwarding it.
+
+## 2026-11-13: The leak sweep counts map layers and active timers
+
+`e2e/robustness.spec.ts` reads `map.layerCount` after the warm-up and after the fifty navigations, and the listener bound is five as recorded above. `src/dev/leaks.ts` removes a timeout id when its callback fires, so the timer count means active timers rather than every timeout ever scheduled.
+
+Trade-off: the layer count includes basemap layers, so it proves the operational set is rebuilt exactly, not that a particular MapLibre layer was removed; the adapter's own `layerCount` is the honest signal available without reaching into internals.

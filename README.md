@@ -57,6 +57,26 @@ flowchart LR
 
 The map is the product. Every feature speaks the `MapAdapter` contract (`src/map/types.ts`); only `src/map/providers/*` imports a map SDK, and `npm run guard` enforces it.
 
+## Directory map
+
+```
+src/
+  app/          Router, route guards, page frames and route-level chunks
+  api/          Client, generated handoff types, schemas, query keys and hooks
+  errors/       Normalisation, catalogue, reporting, boundaries and slow notices
+  features/     One folder per screen: api, components, hooks (no cross-feature imports)
+  lib/          Formatting, status derivation, storage, time and domain helpers
+  map/          FleetMap, adapters, provider contract, tokens and contract tests
+  mocks/        MSW handlers, fixtures and fault injection for browser and node
+  stores/       Zustand live positions, connection and session state
+  styles/       Tailwind entry, semantic tokens and layer utilities
+  theme/        Pre-paint theme and accent bootstrap
+  ui/           Shared primitives (DataTable, Combobox, Drawer, Toast, ...)
+e2e/            Playwright specs, helpers, layout measurements and review capture
+scripts/        Guard, bundle report, CSP hash, QA checklist and capture tools
+docs/           Product brief, API, design system, decisions, error policy and offline
+```
+
 ## How to verify
 
 | Tier | Command                        | When                                                                              |
