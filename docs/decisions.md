@@ -765,3 +765,19 @@ Service workers, Workbox precache and the PMTiles range route do not exist under
 ## 2026-11-13: The picker has a popover and a modal sheet
 
 `(min-width: 768px) and (pointer: fine)` keeps the anchored popover (44px rows, 360px cap, Cancel/X stay reachable). Every other viewport or pointer gets a modal bottom sheet on the Radix Dialog primitive: at most 85% of the visual viewport, a sticky 60px header with the 44px search and close, 56px two-line rows and the list as the only scrollport. The sheet deliberately covers the parent dialog's footer and close; its own close, backdrop and Escape are the three exits. Keeping the trigger editable was rejected because it would create two competing queries; the trigger is read-only with `aria-haspopup="dialog"` and the sheet search is the single focus target. Clear is an option row and is offered only by the trip-create optional driver, because the API drops a null `driver_id` elsewhere. Trade-off: the `§10.9` "never covers Cancel/X" rule now applies only to the popover, and a pointer that lacks `matchMedia` falls back to the popover.
+
+## 2026-11-13: Fill-table state bodies scroll; the filter row stays planted
+
+The Alerts, Trips, Drivers and Audit fill pages put the `StateBoundary` body in a `min-h-0 overflow-y-auto overscroll-contain` region, so the empty, loading and error states — and any Clear filters or Retry recovery — scroll inside the remaining space instead of being painted below a clipped frame. The ready state keeps the `DataTable`'s own scrollport; the outer region does not scroll while the table is constrained. Trade-off: a table page has two nested scroll containers, but only one is active for a given state, and the filter row never leaves the viewport.
+
+## 2026-11-13: The sheet's controls opt out of the desktop shrink
+
+`Button` and `IconButton` gained a `touch` size that has no `md:` override. The picker sheet uses it for the close and for Retry, because the sheet is selected by a coarse pointer even at 1024px where the width-based `md:` rules would otherwise shrink the controls to 32px. The popover keeps the smaller desktop sizes. Trade-off: a new size variant exists solely for controls that live in a modal sheet, so a future control there must opt in explicitly.
+
+## 2026-11-13: The route error surface is not a second main
+
+When a route component throws, TanStack renders `RouteError` inside the shell's `<main>`. That surface is now a `<div>`; only the app-level boundary outside the shell renders a `<main>`. The crash spec also runs axe, so a second landmark or another accessibility regression fails the suite. Trade-off: the route error is no longer a landmark; its `h1` and the blocking `ErrorState` carry the semantics.
+
+## 2026-11-13: e2e warms the dev server once
+
+Vite's first transform of the map, picker and styleguide graphs can exceed a spec's timeout, which made the 13b tier red on a cold run. `e2e/global-setup.ts` loads `/map?map=fake`, `/alerts`, `/dev/combobox` and `/styleguide` in a real browser before the workers start; the page-frame route wait is 30s and the picker axe test has 60s. Trade-off: every e2e invocation pays one short warm-up, and a route that cannot render is reported once by the setup rather than as scattered timeouts.
