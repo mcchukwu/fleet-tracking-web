@@ -295,6 +295,9 @@ Shell and dialog sizes are tokens: `--spacing-touch: 44px`, `--spacing-rail-expa
 
 - Navigation is a 56px icon rail with tooltips, expandable to 200px. Active item uses `accent-soft` background and `accent-fg` text.
 - Non-map screens (alerts, trips, drivers, reports, audit) use a standard page layout: page title row, filter row, content. Max content width 1440px, left-aligned.
+- **The document never scrolls.** `html`, `body` and `#root` are exactly one dynamic viewport tall (`100dvh`) with `overflow: hidden` and `overscroll-behavior: none`. The shell is an `h-dvh` column; the top bar is shell chrome and never enters a scroll container. No `min-h-screen`, `h-screen`, `100vh` or `100vw` exists anywhere; the guard rejects them.
+- **Every route declares a `PageFrame`** (`src/ui/PageFrame.tsx`) with `layout="fill"` or `layout="scroll"`. Fill pages (Map, Geofences, Playback, and the table pages Alerts, Trips, Drivers, Audit) never scroll at page level: only their designated inner region does, and a table page keeps its header, tabs and filter row planted while the table scrollport moves. Scroll pages (Reports, System, Import, Login, NotFound, Forbidden, route and app error surfaces, StyleGuide) scroll inside the content area and end with exactly one `24px` inset plus `env(safe-area-inset-bottom)`. Pages never add their own bottom padding.
+- Scroll frames end at their content: there is no forced minimum height, and Login/NotFound centre with auto margins rather than a tall blank page. `viewport-fit=cover` is set in `index.html`, and collapsing or expanding mobile browser chrome must leave no gap at the bottom.
 - Floating panels sit 12px from the **content area** edge, are opaque, have `--radius-lg`, one border, and `--shadow-float`. The content area starts below the top bar and the in-flow banner region, so a banner pushes every panel, drawer, sheet, control and attribution down with it.
 - Panels are collapsible with `[`. The map must never be covered by more than 60% of its area at 1440px width.
 
@@ -498,6 +501,15 @@ Each component lists its anatomy and its rules. All come from shadcn primitives 
   - Focus is the shared `--accent` border plus a 1px inset `--focus-ring` ring. The control never grows or shifts.
   - `SearchInput` adds the 150ms debounce, the clear button and the `/` hint on top of `SearchField`. `Combobox` composes the same field with a chevron trailing slot.
 - Compact exception: the mobile sheet header may use a visually hidden label for the search field because the row has no space for a second label line. The magnifier and placeholder remain, and the accessible name is still `Search vehicles`.
+- **Two picker presentations, one `Combobox` API.** At `(min-width: 768px) and (pointer: fine)` the picker is an anchored popover: 44px rows, a maximum of 360px, flips above or shifts inside the visual viewport, and keeps the dialog's Cancel and close hit-testable. Below 768px or with a coarse pointer it is a modal **picker sheet** from the bottom:
+  - At most 85% of the visual viewport, anchored to it, so the software keyboard pushes the sheet up and its top never leaves the screen.
+  - A sticky 60px header with the search field (44px at every width) and a 44px close button; the list below is the only scrollport (`overscroll-behavior: contain`).
+  - 56px two-line rows: the primary line plus the disambiguating detail (depot or type for vehicles, licence or status for drivers).
+  - It is portalled in the popover layer, above the parent dialog. Because it is modal it deliberately covers the parent dialog's footer and close; its own close, the backdrop and Escape are the three exits. This supersedes the §10.9 "never covers Cancel/X" rule for the sheet only.
+  - It renders through the Radix Dialog primitive, so the focus trap, `aria-modal`, Escape ordering (first Escape closes the sheet, the second the dialog) and focus return come from the primitive.
+  - The trigger is a read-only combobox with `aria-haspopup="dialog"`; the sheet's search field is the single query and focus target.
+- **Clear** is offered only where the form can clear the value (today: the optional driver on trip create). It is an option row at the top of the list, selected with the same Arrow/Enter path as any value, and it calls `onClear`. Required pickers never show it.
+- Both presentations share `PickerList` and every state: loading, empty, error with Retry (with cached items too), disabled-with-reason on the trigger, and virtualisation above 100 options (`aria-setsize`/`aria-posinset` always present).
 
 ### 10.3 Table
 
@@ -556,9 +568,10 @@ Bottom-right, 4s, one line plus an optional action. Success and info auto-dismis
 ### 10.9 Tooltip, menu, tabs, select, combobox
 
 - Standard Radix behaviour. Tooltip delay 400ms, content `text-xs`, never the only way to reach information. Menus 32px items, `--shadow-menu`. Tabs use an underline indicator in `--accent`, 36px height.
-- `Combobox` is the searchable single-select for long, changing lists (for example active drivers). It uses the ARIA 1.2 combobox/listbox pattern: a labelled input owns the keyboard, `aria-expanded`/`aria-controls`/`aria-activedescendant`/`aria-haspopup` are wired, options show a second line with the disambiguating detail (phone and licence for duplicated names), filtering ignores case, spaces and hyphens, and the list resets on blur. Options are 44px on touch. A plate or IMEI option renders its primary line in the mono font. Loading, error, empty and disabled states are explicit; the disabled reason stays visible.
-- The combobox list is an overlay in the popover layer, never in the dialog's flow. Opening it must not change the input's or the dialog's bounding box. It is `position: fixed`, anchored 4px below the input, at least 240px wide and as wide as the input (clamped to the visual viewport), with a maximum height from `visualViewport` and its own scrollport. It flips above the input when the space below is short, and it is capped by the dialog's close button and footer, so neither is ever covered and both stay hit-testable — also with the software keyboard open. Every picker uses this behaviour; there is no per-dialog opt-in.
-- Keyboard: `ArrowUp`/`ArrowDown`/`Home`/`End` move `aria-activedescendant` and scroll the active option into view, `Enter` selects, the first `Escape` closes only the list and keeps focus in the input, and the second closes the dialog. Focus never leaves the input while the list is open.
+- `Combobox` is the searchable single-select for long, changing lists (for example active drivers). It uses the ARIA 1.2 combobox/listbox pattern: a labelled input owns the keyboard, `aria-expanded`/`aria-controls`/`aria-activedescendant`/`aria-haspopup` are wired, options show a second line with the disambiguating detail (phone and licence for duplicated names), filtering ignores case, spaces and hyphens, and the list resets on blur. A plate or IMEI option renders its primary line in the mono font. Loading, error, empty and disabled states are explicit; the disabled reason stays visible.
+- The presentation split, sheet anatomy and Clear rule live in §10.2. In the popover presentation the list is an overlay in the popover layer, never in the dialog's flow. Opening it must not change the input's or the dialog's bounding box. It is `position: fixed`, anchored 4px below the input, at least 240px wide and as wide as the input (clamped to the visual viewport), capped at 360px from `visualViewport` with its own scrollport, and 44px rows. It flips above the input when the space below is short, and it is capped by the dialog's close button and footer, so neither is ever covered and both stay hit-testable — also with the software keyboard open. The sheet presentation is modal and supersedes that cap with its own close, backdrop and Escape path.
+- Above 100 options the list is virtualised: only a window of fixed-height rows is mounted, End scrolls to the last option, and `aria-activedescendant` always points at a mounted row.
+- Keyboard: `ArrowUp`/`ArrowDown`/`Home`/`End` move `aria-activedescendant` and scroll the active option into view, `Enter` selects, the first `Escape` closes only the picker and keeps focus on the trigger, and the second closes the dialog. Focus never leaves the search field while the sheet is open, and choosing a value returns focus to the trigger/form field.
 
 ### 10.10 Map controls
 
@@ -706,6 +719,10 @@ const pill = cva("inline-flex h-5 items-center gap-1 rounded-full px-2 text-xs f
 - [ ] Keyboard path works end to end; focus visible; `Esc` behaves.
 - [ ] Contrast meets §3.2; `axe` reports no violations.
 - [ ] Works at 1440px, 390px and 360px; no horizontal page scroll.
+- [ ] The document never scrolls; exactly one `PageFrame` wraps the route, fill pages have no page scroll and scroll pages end at one 24px + safe-area inset.
+- [ ] The top bar's box is unchanged after scrolling any inner region, and a collapsing mobile toolbar leaves no gap.
+- [ ] Every picker scrolls with 500 options by wheel, touch and keyboard; the sheet keeps four rows, its top and its 44px close, and Escape closes it before the parent dialog.
+- [ ] Picker selection by mouse, touch and keyboard returns focus to the trigger; Clear appears only on optional fields.
 - [ ] Map controls, attribution, KPI, panels and the sheet never overlap at any snap point.
 - [ ] The top bar contains no standalone theme or accent control; appearance lives in the user menu.
 - [ ] The vehicle drawer is non-modal, keeps the map interactive, and returns focus to its origin; disabled actions stay visible with a reason.
