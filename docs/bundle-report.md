@@ -6,14 +6,14 @@ Budgets are enforced by the same script and by `npm run build`.
 | Bundle | Gzip | Budget | Result |
 | --- | ---: | ---: | --- |
 | Entry chunk | 244.2 KB | 350.0 KB | pass |
-| Largest route chunk | 43.2 KB | 200.0 KB | pass |
+| Largest route chunk | 43.3 KB | 200.0 KB | pass |
 | MapLibre provider + worker | 443.9 KB | 500.0 KB | pass |
 | CSS | 23.5 KB | 25.0 KB | pass |
 
 | Chunk | Gzip |
 | --- | ---: |
 | Entry (static graph) | 244.2 KB |
-| Route · MapPage | 43.2 KB |
+| Route · MapPage | 43.3 KB |
 | Route · AlertsPage | 20.6 KB |
 | Route · PlaybackPage | 18.6 KB |
 | Route · ImportPage | 17.6 KB |
