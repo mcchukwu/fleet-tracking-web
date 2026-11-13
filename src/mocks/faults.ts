@@ -17,7 +17,8 @@ export type FaultKind =
   | "slow"
   | "malformed"
   | "unknown_enum"
-  | "lost";
+  | "lost"
+  | "lost_after_save";
 
 const faultKinds = new Set<string>([
   "offline",
@@ -37,6 +38,7 @@ const faultKinds = new Set<string>([
   "malformed",
   "unknown_enum",
   "lost",
+  "lost_after_save",
 ]);
 
 export function isFaultKind(value: string): value is FaultKind {
@@ -117,6 +119,7 @@ export function faultResponse(kind: FaultKind, retryAfterSec = 30): Promise<Resp
     case "unknown_enum":
       return Promise.resolve(unknownEnum());
     case "lost":
+    case "lost_after_save":
       return lostResponse();
     case "slow":
       return delay(12_000).then(() => HttpResponse.json({ data: [] }));
@@ -161,8 +164,14 @@ export function withFault(
   if (!fault) return resolver();
   const [target, kind] = fault.split(":");
   const methodTarget = `${resource}-${request.method.toLowerCase()}`;
-  if ((target !== resource && target !== methodTarget) || !kind || !isFaultKind(kind)) {
+  const targetMatches = target === "*" || target === resource || target === methodTarget;
+  if (!targetMatches || !kind || !isFaultKind(kind)) {
     return resolver();
+  }
+  // The write reaches the handler and changes mock state, then the response is
+  // lost: the honest "we don't know whether it saved" case.
+  if (kind === "lost_after_save") {
+    return Promise.resolve(resolver()).then(() => lostResponse());
   }
   return faultResponse(kind);
 }

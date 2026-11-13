@@ -212,6 +212,7 @@ export interface AlertTableProps {
   onRevealNew: () => void;
   highlightIds: ReadonlySet<string>;
   emptyReason: AlertEmptyReason;
+  cancelled?: boolean;
   onClearFilters: () => void;
   zoneFor: (alert: Alert) => string | null;
   tripFor: (alert: Alert) => string | null;
@@ -247,6 +248,7 @@ export function AlertTable({
   resetKey,
   ackError = null,
   offline = false,
+  cancelled = false,
   staleLabel,
   forbiddenAction,
 }: AlertTableProps) {
@@ -397,7 +399,17 @@ export function AlertTable({
     [disabledReason, onAck, onOpen, pendingId, tripFor, zoneFor],
   );
 
-  const empty = offline ? (
+  const empty = cancelled ? (
+    <EmptyState
+      title="Loading cancelled"
+      description="Nothing was loaded."
+      action={
+        <Button size="sm" onClick={onRetry}>
+          Retry
+        </Button>
+      }
+    />
+  ) : offline ? (
     <EmptyState
       title="No alerts available offline"
       description="Reconnect to load the alert list."

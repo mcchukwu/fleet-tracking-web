@@ -60,6 +60,7 @@ export function recordRequestSuccess(): void {
 export function resetErrorStorm(): void {
   failures = [];
   stormActive = false;
+  for (const listener of stormListeners) listener();
 }
 
 function appEvent(name: string, detail?: unknown): void {

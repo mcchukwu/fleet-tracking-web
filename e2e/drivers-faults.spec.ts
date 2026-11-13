@@ -50,7 +50,7 @@ async function openEdit(page: Page): Promise<void> {
   await expect(page.getByRole("dialog", { name: "Edit driver" })).toBeVisible();
 }
 
-test.describe("drivers faults", () => {
+test.describe("drivers faults", { tag: "@fault" }, () => {
   test("a server error with nothing cached shows the region error and Retry recovers", async ({
     page,
   }) => {
@@ -208,5 +208,31 @@ test.describe("drivers faults", () => {
     await expect(page.getByRole("banner")).toBeVisible();
     await expectNoHorizontalScroll(page);
     await captureForReview(page, "07-drivers-crash");
+  });
+});
+
+test.describe("drivers uncertain writes", { tag: "@fault" }, () => {
+  test("a response lost after the create saved reconciles and adds exactly one driver", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    await page.goto("/drivers");
+    await expectLoaded(page);
+    await page.clock.install();
+    await page.evaluate(() => {
+      history.replaceState({}, "", "/drivers?fault=drivers-post:lost_after_save");
+    });
+
+    await page.getByRole("button", { name: "Create driver" }).click();
+    const create = page.getByRole("dialog", { name: "Create driver" });
+    await create.getByLabel("Name").fill("Lost Save Driver");
+    await create.getByLabel("Phone (optional)").fill("0803 100 0999");
+    await create.getByRole("button", { name: "Create driver" }).click();
+    await page.clock.runFor(16_000);
+
+    await expect(page.getByText("It was saved.").first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("drivers-page")).toContainText("27 drivers", { timeout: 20_000 });
+    const writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
+    expect(writes.filter((write) => write.method === "POST")).toHaveLength(1);
   });
 });

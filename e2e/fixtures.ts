@@ -46,9 +46,17 @@ export const test = base.extend<{ theme: ReviewTheme; liveSocket: LiveSocketHarn
     },
     { auto: true },
   ],
-  page: async ({ page, theme }, use) => {
+  page: async ({ page, theme }, use, testInfo) => {
     await setStoredTheme(page, theme);
+    const pageErrors: string[] = [];
+    page.on("pageerror", (error) => pageErrors.push(error.message));
     await use(page);
+    if (!testInfo.tags.includes("@fault")) {
+      expect(
+        pageErrors,
+        "unhandled page error or rejection; tag a deliberately failing test @fault",
+      ).toEqual([]);
+    }
   },
 });
 

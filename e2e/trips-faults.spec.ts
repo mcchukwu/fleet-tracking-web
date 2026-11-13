@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { captureForReview, expectNoAxeViolations } from "./helpers";
+import { captureForReview, expectNoAxeViolations, primeOfflineSession } from "./helpers";
 
 async function gotoFault(page: Page, fault: string, extra = ""): Promise<void> {
   await page.goto(`/trips?fault=${encodeURIComponent(fault)}${extra ? `&${extra}` : ""}`);
@@ -50,7 +50,7 @@ async function fillCreate(page: Page): Promise<void> {
   await create.getByRole("button", { name: "Create trip" }).click();
 }
 
-test.describe("trips faults", () => {
+test.describe("trips faults", { tag: "@fault" }, () => {
   test("a server error with nothing cached shows the region error and Retry recovers", async ({
     page,
   }) => {
@@ -133,9 +133,7 @@ test.describe("trips faults", () => {
   });
 
   test("offline with no cache shows the neutral empty state", async ({ page }) => {
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator, "onLine", { configurable: true, get: () => false });
-    });
+    await primeOfflineSession(page);
     await page.goto("/trips?fault=trips%3Anetwork");
 
     await expect(page.getByText("You're offline")).toBeVisible();
@@ -240,5 +238,28 @@ test.describe("trips faults", () => {
     await expect(page.getByText("This part of the page stopped working")).toBeVisible();
     await expect(page.getByRole("banner")).toBeVisible();
     await captureForReview(page, "06-trips-crash");
+  });
+});
+
+test.describe("trips uncertain writes", { tag: "@fault" }, () => {
+  test("a response lost after the create saved reconciles and adds exactly one trip", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    await page.goto("/trips");
+    await expectLoaded(page);
+    await page.clock.install();
+    await page.evaluate(() => {
+      history.replaceState({}, "", "/trips?fault=trips-post:lost_after_save");
+    });
+
+    await page.getByRole("button", { name: "Create trip" }).click();
+    await fillCreate(page);
+    await page.clock.runFor(16_000);
+
+    await expect(page.getByText("It was saved.").first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("trips-page")).toContainText("6 loaded", { timeout: 20_000 });
+    const writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
+    expect(writes.filter((write) => write.method === "POST")).toHaveLength(1);
   });
 });

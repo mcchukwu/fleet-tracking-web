@@ -40,7 +40,7 @@ function unexpectedConsole(errors: string[]): string[] {
   );
 }
 
-test.describe("system health faults", () => {
+test.describe("system health faults", { tag: "@fault" }, () => {
   test("an unreachable first load shows Can't reach the API and Retry recovers", async ({
     page,
   }) => {

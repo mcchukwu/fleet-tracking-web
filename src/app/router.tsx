@@ -95,6 +95,14 @@ async function requireUser(context: RouterContext, href: string): Promise<User> 
   return user;
 }
 
+function RootRouteError(props: ErrorComponentProps) {
+  return (
+    <main className="bg-bg text-text h-dvh">
+      <RouteError {...props} />
+    </main>
+  );
+}
+
 function RouteError({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
   const route = typeof window === "undefined" ? "/" : window.location.pathname;
@@ -178,7 +186,7 @@ function ForbiddenPage() {
 const rootRoute = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
   notFoundComponent: NotFound,
-  errorComponent: RouteError,
+  errorComponent: RootRouteError,
 });
 
 const indexRoute = createRoute({
@@ -210,6 +218,7 @@ const appRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: "_app",
   component: AppShell,
+  errorComponent: RootRouteError,
   pendingComponent: ShellSkeleton,
   pendingMs: 0,
   beforeLoad: async ({ context, location }) => ({

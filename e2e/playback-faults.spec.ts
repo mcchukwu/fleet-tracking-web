@@ -9,7 +9,7 @@ async function gotoFault(page: Page, fault: string): Promise<void> {
   await expect(page.getByRole("region", { name: "Playback map" })).toBeVisible();
 }
 
-test.describe("playback faults", () => {
+test.describe("playback faults", { tag: "@fault" }, () => {
   test("shows a retryable server error with nothing cached", async ({ page }) => {
     await gotoFault(page, "vehicle-history:server");
     await expect(page.getByText("Something went wrong on our side")).toBeVisible({
@@ -40,6 +40,31 @@ test.describe("playback faults", () => {
     await gotoFault(page, "vehicle-history:slow");
     await expect(page.getByText("Still working…")).toBeVisible({ timeout: 8_000 });
     await captureForReview(page, "05-playback-slow");
+  });
+
+  test("the 10-second notice offers Cancel and Retry, and Cancel shows the cancelled state", async ({
+    page,
+  }) => {
+    await page.clock.install();
+    await page.goto(`/playback?map=fake&vehicle=${VEHICLE}&fault=vehicle-history:slow`);
+    await page.clock.runFor(3_200);
+    await expect(page.getByText("Still working…")).toBeVisible();
+    await page.clock.runFor(7_000);
+    await expect(page.getByText("Taking longer than usual")).toBeVisible();
+    await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(page.getByText("Playback cancelled")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Retry", exact: true }).first()).toBeVisible();
+    await expectNoAxeViolations(page);
+  });
+
+  test("a reduced-motion preference snaps the cursor and reports it", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto(`/playback?map=fake&vehicle=${VEHICLE}`);
+    await expect
+      .poll(() => page.evaluate(() => window.__FLEET_DEBUG__?.playback?.reducedMotion ?? false), {
+        timeout: 20_000,
+      })
+      .toBe(true);
   });
 
   test("keeps the route usable when events fail and names unknown events", async ({ page }) => {

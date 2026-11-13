@@ -47,7 +47,7 @@ function unexpectedConsole(errors: string[]): string[] {
   );
 }
 
-test.describe("reports faults", () => {
+test.describe("reports faults", { tag: "@fault" }, () => {
   test("a server error with nothing cached shows the region error and Retry recovers", async ({
     page,
   }) => {

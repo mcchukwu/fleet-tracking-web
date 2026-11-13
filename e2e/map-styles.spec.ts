@@ -184,7 +184,7 @@ test.describe("MapTiler styles (real adapter)", { tag: "@theme" }, () => {
     await expect(trigger).toHaveAttribute("aria-busy", "false");
   });
 
-  test("falls back to Map once when Streets is refused", async ({ page }) => {
+  test("falls back to Map once when Streets is refused", { tag: "@fault" }, async ({ page }) => {
     await installStyleMock(page, { streets: "403" });
     await gotoRealMap(page);
 

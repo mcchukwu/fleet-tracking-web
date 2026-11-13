@@ -30,7 +30,7 @@ async function clearFault(page: Page): Promise<void> {
   await page.evaluate(() => history.replaceState({}, "", window.location.pathname));
 }
 
-test.describe("fault scenarios", () => {
+test.describe("fault scenarios", { tag: "@fault" }, () => {
   test("a route failure uses the app error surface and records diagnostics", async ({
     page,
     theme,

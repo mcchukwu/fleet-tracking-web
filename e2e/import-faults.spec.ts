@@ -46,7 +46,7 @@ function unexpectedConsole(errors: string[]): string[] {
   );
 }
 
-test.describe("import faults", () => {
+test.describe("import faults", { tag: "@fault" }, () => {
   test("a server failure is an inline notice with Retry, not a toast or raw text", async ({
     page,
   }) => {
@@ -87,11 +87,13 @@ test.describe("import faults", () => {
   });
 
   test("an unanswered upload says it is safe to upload again", async ({ page }) => {
-    test.setTimeout(45_000);
+    test.setTimeout(90_000);
     const errors = collectErrors(page);
-    await gotoFault(page, "import:network");
+    await gotoFault(page, "import:timeout");
     await chooseFile(page);
+    await page.clock.install();
     await page.getByRole("button", { name: "Upload file" }).click();
+    await page.clock.runFor(121_000);
 
     const notice = page.getByTestId("import-failure");
     await expect(notice).toContainText("We couldn't confirm the import");
@@ -105,6 +107,32 @@ test.describe("import faults", () => {
     await expect(page.getByTestId("import-result-sentence")).toHaveText("1 vehicle imported.", {
       timeout: 15_000,
     });
+  });
+
+  test("a response lost after the upload saved is safe to retry without duplicates", async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await gotoFault(page, "import-post:lost_after_save");
+    await chooseFile(page);
+    await page.clock.install();
+    await page.getByRole("button", { name: "Upload file" }).click();
+    await page.clock.runFor(121_000);
+
+    const notice = page.getByTestId("import-failure");
+    await expect(notice).toContainText("We couldn't confirm the import", { timeout: 20_000 });
+    await expect(notice).toContainText("It's safe to upload again.");
+    await clearFault(page);
+    await notice.getByRole("button", { name: "Upload again" }).click();
+    await expect(page.getByTestId("import-result-sentence")).toHaveText("1 vehicle imported.", {
+      timeout: 20_000,
+    });
+    const rows = await page.evaluate(async () => {
+      const response = await fetch("/api/v1/vehicles?q=fault-import-1");
+      const payload = (await response.json()) as { data: unknown[] };
+      return payload.data.length;
+    });
+    expect(rows).toBe(1);
   });
 
   test("a forbidden upload offers a way back", async ({ page }) => {

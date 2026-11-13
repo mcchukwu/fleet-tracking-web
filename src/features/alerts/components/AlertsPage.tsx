@@ -281,6 +281,7 @@ function AlertsPageContent() {
               onRevealNew={feed.revealNew}
               highlightIds={feed.highlightIds}
               emptyReason={reason}
+              cancelled={feed.cancelled}
               onClearFilters={resetFilters}
               zoneFor={zoneFor}
               tripFor={tripFor}

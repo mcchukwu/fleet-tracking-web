@@ -11,6 +11,7 @@ import { Combobox } from "../../../ui/Combobox";
 import { Dialog } from "../../../ui/Dialog";
 import { Input } from "../../../ui/Input";
 import { Select } from "../../../ui/Select";
+import { useToast } from "../../../ui/Toast";
 import { activeDrivers, driverDescription } from "../../../lib/drivers";
 import {
   administrativeStatuses,
@@ -40,6 +41,7 @@ export function VehicleEditDialog({
   readOnly,
   readOnlyReason,
 }: VehicleEditDialogProps) {
+  const { toast } = useToast();
   const driversQuery = useDrivers();
   const write = useVehicleWrite(vehicle.id);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
@@ -90,6 +92,9 @@ export function VehicleEditDialog({
     if (Object.keys(update).length === 0) return;
     const outcome = await write.submit(update);
     if (outcome.status === "success" || outcome.status === "reconciled") {
+      if (outcome.status === "reconciled") {
+        toast({ title: "It was saved.", tone: "success", key: "vehicle-updated" });
+      }
       reset(toVehicleFormValues(vehicle));
       onSaved();
       onClose();

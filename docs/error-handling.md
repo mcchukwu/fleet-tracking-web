@@ -281,7 +281,7 @@ Each slice's rows are acceptance criteria. "Keeps" means what must not disappear
 
 Build a fault layer in Slice 0 and use it everywhere:
 
-- MSW helper `fault(kind, endpoint)` producing each taxonomy kind, plus `slow(ms)`, `malformed()` (schema-violating body), `unknownEnum()`, `lostResponse()` (request reaches the handler, the response never returns: the uncertain-outcome case).
+- MSW helper `fault(kind, endpoint)` producing each taxonomy kind, plus `slow(ms)`, `malformed()` (schema-violating body), `unknownEnum()`, `lostResponse()` (request reaches the handler, the response never returns: the uncertain-outcome case). `lost_after_save` runs the real handler first, so the mock state changes and reconcile can prove the write saved; `*` as the target faults every resource in one request.
 - In mock mode a dev-only query string forces faults for manual testing: `?fault=alerts:server`.
 - Unit tests: `normalize` for every kind, `catalog` completeness (every kind has copy), reconcile functions.
 - Playwright, for **every screen the slice adds**, run these scenarios and assert them:

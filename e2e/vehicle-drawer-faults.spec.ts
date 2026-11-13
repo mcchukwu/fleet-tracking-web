@@ -22,7 +22,7 @@ async function gotoFault(page: Page, fault: string): Promise<void> {
     .toBe(true);
 }
 
-test.describe("vehicle drawer faults", () => {
+test.describe("vehicle drawer faults", { tag: "@fault" }, () => {
   test("a detail server error keeps the live row, disables writes and offers Retry", async ({
     page,
   }) => {
@@ -186,4 +186,26 @@ test.describe("vehicle drawer faults", () => {
       await expectNoAxeViolations(page);
     },
   );
+});
+
+test.describe("vehicle uncertain writes", { tag: "@fault" }, () => {
+  test("a response lost after the edit saved reconciles the drawer", async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.goto(`/map?map=fake&v=${VEHICLE_2}`);
+    await expect(drawer(page)).toBeVisible();
+    await drawer(page).getByRole("button", { name: "Edit" }).click();
+    const dialog = page.getByRole("dialog", { name: `Edit ${PLATE_2}` });
+    await dialog.getByLabel("Plate").fill("LSD-101-AD");
+    await page.clock.install();
+    await page.evaluate(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("fault", "vehicle-patch:lost_after_save");
+      history.replaceState({}, "", `${url.pathname}${url.search}`);
+    });
+    await dialog.getByRole("button", { name: "Save changes" }).click();
+    await page.clock.runFor(16_000);
+
+    await expect(page.getByText("It was saved.").first()).toBeVisible({ timeout: 20_000 });
+    await expect(drawer(page)).toContainText("LSD-101-AD", { timeout: 20_000 });
+  });
 });

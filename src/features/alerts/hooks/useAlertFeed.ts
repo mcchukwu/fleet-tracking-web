@@ -12,6 +12,7 @@ export interface AlertFeedController {
   loadedCount: number;
   hasMore: boolean;
   isLoading: boolean;
+  cancelled: boolean;
   isFetching: boolean;
   isFetchingNextPage: boolean;
   error: unknown;
@@ -96,6 +97,7 @@ export function useAlertFeed(filters: AlertFilterValues): AlertFeedController {
     loadedCount: incoming.length,
     hasMore: query.hasNextPage ?? false,
     isLoading: query.isLoading && !cancelled,
+    cancelled,
     isFetching: query.isFetching,
     isFetchingNextPage: query.isFetchingNextPage,
     error: query.error,

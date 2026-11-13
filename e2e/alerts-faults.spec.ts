@@ -17,7 +17,7 @@ async function clearFault(page: Page): Promise<void> {
   });
 }
 
-test.describe("alerts faults", () => {
+test.describe("alerts faults", { tag: "@fault" }, () => {
   test("a server error with nothing cached shows the region error and Retry recovers", async ({
     page,
   }) => {
@@ -88,6 +88,14 @@ test.describe("alerts faults", () => {
     await page.getByRole("button", { name: "Cancel" }).click();
     await expect(page.getByText("Still working…")).toHaveCount(0);
     await expect(page.getByText("Taking longer than usual")).toHaveCount(0);
+    await expect(page.getByText("Loading cancelled")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Retry", exact: true })).toBeVisible();
+
+    await clearFault(page);
+    await page.getByRole("button", { name: "Retry", exact: true }).click();
+    await expect(page.getByTestId("alerts-page")).toContainText("10 loaded", {
+      timeout: 20_000,
+    });
   });
 
   test("a forbidden list shows the forbidden state", async ({ page }) => {
@@ -244,5 +252,52 @@ test.describe("alerts faults", () => {
     await expectNoHorizontalScroll(page);
     await expectNoAxeViolations(page);
     await captureForReview(page, "04-alerts-crash");
+  });
+});
+
+test.describe("alerts uncertain writes", { tag: "@fault" }, () => {
+  test("a response lost after the acknowledge saved reconciles the row", async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.goto("/alerts?map=fake&status=open");
+    const target = page
+      .getByRole("row")
+      .filter({ hasText: "LSD-102-AA" })
+      .filter({ hasText: "Geofence exit" });
+    await expect(target).toBeVisible({ timeout: 20_000 });
+    await page.clock.install();
+    await page.evaluate(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("fault", "alerts-post:lost_after_save");
+      history.replaceState({}, "", `${url.pathname}${url.search}`);
+    });
+
+    await target.getByRole("button", { name: /Acknowledge alert for/ }).click();
+    await page.clock.runFor(16_000);
+
+    await expect(page.getByText("Acknowledged.").first()).toBeVisible({ timeout: 20_000 });
+    await expect(target).toHaveCount(0, { timeout: 20_000 });
+    const writes = await page.evaluate(() => window.__FLEET_MOCK_WRITES__ ?? []);
+    expect(writes).toHaveLength(1);
+  });
+
+  test("a response lost after the rule toggle saved reconciles the switch", async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.goto("/alerts?map=fake&tab=rules");
+    const speeding = page.getByRole("listitem").filter({ hasText: "Speeding" });
+    await expect(speeding).toBeVisible({ timeout: 20_000 });
+    await page.clock.install();
+    await page.evaluate(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("fault", "alert-rules-patch:lost_after_save");
+      history.replaceState({}, "", `${url.pathname}${url.search}`);
+    });
+
+    await speeding.getByRole("checkbox", { name: "Enabled Speeding rule" }).click();
+    await page.clock.runFor(16_000);
+
+    await expect(page.getByText("Alert rule updated.").first()).toBeVisible({ timeout: 20_000 });
+    await expect(
+      speeding.getByRole("checkbox", { name: "Enabled Speeding rule" }),
+    ).not.toBeChecked();
   });
 });

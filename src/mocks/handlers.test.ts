@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { appendMockAlert, applyMockImport, freshenVehicles, resetMockState } from "./handlers";
+import { withFault } from "./faults";
 import { vehiclesFixture } from "./fixtures/vehicles";
 import { alertsFixture } from "./fixtures/alerts";
 import { perfVehicles } from "./perf";
@@ -1094,5 +1095,53 @@ describe("mock audit", () => {
       data: Array<{ action: string }>;
     };
     expect(afterReset.data[0]?.action).toBe(auditResponseFixture.data[0]?.action);
+  });
+});
+
+describe("mock fault layer", () => {
+  afterEach(() => {
+    resetMockState();
+  });
+
+  it("saves the write and then loses the response", async () => {
+    const controller = new AbortController();
+    const pending = fetch(
+      `${API}/vehicles/${vehicleId}?fault=${encodeURIComponent("vehicle-patch:lost_after_save")}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ colour: "orange" }),
+        signal: controller.signal,
+      },
+    );
+
+    const outcome = await Promise.race([
+      pending.then(() => "settled"),
+      new Promise<string>((resolve) => setTimeout(() => resolve("pending"), 100)),
+    ]);
+    expect(outcome).toBe("pending");
+
+    controller.abort();
+    await pending.catch(() => undefined);
+
+    const detail = (await (await fetch(`${API}/vehicles/${vehicleId}`)).json()) as {
+      data: { colour: string };
+    };
+    expect(detail.data.colour).toBe("orange");
+  });
+
+  it("the * target faults every resource", async () => {
+    const alerts = await withFault(
+      "alerts",
+      new Request(`${API}/alerts?fault=${encodeURIComponent("*:server")}`),
+      () => new Response("ok"),
+    );
+    const trips = await withFault(
+      "trips",
+      new Request(`${API}/trips?fault=${encodeURIComponent("*:server")}`),
+      () => new Response("ok"),
+    );
+    expect(alerts.status).toBe(500);
+    expect(trips.status).toBe(500);
   });
 });

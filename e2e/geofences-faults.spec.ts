@@ -1,6 +1,11 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { captureForReview, expectNoAxeViolations, expectNoHorizontalScroll } from "./helpers";
+import {
+  captureForReview,
+  expectNoAxeViolations,
+  expectNoHorizontalScroll,
+  primeOfflineSession,
+} from "./helpers";
 
 async function gotoFault(page: Page, fault: string, extra = ""): Promise<void> {
   await page.goto(
@@ -65,7 +70,7 @@ async function drawTriangle(page: Page): Promise<void> {
   await expect(page.getByText("Polygon ready.")).toBeVisible();
 }
 
-test.describe("geofences faults", () => {
+test.describe("geofences faults", { tag: "@fault" }, () => {
   test("a server error with nothing cached shows the region error and Retry recovers", async ({
     page,
   }) => {
@@ -165,9 +170,7 @@ test.describe("geofences faults", () => {
   });
 
   test("offline with no cache shows the neutral empty state", async ({ page }) => {
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator, "onLine", { configurable: true, get: () => false });
-    });
+    await primeOfflineSession(page);
     await page.goto("/geofences?map=fake&fault=geofences%3Anetwork");
     await expect(page.getByText("No geofences available offline")).toBeVisible({
       timeout: 15_000,
@@ -322,5 +325,48 @@ test.describe("geofences faults", () => {
     await expect(page.getByRole("banner")).toBeVisible();
     await expectNoHorizontalScroll(page);
     await captureForReview(page, "08-geofences-crash");
+  });
+});
+
+test.describe("geofences uncertain writes", { tag: "@fault" }, () => {
+  test("a response lost after the edit saved reconciles the new name", async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.goto("/geofences?map=fake");
+    await expectLoaded(page);
+    await row(page, "Border").click();
+    await page.getByRole("button", { name: "Edit" }).click();
+    const form = page.getByRole("form", { name: "Edit geofence" });
+    await form.getByLabel("Name").fill("Border North");
+    await page.clock.install();
+    await page.evaluate(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("fault", "geofences-patch:lost_after_save");
+      history.replaceState({}, "", `${url.pathname}${url.search}`);
+    });
+    await form.getByRole("button", { name: "Save changes" }).click();
+    await page.clock.runFor(16_000);
+
+    await expect(page.getByText("It was saved.").first()).toBeVisible({ timeout: 20_000 });
+    await expect(row(page, "Border North")).toBeVisible({ timeout: 20_000 });
+  });
+
+  test("a response lost after the delete saved reconciles the removal", async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.goto("/geofences?map=fake");
+    await expectLoaded(page);
+    await row(page, "Border").click();
+    await page.clock.install();
+    await page.evaluate(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("fault", "geofences-delete:lost_after_save");
+      history.replaceState({}, "", `${url.pathname}${url.search}`);
+    });
+    await page.getByRole("button", { name: "Delete" }).click();
+    const dialog = page.getByRole("dialog", { name: 'Delete geofence "Border"?' });
+    await dialog.getByRole("button", { name: "Delete" }).click();
+    await page.clock.runFor(16_000);
+
+    await expect(page.getByText("It was deleted.").first()).toBeVisible({ timeout: 20_000 });
+    await expect(row(page, "Border")).toHaveCount(0, { timeout: 20_000 });
   });
 });

@@ -387,26 +387,34 @@ test.describe("map", () => {
     expect(await scroller.evaluate((element) => element.scrollTop)).toBe(before);
   });
 
-  test("a map adapter failure leaves the vehicle list usable", async ({ page }) => {
-    await page.goto("/map?map=fake&adapter=error");
-    await expect(page.getByText("The map couldn't load")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole("button", { name: "Retry" }).first()).toBeVisible();
-    await openPanel(page);
-    await expect(page.getByText("Showing 25 of 25")).toBeVisible();
-    await expectNoAxeViolations(page);
-    await captureForReview(page, "02-map-adapter-error");
-  });
+  test(
+    "a map adapter failure leaves the vehicle list usable",
+    { tag: "@fault" },
+    async ({ page }) => {
+      await page.goto("/map?map=fake&adapter=error");
+      await expect(page.getByText("The map couldn't load")).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByRole("button", { name: "Retry" }).first()).toBeVisible();
+      await openPanel(page);
+      await expect(page.getByText("Showing 25 of 25")).toBeVisible();
+      await expectNoAxeViolations(page);
+      await captureForReview(page, "02-map-adapter-error");
+    },
+  );
 
-  test("a crash in the map overlay is contained by the panel boundary", async ({ page }) => {
-    await page.goto("/map?map=fake&crash=map");
-    await expect(page.getByText("This part of the page stopped working")).toBeVisible({
-      timeout: 15_000,
-    });
-    await openPanel(page);
-    await expect(page.getByText("Showing 25 of 25")).toBeVisible();
-    await expectNoAxeViolations(page);
-    await captureForReview(page, "02-map-render-crash");
-  });
+  test(
+    "a crash in the map overlay is contained by the panel boundary",
+    { tag: "@fault" },
+    async ({ page }) => {
+      await page.goto("/map?map=fake&crash=map");
+      await expect(page.getByText("This part of the page stopped working")).toBeVisible({
+        timeout: 15_000,
+      });
+      await openPanel(page);
+      await expect(page.getByText("Showing 25 of 25")).toBeVisible();
+      await expectNoAxeViolations(page);
+      await captureForReview(page, "02-map-render-crash");
+    },
+  );
 
   test("a slow snapshot request reports progress instead of a silent skeleton", async ({
     page,

@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { captureForReview, expectNoAxeViolations } from "./helpers";
+import { captureForReview, expectNoAxeViolations, primeOfflineSession } from "./helpers";
 
 async function setRole(page: Page, role = "admin"): Promise<void> {
   await page.addInitScript((value) => {
@@ -46,7 +46,7 @@ function unexpectedConsole(errors: string[]): string[] {
   );
 }
 
-test.describe("audit faults", () => {
+test.describe("audit faults", { tag: "@fault" }, () => {
   test.describe.configure({ timeout: 60_000 });
 
   test.beforeEach(async ({ page }) => {
@@ -138,12 +138,7 @@ test.describe("audit faults", () => {
 
   test("offline without a cache shows the neutral offline state", async ({ page }) => {
     const errors = collectErrors(page);
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator, "onLine", {
-        configurable: true,
-        get: () => false,
-      });
-    });
+    await primeOfflineSession(page, "admin");
     await page.goto("/audit");
     await expect(page.getByText("Audit isn't available offline")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole("button", { name: "Retry" })).toHaveCount(0);
@@ -153,7 +148,14 @@ test.describe("audit faults", () => {
 
   test("a session expiry shows the dialog and keeps the page", async ({ page }) => {
     const errors = collectErrors(page);
-    await page.goto(`/audit?fault=${encodeURIComponent("audit:unauthenticated")}`);
+    await page.goto("/audit");
+    await expect(page.getByTestId("audit-page")).toBeVisible({ timeout: 20_000 });
+    await page.evaluate(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("fault", "audit:unauthenticated");
+      history.replaceState({}, "", `${url.pathname}${url.search}`);
+    });
+    await page.getByRole("button", { name: "Refresh" }).click();
     const dialog = page.getByRole("dialog", { name: "Your session expired" });
     await expect(dialog).toBeVisible({ timeout: 15_000 });
     await expect

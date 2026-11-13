@@ -22,10 +22,13 @@ const OFFLINE_PROFILE_KEY = "fleet.offline-profile";
  * network, then makes every later navigation report offline. A static
  * same-origin document is used so the app does not boot and warm the cache.
  */
-export async function primeOfflineSession(page: Page): Promise<void> {
+export async function primeOfflineSession(
+  page: Page,
+  role: "admin" | "dispatcher" | "security" | "viewer" = "dispatcher",
+): Promise<void> {
   await page.goto("/favicon.svg");
   await page.evaluate(
-    async ({ key }) => {
+    async ({ key, role: storedRole }) => {
       const db = await new Promise<IDBDatabase>((resolve, reject) => {
         const request = indexedDB.open("keyval-store");
         request.onupgradeneeded = () => request.result.createObjectStore("keyval");
@@ -41,7 +44,7 @@ export async function primeOfflineSession(page: Page): Promise<void> {
               tenant_id: "tenant-demo",
               email: "dispatcher@demo.ftb",
               name: "Demo Dispatcher",
-              role: "dispatcher",
+              role: storedRole,
             },
             savedAt: Date.now(),
           },
@@ -52,7 +55,7 @@ export async function primeOfflineSession(page: Page): Promise<void> {
       });
       db.close();
     },
-    { key: OFFLINE_PROFILE_KEY },
+    { key: OFFLINE_PROFILE_KEY, role },
   );
   await page.addInitScript(() => {
     Object.defineProperty(navigator, "onLine", {
