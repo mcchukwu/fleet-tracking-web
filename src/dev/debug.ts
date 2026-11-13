@@ -15,6 +15,9 @@ export interface FleetDebugMapState {
   fitBounds: Bounds | null;
   fitCount: number;
   geofenceCount: number;
+  clusterCount: number;
+  unclusteredCount: number;
+  layerCount: number;
   stale: boolean;
 }
 
@@ -54,6 +57,7 @@ export interface FleetDebugSnapshot {
   map: FleetDebugMapState;
   playback: FleetDebugPlaybackState;
   pwa: FleetDebugPwaState;
+  leaks: { listeners: number; timers: number; sockets: number; byType: Record<string, number> };
 }
 
 export interface FleetDebugPlaybackState {
@@ -91,6 +95,9 @@ const emptyMapState: FleetDebugMapState = {
   fitBounds: null,
   fitCount: 0,
   geofenceCount: 0,
+  clusterCount: 0,
+  unclusteredCount: 0,
+  layerCount: 0,
   stale: false,
 };
 

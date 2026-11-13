@@ -114,7 +114,10 @@ function AuditPageContent() {
   function changeFilters(patch: Partial<AuditFilterValues>): void {
     const next: Partial<AuditSearch> = { entry: undefined };
     if ("action" in patch) next.action = patch.action ?? undefined;
-    if ("q" in patch) next.q = patch.q ?? undefined;
+    if ("q" in patch) {
+      const trimmed = patch.q?.trim() ?? "";
+      next.q = trimmed === "" ? undefined : trimmed;
+    }
     updateSearch(next);
   }
 

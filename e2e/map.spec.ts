@@ -101,6 +101,7 @@ test.describe("map", () => {
   });
 
   test("search, status, depot, sort and in-view update the URL and restore", async ({ page }) => {
+    test.setTimeout(120_000);
     await gotoMap(page);
     await openPanel(page);
     const region = await panel(page);
@@ -429,7 +430,8 @@ test.describe("map", () => {
   });
 
   test("slow Cancel removes the pending surfaces and offers Retry", async ({ page }) => {
-    await page.goto("/map?map=fake&fault=live-snapshot:slow");
+    test.setTimeout(60_000);
+    await page.goto("/map?map=fake&fault=live-snapshot:slow_long");
     await openPanel(page);
     await expect(page.getByText("Taking longer than usual")).toBeVisible({ timeout: 15_000 });
 

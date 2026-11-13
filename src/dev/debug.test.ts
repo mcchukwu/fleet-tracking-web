@@ -25,9 +25,13 @@ const snapshot: FleetDebugSnapshot = {
     hoveredKey: null,
     fitBounds: null,
     fitCount: 0,
+    clusterCount: 0,
+    unclusteredCount: 0,
+    layerCount: 0,
     geofenceCount: 0,
     stale: false,
   },
+  leaks: { listeners: 0, timers: 0, sockets: 0, byType: {} },
   pwa: {
     cacheSavedAt: null,
     mapCachedAt: null,

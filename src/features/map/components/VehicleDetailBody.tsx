@@ -83,7 +83,7 @@ export function VehicleDetailBody({
           />
           {showDetailSkeleton ? <VehicleDrawerSkeleton /> : null}
         </>
-      ) : view.state === "error" || view.state === "empty" ? (
+      ) : view.state === "error" ? (
         detailError && !vehicle && !row ? (
           <div className="p-4">
             <ErrorState error={detailError} onRetry={retryDetail} />

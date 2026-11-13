@@ -9,7 +9,6 @@ import {
   formatDistanceCompact,
   formatHeading,
   formatPlaybackDuration,
-  formatPlaybackRange,
   formatPercent,
   formatPlaybackTime,
   formatRangeLabel,
@@ -101,15 +100,6 @@ describe("playback formatting", () => {
 
   it("returns the missing value for an invalid instant", () => {
     expect(formatPlaybackTime("not-a-date")).toBe(MISSING);
-  });
-
-  it("formats a same-day range once and a cross-day range with both dates", () => {
-    expect(formatPlaybackRange(iso(2026, 11, 8, 14, 0), iso(2026, 11, 8, 16, 0))).toBe(
-      "14:00 – 16:00",
-    );
-    expect(formatPlaybackRange(iso(2026, 11, 8, 22, 0), iso(2026, 11, 9, 2, 0))).toBe(
-      "8 Nov 22:00 – 9 Nov 02:00",
-    );
   });
 
   it("detects a range that crosses local midnight", () => {

@@ -596,6 +596,12 @@ describe("report summary", () => {
     expect(result.summary.alerts_by_type).toEqual([]);
   });
 
+  it("rejects negative and fractional core counts", () => {
+    expect(() => parseReportSummary({ ...valid, open_alerts: -1 })).toThrow();
+    expect(() => parseReportSummary({ ...valid, trips: 2.5 })).toThrow();
+    expect(parseReportSummary({ ...valid, distance_km: 12.5 }).summary.distance_km).toBe(12.5);
+  });
+
   it("drops a malformed chart row and still parses the summary", () => {
     const result = parseReportSummary({
       ...valid,

@@ -318,12 +318,12 @@ export const historyResponseSchema = z.object({
 });
 
 const reportSummaryRowSchema = z.object({
-  vehicles: z.number(),
-  trips: z.number(),
-  completed_trips: z.number(),
-  active_trips: z.number(),
-  alerts: z.number(),
-  open_alerts: z.number(),
+  vehicles: z.number().int().nonnegative(),
+  trips: z.number().int().nonnegative(),
+  completed_trips: z.number().int().nonnegative(),
+  active_trips: z.number().int().nonnegative(),
+  alerts: z.number().int().nonnegative(),
+  open_alerts: z.number().int().nonnegative(),
   distance_km: z.number(),
   // Echo metadata: present in reality, absent from openapi.yaml, never required.
   from: z.string().optional(),

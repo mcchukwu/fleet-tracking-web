@@ -6,6 +6,7 @@ import {
   registerDebugSnapshot,
 } from "./debug";
 import { recordRequestFailure, resetErrorStorm } from "../errors/global";
+import { installLeakCounters, readLeakCounts } from "./leaks";
 import { freezeConnection, useConnectionStore, type ConnectionState } from "../stores/connection";
 import { useLiveStore } from "../stores/live";
 
@@ -41,10 +42,12 @@ export function installDebugHook(): () => void {
       map: readMapDebug(),
       playback: readPlaybackDebug(),
       pwa: readPwaDebug(),
+      leaks: readLeakCounts(),
     };
   });
 
   if (!debugEnabled()) return unregister;
+  const uninstallLeaks = installLeakCounters();
   Object.defineProperty(window, "__FLEET_TEST_CONNECTION__", {
     configurable: true,
     enumerable: false,
@@ -68,6 +71,7 @@ export function installDebugHook(): () => void {
   });
 
   return () => {
+    uninstallLeaks();
     unregister();
     Reflect.deleteProperty(window, "__FLEET_TEST_CONNECTION__");
     Reflect.deleteProperty(window, "__FLEET_TEST_STORM__");

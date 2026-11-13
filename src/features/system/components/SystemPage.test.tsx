@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -20,6 +20,19 @@ vi.mock("@tanstack/react-router", () => ({
 vi.mock("../hooks/useSystemHealthFeed", () => ({
   useSystemHealthFeed: () => mocks.feed,
 }));
+
+const counters = vi.hoisted(() => ({ groupRenders: 0 }));
+
+vi.mock("./SystemHealthGroup", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("./SystemHealthGroup")>();
+  return {
+    ...mod,
+    SystemHealthGroup: (props: Parameters<typeof mod.SystemHealthGroup>[0]) => {
+      counters.groupRenders += 1;
+      return <mod.SystemHealthGroup {...props} />;
+    },
+  };
+});
 
 function feed(overrides: Partial<SystemHealthFeed> = {}): SystemHealthFeed {
   return {
@@ -71,6 +84,16 @@ describe("SystemPage", () => {
     expect(screen.getByText("Received")).toBeVisible();
     expect(screen.getByText("72,180", { exact: true })).toBeVisible();
     await waitFor(() => expect(document.title).toBe("System health · Fleet Console"));
+  });
+
+  it("a live position batch does not rebuild the health groups", async () => {
+    renderPage();
+    await screen.findByText("Dependencies");
+    const before = counters.groupRenders;
+    act(() => {
+      useConnectionStore.setState({ lastDataAt: Date.now() });
+    });
+    expect(counters.groupRenders).toBe(before);
   });
 
   it("shows the skeleton after 200ms while the first load runs", async () => {

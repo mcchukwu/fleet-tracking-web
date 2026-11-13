@@ -43,6 +43,8 @@ interface Layout {
   sheetBottom: number;
   header: Box;
   scroller: Box;
+  /** The stale row above the list, when the fixture has outlived the data. */
+  staleHeight: number;
   listHeight: number;
   rows: Array<{
     box: Box;
@@ -116,6 +118,14 @@ async function readLayout(page: Page): Promise<Layout> {
         ? Math.max(1, Math.round(range.getBoundingClientRect().height / lineHeight))
         : 0;
 
+    const staleRow = [
+      ...document.querySelectorAll<HTMLElement>('[data-testid="sheet-content"] div'),
+    ].find(
+      (element) =>
+        element.children.length <= 1 && (element.textContent?.trim().includes("Stale ·") ?? false),
+    );
+    const staleHeight = staleRow?.getBoundingClientRect().height ?? 0;
+
     const rows = [...document.querySelectorAll<HTMLElement>("[data-vehicle-key]")].map((row) => {
       const content = row.querySelector<HTMLElement>("div.pointer-events-none");
       const divider = row.querySelector<HTMLElement>('[data-testid="row-divider"]');
@@ -148,6 +158,7 @@ async function readLayout(page: Page): Promise<Layout> {
       sheetBottom: sheetRect.bottom,
       header: box(header),
       scroller: box(scroller),
+      staleHeight,
       listHeight: Number.parseFloat(list.style.height),
       rows,
       controls: box(controls),
@@ -181,9 +192,12 @@ function assertRows(layout: Layout, scroll: Scroll, snap: Snap): void {
     // rows. The list region is exactly the header's height: zero.
     expect(rows, "peek renders list rows").toHaveLength(0);
     const peekInset = Math.max(layout.safeBottom, layout.sheetPaddingBottom);
-    expect(layout.scroller.y, "peek list top").toBeCloseTo(layout.header.bottom, 0);
+    expect(layout.scroller.y, "peek list top").toBeCloseTo(
+      layout.header.bottom + layout.staleHeight,
+      0,
+    );
     expect(layout.scroller.bottom, "peek list bottom").toBeCloseTo(
-      layout.sheetBottom - peekInset,
+      layout.sheetBottom - peekInset + layout.staleHeight,
       0,
     );
     expect(layout.listHeight, "peek virtual total").toBeCloseTo(
@@ -232,12 +246,13 @@ function assertRows(layout: Layout, scroll: Scroll, snap: Snap): void {
 
   expect(layout.listHeight, "virtual total").toBeCloseTo(layout.vehicleCount * ROW_HEIGHT, 0);
 
-  // The list starts at the header's bottom and fills down to the sheet's bottom.
+  // The list starts below the header (and an optional stale label) and fills
+  // down to the sheet's bottom.
   const bottomInset = Math.max(layout.safeBottom, layout.sheetPaddingBottom);
-  expect(layout.scroller.y, "list top").toBeCloseTo(layout.header.bottom, 0);
+  expect(layout.scroller.y, "list top").toBeCloseTo(layout.header.bottom + layout.staleHeight, 0);
   expect(layout.scroller.bottom, "list bottom").toBeCloseTo(layout.sheetBottom - bottomInset, 0);
   expect(layout.scroller.height, "list height").toBeCloseTo(
-    layout.sheet.height - layout.header.height - bottomInset,
+    layout.sheet.height - layout.header.height - layout.staleHeight - bottomInset,
     0,
   );
 
@@ -300,6 +315,20 @@ async function setSnap(page: Page, snap: Snap): Promise<void> {
   if (snap === "full") await page.keyboard.press("End");
   await expect(handle).toHaveAttribute("aria-expanded", snap === "peek" ? "false" : "true");
   await page.waitForTimeout(350);
+  // The sheet animates between snaps; do not measure mid-transition.
+  await page.waitForFunction(
+    () => {
+      const sheet = document.querySelector('section[aria-label="Vehicles"]');
+      if (!sheet) return false;
+      const top = sheet.getBoundingClientRect().top;
+      const probe = window as Window & { __sheetTop?: number };
+      const stable = probe.__sheetTop !== undefined && Math.abs(probe.__sheetTop - top) < 0.5;
+      probe.__sheetTop = top;
+      return stable;
+    },
+    undefined,
+    { polling: 100, timeout: 5_000 },
+  );
 }
 
 async function setScroll(page: Page, scroll: Scroll): Promise<void> {
@@ -359,6 +388,20 @@ test.describe("mobile sheet rows and attribution", { tag: "@theme" }, () => {
       await captureForReview(page, `sheet-rows-${viewport.width}x${viewport.height}-peek`);
     });
   }
+
+  test("the header returns to the last open snap, not always to half", async ({ page }) => {
+    test.skip((page.viewportSize()?.width ?? 1440) >= 1024, "mobile-only layout");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await gotoFleet(page, 25);
+    const handle = page.getByRole("button", { name: /Showing \d+ of \d+/ });
+
+    await setSnap(page, "full");
+    await page.keyboard.press("Home");
+    await expect(handle).toHaveAttribute("aria-expanded", "false");
+    await handle.click();
+    await expect(handle).toHaveAttribute("aria-expanded", "true");
+    await expect(page.locator("[data-snap]").first()).toHaveAttribute("data-snap", "full");
+  });
 
   test("the last row clears a bottom safe-area inset", async ({ page }) => {
     test.skip((page.viewportSize()?.width ?? 1440) >= 1024, "mobile-only layout");

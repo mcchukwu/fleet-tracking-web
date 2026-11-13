@@ -141,12 +141,7 @@ export function formatRangeLabel(from: string, to: string): string {
   const start = dateOf(from);
   const end = dateOf(to);
   if (!start || !end) return MISSING;
-  const time = (date: Date): string =>
-    new Intl.DateTimeFormat("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }).format(date);
+  const time = minutesOnly;
   const day = (date: Date, withYear: boolean): string =>
     new Intl.DateTimeFormat("en-GB", {
       day: "numeric",
@@ -218,24 +213,6 @@ function minutesOnly(date: Date): string {
     minute: "2-digit",
     hour12: false,
   }).format(date);
-}
-
-export function formatPlaybackRange(from: string, to: string): string {
-  const start = playbackDate(from);
-  const end = playbackDate(to);
-  if (!start || !end) return MISSING;
-  if (localDay(start) === localDay(end)) {
-    return `${minutesOnly(start)} – ${minutesOnly(end)}`;
-  }
-  const startDay = new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short",
-  }).format(start);
-  const endDay = new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short",
-  }).format(end);
-  return `${startDay} ${minutesOnly(start)} – ${endDay} ${minutesOnly(end)}`;
 }
 
 export function formatPlaybackDuration(ms: number): string {

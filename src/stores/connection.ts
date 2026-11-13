@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { onlineManager } from "@tanstack/react-query";
-import { useNow } from "../lib/ticker";
 import { setReportedOnline } from "../errors/report";
 
 export type NetworkState = "online" | "offline";
@@ -97,13 +96,6 @@ export function useConnection() {
       socketDownAt: state.socketDownAt,
     })),
   );
-}
-
-export function useDataAge(): number | null {
-  const lastDataAt = useConnectionStore((state) => state.lastDataAt);
-  const now = useNow();
-  if (lastDataAt === null) return null;
-  return Math.max(0, Math.floor((now - lastDataAt) / 1000));
 }
 
 function applyNetwork(next: NetworkState): void {

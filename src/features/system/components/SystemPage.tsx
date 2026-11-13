@@ -8,7 +8,7 @@ import { formatClockTime } from "../../../lib/format";
 import { useDelayedFlag } from "../../../lib/useDelayedFlag";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useNow } from "../../../lib/ticker";
-import { useConnection } from "../../../stores/connection";
+import { useConnectionStore } from "../../../stores/connection";
 import { Button } from "../../../ui/Button";
 import { PageFrame } from "../../../ui/PageFrame";
 import { EmptyState, Skeleton } from "../../../ui/StatePanel";
@@ -35,7 +35,9 @@ export function SystemPage() {
 function SystemPageContent() {
   useDocumentTitle("System health");
   const feed = useSystemHealthFeed();
-  const { lastDataAt } = useConnection();
+  // Read the latest report imperatively: the 30s ticker and the 10s poll
+  // re-render this page, so a position batch must not rebuild every group.
+  const lastDataAt = useConnectionStore.getState().lastDataAt;
   const now = useNow();
   const storm = useErrorStorm();
   const retryRef = useRef<HTMLButtonElement>(null);

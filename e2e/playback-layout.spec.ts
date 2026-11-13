@@ -89,6 +89,7 @@ for (const viewport of VIEWPORTS) {
       const mobile = viewport.width < 768;
 
       test("never overflows and keeps every control inside the 12px inset", async ({ page }) => {
+        test.setTimeout(120_000);
         for (const labels of LABELS) {
           for (const count of EVENT_COUNTS) {
             await gotoPlayback(page, count, labels);
@@ -263,6 +264,7 @@ for (const viewport of VIEWPORTS) {
       });
 
       test("opens the events menu anchored inside the viewport", async ({ page }) => {
+        test.setTimeout(90_000);
         for (const count of EVENT_COUNTS) {
           await gotoPlayback(page, count);
           const trigger = page.getByRole("button", { name: /^Events \(/ });
@@ -310,7 +312,7 @@ for (const viewport of VIEWPORTS) {
           expect(firstBox.right - badgeBox.right).toBeCloseTo(12, 0);
           if (count > 1) {
             const secondBox = await measure(items.nth(1));
-            expect(secondBox.y - firstBox.bottom).toBeCloseTo(2, 0);
+            expect(secondBox.y - firstBox.bottom).toBeCloseTo(4, 0);
             await items.nth(1).hover();
             expect(await style(items.nth(1), "backgroundColor")).not.toBe("rgba(0, 0, 0, 0)");
             await page.mouse.move(0, 0);

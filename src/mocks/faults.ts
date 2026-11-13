@@ -15,6 +15,7 @@ export type FaultKind =
   | "unavailable"
   | "contract"
   | "slow"
+  | "slow_long"
   | "malformed"
   | "unknown_enum"
   | "lost"
@@ -35,6 +36,7 @@ const faultKinds = new Set<string>([
   "unavailable",
   "contract",
   "slow",
+  "slow_long",
   "malformed",
   "unknown_enum",
   "lost",
@@ -123,6 +125,10 @@ export function faultResponse(kind: FaultKind, retryAfterSec = 30): Promise<Resp
       return lostResponse();
     case "slow":
       return delay(12_000).then(() => HttpResponse.json({ data: [] }));
+    // Long enough that the 10s notice and its Cancel can be exercised without
+    // racing the response.
+    case "slow_long":
+      return delay(25_000).then(() => HttpResponse.json({ data: [] }));
   }
 }
 

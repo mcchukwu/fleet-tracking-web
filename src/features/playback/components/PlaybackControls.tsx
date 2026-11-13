@@ -3,13 +3,7 @@ import type { Ref } from "react";
 import type { AppError } from "../../../errors/types";
 import { ErrorState } from "../../../errors/ErrorState";
 import { SlowNotice } from "../../../errors/SlowNotice";
-import {
-  MISSING,
-  formatHeading,
-  formatPlaybackTime,
-  formatSpeed,
-  spansLocalDays,
-} from "../../../lib/format";
+import { formatPlaybackTime, spansLocalDays } from "../../../lib/format";
 import { useDelayedFlag } from "../../../lib/useDelayedFlag";
 import { IconButton } from "../../../ui/IconButton";
 import { Select } from "../../../ui/Select";
@@ -18,6 +12,7 @@ import { cn } from "../../../ui/cn";
 import type { PlaybackEvent } from "../lib/events";
 import { gapLabel, type Cursor, type RouteGap } from "../lib/history";
 import { MAX_VISIBLE_GAP_LABELS, PLAYBACK_SPEEDS } from "../lib/constants";
+import { PlaybackReadouts } from "./PlaybackReadouts";
 import { PlaybackScrubber } from "./PlaybackScrubber";
 
 export interface PlaybackControlsProps {
@@ -159,17 +154,11 @@ export function PlaybackControls({
                   icon={<SkipForward aria-hidden="true" className="size-4" strokeWidth={1.5} />}
                 />
               </fieldset>
-              <div
-                data-testid="playback-readout"
+              <PlaybackReadouts
+                cursor={cursor}
+                inGap={inGap}
                 className="hidden shrink-0 items-center gap-3 text-sm md:order-2 md:flex"
-              >
-                <span className="min-w-16 text-right tabular-nums">
-                  {formatSpeed(inGap ? null : cursor.speedKph)}
-                </span>
-                <span className="min-w-14 tabular-nums">
-                  {inGap ? MISSING : formatHeading(cursor.headingDeg)}
-                </span>
-              </div>
+              />
               <div className="order-3 shrink-0 md:order-4">
                 <Select
                   label="Playback speed"

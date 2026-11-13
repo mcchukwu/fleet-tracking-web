@@ -13,7 +13,6 @@ import type {
   Padding,
   Viewport,
 } from "../../../map/types";
-import { LoadingBar } from "../../../ui/StatePanel";
 import type { VehicleRow } from "../lib/filter";
 import { MapTooltip } from "./MapTooltip";
 
@@ -26,7 +25,6 @@ export interface MapViewProps {
   hoverPoint: { x: number; y: number } | null;
   dimmed: boolean;
   baseStyle: MapStyleId;
-  loading: boolean;
   error: AppError | null;
   hasData: boolean;
   showErrorOverlay: boolean;
@@ -56,7 +54,6 @@ export function MapView({
   hoverPoint,
   dimmed,
   baseStyle,
-  loading,
   error,
   hasData,
   showErrorOverlay,
@@ -160,12 +157,6 @@ export function MapView({
         onReady={handleReady}
         onError={handleError}
       />
-
-      {loading && !hasData ? (
-        <div className="z-map-controls absolute inset-x-0 top-0">
-          <LoadingBar label="Loading vehicles" />
-        </div>
-      ) : null}
 
       {error && !hasData && showErrorOverlay ? (
         <div

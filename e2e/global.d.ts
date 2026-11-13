@@ -42,7 +42,16 @@ declare global {
         fitBounds: { south: number; west: number; north: number; east: number } | null;
         fitCount: number;
         geofenceCount: number;
+        clusterCount: number;
+        unclusteredCount: number;
+        layerCount: number;
         stale: boolean;
+      };
+      leaks: {
+        listeners: number;
+        timers: number;
+        sockets: number;
+        byType: Record<string, number>;
       };
       pwa: {
         cacheSavedAt: number | null;

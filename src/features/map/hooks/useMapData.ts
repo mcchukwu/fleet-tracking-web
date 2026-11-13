@@ -65,7 +65,6 @@ export interface MapData {
   online: number;
   activeTrips: number;
   lastDataAtMs: number | null;
-  lastDataAgeSeconds: number | null;
   now: number;
 }
 
@@ -97,8 +96,6 @@ export function useMapData({ snapshot, alerts, selectedId, hoveredKey }: UseMapD
           : latest,
       null,
     );
-    const lastDataAgeSeconds =
-      lastDataAtMs === null ? null : Math.max(0, Math.floor((now - lastDataAtMs) / 1_000));
     const activeTrips = vehicles.filter((vehicle) => vehicle.trip_status === "active").length;
 
     return {
@@ -106,7 +103,6 @@ export function useMapData({ snapshot, alerts, selectedId, hoveredKey }: UseMapD
       total: vehicles.length,
       activeTrips,
       lastDataAtMs,
-      lastDataAgeSeconds,
       now,
     };
   }, [snapshot, alerts, now]);
@@ -146,7 +142,6 @@ export function useMapData({ snapshot, alerts, selectedId, hoveredKey }: UseMapD
     online: rows.rows.filter((row) => row.online).length,
     activeTrips: rows.activeTrips,
     lastDataAtMs: rows.lastDataAtMs,
-    lastDataAgeSeconds: rows.lastDataAgeSeconds,
     now,
   };
 }

@@ -8,11 +8,22 @@ export interface WarmMapOptions {
   signal?: AbortSignal;
   fetcher?: typeof fetch;
   waitForController?: () => Promise<boolean>;
+  isCached?: (url: string) => Promise<boolean>;
   now?: () => number;
 }
 
 let warming: Promise<boolean> | null = null;
 let warmedFor: string | null = null;
+
+/** iOS may evict the pack between sessions; the flag alone is not proof. */
+async function hasCachedResponse(url: string): Promise<boolean> {
+  if (typeof caches === "undefined") return false;
+  try {
+    return (await caches.match(url)) !== undefined;
+  } catch {
+    return false;
+  }
+}
 
 async function waitForServiceWorker(timeoutMs = CONTROLLER_TIMEOUT_MS): Promise<boolean> {
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return false;
@@ -43,7 +54,8 @@ async function waitForServiceWorker(timeoutMs = CONTROLLER_TIMEOUT_MS): Promise<
  */
 export async function warmMap(url: string, options: WarmMapOptions = {}): Promise<boolean> {
   if (url === "") return false;
-  if (warmedFor === url) return true;
+  const cached = options.isCached ?? hasCachedResponse;
+  if (warmedFor === url && (await cached(url))) return true;
   if (warming) return warming;
   if (!onlineManager.isOnline()) return false;
   if (options.signal?.aborted) return false;

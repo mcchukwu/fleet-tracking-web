@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useRef,
   useState,
   type CSSProperties,
@@ -9,6 +10,7 @@ import { formatPlaybackTime } from "../../../lib/format";
 import { cn } from "../../../ui/cn";
 import { nearestEventIndex, type PlaybackEvent } from "../lib/events";
 import type { RouteGap } from "../lib/history";
+import { PlaybackEventMarkers } from "./PlaybackEventMarkers";
 
 export interface PlaybackScrubberProps {
   fromMs: number;
@@ -23,28 +25,6 @@ export interface PlaybackScrubberProps {
 }
 
 const STEP_MS = 1_000;
-const DOT_INSET_PX = 4;
-
-const severityColor: Record<string, string> = {
-  low: "text-sev-low",
-  medium: "text-sev-medium",
-  high: "text-sev-high",
-  critical: "text-sev-critical",
-};
-
-const severityShape: Record<string, string> = {
-  low: "h-1 w-2 rounded-full",
-  medium: "size-2 rounded-full",
-  high: "size-2 rotate-45 rounded-none",
-  critical: "size-2 rounded-none",
-};
-
-function percentLeft(percent: number): CSSProperties {
-  // guard-ignore: runtime event position, clamped so the dot never protrudes over a time label.
-  return {
-    left: `clamp(${DOT_INSET_PX}px, ${percent}%, calc(100% - ${DOT_INSET_PX}px))`,
-  };
-}
 
 function bandStyle(startPercent: number, widthPercent: number): CSSProperties {
   // guard-ignore: runtime gap band; no utility class can express an arbitrary percentage width.
@@ -141,32 +121,41 @@ export function PlaybackScrubber({
     if (event.pointerType === "touch") setPreviewIndex(null);
   };
 
-  const focusMarker = (index: number) => {
-    const next = (index + events.length) % events.length;
-    setActiveIndex(next);
-    markerRefs.current[next]?.focus();
-  };
+  const focusMarker = useCallback(
+    (index: number) => {
+      const next = (index + events.length) % events.length;
+      setActiveIndex(next);
+      markerRefs.current[next]?.focus();
+    },
+    [events.length],
+  );
 
-  const handleMarkerKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
-    if (events.length === 0) return;
-    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
-      event.preventDefault();
-      event.stopPropagation();
-      focusMarker(index + 1);
-    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-      event.preventDefault();
-      event.stopPropagation();
-      focusMarker(index - 1);
-    } else if (event.key === "Home") {
-      event.preventDefault();
-      event.stopPropagation();
-      focusMarker(0);
-    } else if (event.key === "End") {
-      event.preventDefault();
-      event.stopPropagation();
-      focusMarker(events.length - 1);
-    }
-  };
+  const handleMarkerKeyDown = useCallback(
+    (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
+      if (events.length === 0) return;
+      if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+        event.preventDefault();
+        event.stopPropagation();
+        focusMarker(index + 1);
+      } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+        event.preventDefault();
+        event.stopPropagation();
+        focusMarker(index - 1);
+      } else if (event.key === "Home") {
+        event.preventDefault();
+        event.stopPropagation();
+        focusMarker(0);
+      } else if (event.key === "End") {
+        event.preventDefault();
+        event.stopPropagation();
+        focusMarker(events.length - 1);
+      }
+    },
+    [events.length, focusMarker],
+  );
+
+  const focusMarkerAt = useCallback((index: number) => setActiveIndex(index), []);
+  const seekToEvent = useCallback((atMs: number) => onSeek(atMs), [onSeek]);
 
   return (
     <div data-testid="playback-scrubber" className={cn("flex min-w-0 items-end gap-2", className)}>
@@ -188,34 +177,15 @@ export function PlaybackScrubber({
           onPointerCancel={() => setPreviewIndex(null)}
           onPointerLeave={() => setPreviewIndex(null)}
         >
-          {events.map((event, index) => (
-            <button
-              key={event.key}
-              ref={(node) => {
-                markerRefs.current[index] = node;
-              }}
-              type="button"
-              data-testid="playback-event-marker"
-              tabIndex={index === rovingIndex ? 0 : -1}
-              aria-label={`${event.label}${event.severity ? ` (${event.severity})` : ""} at ${formatPlaybackTime(event.at, includeDate)}`}
-              onClick={() => onSeek(event.atMs)}
-              onFocus={() => setActiveIndex(index)}
-              onKeyDown={(keyEvent) => handleMarkerKeyDown(keyEvent, index)}
-              className={cn(
-                "group size-touch md:size-control-sm pointer-events-none absolute top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-sm outline-none",
-                event.severity ? severityColor[event.severity] : "text-muted",
-              )}
-              style={percentLeft(event.percent)}
-            >
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "group-focus-visible:ring-focus-ring group-focus-visible:ring-offset-surface block bg-current group-focus-visible:ring-2 group-focus-visible:ring-offset-2",
-                  event.severity ? severityShape[event.severity] : "size-2 rounded-full",
-                )}
-              />
-            </button>
-          ))}
+          <PlaybackEventMarkers
+            events={events}
+            includeDate={includeDate}
+            rovingIndex={rovingIndex}
+            markerRefs={markerRefs}
+            onSeek={seekToEvent}
+            onFocusMarker={focusMarkerAt}
+            onKeyDown={handleMarkerKeyDown}
+          />
         </div>
         <div
           ref={trackRef}

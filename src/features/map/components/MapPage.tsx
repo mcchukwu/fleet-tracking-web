@@ -146,6 +146,8 @@ export function MapPage() {
   const drawerOpen = selectedId !== null;
   const panelVisible = preferences.panelOpen && (!drawerOpen || isXl);
   const sheetSnap = drawerOpen && !isDesktop ? detailSnap : listSnap;
+  // The header toggle returns to the last open snap, not always to half.
+  const [lastListSnap, setLastListSnap] = useState<Exclude<SheetSnap, "peek">>("half");
 
   const offline = network === "offline";
   // Offline is only a layout variant when the provider cannot serve its map.
@@ -635,7 +637,6 @@ export function MapPage() {
               hoverPoint={hoverPoint}
               dimmed={offline}
               baseStyle={mapStyle.effectiveStyle}
-              loading={snapshotPending}
               error={snapshotPending ? null : snapshotError}
               hasData={hasData}
               showErrorOverlay
@@ -747,7 +748,11 @@ export function MapPage() {
           ) : !listOnly ? (
             <MobileVehicleSheet
               snap={listSnap}
-              onSnap={setListSnap}
+              restoreSnap={lastListSnap}
+              onSnap={(next) => {
+                if (listSnap !== "peek") setLastListSnap(listSnap);
+                setListSnap(next);
+              }}
               shown={rows.length}
               total={data.total}
               filters={filters}

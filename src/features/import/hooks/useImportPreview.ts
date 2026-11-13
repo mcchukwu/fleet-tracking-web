@@ -1,3 +1,4 @@
+import { IMPORT_FILE_EXTENSION } from "../lib/constants";
 import { useEffect, useRef, useState } from "react";
 import {
   buildImportPreview,
@@ -15,7 +16,7 @@ export interface ImportPreviewController {
 }
 
 function extensionIsCsv(name: string): boolean {
-  return name.toLowerCase().endsWith(".csv");
+  return name.toLowerCase().endsWith(IMPORT_FILE_EXTENSION);
 }
 
 export function useImportPreview(file: File | null): ImportPreviewController {

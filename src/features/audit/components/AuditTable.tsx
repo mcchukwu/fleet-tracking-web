@@ -77,7 +77,8 @@ function AuditTimeCell({ entry, onOpen }: { entry: AuditEntry; onOpen: () => voi
 
 function AuditTableSkeleton() {
   return (
-    <output aria-busy="true" aria-label="Loading audit log" className="block">
+    // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- <output> cannot wrap a table.
+    <div role="status" aria-busy="true" aria-label="Loading audit log" className="block">
       <div className="border-border overflow-x-auto rounded-lg border">
         <table
           className="w-full table-fixed border-collapse text-sm"
@@ -111,7 +112,7 @@ function AuditTableSkeleton() {
           </tbody>
         </table>
       </div>
-    </output>
+    </div>
   );
 }
 
@@ -320,7 +321,7 @@ export function AuditTable({
             label="Audit log"
             columns={columns}
             rows={rowsToRender}
-            rowKey={(entry, index) => `${String(entry.id)}:${index}`}
+            rowKey={(entry) => String(entry.id)}
             className="min-h-0 flex-1"
             topSpacer={paddingTop}
             bottomSpacer={paddingBottom}

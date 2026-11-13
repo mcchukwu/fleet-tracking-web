@@ -48,6 +48,19 @@ describe("map warm-up", () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
+  it("re-warms when the cached pack was evicted even though the flag is set", async () => {
+    const fetcher = vi.fn().mockResolvedValue(response());
+    const options = {
+      fetcher: fetcher as unknown as typeof fetch,
+      waitForController: async () => true,
+      isCached: async () => false,
+      now: () => 1,
+    };
+    await expect(warmMap("/map/fleet.pmtiles", options)).resolves.toBe(true);
+    await expect(warmMap("/map/fleet.pmtiles", options)).resolves.toBe(true);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
   it("does nothing without a controller", async () => {
     const fetcher = vi.fn();
     await expect(

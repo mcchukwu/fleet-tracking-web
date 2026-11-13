@@ -1,3 +1,4 @@
+import { setMapDebug } from "../../../dev/debug";
 import { normalize } from "../../../errors/normalize";
 import { MapError } from "../../../errors/types";
 import type { StyleSpecification } from "maplibre-gl";
@@ -455,6 +456,17 @@ export function createMapLibreAdapter(options: MapLibreAdapterOptions = {}): Map
     instance.on("moveend", () => {
       if (instance !== map) return;
       emit("viewportChange", viewportOf(instance));
+    });
+
+    instance.on("idle", () => {
+      if (instance !== map) return;
+      const layers = instance.getStyle().layers ?? [];
+      setMapDebug({
+        clusterCount: instance.queryRenderedFeatures({ layers: [LAYER_IDS.clusterCircle] }).length,
+        unclusteredCount: instance.queryRenderedFeatures({ layers: [LAYER_IDS.vehicleCircle] })
+          .length,
+        layerCount: layers.length,
+      });
     });
 
     instance.on("click", (event: MapMouseEvent) => {

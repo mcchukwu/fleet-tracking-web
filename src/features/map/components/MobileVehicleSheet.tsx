@@ -17,6 +17,7 @@ function sheetVisibleStyle(visible: number): CSSProperties {
 export interface MobileVehicleSheetProps {
   snap: SheetSnap;
   onSnap: (snap: SheetSnap) => void;
+  restoreSnap?: Exclude<SheetSnap, "peek">;
   shown: number;
   total: number;
   filters: MapFilterValues;
@@ -36,6 +37,7 @@ export interface MobileVehicleSheetProps {
 export function MobileVehicleSheet({
   snap,
   onSnap,
+  restoreSnap = "half",
   shown,
   total,
   filters,
@@ -85,7 +87,7 @@ export function MobileVehicleSheet({
             aria-expanded={snap !== "peek"}
             aria-controls="mobile-vehicle-panel"
             className="h-touch focus-visible:outline-focus-ring flex min-w-0 flex-1 items-center gap-2 rounded-md text-left focus-visible:outline-2 focus-visible:outline-offset-0"
-            onClick={() => onSnap(toggleSheetSnap(snap, "half"))}
+            onClick={() => onSnap(toggleSheetSnap(snap, restoreSnap))}
             onKeyDown={(event) => {
               if (event.key === "ArrowUp") {
                 event.preventDefault();

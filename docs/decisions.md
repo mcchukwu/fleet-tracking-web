@@ -829,3 +829,39 @@ Trade-off: the panel, search and control offsets now have one owner in `tokens.c
 Both `Input` and `SearchField` render their error text with `role="alert"` and keep `aria-describedby` pointing at it. A field error is announced once, when it appears, and the field remains linked for later focus.
 
 Trade-off: a form that already wraps its errors in an alert could double-announce; the form-level surface owns submission errors, and field-level errors stay on the field.
+
+## 2026-11-13: The 5,000-vehicle path still coalesces per frame
+
+The stress fixture re-ran on 2026-11-13 after route splitting: 500 messages produced a frame count above five times the batch count, and the test that used to take 19s under parallel load completed in 4.9s on a quiet host. No work moved into the per-message path; `setVehicleDataSoon` still batches source updates.
+
+Trade-off: the assertion is a ratio, not a wall-clock budget, so a slower host does not fail the test; the recorded run is the regression baseline in the report.
+
+## 2026-11-13: The real adapter's pan budget is 500ms
+
+A warmed 20-step pointer pan on the 25-vehicle fixture, through MapLibre with a mocked style, must keep its longest long task under 500ms (`e2e/map-perf.spec.ts`). The first cold pan measured 632ms because it included shader and source warm-up; the test now pans four steps before starting the observer. The same fixture proves clustering at the fitted zoom, no clusters at street zoom, and that fit-to-fleet does not re-run after a user pan.
+
+Trade-off: a headless WebGL budget is coarser than a device measurement. It catches a real regression in the render loop, not raster quality.
+
+## 2026-11-13: Leak counters track long-lived targets only
+
+`src/dev/leaks.ts` wraps `EventTarget` listeners, timers and `WebSocket` construction only in debug builds. The listener count covers `window`, `document`, `AbortSignal` and `MediaQueryList`; element and socket listeners are excluded because they die with their target and counting them retains detached nodes. The 50-navigation e2e sweep asserts listener growth of at most 5 and socket growth of at most 1.
+
+Timers include TanStack Query's five-minute `gcTime` timers, one per unmounted query, so their allowed growth is bounded rather than zero; a listener that grows per screen is the failure this catches.
+
+## 2026-11-13: Playback readouts and event markers are separate memo surfaces
+
+`PlaybackReadouts` owns the speed/heading text that changes on every clock tick, and `PlaybackEventMarkers` is memoised with stable callbacks so the 20fps clock does not rebuild the event buttons in the scrubber. `SystemPage` reads `lastDataAt` imperatively and re-renders on the 30s ticker or the 10s poll, not on every live position batch.
+
+Trade-off: the scrubber still re-renders per tick because its slider value changes; that is the one element that must move.
+
+## 2026-11-13: The silhouette marker is deliberately skipped
+
+The optional top-down vehicle silhouettes (truck, tanker, van, car) at zoom 16+ were not built. The spec permits them only when they cost nothing measurable, and proving that needs a new SDF sprite set, a symbol-layer change and a 5,000-vehicle re-measurement; the existing circle plus heading chevron already carries status by shape and colour. The item stays in `docs/backlog.md` for a slice that can spend the measurement budget.
+
+Trade-off: no vehicle-type silhouette at street zoom. Nothing regresses; the chevron remains the heading cue.
+
+## 2026-11-13: The sheet's stale label is part of the measured layout
+
+`e2e/sheet-rows.spec.ts` now measures the list from the header's bottom **plus** the stale row when the mock fleet has outlived the 15s freshness window. The stale badge is a real state variant of the sheet, not a fixed zero-height element; the virtual total and the row invariants are unchanged. The suite also waits for the sheet's position to stabilise between snaps instead of trusting a fixed 350ms transition.
+
+Trade-off: a test that runs longer than the freshness window no longer reports a false row-alignment failure, but the assertion is conditional on the header, stale row and sheet bottom together, which is what the user sees.

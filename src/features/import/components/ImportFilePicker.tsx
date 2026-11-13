@@ -2,6 +2,7 @@ import { FileUp, X } from "lucide-react";
 import { useRef, useState, type DragEvent, type Ref } from "react";
 import { formatBytes } from "../../../lib/format";
 import { Button } from "../../../ui/Button";
+import { IMPORT_FILE_EXTENSION } from "../lib/constants";
 import { cn } from "../../../ui/cn";
 
 export interface ImportFilePickerProps {
@@ -67,7 +68,9 @@ export function ImportFilePicker({
       >
         <div className="flex items-center gap-2">
           <FileUp aria-hidden="true" className="text-subtle size-5 shrink-0" strokeWidth={1.5} />
-          <p className="text-text text-sm">Drop a .csv here, or choose a file.</p>
+          <p className="text-text text-sm">
+            Drop a {IMPORT_FILE_EXTENSION} here, or choose a file.
+          </p>
         </div>
         <Button
           ref={chooseButtonRef}
@@ -81,7 +84,7 @@ export function ImportFilePicker({
           ref={inputRef}
           data-testid="import-file-input"
           type="file"
-          accept=".csv,text/csv"
+          accept={`${IMPORT_FILE_EXTENSION},text/csv`}
           aria-label="Choose a CSV file"
           tabIndex={-1}
           className="sr-only"
