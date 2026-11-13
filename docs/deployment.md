@@ -105,6 +105,33 @@ A deployment pins both the Worker and the asset upload. Reverting the commit and
 ## Caveats
 
 - The committed `API_ORIGIN` is staging. It is shared, may restart during a deploy, and must not hold real customer data. A public console pointed at it is a demo, not a production service.
-- Only login, the map and the vehicle drawer are implemented. The remaining screens are placeholders.
+- Every screen in `ui-brief.md` is implemented; `/styleguide` is the visual contract.
 - `VITE_MAPTILER_API_KEY` is public in the bundle by design. Use a domain-restricted key.
-- No Content-Security-Policy is set. The inline theme script in `index.html` needs a hash and MapLibre needs tile and worker sources; add a report-only policy as a separate change.
+- The recommended Content-Security-Policy is documented below but is not enforced in `public/_headers`. Verify it on a deployed build before enforcing.
+
+## Recommended Content-Security-Policy
+
+`index.html` contains one inline script: the pre-paint theme and accent bootstrap. MapLibre needs a worker created from a `blob:` URL and inline styles for its canvas. Tiles, glyphs and sprites come from the configured style origin.
+
+Compute the script hash after any change to that inline script:
+
+```bash
+npm run csp:hash
+```
+
+Then send the policy from the Worker or `_headers`:
+
+```text
+default-src 'self';
+script-src 'self' 'sha256-iZIpAOKPt4J/RouheqAfDbSatweqIIXkZ6VqX/FSFk4=';
+style-src 'self' 'unsafe-inline';
+worker-src 'self' blob:;
+img-src 'self' data: blob:;
+font-src 'self';
+connect-src 'self' wss://fleet-demo.165-232-96-216.sslip.io https://styles.test;
+frame-ancestors 'none';
+base-uri 'self';
+form-action 'self';
+```
+
+Replace the `connect-src` origins with the deployment's API/style origins. If the standard style is self-hosted (PMTiles), it needs no external origin; a hosted MapTiler style needs `https://api.maptiler.com` and its tile CDN. Ship the policy as `Content-Security-Policy-Report-Only` first, fix the violations, then enforce it.

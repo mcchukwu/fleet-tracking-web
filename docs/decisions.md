@@ -865,3 +865,15 @@ Trade-off: no vehicle-type silhouette at street zoom. Nothing regresses; the che
 `e2e/sheet-rows.spec.ts` now measures the list from the header's bottom **plus** the stale row when the mock fleet has outlived the 15s freshness window. The stale badge is a real state variant of the sheet, not a fixed zero-height element; the virtual total and the row invariants are unchanged. The suite also waits for the sheet's position to stabilise between snaps instead of trusting a fixed 350ms transition.
 
 Trade-off: a test that runs longer than the freshness window no longer reports a false row-alignment failure, but the assertion is conditional on the header, stale row and sheet bottom together, which is what the user sees.
+
+## 2026-11-13: The demo story asserts fixture counts, never the brief's numbers
+
+`e2e/demo-story.spec.ts` follows the six steps against MSW: sign in, fleet and geofences, the geofence-exit alert, the deviation with evidence and trip, replay, acknowledge, import and an all-green System screen. It reads the fleet and geofence counts from the debug snapshot instead of hard-coding the brief's 20 trucks and 3 geofences.
+
+Trade-off: a fixture change updates behaviour without editing the demo copy. The story proves the wiring, not staging data.
+
+## 2026-11-13: CSP is documented and hash-generated, not enforced
+
+`npm run csp:hash` hashes the inline theme bootstrap, and `docs/deployment.md` carries the recommended policy (self for scripts, the hash, `blob:` workers for MapLibre, `data:`/`blob:` images, self and the API/WebSocket origins for connect). The policy is deliberately not in `public/_headers` yet: the tile and style origins depend on deployment env, and the first enforcement should be Report-Only on a deployed build.
+
+Trade-off: no CSP protection on the current demo deploy. The hash workflow keeps the policy from going stale, and enforcement is a roadmap item.

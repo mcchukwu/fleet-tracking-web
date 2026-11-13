@@ -25,7 +25,7 @@ The Bruno collection is in `~/Projects/fleet-tracking-handoff/bruno`, outside th
 - Demo password: `DemoPass123!`
 - Users: `dispatcher@demo.ftb`, `security@demo.ftb`, `viewer@demo.ftb`, `admin@demo.ftb`
 
-The current staging snapshot has 25 vehicles, geofences, trips and alerts. Product copy must not hard-code the count. Staging is shared, may restart during a deploy, and must not hold real customer data.
+The staging tenant holds a changing fleet, geofences, trips and alerts. Product copy must not hard-code the count; the UI reads it from the snapshot. Staging is shared, may restart during a deploy, and must not hold real customer data.
 
 There is no CORS. Vite proxies `/api` to staging by default. Set `VITE_PROXY_TARGET=http://localhost:8081` to use a local backend.
 

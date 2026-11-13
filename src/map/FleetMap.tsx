@@ -116,6 +116,11 @@ export function FleetMap({
           ...(baseStyleRef.current ? { baseStyle: baseStyleRef.current } : {}),
         });
         if (cancelled) return;
+        if (variant === "static") {
+          // The mini map is decorative; its provider canvas must not join the
+          // tab order inside the aria-hidden frame.
+          for (const canvas of target.querySelectorAll("canvas")) canvas.tabIndex = -1;
+        }
 
         setLoaded(true);
         const offReady = instance.on("ready", () => setLoaded(true));
@@ -193,7 +198,7 @@ export function FleetMap({
         <div
           ref={canvasRef}
           data-testid="fleet-map-canvas"
-          aria-hidden="true"
+          aria-hidden={variant === "static" ? true : undefined}
           className="h-full w-full"
         />
       </div>

@@ -97,3 +97,7 @@ Lighthouse removed the dedicated PWA category and its installability audits in v
 - Glyph coverage stops at U+07FF. Exotic place names may render without glyphs offline.
 - WebKit coverage needs system libraries that a locked-down local host may not have. The projects exist and CI runs them; local Chromium covers the same assertions except WebGL, which is Chromium-only.
 - `e2e:pwa:webkit` requires `sudo npx playwright install-deps` on Linux.
+
+## Route chunks and the precache
+
+Slice 14 split every feature page into its own chunk. `injectManifest.globPatterns` already matches every generated `assets/*.js` and `*.css`, so the service worker precaches the route chunks without a second manifest, and a cold offline load of a lazy route renders from the precache. The MapLibre provider, glyphs, sprites and the PMTiles pack keep their separate cache entries; `npm run e2e:pwa` is the gate.
